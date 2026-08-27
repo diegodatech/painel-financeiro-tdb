@@ -891,13 +891,13 @@ function PainelFinanceiro() {
   const resumoMensal = useMemo(() => {
     if (!transacoes) return [];
     return MESES.map(mes => {
-      const doMes = transacoes.filter(t => t.mes === mes);
+      const doMes = transacoes.filter(t => t.mes === mes && t.status === 'Pago');
       const entradas = doMes.filter(t => t.tipo === 'Entrada').reduce((s,t)=>s+t.valor,0);
       const fixas = doMes.filter(t => t.tipo === 'Fixa').reduce((s,t)=>s+t.valor,0);
       const variaveis = doMes.filter(t => t.tipo === 'Variável').reduce((s,t)=>s+t.valor,0);
       const saidas = fixas + variaveis;
       const lucro = entradas - saidas;
-      const temDados = doMes.length > 0;
+      const temDados = transacoes.some(t => t.mes === mes);
       let status = 'Sem dados';
       if (temDados && entradas > 0) status = 'OK';
       else if (temDados && entradas === 0) status = 'Falta entrada';
@@ -917,7 +917,7 @@ function PainelFinanceiro() {
   const top10 = useMemo(() => {
     if (!transacoes) return [];
     const porCategoria = {};
-    transacoes.filter(t => t.tipo !== 'Entrada').forEach(t => {
+    transacoes.filter(t => t.tipo !== 'Entrada' && t.status === 'Pago').forEach(t => {
       porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + (t.valor || 0);
     });
     return Object.entries(porCategoria)
@@ -1415,7 +1415,7 @@ function Lancamentos(props) {
   const kpisMes = useMemo(() => {
     const mesAlvo = filtroMes !== 'TODOS' ? filtroMes
       : [...MESES].reverse().find(m => transacoes.some(t => t.mes === m && t.status === 'Pago')) || 'AGOSTO';
-    const doMes = transacoes.filter(t => t.mes === mesAlvo);
+    const doMes = transacoes.filter(t => t.mes === mesAlvo && t.status === 'Pago');
     const entradas = doMes.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
     const saidas = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
     const saldoInfo = SEED_SALDOS.find(s => s.mes === mesAlvo);
@@ -2336,7 +2336,7 @@ function Orcamento({ transacoes }) {
   const gastoPorCategoria = useMemo(() => {
     const map = {};
     if (!transacoes) return map;
-    transacoes.filter(t => t.mes === mesAtual && t.tipo !== 'Entrada').forEach(t => {
+    transacoes.filter(t => t.mes === mesAtual && t.tipo !== 'Entrada' && t.status === 'Pago').forEach(t => {
       map[t.categoria] = (map[t.categoria] || 0) + (t.valor || 0);
     });
     return map;
@@ -2344,7 +2344,7 @@ function Orcamento({ transacoes }) {
 
   const resultadoDoMes = useMemo(() => {
     if (!transacoes) return 0;
-    const doMes = transacoes.filter(t => t.mes === mesAtual);
+    const doMes = transacoes.filter(t => t.mes === mesAtual && t.status === 'Pago');
     const entradas = doMes.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
     const saidas = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
     return entradas - saidas;
