@@ -476,6 +476,12 @@ function formatBRLNumber(v) {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// deixa a primeira letra de cada palavra maiúscula automaticamente (ex: "joão silva" -> "João Silva")
+function capitalizarPalavras(str) {
+  if (!str) return str;
+  return str.replace(/(^|\s)([a-zà-ú])/g, (match, espaco, letra) => espaco + letra.toUpperCase());
+}
+
 function parseBRLInput(strVal) {
   if (strVal == null) return null;
   let s = String(strVal).replace(/R\$/gi, '').trim();
@@ -2086,17 +2092,17 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>PAI/RESPONSÁVEL</label>
-              <input value={novoPai} onChange={e => setNovoPai(e.target.value)} placeholder="Opcional"
+              <input value={novoPai} onChange={e => setNovoPai(capitalizarPalavras(e.target.value))} placeholder="Opcional"
                 disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CONVÊNIO</label>
-              <input value={novoConvenio} onChange={e => setNovoConvenio(e.target.value)} placeholder="PARTICULAR"
+              <input value={novoConvenio} onChange={e => setNovoConvenio(capitalizarPalavras(e.target.value))} placeholder="PARTICULAR"
                 list="convenios-lista" disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '1 1 160px' }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>TIRAR NOTA</label>
-              <input value={novoTirarNota} onChange={e => setNovoTirarNota(e.target.value)} placeholder="Opcional"
+              <input value={novoTirarNota} onChange={e => setNovoTirarNota(capitalizarPalavras(e.target.value))} placeholder="Opcional"
                 style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
           </div>
