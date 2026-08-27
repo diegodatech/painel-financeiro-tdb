@@ -652,6 +652,7 @@ function PainelFinanceiro() {
   const [loading, setLoading] = useState(true);
   const [storageOk, setStorageOk] = useState(true);
   const [statusPlanilha, setStatusPlanilha] = useState(null); // null=modo local, 'ok'=sincronizando, 'erro'=falhou
+  const [saldosMensais, setSaldosMensais] = useState(null); // { JANEIRO: 3111.69, ... } — editável na tela
 
   useEffect(() => {
     if (!window.APPS_SCRIPT_URL_CONFIGURADA) return;
@@ -707,6 +708,32 @@ function PainelFinanceiro() {
       setLoading(false);
     })();
   }, []);
+
+  // saldos mensais editáveis — carrega o que já foi salvo, ou usa o extrato original como ponto de partida
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('saldos_mensais', false);
+        if (r && r.value) {
+          setSaldosMensais(JSON.parse(r.value));
+        } else {
+          const inicial = {};
+          SEED_SALDOS.forEach(s => { inicial[s.mes] = s.total; });
+          setSaldosMensais(inicial);
+        }
+      } catch (e) {
+        const inicial = {};
+        SEED_SALDOS.forEach(s => { inicial[s.mes] = s.total; });
+        setSaldosMensais(inicial);
+      }
+    })();
+  }, []);
+
+  async function salvarSaldoMensal(mes, valor) {
+    const next = { ...(saldosMensais || {}), [mes]: valor };
+    setSaldosMensais(next);
+    try { await window.storage.set('saldos_mensais', JSON.stringify(next), false); } catch (e) {}
+  }
 
   useEffect(() => {
     if (!transacoes) return;
@@ -910,9 +937,11 @@ function PainelFinanceiro() {
     const entradas = comDados.reduce((s,m)=>s+m.entradas,0);
     const saidas = comDados.reduce((s,m)=>s+m.saidas,0);
     const resultado = entradas - saidas;
-    const saldoRecente = [...SEED_SALDOS].reverse().find(s => s.total > 0);
-    return { entradas, saidas, resultado, saldo: saldoRecente ? saldoRecente.total : 0, mesSaldo: saldoRecente ? MESES_ABREV[saldoRecente.mes] : '-' };
-  }, [resumoMensal]);
+    const saldos = saldosMensais || {};
+    // usa o último mês que tem um saldo digitado (maior que zero), do mais recente pro mais antigo
+    const mesComSaldo = [...MESES].reverse().find(m => saldos[m] > 0);
+    return { entradas, saidas, resultado, saldo: mesComSaldo ? saldos[mesComSaldo] : 0, mesSaldo: mesComSaldo ? MESES_ABREV[mesComSaldo] : '-' };
+  }, [resumoMensal, saldosMensais]);
 
   const top10 = useMemo(() => {
     if (!transacoes) return [];
@@ -934,7 +963,10 @@ function PainelFinanceiro() {
     return [{ name: 'Fixas', value: fixas }, { name: 'Variáveis', value: variaveis }];
   }, [resumoMensal]);
 
-  const saldoEvolucao = SEED_SALDOS.map(s => ({ mes: MESES_ABREV[s.mes], total: s.total }));
+  const saldoEvolucao = useMemo(() => {
+    const saldos = saldosMensais || {};
+    return MESES.map(m => ({ mes: MESES_ABREV[m], total: saldos[m] || 0 }));
+  }, [saldosMensais]);
 
   const alertas = useMemo(() => {
     const lista = [];
@@ -1126,6 +1158,8 @@ function PainelFinanceiro() {
             fixasVsVariaveis={fixasVsVariaveis}
             saldoEvolucao={saldoEvolucao}
             transacoes={transacoes}
+            saldosMensais={saldosMensais}
+            salvarSaldoMensal={salvarSaldoMensal}
           />
         ) : tab === 'lancamentos' ? (
           <Lancamentos
@@ -1142,6 +1176,7 @@ function PainelFinanceiro() {
             novoStatus={novoStatus} setNovoStatus={setNovoStatus}
             adicionarLancamento={adicionarLancamento}
             formErro={formErro} formOk={formOk}
+            saldosMensais={saldosMensais}
           />
         ) : tab === 'mensalidades' ? (
           <Mensalidades
@@ -1202,7 +1237,21 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, transacoes }) {
+function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, transacoes, saldosMensais, salvarSaldoMensal }) {
+  const [editandoSaldos, setEditandoSaldos] = useState(false);
+  const [saldoEditMes, setSaldoEditMes] = useState(null);
+  const [saldoEditValor, setSaldoEditValor] = useState('');
+
+  function iniciarEdicaoSaldo(mes) {
+    setSaldoEditMes(mes);
+    setSaldoEditValor(formatBRLNumber((saldosMensais || {})[mes] || 0));
+  }
+  function salvarEdicaoSaldo() {
+    const num = parseBRLInput(saldoEditValor);
+    if (num != null && salvarSaldoMensal) salvarSaldoMensal(saldoEditMes, num);
+    setSaldoEditMes(null);
+  }
+
   const inadimplencia = useMemo(() => {
     if (!transacoes) return null;
     const mesAlvo = [...MESES].reverse().find(m => transacoes.some(t => t.mes === m && t.tipo === 'Entrada' && t.status === 'Pago'));
@@ -1306,6 +1355,47 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         </CardChart>
       </div>
 
+      {/* EDIÇÃO MANUAL DO SALDO MENSAL — o saldo não dá pra calcular sozinho a partir dos
+          lançamentos (não bate com o extrato real), então fica editável aqui, mês a mês */}
+      <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
+        <button onClick={() => setEditandoSaldos(v => !v)} style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '11px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
+          fontSize: 12.5, fontWeight: 700, color: COLORS.ink,
+        }}>
+          <span>💰 Editar saldo em conta de cada mês (confira no extrato do banco)</span>
+          <ChevronDown size={16} style={{ transform: editandoSaldos ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+        </button>
+        {editandoSaldos && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 1, background: COLORS.lineSoft }}>
+            {MESES.map(mes => {
+              const emEdicao = saldoEditMes === mes;
+              const valorAtual = (saldosMensais || {})[mes] || 0;
+              return (
+                <div key={mes} style={{ background: COLORS.paperCard, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 600 }}>{MESES_ABREV[mes]}</span>
+                  {emEdicao ? (
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      <input autoFocus value={saldoEditValor} onChange={e => setSaldoEditValor(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoSaldo(); if (e.key === 'Escape') setSaldoEditMes(null); }}
+                        className="mono" style={{ width: 90, border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '4px 6px', fontSize: 12.5 }} />
+                      <button onClick={salvarEdicaoSaldo} style={{ background: COLORS.green, border: 'none', borderRadius: 5, padding: '4px 6px', cursor: 'pointer' }}>
+                        <Check size={12} color="#FFFFFF" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => iniciarEdicaoSaldo(mes)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.ink }}>{formatBRL(valorAtual)}</span>
+                      <Pencil size={11} color={COLORS.inkSoft} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div className="grid-charts-b" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
         <CardChart
           title="Raio-X de Gastos por Item"
@@ -1400,7 +1490,7 @@ function Lancamentos(props) {
     mesesAbertos, toggleMes, removerLancamento, editarLancamento,
     novoMes, setNovoMes, novaCategoria, setNovaCategoria, novoTipo, setNovoTipo,
     novoValor, setNovoValor, novoStatus, setNovoStatus, adicionarLancamento,
-    formErro, formOk,
+    formErro, formOk, saldosMensais,
   } = props;
 
   const [editandoId, setEditandoId] = useState(null);
@@ -1418,9 +1508,9 @@ function Lancamentos(props) {
     const doMes = transacoes.filter(t => t.mes === mesAlvo && t.status === 'Pago');
     const entradas = doMes.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
     const saidas = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
-    const saldoInfo = SEED_SALDOS.find(s => s.mes === mesAlvo);
-    return { mesAlvo, entradas, saidas, resultado: entradas - saidas, saldo: saldoInfo ? saldoInfo.total : 0 };
-  }, [transacoes, filtroMes]);
+    const saldoInfo = (saldosMensais || {})[mesAlvo];
+    return { mesAlvo, entradas, saidas, resultado: entradas - saidas, saldo: saldoInfo || 0 };
+  }, [transacoes, filtroMes, saldosMensais]);
 
   function iniciarEdicao(t) {
     setEditandoId(t.id);
