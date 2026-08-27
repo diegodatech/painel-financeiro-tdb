@@ -22,6 +22,10 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
     body {
       margin: 0;
       padding: 0;
@@ -438,6 +442,21 @@ const COLORS = {
 };
 
 const PIE_COLORS = ['#651B58', '#2E8C89'];
+
+// Aviso temporário de confirmação ("✓ Salvo com sucesso"), some sozinho depois de um tempo
+function Toast({ mensagem }) {
+  if (!mensagem) return null;
+  return (
+    <div style={{
+      position: 'fixed', top: 18, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+      background: '#1F7A4D', color: '#FFFFFF', padding: '11px 22px', borderRadius: 10,
+      fontSize: 13.5, fontWeight: 600, boxShadow: '0 6px 20px rgba(0,0,0,0.22)',
+      display: 'flex', alignItems: 'center', gap: 8, animation: 'toastIn 0.25s ease-out',
+    }}>
+      <span style={{ fontSize: 15 }}>✓</span>{mensagem}
+    </div>
+  );
+}
 
 function formatBRL(v) {
   const n = Number(v) || 0;
@@ -1471,7 +1490,7 @@ function Lancamentos(props) {
           }}><Plus size={15}/> Lançar</button>
         </form>
         {formErro && <div style={{ color: COLORS.red, fontSize: 12.5, marginTop: 10 }}>{formErro}</div>}
-        {formOk && <div style={{ color: COLORS.green, fontSize: 12.5, marginTop: 10 }}>Lançamento adicionado.</div>}
+        <Toast mensagem={formOk ? '✓ Lançamento adicionado com sucesso!' : null} />
       </div>
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1910,6 +1929,11 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
   const [filtroMes, setFiltroMes] = useState('AGOSTO');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [filtroTexto, setFiltroTexto] = useState('');
+  const [toastMsg, setToastMsg] = useState(null);
+  function mostrarToast(msg) {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 2600);
+  }
 
   const [editandoId, setEditandoId] = useState(null);
   const [valorEdit, setValorEdit] = useState('');
@@ -2013,6 +2037,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
       nota: novoTipoOrigem === 'Aluno' ? 'Pendente' : undefined,
       data: dataHoje, // preenche sozinho com a data de hoje — dá pra mudar depois no lápis de editar
     });
+    mostrarToast(`✓ ${novoNome.trim()} adicionado com sucesso!`);
     setNovoNome(''); setNovoValor(''); setNovoValorCheio(''); setNovoPai(''); setNovoConvenio('PARTICULAR');
   }
 
@@ -2025,6 +2050,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
+      <Toast mensagem={toastMsg} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
         <div style={{ background: COLORS.redBg, border: `1px solid ${COLORS.red}22`, borderRadius: 10, padding: '14px 16px' }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.red, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Pendentes</div>
