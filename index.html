@@ -951,7 +951,17 @@ function PainelFinanceiro() {
     return transacoes
       .filter(t => t.tipo !== 'Entrada')
       .filter(t => filtroMes === 'TODOS' || t.mes === filtroMes)
-      .filter(t => !filtroTexto || t.categoria.toLowerCase().includes(filtroTexto.toLowerCase()))
+      .filter(t => {
+        if (!filtroTexto) return true;
+        const busca = filtroTexto.toLowerCase().trim();
+        if (t.categoria.toLowerCase().includes(busca)) return true;
+        // também aceita buscar pelo valor, digitado com ou sem vírgula/ponto (ex: "1500" acha "R$ 1.500,00")
+        const buscaNum = busca.replace(/\./g, '').replace(',', '.');
+        if (buscaNum && !isNaN(buscaNum) && t.valor != null) {
+          return String(t.valor).includes(buscaNum) || formatBRLNumber(t.valor).replace(/\./g, '').includes(busca.replace(/\./g, ''));
+        }
+        return false;
+      })
       .sort((a,b) => monthIndex(a.mes) - monthIndex(b.mes) || a.categoria.localeCompare(b.categoria));
   }, [transacoes, filtroMes, filtroTexto]);
 
@@ -1502,7 +1512,7 @@ function Lancamentos(props) {
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: '1 1 240px' }}>
           <Search size={15} color={COLORS.inkSoft} style={{ position: 'absolute', left: 12, top: 11 }} />
-          <input value={filtroTexto} onChange={e => setFiltroTexto(e.target.value)} placeholder="Buscar por nome do lançamento..."
+          <input value={filtroTexto} onChange={e => setFiltroTexto(e.target.value)} placeholder="Buscar por nome ou valor (ex: mercado ou 1500)..."
             style={{ ...inputStyle, width: '100%', paddingLeft: 34, boxSizing: 'border-box' }} />
         </div>
         <select value={filtroMes} onChange={e => setFiltroMes(e.target.value)} style={inputStyle}>
@@ -1516,7 +1526,7 @@ function Lancamentos(props) {
           <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14 }}>Nenhum lançamento encontrado.</div>
         )}
         {agrupadoPorMes.map(({ mes, itens }) => {
-          const aberto = mesesAbertos[mes] === true;
+          const aberto = mesesAbertos[mes] === true || (!!filtroTexto && itens.length > 0);
           const totalMes = itens.reduce((s,t) => s + (t.tipo === 'Entrada' ? t.valor : -t.valor), 0);
           return (
             <div key={mes} style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
@@ -2239,6 +2249,7 @@ function Orcamento({ transacoes }) {
   const [novaCategoria, setNovaCategoria] = useState('');
   const [novoValor, setNovoValor] = useState('');
   const [formErro, setFormErro] = useState('');
+  const [buscaOrcamento, setBuscaOrcamento] = useState('');
 
   // lista das categorias de despesa (Fixa/Variável) já usadas em Lançamentos,
   // pra mostrar como sugestão de clique em vez de precisar digitar do zero
@@ -2335,7 +2346,9 @@ function Orcamento({ transacoes }) {
     return <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: 40 }}>Carregando...</div>;
   }
 
-  const categorias = Object.keys(orcamentos).sort();
+  const categorias = Object.keys(orcamentos)
+    .filter(cat => !buscaOrcamento || cat.toLowerCase().includes(buscaOrcamento.toLowerCase()))
+    .sort();
   const totalOrcado = categorias.reduce((s, c) => s + orcamentos[c], 0);
   const totalGasto = categorias.reduce((s, c) => s + (gastoPorCategoria[c] || 0), 0);
 
@@ -2412,6 +2425,12 @@ function Orcamento({ transacoes }) {
         {formErro && <div style={{ color: COLORS.red, fontSize: 12.5, marginTop: 10 }}>{formErro}</div>}
       </div>
 
+      <div style={{ position: 'relative' }}>
+        <Search size={15} color={COLORS.inkSoft} style={{ position: 'absolute', left: 12, top: 11 }} />
+        <input value={buscaOrcamento} onChange={e => setBuscaOrcamento(e.target.value)} placeholder="Buscar categoria orçada..."
+          style={{ ...inputStyle, width: '100%', paddingLeft: 34, boxSizing: 'border-box' }} spellCheck="true" lang="pt-BR" />
+      </div>
+
       {/* TABELA ORÇADO x REALIZADO */}
       <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
         <div style={{ padding: '11px 18px', background: COLORS.lineSoft, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, display: 'flex', justifyContent: 'space-between' }}>
@@ -2420,7 +2439,7 @@ function Orcamento({ transacoes }) {
         </div>
         {categorias.length === 0 ? (
           <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: '30px 0', fontSize: 13.5 }}>
-            Nenhuma categoria com orçamento ainda — adicione uma acima pra começar a acompanhar.
+            {buscaOrcamento ? 'Nenhuma categoria encontrada com essa busca.' : 'Nenhuma categoria com orçamento ainda — adicione uma acima pra começar a acompanhar.'}
           </div>
         ) : (
           categorias.map(cat => {
