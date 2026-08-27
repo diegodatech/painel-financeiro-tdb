@@ -1408,6 +1408,7 @@ function Lancamentos(props) {
   const [statusEdit, setStatusEdit] = useState('Pago');
   const [editandoValorOriginal, setEditandoValorOriginal] = useState(null);
   const [editandoHistoricoOriginal, setEditandoHistoricoOriginal] = useState(null);
+  const [historicoEdit, setHistoricoEdit] = useState('');
   const [contaDigitada, setContaDigitada] = useState(false);
 
   // KPIs do mês em foco (o que estiver escolhido no filtro; se for "todos", usa o mês mais recente com dados)
@@ -1427,6 +1428,7 @@ function Lancamentos(props) {
     setStatusEdit(t.status);
     setEditandoValorOriginal(t.valor);
     setEditandoHistoricoOriginal(t.historico || null);
+    setHistoricoEdit(t.historico || '');
     setContaDigitada(false);
   }
   function cancelarEdicao() {
@@ -1435,8 +1437,9 @@ function Lancamentos(props) {
   function salvarEdicao(id) {
     const valorFinal = parseBRLInput(valorEdit);
     // se a pessoa digitou uma conta (com +, -, * ou /) em vez de só um número novo,
-    // guarda o "extrato" da conta pra poder conferir depois, em vez de perder o histórico
-    let historico = editandoHistoricoOriginal;
+    // guarda o "extrato" da conta pra poder conferir depois. O texto do histórico é
+    // editável — se a pessoa apagou manualmente, respeita o que ela deixou.
+    let historico = historicoEdit.trim() || null;
     if (contaDigitada && valorFinal != null && editandoValorOriginal != null && valorFinal !== editandoValorOriginal) {
       const diff = valorFinal - editandoValorOriginal;
       const termo = diff >= 0 ? `+${formatBRLNumber(diff)}` : `-${formatBRLNumber(Math.abs(diff))}`;
@@ -1570,8 +1573,20 @@ function Lancamentos(props) {
                     }}>
                       <div>
                         <span style={{ color: COLORS.ink }}>{t.categoria}</span>
-                        {t.historico && (
-                          <div style={{ fontSize: 10.5, color: COLORS.inkSoft, fontFamily: 'monospace', marginTop: 1 }}>
+                        {emEdicao ? (
+                          (historicoEdit || t.historico) && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                              <input value={historicoEdit} onChange={e => setHistoricoEdit(e.target.value)}
+                                placeholder="extrato da conta (pode apagar)"
+                                style={{ ...inputStyle, fontSize: 11.5, padding: '3px 6px', fontFamily: 'monospace', width: 200 }} />
+                              <button type="button" onClick={() => setHistoricoEdit('')} title="Apagar histórico"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.6 }}>
+                                <X size={13} color={COLORS.red} />
+                              </button>
+                            </div>
+                          )
+                        ) : t.historico && (
+                          <div style={{ fontSize: 12, color: COLORS.inkSoft, fontFamily: 'monospace', marginTop: 2 }}>
                             {t.historico}
                           </div>
                         )}
