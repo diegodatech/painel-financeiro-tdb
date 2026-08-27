@@ -1406,6 +1406,9 @@ function Lancamentos(props) {
   const [editandoId, setEditandoId] = useState(null);
   const [valorEdit, setValorEdit] = useState('');
   const [statusEdit, setStatusEdit] = useState('Pago');
+  const [editandoValorOriginal, setEditandoValorOriginal] = useState(null);
+  const [editandoHistoricoOriginal, setEditandoHistoricoOriginal] = useState(null);
+  const [contaDigitada, setContaDigitada] = useState(false);
 
   // KPIs do mês em foco (o que estiver escolhido no filtro; se for "todos", usa o mês mais recente com dados)
   const kpisMes = useMemo(() => {
@@ -1422,13 +1425,25 @@ function Lancamentos(props) {
     setEditandoId(t.id);
     setValorEdit(t.valor != null ? formatBRLNumber(t.valor) : '');
     setStatusEdit(t.status);
+    setEditandoValorOriginal(t.valor);
+    setEditandoHistoricoOriginal(t.historico || null);
+    setContaDigitada(false);
   }
   function cancelarEdicao() {
     setEditandoId(null);
   }
   function salvarEdicao(id) {
     const valorFinal = parseBRLInput(valorEdit);
-    editarLancamento(id, { valor: valorFinal, status: statusEdit });
+    // se a pessoa digitou uma conta (com +, -, * ou /) em vez de só um número novo,
+    // guarda o "extrato" da conta pra poder conferir depois, em vez de perder o histórico
+    let historico = editandoHistoricoOriginal;
+    if (contaDigitada && valorFinal != null && editandoValorOriginal != null && valorFinal !== editandoValorOriginal) {
+      const diff = valorFinal - editandoValorOriginal;
+      const termo = diff >= 0 ? `+${formatBRLNumber(diff)}` : `-${formatBRLNumber(Math.abs(diff))}`;
+      const base = historico || formatBRLNumber(editandoValorOriginal);
+      historico = `${base}${termo}=${formatBRLNumber(valorFinal)}`;
+    }
+    editarLancamento(id, { valor: valorFinal, status: statusEdit, historico });
     setEditandoId(null);
   }
 
@@ -1553,7 +1568,14 @@ function Lancamentos(props) {
                       padding: '9px 18px', borderTop: `1px solid ${COLORS.lineSoft}`, fontSize: 13.5,
                       background: semValor && !emEdicao ? '#FFFBF0' : 'transparent',
                     }}>
-                      <span style={{ color: COLORS.ink }}>{t.categoria}</span>
+                      <div>
+                        <span style={{ color: COLORS.ink }}>{t.categoria}</span>
+                        {t.historico && (
+                          <div style={{ fontSize: 10.5, color: COLORS.inkSoft, fontFamily: 'monospace', marginTop: 1 }}>
+                            {t.historico}
+                          </div>
+                        )}
+                      </div>
                       <span style={{
                         fontSize: 10.5, fontWeight: 700, letterSpacing: '0.03em', color: TIPO_COR[t.tipo],
                         background: TIPO_BG[t.tipo],
@@ -1574,7 +1596,7 @@ function Lancamentos(props) {
                           autoFocus
                           value={valorEdit}
                           onChange={e => setValorEdit(e.target.value)}
-                          onBlur={() => onBlurCalc(valorEdit, setValorEdit)}
+                          onBlur={() => { if (valorEdit && /[\+\-\*\/]/.test(valorEdit)) setContaDigitada(true); onBlurCalc(valorEdit, setValorEdit); }}
                           onKeyDown={e => { if (e.key === 'Enter') salvarEdicao(t.id); if (e.key === 'Escape') cancelarEdicao(); }}
                           placeholder="0,00 ou 900+150"
                           className="mono"
