@@ -2198,6 +2198,15 @@ function Orcamento({ transacoes }) {
   const [novoValor, setNovoValor] = useState('');
   const [formErro, setFormErro] = useState('');
 
+  // lista das categorias de despesa (Fixa/Variável) já usadas em Lançamentos,
+  // pra mostrar como sugestão de clique em vez de precisar digitar do zero
+  const categoriasExistentes = useMemo(() => {
+    if (!transacoes) return [];
+    const set = new Set();
+    transacoes.filter(t => t.tipo !== 'Entrada' && t.categoria).forEach(t => set.add(t.categoria));
+    return Array.from(set).sort();
+  }, [transacoes]);
+
   const [editandoCat, setEditandoCat] = useState(null);
   const [valorEditOrc, setValorEditOrc] = useState('');
 
@@ -2341,8 +2350,11 @@ function Orcamento({ transacoes }) {
         <form onSubmit={submeterNovo} style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'end' }}>
           <div style={{ display: 'grid', gap: 4, flex: '2 1 220px' }}>
             <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CATEGORIA</label>
-            <input value={novaCategoria} onChange={e => setNovaCategoria(e.target.value)} list="convenios-lista"
+            <input value={novaCategoria} onChange={e => setNovaCategoria(e.target.value)} list="categorias-despesa-lista"
               placeholder="ex: ALUGUEL, MERCADO..." style={inputStyle} />
+            <datalist id="categorias-despesa-lista">
+              {categoriasExistentes.map(c => <option key={c} value={c} />)}
+            </datalist>
           </div>
           <div style={{ display: 'grid', gap: 4, flex: '1 1 140px' }}>
             <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>VALOR MENSAL (R$)</label>
