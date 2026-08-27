@@ -1950,6 +1950,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
   const [novoNome, setNovoNome] = useState('');
   const [novoPai, setNovoPai] = useState('');
   const [novoConvenio, setNovoConvenio] = useState('PARTICULAR');
+  const [novoTirarNota, setNovoTirarNota] = useState('');
   const [novoMes, setNovoMes] = useState('AGOSTO');
   const [novoValor, setNovoValor] = useState('');
   const [novoValorCheio, setNovoValorCheio] = useState('');
@@ -2034,11 +2035,12 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
       status: novoStatus, banco: novoBanco,
       pai: novoTipoOrigem === 'Aluno' ? (novoPai.trim() || null) : null,
       convenio: novoTipoOrigem === 'Aluno' ? (novoConvenio.trim() || 'PARTICULAR') : null,
+      tirarNota: novoTirarNota.trim() || null,
       nota: novoTipoOrigem === 'Aluno' ? 'Pendente' : undefined,
       data: dataHoje, // preenche sozinho com a data de hoje — dá pra mudar depois no lápis de editar
     });
     mostrarToast(`✓ ${novoNome.trim()} adicionado com sucesso!`);
-    setNovoNome(''); setNovoValor(''); setNovoValorCheio(''); setNovoPai(''); setNovoConvenio('PARTICULAR');
+    setNovoNome(''); setNovoValor(''); setNovoValorCheio(''); setNovoPai(''); setNovoConvenio('PARTICULAR'); setNovoTirarNota('');
   }
 
   const linhaHandlers = {
@@ -2091,6 +2093,11 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CONVÊNIO</label>
               <input value={novoConvenio} onChange={e => setNovoConvenio(e.target.value)} placeholder="PARTICULAR"
                 list="convenios-lista" disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gap: 4, flex: '1 1 160px' }}>
+              <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>TIRAR NOTA</label>
+              <input value={novoTirarNota} onChange={e => setNovoTirarNota(e.target.value)} placeholder="Opcional"
+                style={inputStyle} />
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'end' }}>
