@@ -1993,10 +1993,13 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
   function submeterNovo(e) {
     e.preventDefault();
     setFormErro('');
-    const num = parseBRLInput(novoValor);
     if (!novoNome.trim()) { setFormErro('Escreva o nome do aluno ou convênio.'); return; }
-    if (!num || num <= 0) { setFormErro('Coloque um valor válido.'); return; }
+    const numPago = parseBRLInput(novoValor);
     const numCheio = parseBRLInput(novoValorCheio);
+    // se só preencher "Valor a Pagar" e deixar "Valor Pago" em branco, usa o mesmo
+    // valor pros dois — muito comum em convênio/empresa, que não tem desconto
+    const num = (numPago && numPago > 0) ? numPago : numCheio;
+    if (!num || num <= 0) { setFormErro('Coloque um valor válido em algum dos dois campos (Valor a Pagar ou Valor Pago).'); return; }
     const prefixo = novoTipoOrigem === 'Aluno' ? 'Mensalidade - ' : novoTipoOrigem === 'Convênio' ? 'Convênio - ' : '';
     const hoje = new Date();
     const dataHoje = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
