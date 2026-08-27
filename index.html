@@ -1453,7 +1453,7 @@ function Lancamentos(props) {
           <div style={{ display: 'grid', gap: 4 }}>
             <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>O QUÊ</label>
             <input list="categorias-lista" value={novaCategoria} onChange={e => setNovaCategoria(e.target.value)}
-              placeholder="ex: Mercado, Saque Sicoob..." style={inputStyle} />
+              placeholder="ex: Mercado, Saque Sicoob..." style={inputStyle} spellCheck="true" lang="pt-BR" />
             <datalist id="categorias-lista">
               {CATEGORIAS_CONHECIDAS.map(c => <option key={c} value={c} />)}
             </datalist>
@@ -2082,22 +2082,22 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '2 1 200px' }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>NOME</label>
-              <input value={novoNome} onChange={e => setNovoNome(e.target.value)} placeholder="Nome do aluno/empresa" style={inputStyle} />
+              <input value={novoNome} onChange={e => setNovoNome(e.target.value)} placeholder="Nome do aluno/empresa" style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>PAI/RESPONSÁVEL</label>
               <input value={novoPai} onChange={e => setNovoPai(e.target.value)} placeholder="Opcional"
-                disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} />
+                disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CONVÊNIO</label>
               <input value={novoConvenio} onChange={e => setNovoConvenio(e.target.value)} placeholder="PARTICULAR"
-                list="convenios-lista" disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} />
+                list="convenios-lista" disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '1 1 160px' }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>TIRAR NOTA</label>
               <input value={novoTirarNota} onChange={e => setNovoTirarNota(e.target.value)} placeholder="Opcional"
-                style={inputStyle} />
+                style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'end' }}>
@@ -2387,7 +2387,7 @@ function Orcamento({ transacoes }) {
           <div style={{ display: 'grid', gap: 4, flex: '2 1 220px' }}>
             <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CATEGORIA</label>
             <input value={novaCategoria} onChange={e => setNovaCategoria(e.target.value)} list="categorias-despesa-lista"
-              placeholder="ex: ALUGUEL, MERCADO..." style={inputStyle} />
+              placeholder="ex: ALUGUEL, MERCADO..." style={inputStyle} spellCheck="true" lang="pt-BR" />
             <datalist id="categorias-despesa-lista">
               {categoriasExistentes.map(c => <option key={c} value={c} />)}
             </datalist>
