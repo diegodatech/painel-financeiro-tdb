@@ -709,22 +709,21 @@ function PainelFinanceiro() {
     })();
   }, []);
 
-  // saldos mensais editáveis — carrega o que já foi salvo, ou usa o extrato original como ponto de partida
+  // saldos mensais editáveis — sempre parte dos valores reais da planilha original (extrato)
+  // como base, e por cima aplica qualquer edição manual já salva (mês a mês)
   useEffect(() => {
     (async () => {
+      const base = {};
+      SEED_SALDOS.forEach(s => { base[s.mes] = s.total; });
       try {
         const r = await window.storage.get('saldos_mensais', false);
         if (r && r.value) {
-          setSaldosMensais(JSON.parse(r.value));
+          setSaldosMensais({ ...base, ...JSON.parse(r.value) });
         } else {
-          const inicial = {};
-          SEED_SALDOS.forEach(s => { inicial[s.mes] = s.total; });
-          setSaldosMensais(inicial);
+          setSaldosMensais(base);
         }
       } catch (e) {
-        const inicial = {};
-        SEED_SALDOS.forEach(s => { inicial[s.mes] = s.total; });
-        setSaldosMensais(inicial);
+        setSaldosMensais(base);
       }
     })();
   }, []);
@@ -1145,7 +1144,6 @@ function PainelFinanceiro() {
               { label: 'Entradas (com dados)', valor: kpis.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
               { label: 'Saídas (com dados)', valor: kpis.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
               { label: 'Resultado', valor: kpis.resultado, icon: kpis.resultado >= 0 ? TrendingUp : TrendingDown, cor: kpis.resultado >= 0 ? COLORS.green : COLORS.red, bg: kpis.resultado >= 0 ? COLORS.greenBg : COLORS.redBg },
-              { label: `Saldo em conta (${kpis.mesSaldo})`, valor: kpis.saldo, icon: Wallet, cor: COLORS.ink, bg: COLORS.goldSoft },
             ]} />
           </div>
         )}
@@ -1177,6 +1175,7 @@ function PainelFinanceiro() {
             adicionarLancamento={adicionarLancamento}
             formErro={formErro} formOk={formOk}
             saldosMensais={saldosMensais}
+            salvarSaldoMensal={salvarSaldoMensal}
           />
         ) : tab === 'mensalidades' ? (
           <Mensalidades
@@ -1195,7 +1194,7 @@ function PainelFinanceiro() {
   );
 }
 
-function KPIStrip({ items }) {
+function KPIStrip({ items, extra }) {
   return (
     <div className="grid-kpi" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
       {items.map((c, i) => (
@@ -1209,6 +1208,7 @@ function KPIStrip({ items }) {
           <div className="mono" style={{ fontSize: 20, fontWeight: 600, color: c.cor }}>{formatBRL(c.valor)}</div>
         </div>
       ))}
+      {extra}
     </div>
   );
 }
@@ -1238,18 +1238,21 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, transacoes, saldosMensais, salvarSaldoMensal }) {
-  const [editandoSaldos, setEditandoSaldos] = useState(false);
-  const [saldoEditMes, setSaldoEditMes] = useState(null);
+  const [saldoMesSelecionado, setSaldoMesSelecionado] = useState(MESES[MESES.length - 1]);
   const [saldoEditValor, setSaldoEditValor] = useState('');
+  const [saldoToast, setSaldoToast] = useState(false);
 
-  function iniciarEdicaoSaldo(mes) {
-    setSaldoEditMes(mes);
-    setSaldoEditValor(formatBRLNumber((saldosMensais || {})[mes] || 0));
-  }
+  useEffect(() => {
+    setSaldoEditValor(formatBRLNumber((saldosMensais || {})[saldoMesSelecionado] || 0));
+  }, [saldoMesSelecionado, saldosMensais]);
+
   function salvarEdicaoSaldo() {
     const num = parseBRLInput(saldoEditValor);
-    if (num != null && salvarSaldoMensal) salvarSaldoMensal(saldoEditMes, num);
-    setSaldoEditMes(null);
+    if (num != null && salvarSaldoMensal) {
+      salvarSaldoMensal(saldoMesSelecionado, num);
+      setSaldoToast(true);
+      setTimeout(() => setSaldoToast(false), 2200);
+    }
   }
 
   const inadimplencia = useMemo(() => {
@@ -1315,6 +1318,42 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           </div>
         </div>
       )}
+
+      {/* EDIÇÃO MANUAL DO SALDO MENSAL — o saldo não dá pra calcular sozinho a partir dos
+          lançamentos (não bate com o extrato real), então fica editável aqui, escolhendo o mês */}
+      <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '14px 18px' }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 10 }}>
+          💰 Saldo em conta (confira no extrato do banco)
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'end' }}>
+          <div style={{ display: 'grid', gap: 4 }}>
+            <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>MÊS</label>
+            <select value={saldoMesSelecionado} onChange={e => setSaldoMesSelecionado(e.target.value)} style={{
+              border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 11px', fontSize: 13.5,
+              fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink,
+            }}>
+              {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'grid', gap: 4 }}>
+            <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>VALOR (R$)</label>
+            <input value={saldoEditValor} onChange={e => setSaldoEditValor(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoSaldo(); }}
+              className="mono" style={{
+                border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 11px', fontSize: 13.5,
+                fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 130,
+              }} />
+          </div>
+          <button onClick={salvarEdicaoSaldo} style={{
+            background: COLORS.ink, color: '#FFFFFF', border: 'none', borderRadius: 7, padding: '10px 16px',
+            fontWeight: 600, fontSize: 13.5, cursor: 'pointer', height: 39,
+          }}>Salvar</button>
+          {saldoToast && (
+            <span style={{ color: COLORS.green, fontSize: 12.5, fontWeight: 600, alignSelf: 'center' }}>✓ Saldo salvo!</span>
+          )}
+        </div>
+      </div>
+
       <div className="grid-charts-a" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
         <CardChart title="Entradas x Saídas" height={180}>
           <ResponsiveContainer width="100%" height="100%">
@@ -1355,48 +1394,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         </CardChart>
       </div>
 
-      {/* EDIÇÃO MANUAL DO SALDO MENSAL — o saldo não dá pra calcular sozinho a partir dos
-          lançamentos (não bate com o extrato real), então fica editável aqui, mês a mês */}
-      <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
-        <button onClick={() => setEditandoSaldos(v => !v)} style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '11px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
-          fontSize: 12.5, fontWeight: 700, color: COLORS.ink,
-        }}>
-          <span>💰 Editar saldo em conta de cada mês (confira no extrato do banco)</span>
-          <ChevronDown size={16} style={{ transform: editandoSaldos ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
-        </button>
-        {editandoSaldos && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 1, background: COLORS.lineSoft }}>
-            {MESES.map(mes => {
-              const emEdicao = saldoEditMes === mes;
-              const valorAtual = (saldosMensais || {})[mes] || 0;
-              return (
-                <div key={mes} style={{ background: COLORS.paperCard, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 600 }}>{MESES_ABREV[mes]}</span>
-                  {emEdicao ? (
-                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <input autoFocus value={saldoEditValor} onChange={e => setSaldoEditValor(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoSaldo(); if (e.key === 'Escape') setSaldoEditMes(null); }}
-                        className="mono" style={{ width: 90, border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '4px 6px', fontSize: 12.5 }} />
-                      <button onClick={salvarEdicaoSaldo} style={{ background: COLORS.green, border: 'none', borderRadius: 5, padding: '4px 6px', cursor: 'pointer' }}>
-                        <Check size={12} color="#FFFFFF" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => iniciarEdicaoSaldo(mes)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.ink }}>{formatBRL(valorAtual)}</span>
-                      <Pencil size={11} color={COLORS.inkSoft} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="grid-charts-b" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+            <div className="grid-charts-b" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
         <CardChart
           title="Raio-X de Gastos por Item"
           height={210}
@@ -1490,7 +1488,7 @@ function Lancamentos(props) {
     mesesAbertos, toggleMes, removerLancamento, editarLancamento,
     novoMes, setNovoMes, novaCategoria, setNovaCategoria, novoTipo, setNovoTipo,
     novoValor, setNovoValor, novoStatus, setNovoStatus, adicionarLancamento,
-    formErro, formOk, saldosMensais,
+    formErro, formOk, saldosMensais, salvarSaldoMensal,
   } = props;
 
   const [editandoId, setEditandoId] = useState(null);
@@ -1500,6 +1498,22 @@ function Lancamentos(props) {
   const [editandoHistoricoOriginal, setEditandoHistoricoOriginal] = useState(null);
   const [historicoEdit, setHistoricoEdit] = useState('');
   const [contaDigitada, setContaDigitada] = useState(false);
+  const [saldoMesEdit, setSaldoMesEdit] = useState(MESES[MESES.length - 1]);
+  const [saldoValorEdit, setSaldoValorEdit] = useState('');
+  const [saldoSalvoToast, setSaldoSalvoToast] = useState(false);
+
+  useEffect(() => {
+    setSaldoValorEdit(formatBRLNumber((saldosMensais || {})[saldoMesEdit] || 0));
+  }, [saldoMesEdit, saldosMensais]);
+
+  function salvarSaldoDoMes() {
+    const num = parseBRLInput(saldoValorEdit);
+    if (num != null && salvarSaldoMensal) {
+      salvarSaldoMensal(saldoMesEdit, num);
+      setSaldoSalvoToast(true);
+      setTimeout(() => setSaldoSalvoToast(false), 2200);
+    }
+  }
 
   // KPIs do mês em foco (o que estiver escolhido no filtro; se for "todos", usa o mês mais recente com dados)
   const kpisMes = useMemo(() => {
@@ -1553,12 +1567,44 @@ function Lancamentos(props) {
         <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 8 }}>
           Resumo de {kpisMes.mesAlvo.charAt(0) + kpisMes.mesAlvo.slice(1).toLowerCase()}
         </div>
-        <KPIStrip items={[
-          { label: 'Entradas do mês', valor: kpisMes.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
-          { label: 'Saídas do mês', valor: kpisMes.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
-          { label: 'Resultado do mês', valor: kpisMes.resultado, icon: kpisMes.resultado >= 0 ? TrendingUp : TrendingDown, cor: kpisMes.resultado >= 0 ? COLORS.green : COLORS.red, bg: kpisMes.resultado >= 0 ? COLORS.greenBg : COLORS.redBg },
-          { label: 'Saldo em conta', valor: kpisMes.saldo, icon: Wallet, cor: COLORS.ink, bg: COLORS.goldSoft },
-        ]} />
+        <KPIStrip
+          items={[
+            { label: 'Entradas do mês', valor: kpisMes.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
+            { label: 'Saídas do mês', valor: kpisMes.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
+            { label: 'Resultado do mês', valor: kpisMes.resultado, icon: kpisMes.resultado >= 0 ? TrendingUp : TrendingDown, cor: kpisMes.resultado >= 0 ? COLORS.green : COLORS.red, bg: kpisMes.resultado >= 0 ? COLORS.greenBg : COLORS.redBg },
+          ]}
+          extra={
+            <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '14px 16px', boxShadow: '0 1px 2px rgba(31,59,54,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div style={{ background: COLORS.goldSoft, borderRadius: 6, padding: 5, display: 'flex' }}>
+                  <Wallet size={13} color={COLORS.ink} />
+                </div>
+                <span style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase' }}>Saldo em conta</span>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <select value={saldoMesEdit} onChange={e => setSaldoMesEdit(e.target.value)} style={{
+                  border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 6px', fontSize: 12,
+                  fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 62,
+                }}>
+                  {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
+                </select>
+                <input value={saldoValorEdit} onChange={e => setSaldoValorEdit(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') salvarSaldoDoMes(); }}
+                  className="mono" style={{
+                    border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 6px', fontSize: 13,
+                    fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 78, minWidth: 0,
+                  }} />
+                <button onClick={salvarSaldoDoMes} title="Salvar saldo" style={{
+                  background: COLORS.ink, border: 'none', borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', flexShrink: 0,
+                }}>
+                  <Check size={13} color="#FFFFFF" />
+                </button>
+              </div>
+              {saldoSalvoToast && <div style={{ color: COLORS.green, fontSize: 11, fontWeight: 600, marginTop: 4 }}>✓ Salvo!</div>}
+            </div>
+          }
+        />
       </div>
 
       <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '20px 22px', boxShadow: '0 1px 2px rgba(31,59,54,0.06)' }}>
