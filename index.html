@@ -1644,27 +1644,33 @@ function Lancamentos(props) {
                 </div>
                 <span style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase' }}>Saldo em conta</span>
               </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <select value={saldoMesEdit} onChange={e => setSaldoMesEdit(e.target.value)} style={{
-                  border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 6px', fontSize: 12,
-                  fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 62,
-                }}>
-                  {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
-                </select>
-                <input value={saldoValorEdit} onChange={e => setSaldoValorEdit(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') salvarSaldoDoMes(); }}
-                  className="mono" style={{
-                    border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 6px', fontSize: 13,
-                    fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 78, minWidth: 0,
-                  }} />
-                <button onClick={salvarSaldoDoMes} title="Salvar saldo" style={{
-                  background: COLORS.ink, border: 'none', borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', flexShrink: 0,
-                }}>
-                  <Check size={13} color="#FFFFFF" />
-                </button>
-              </div>
-              {saldoSalvoToast && <div style={{ color: COLORS.green, fontSize: 11, fontWeight: 600, marginTop: 4 }}>✓ Salvo!</div>}
+              {privadoTotais ? (
+                <div className="mono" style={{ fontSize: 15, fontWeight: 600, color: COLORS.ink, padding: '6px 0' }}>R$ ••••••</div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <select value={saldoMesEdit} onChange={e => setSaldoMesEdit(e.target.value)} style={{
+                      border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 6px', fontSize: 12,
+                      fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 62,
+                    }}>
+                      {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
+                    </select>
+                    <input value={saldoValorEdit} onChange={e => setSaldoValorEdit(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') salvarSaldoDoMes(); }}
+                      className="mono" style={{
+                        border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 6px', fontSize: 13,
+                        fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 78, minWidth: 0,
+                      }} />
+                    <button onClick={salvarSaldoDoMes} title="Salvar saldo" style={{
+                      background: COLORS.ink, border: 'none', borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', flexShrink: 0,
+                    }}>
+                      <Check size={13} color="#FFFFFF" />
+                    </button>
+                  </div>
+                  {saldoSalvoToast && <div style={{ color: COLORS.green, fontSize: 11, fontWeight: 600, marginTop: 4 }}>✓ Salvo!</div>}
+                </>
+              )}
             </div>
           }
         />
@@ -1897,7 +1903,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
   return (
     <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ padding: '12px 18px', background: COLORS.lineSoft, fontSize: 13, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>{titulo} <span style={{ fontWeight: 500, color: COLORS.inkSoft }}>({itens.length})</span></span>
+        <span>{titulo} <span style={{ fontWeight: 500, color: COLORS.inkSoft }}>({modoPrivado ? '••' : itens.length})</span></span>
         <span style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 500 }}>Dica: Você pode digitar contas nos valores (ex: <b>900+150</b> ou <b>1483-200</b>) e salvar</span>
       </div>
       {itens.length === 0 ? (
