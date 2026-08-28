@@ -1041,24 +1041,26 @@ function PainelFinanceiro() {
     }
   }
 
-  // "backup automático semanal" — como o painel é um site simples (sem servidor rodando o
-  // tempo todo), não dá pra fazer o backup rodar sozinho enquanto o app está fechado. O jeito
-  // honesto de aproximar isso: toda vez que o painel é aberto, ele confere quando foi o último
-  // backup — se já fez uma semana ou mais (ou nunca fez), baixa um novo backup sozinho na hora.
-  const [avisoBackupAuto, setAvisoBackupAuto] = useState(false);
+  // "backup semanal" — em vez de baixar sozinho sem avisar (que alguns navegadores bloqueiam,
+  // por tratar como download automático suspeito), o painel só AVISA que já passou uma semana
+  // e mostra um botão fixo pra você confirmar com um toque. Mais transparente e sem bloqueio.
+  const [backupPendente, setBackupPendente] = useState(false);
   useEffect(() => {
     if (!transacoes || transacoes.length === 0) return;
     const UMA_SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
     const ultimoStr = localStorage.getItem('painel_ultimoBackupAuto');
     const ultimo = ultimoStr ? new Date(ultimoStr).getTime() : 0;
     if (Date.now() - ultimo >= UMA_SEMANA_MS) {
-      exportarBackup();
-      localStorage.setItem('painel_ultimoBackupAuto', new Date().toISOString());
-      setAvisoBackupAuto(true);
-      setTimeout(() => setAvisoBackupAuto(false), 4500);
+      setBackupPendente(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transacoes != null]);
+
+  function confirmarBackupSemanal() {
+    exportarBackup();
+    localStorage.setItem('painel_ultimoBackupAuto', new Date().toISOString());
+    setBackupPendente(false);
+  }
 
   function exportarBackup() {
     if (!transacoes) return;
@@ -1394,8 +1396,17 @@ function PainelFinanceiro() {
   }
 
   return (
-    <div className={`painel-raiz${temaEscuro ? ' dark-mode' : ''}`} style={{ background: COLORS.paper, minHeight: '100vh', fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink, zoom: 0.92 }}>
-      <Toast mensagem={avisoBackupAuto ? '💾 Backup semanal automático baixado' : null} />
+    <div className={`painel-raiz${temaEscuro ? ' dark-mode' : ''}`} style={{ background: COLORS.paper, minHeight: '100vh', fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink, zoom: 0.92, paddingTop: backupPendente ? 38 : 0 }}>
+      {backupPendente && (
+        <button onClick={confirmarBackupSemanal} style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9998, width: '100%',
+          background: COLORS.ink, color: '#FFFFFF', border: 'none', cursor: 'pointer',
+          padding: '10px 16px', fontSize: 13, fontWeight: 600,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>
+          💾 Seu backup semanal está pronto — toque aqui pra baixar
+        </button>
+      )}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         /* o "zoom" e uma propriedade nao-padrao que se comporta de forma inconsistente
