@@ -18,10 +18,41 @@
   <script crossorigin src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
   <!-- Recharts -->
   <script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+  <!-- jsPDF (gera o relatório em PDF) -->
+  <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <!-- Babel Standalone -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
+    :root {
+      --c-paper: #FBF7FB;
+      --c-paperCard: #FFFFFF;
+      --c-ink: #651B58;
+      --c-inkSoft: #8A5C81;
+      --c-gold: #B85CA3;
+      --c-goldSoft: #F0DCEC;
+      --c-green: #2E8C89;
+      --c-greenBg: #DFF1F0;
+      --c-red: #C1272D;
+      --c-redBg: #FBE1E0;
+      --c-line: #E8D9E5;
+      --c-lineSoft: #F3E9F1;
+    }
+    .dark-mode {
+      --c-paper: #1A1420;
+      --c-paperCard: #241C2C;
+      --c-ink: #F0DCEC;
+      --c-inkSoft: #B99BB0;
+      --c-gold: #E8A9D6;
+      --c-goldSoft: #3A2A3E;
+      --c-green: #5BC2BE;
+      --c-greenBg: #1D3634;
+      --c-red: #F0807A;
+      --c-redBg: #3D2325;
+      --c-line: #3D3044;
+      --c-lineSoft: #2C2233;
+    }
+    .dark-mode body { background: var(--c-paper); }
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -439,18 +470,18 @@ const ALUNOS_INFO = {
 };
 
 const COLORS = {
-  paper: '#FBF7FB',
-  paperCard: '#FFFFFF',
-  ink: '#651B58',
-  inkSoft: '#8A5C81',
-  gold: '#B85CA3',
-  goldSoft: '#F0DCEC',
-  green: '#2E8C89',
-  greenBg: '#DFF1F0',
-  red: '#C1272D',
-  redBg: '#FBE1E0',
-  line: '#E8D9E5',
-  lineSoft: '#F3E9F1',
+  paper: 'var(--c-paper)',
+  paperCard: 'var(--c-paperCard)',
+  ink: 'var(--c-ink)',
+  inkSoft: 'var(--c-inkSoft)',
+  gold: 'var(--c-gold)',
+  goldSoft: 'var(--c-goldSoft)',
+  green: 'var(--c-green)',
+  greenBg: 'var(--c-greenBg)',
+  red: 'var(--c-red)',
+  redBg: 'var(--c-redBg)',
+  line: 'var(--c-line)',
+  lineSoft: 'var(--c-lineSoft)',
 };
 
 const PIE_COLORS = ['#651B58', '#2E8C89'];
@@ -664,6 +695,118 @@ function LogoEscola() {
   );
 }
 
+// Tela de PIN — protege o painel de quem só tem o link mas não sabe o código.
+// Não é uma segurança "à prova de hacker" (é tudo no navegador, sem servidor de verdade),
+// mas já impede o acesso casual de alguém que só encontrou/recebeu o link.
+function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPin }) {
+  const [modo, setModo] = useState(pinConfigurado ? 'entrar' : 'escolher'); // 'entrar' | 'escolher' | 'confirmar'
+  const [digitado, setDigitado] = useState('');
+  const [primeiroPin, setPrimeiroPin] = useState('');
+  const [erro, setErro] = useState('');
+  const [tentativasErradas, setTentativasErradas] = useState(0);
+
+  function apertarDigito(d) {
+    if (digitado.length >= 4) return;
+    const novo = digitado + d;
+    setDigitado(novo);
+    setErro('');
+    if (novo.length === 4) {
+      setTimeout(() => confirmarDigitos(novo), 120);
+    }
+  }
+  function apagar() { setDigitado(d => d.slice(0, -1)); setErro(''); }
+
+  function confirmarDigitos(valor) {
+    if (modo === 'entrar') {
+      if (valor === pinConfigurado) {
+        onDesbloquear();
+      } else {
+        setErro('PIN incorreto, tenta de novo.');
+        setTentativasErradas(t => t + 1);
+        setDigitado('');
+      }
+    } else if (modo === 'escolher') {
+      setPrimeiroPin(valor);
+      setDigitado('');
+      setModo('confirmar');
+    } else if (modo === 'confirmar') {
+      if (valor === primeiroPin) {
+        onDefinirPin(valor);
+      } else {
+        setErro('Os PINs não bateram, vamos tentar de novo.');
+        setDigitado('');
+        setPrimeiroPin('');
+        setModo('escolher');
+      }
+    }
+  }
+
+  const titulo = modo === 'entrar' ? 'Digite o PIN pra abrir o painel'
+    : modo === 'escolher' ? 'Crie um PIN de 4 dígitos'
+    : 'Digite o mesmo PIN de novo, pra confirmar';
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      background: '#FBF7FB', fontFamily: 'Inter, -apple-system, sans-serif', padding: 20, gap: 22, textAlign: 'center',
+    }}>
+      <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{ height: 80, maxWidth: '90%', objectFit: 'contain' }} />
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#651B58', marginBottom: 4 }}>{titulo}</div>
+        {modo !== 'entrar' && <div style={{ fontSize: 12.5, color: '#8A5C81' }}>Vai precisar desse PIN toda vez que abrir o painel.</div>}
+      </div>
+
+      <div style={{ display: 'flex', gap: 12 }}>
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} style={{
+            width: 18, height: 18, borderRadius: '50%',
+            border: '2px solid #B85CA3',
+            background: digitado.length > i ? '#B85CA3' : 'transparent',
+          }} />
+        ))}
+      </div>
+
+      {erro && <div style={{ color: '#C1272D', fontSize: 12.5, fontWeight: 600 }}>{erro}</div>}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 64px)', gap: 12 }}>
+        {['1','2','3','4','5','6','7','8','9'].map(d => (
+          <button key={d} onClick={() => apertarDigito(d)} style={{
+            width: 64, height: 64, borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
+            fontSize: 22, fontWeight: 600, color: '#651B58', cursor: 'pointer',
+          }}>{d}</button>
+        ))}
+        <div />
+        <button onClick={() => apertarDigito('0')} style={{
+          width: 64, height: 64, borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
+          fontSize: 22, fontWeight: 600, color: '#651B58', cursor: 'pointer',
+        }}>0</button>
+        <button onClick={apagar} style={{
+          width: 64, height: 64, borderRadius: '50%', border: 'none', background: 'none',
+          fontSize: 14, fontWeight: 600, color: '#8A5C81', cursor: 'pointer',
+        }}>⌫</button>
+      </div>
+
+      {modo === 'entrar' && (
+        <button onClick={onDesbloquear} style={{ background: 'none', border: 'none', color: '#8A5C81', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', marginTop: 4 }}>
+          Continuar sem PIN por agora
+        </button>
+      )}
+      {modo === 'escolher' && (
+        <button onClick={onDesbloquear} style={{ background: 'none', border: 'none', color: '#8A5C81', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', marginTop: 4 }}>
+          Pular, não quero usar PIN
+        </button>
+      )}
+      {modo === 'entrar' && tentativasErradas >= 3 && (
+        <button onClick={() => { if (window.confirm('Isso remove a proteção por PIN completamente. Confirma?')) onRemoverPin(); }} style={{
+          background: 'none', border: 'none', color: '#C1272D', fontSize: 11.5, cursor: 'pointer', marginTop: 8,
+        }}>
+          Esqueci o PIN — remover proteção
+        </button>
+      )}
+    </div>
+  );
+}
+
 function monthIndex(mes) { return MESES.indexOf(mes); }
 
 // lê/salva uma preferência (true/false) direto no aparelho, pra lembrar entre uma
@@ -684,9 +827,36 @@ function PainelFinanceiro() {
   // assim dá pra esconder só o resumo geral e continuar vendo os valores individuais pra trabalhar
   const [privadoTotais, setPrivadoTotais] = useState(() => lerPreferencia('privadoTotais'));
   const [privadoDetalhes, setPrivadoDetalhes] = useState(() => lerPreferencia('privadoDetalhes'));
+  const [temaEscuro, setTemaEscuro] = useState(() => lerPreferencia('temaEscuro'));
+  useEffect(() => { salvarPreferencia('temaEscuro', temaEscuro); }, [temaEscuro]);
   useEffect(() => { salvarPreferencia('modoPrivado', modoPrivado); }, [modoPrivado]);
   useEffect(() => { salvarPreferencia('privadoTotais', privadoTotais); }, [privadoTotais]);
   useEffect(() => { salvarPreferencia('privadoDetalhes', privadoDetalhes); }, [privadoDetalhes]);
+
+  // PIN de proteção — guardado na Planilha Google (assim é o mesmo PIN pra quem acessar
+  // de qualquer aparelho). "null" = ainda carregando; "" = nunca configurou um PIN.
+  const [pinConfigurado, setPinConfigurado] = useState(null);
+  const [desbloqueado, setDesbloqueado] = useState(false);
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('painel_pin', false);
+        setPinConfigurado(r && r.value ? r.value : '');
+      } catch (e) {
+        setPinConfigurado('');
+      }
+    })();
+  }, []);
+  async function definirPin(novoPin) {
+    try { await window.storage.set('painel_pin', novoPin, false); } catch (e) {}
+    setPinConfigurado(novoPin);
+    setDesbloqueado(true);
+  }
+  async function removerPin() {
+    try { await window.storage.set('painel_pin', '', false); } catch (e) {}
+    setPinConfigurado('');
+    setDesbloqueado(true);
+  }
   const [statusPlanilha, setStatusPlanilha] = useState(null); // null=modo local, 'ok'=sincronizando, 'erro'=falhou
   const [saldosMensais, setSaldosMensais] = useState(null); // { JANEIRO: 3111.69, ... } — editável na tela
 
@@ -871,6 +1041,25 @@ function PainelFinanceiro() {
     }
   }
 
+  // "backup automático semanal" — como o painel é um site simples (sem servidor rodando o
+  // tempo todo), não dá pra fazer o backup rodar sozinho enquanto o app está fechado. O jeito
+  // honesto de aproximar isso: toda vez que o painel é aberto, ele confere quando foi o último
+  // backup — se já fez uma semana ou mais (ou nunca fez), baixa um novo backup sozinho na hora.
+  const [avisoBackupAuto, setAvisoBackupAuto] = useState(false);
+  useEffect(() => {
+    if (!transacoes || transacoes.length === 0) return;
+    const UMA_SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
+    const ultimoStr = localStorage.getItem('painel_ultimoBackupAuto');
+    const ultimo = ultimoStr ? new Date(ultimoStr).getTime() : 0;
+    if (Date.now() - ultimo >= UMA_SEMANA_MS) {
+      exportarBackup();
+      localStorage.setItem('painel_ultimoBackupAuto', new Date().toISOString());
+      setAvisoBackupAuto(true);
+      setTimeout(() => setAvisoBackupAuto(false), 4500);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transacoes != null]);
+
   function exportarBackup() {
     if (!transacoes) return;
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transacoes, null, 2));
@@ -881,6 +1070,142 @@ function PainelFinanceiro() {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+  }
+
+  // gera um arquivo .csv com todos os lançamentos, pra abrir direto no Excel/Google Sheets
+  function exportarCSV() {
+    if (!transacoes) return;
+    const colunas = ['Mês', 'Categoria', 'Tipo', 'Valor', 'Status', 'Data', 'Banco', 'Pai/Responsável', 'Convênio'];
+    const linhas = [colunas.join(';')];
+    const escapar = (v) => {
+      if (v == null) return '';
+      const s = String(v).replace(/"/g, '""');
+      return s.includes(';') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
+    };
+    [...transacoes].sort((a, b) => monthIndex(a.mes) - monthIndex(b.mes)).forEach(t => {
+      linhas.push([
+        t.mes, t.categoria, t.tipo,
+        (t.valor != null ? String(t.valor).replace('.', ',') : ''),
+        t.status || '', t.data || '', t.banco || '', t.pai || '', t.convenio || '',
+      ].map(escapar).join(';'));
+    });
+    const csvContent = '\uFEFF' + linhas.join('\r\n'); // BOM no início evita acento quebrado no Excel
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const downloadAnchor = document.createElement('a');
+    const dataHoje = new Date().toISOString().slice(0, 10);
+    downloadAnchor.setAttribute('href', url);
+    downloadAnchor.setAttribute('download', `lancamentos_tempo_de_brincar_${dataHoje}.csv`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // gera um relatório em PDF do mês mais recente (resumo + comparação visual + gastos por categoria),
+  // pronto pra imprimir ou mandar pro contador
+  function exportarPDF(mesEscolhido) {
+    if (!transacoes || !window.jspdf) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const mes = mesEscolhido || [...MESES].reverse().find(m => transacoes.some(t => t.mes === m && t.status === 'Pago')) || 'AGOSTO';
+    const nomeMes = mes.charAt(0) + mes.slice(1).toLowerCase();
+
+    const doMes = transacoes.filter(t => t.mes === mes && t.status === 'Pago');
+    const entradas = doMes.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
+    const saidas = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
+    const resultado = entradas - saidas;
+    const saldo = (saldosMensais || {})[mes] || 0;
+
+    const porCategoria = {};
+    doMes.filter(t => t.tipo !== 'Entrada').forEach(t => {
+      porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + (t.valor || 0);
+    });
+    const categoriasOrdenadas = Object.entries(porCategoria).sort((a, b) => b[1] - a[1]);
+
+    const roxo = [101, 27, 88];
+    const roxoClaro = [138, 92, 129];
+    const verde = [46, 140, 137];
+    const vermelho = [193, 39, 45];
+    const linhaCor = [232, 217, 229];
+
+    let y = 50;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(...roxo);
+    doc.text('Escola Infantil Tempo de Brincar', 40, y);
+    y += 20;
+    doc.setFontSize(13);
+    doc.text(`Relatório Financeiro — ${nomeMes}`, 40, y);
+    y += 8;
+    doc.setDrawColor(...linhaCor); doc.line(40, y, 555, y);
+    y += 28;
+
+    // KPIs em 4 colunas
+    const kpisPdf = [
+      ['ENTRADAS', formatBRL(entradas), verde],
+      ['SAÍDAS', formatBRL(saidas), vermelho],
+      ['RESULTADO', formatBRL(resultado), resultado >= 0 ? verde : vermelho],
+      ['SALDO EM CONTA', formatBRL(saldo), roxo],
+    ];
+    const largCol = (555 - 40) / 4;
+    kpisPdf.forEach(([label, valor, cor], i) => {
+      const x = 40 + i * largCol;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...roxoClaro);
+      doc.text(label, x, y);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...cor);
+      doc.text(valor, x, y + 18);
+    });
+    y += 46;
+    doc.setDrawColor(...linhaCor); doc.line(40, y, 555, y);
+    y += 30;
+
+    // comparação visual simples (barras) Entradas x Saídas
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...roxo);
+    doc.text('Entradas x Saídas', 40, y);
+    y += 14;
+    const maiorValor = Math.max(entradas, saidas, 1);
+    const largMax = 380;
+    const largEntrada = (entradas / maiorValor) * largMax;
+    const largSaida = (saidas / maiorValor) * largMax;
+    doc.setFillColor(...verde); doc.rect(40, y, largEntrada, 16, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...roxo);
+    doc.text(`Entradas — ${formatBRL(entradas)}`, 40 + largMax + 10, y + 12);
+    y += 24;
+    doc.setFillColor(...vermelho); doc.rect(40, y, largSaida, 16, 'F');
+    doc.text(`Saídas — ${formatBRL(saidas)}`, 40 + largMax + 10, y + 12);
+    y += 40;
+    doc.setDrawColor(...linhaCor); doc.line(40, y, 555, y);
+    y += 26;
+
+    // tabela de despesas por categoria
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...roxo);
+    doc.text('Despesas por categoria', 40, y);
+    y += 18;
+    doc.setFontSize(8.5); doc.setTextColor(...roxoClaro);
+    doc.text('CATEGORIA', 40, y);
+    doc.text('VALOR', 500, y, { align: 'right' });
+    y += 6;
+    doc.setDrawColor(...linhaCor); doc.line(40, y, 555, y);
+    y += 14;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...roxo);
+    categoriasOrdenadas.forEach(([cat, valor]) => {
+      if (y > 780) { doc.addPage(); y = 50; }
+      doc.text(cat, 40, y);
+      doc.text(formatBRL(valor), 500, y, { align: 'right' });
+      y += 16;
+    });
+
+    doc.setFontSize(8); doc.setTextColor(...roxoClaro);
+    doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} pelo Painel Financeiro`, 40, 820);
+
+    const blobPdf = doc.output('blob');
+    const urlPdf = URL.createObjectURL(blobPdf);
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', urlPdf);
+    downloadAnchor.setAttribute('download', `relatorio_${mes.toLowerCase()}_tempo_de_brincar.pdf`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    URL.revokeObjectURL(urlPdf);
   }
 
   function importarBackup(e) {
@@ -1048,7 +1373,7 @@ function PainelFinanceiro() {
     });
   }
 
-  if (loading) {
+  if (loading || pinConfigurado === null) {
     return (
       <div style={{ background: COLORS.paper, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: COLORS.ink }}>
         Carregando painel...
@@ -1056,8 +1381,21 @@ function PainelFinanceiro() {
     );
   }
 
+  if (!desbloqueado && (pinConfigurado || pinConfigurado === '')) {
+    // se ainda não configurou PIN nenhum (string vazia), oferece criar; se já tem, pede pra digitar
+    return (
+      <TelaBloqueio
+        pinConfigurado={pinConfigurado}
+        onDesbloquear={() => setDesbloqueado(true)}
+        onDefinirPin={definirPin}
+        onRemoverPin={removerPin}
+      />
+    );
+  }
+
   return (
-    <div className="painel-raiz" style={{ background: COLORS.paper, minHeight: '100vh', fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink, zoom: 0.92 }}>
+    <div className={`painel-raiz${temaEscuro ? ' dark-mode' : ''}`} style={{ background: COLORS.paper, minHeight: '100vh', fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink, zoom: 0.92 }}>
+      <Toast mensagem={avisoBackupAuto ? '💾 Backup semanal automático baixado' : null} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         /* o "zoom" e uma propriedade nao-padrao que se comporta de forma inconsistente
@@ -1143,6 +1481,66 @@ function PainelFinanceiro() {
                 📤 Carregar
                 <input type="file" accept=".json" onChange={importarBackup} style={{ display: 'none' }} />
               </label>
+              <button
+                onClick={exportarCSV}
+                title="Baixa todos os lançamentos num arquivo .csv, pra abrir no Excel ou Google Sheets"
+                style={{
+                  background: '#FFFDF8',
+                  border: `1.5px solid ${COLORS.line}`,
+                  borderRadius: 8,
+                  padding: '6px 13px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: COLORS.ink,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}
+              >
+                📊 Exportar CSV
+              </button>
+              <button
+                onClick={() => exportarPDF()}
+                title="Gera um relatório em PDF do mês mais recente, pronto pra imprimir ou mandar pro contador"
+                style={{
+                  background: '#FFFDF8',
+                  border: `1.5px solid ${COLORS.line}`,
+                  borderRadius: 8,
+                  padding: '6px 13px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: COLORS.ink,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}
+              >
+                📄 Exportar PDF
+              </button>
+              <button
+                onClick={() => setTemaEscuro(v => !v)}
+                title="Alternar entre tema claro e escuro"
+                style={{
+                  background: '#FFFDF8',
+                  border: `1.5px solid ${COLORS.line}`,
+                  borderRadius: 8,
+                  padding: '6px 13px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: COLORS.ink,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}
+              >
+                {temaEscuro ? '☀️ Modo claro' : '🌙 Modo escuro'}
+              </button>
             </div>
           </div>
 
@@ -1302,6 +1700,27 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     setSaldoEditMes(null);
   }
 
+  // detecta despesas "fixas" que se repetem quase todo mês (tipo aluguel, água, internet)
+  // e avisa se alguma delas ainda não foi lançada no mês mais recente
+  const alertaFixasFaltando = useMemo(() => {
+    if (!transacoes) return null;
+    const mesesComDados = MESES.filter(m => transacoes.some(t => t.mes === m));
+    if (mesesComDados.length < 3) return null; // precisa de histórico mínimo pra não dar falso alarme
+    const mesAtual = mesesComDados[mesesComDados.length - 1];
+    const mesesAnteriores = mesesComDados.slice(0, -1);
+    const contagem = {};
+    mesesAnteriores.forEach(mes => {
+      const categoriasNoMes = new Set(transacoes.filter(t => t.mes === mes && t.tipo === 'Fixa').map(t => t.categoria));
+      categoriasNoMes.forEach(cat => { contagem[cat] = (contagem[cat] || 0) + 1; });
+    });
+    const limiar = Math.max(2, Math.ceil(mesesAnteriores.length * 0.7));
+    const recorrentes = Object.keys(contagem).filter(cat => contagem[cat] >= limiar);
+    const categoriasDoMesAtual = new Set(transacoes.filter(t => t.mes === mesAtual).map(t => t.categoria));
+    const faltando = recorrentes.filter(cat => !categoriasDoMesAtual.has(cat)).sort();
+    if (faltando.length === 0) return null;
+    return { mes: mesAtual, categorias: faltando };
+  }, [transacoes]);
+
   const inadimplencia = useMemo(() => {
     if (!transacoes) return null;
     const mesAlvo = [...MESES].reverse().find(m => transacoes.some(t => t.mes === m && t.tipo === 'Entrada' && t.status === 'Pago'));
@@ -1361,6 +1780,23 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
             </span>
             <span style={{ color: COLORS.inkSoft, fontSize: 12.5, marginLeft: 8 }}>
               — {formatBRLPrivado(inadimplencia.valor, modoPrivado)} pendente · {inadimplencia.nomes.slice(0, 3).join(', ')}{inadimplencia.nomes.length > 3 ? ` +${inadimplencia.nomes.length - 3}` : ''}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {alertaFixasFaltando && (
+        <div style={{
+          background: COLORS.goldSoft, border: `1.5px solid ${COLORS.gold}55`, borderRadius: 10,
+          padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+        }}>
+          <AlertTriangle size={20} color={COLORS.gold} style={{ flexShrink: 0 }} />
+          <div style={{ flex: '1 1 auto' }}>
+            <span style={{ fontWeight: 700, color: COLORS.ink, fontSize: 14 }}>
+              {alertaFixasFaltando.categorias.length === 1 ? 'Uma despesa fixa' : `${alertaFixasFaltando.categorias.length} despesas fixas`} ainda não {alertaFixasFaltando.categorias.length === 1 ? 'foi lançada' : 'foram lançadas'} em {alertaFixasFaltando.mes.charAt(0) + alertaFixasFaltando.mes.slice(1).toLowerCase()}
+            </span>
+            <span style={{ color: COLORS.inkSoft, fontSize: 12.5, marginLeft: 8 }}>
+              — {alertaFixasFaltando.categorias.join(', ')}
             </span>
           </div>
         </div>
@@ -2330,11 +2766,11 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
         <div style={{ background: COLORS.redBg, border: `1px solid ${COLORS.red}22`, borderRadius: 10, padding: '14px 16px' }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.red, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Pendentes</div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: COLORS.red }}>{resumo.qtdPendente} · {formatBRLPrivado(resumo.valorPendente, privadoTotais)}</div>
+          <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: COLORS.red }}>{privadoTotais ? '••' : resumo.qtdPendente} · {formatBRLPrivado(resumo.valorPendente, privadoTotais)}</div>
         </div>
         <div style={{ background: COLORS.greenBg, border: `1px solid ${COLORS.green}22`, borderRadius: 10, padding: '14px 16px' }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.green, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Recebidos</div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: COLORS.green }}>{resumo.qtdPago} · {formatBRLPrivado(resumo.valorPago, privadoTotais)}</div>
+          <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: COLORS.green }}>{privadoTotais ? '••' : resumo.qtdPago} · {formatBRLPrivado(resumo.valorPago, privadoTotais)}</div>
         </div>
       </div>
 
@@ -2668,6 +3104,22 @@ function Orcamento({ transacoes, modoPrivado, setModoPrivado }) {
             )}
           </div>
         </div>
+        {metaLucro > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ height: 10, background: COLORS.lineSoft, borderRadius: 6, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${Math.min(100, Math.max(0, (resultadoDoMes / metaLucro) * 100))}%`,
+                background: resultadoDoMes >= metaLucro ? COLORS.green : COLORS.gold,
+                borderRadius: 6,
+                transition: 'width 0.4s ease',
+              }} />
+            </div>
+            <div style={{ fontSize: 10.5, color: COLORS.inkSoft, marginTop: 3, textAlign: 'right' }}>
+              {modoPrivado ? '••%' : `${Math.round(Math.max(0, (resultadoDoMes / metaLucro) * 100))}% da meta`}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* NOVO ORÇAMENTO POR CATEGORIA */}
