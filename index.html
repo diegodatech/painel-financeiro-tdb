@@ -666,15 +666,27 @@ function LogoEscola() {
 
 function monthIndex(mes) { return MESES.indexOf(mes); }
 
+// lê/salva uma preferência (true/false) direto no aparelho, pra lembrar entre uma
+// visita e outra (ex: se os valores estavam ocultos, continuam ocultos ao reabrir)
+function lerPreferencia(chave) {
+  try { return localStorage.getItem('painel_' + chave) === '1'; } catch (e) { return false; }
+}
+function salvarPreferencia(chave, valor) {
+  try { localStorage.setItem('painel_' + chave, valor ? '1' : '0'); } catch (e) {}
+}
+
 function PainelFinanceiro() {
   const [transacoes, setTransacoes] = useState(null);
   const [loading, setLoading] = useState(true);
   const [storageOk, setStorageOk] = useState(true);
-  const [modoPrivado, setModoPrivado] = useState(false); // esconde os valores (bolinhas) quando ligado — usado em Visão Geral e Orçamento
+  const [modoPrivado, setModoPrivado] = useState(() => lerPreferencia('modoPrivado')); // esconde os valores (bolinhas) quando ligado — usado em Visão Geral e Orçamento
   // em Lançamentos e Mensalidades, os totais e a lista têm interruptores separados —
   // assim dá pra esconder só o resumo geral e continuar vendo os valores individuais pra trabalhar
-  const [privadoTotais, setPrivadoTotais] = useState(false);
-  const [privadoDetalhes, setPrivadoDetalhes] = useState(false);
+  const [privadoTotais, setPrivadoTotais] = useState(() => lerPreferencia('privadoTotais'));
+  const [privadoDetalhes, setPrivadoDetalhes] = useState(() => lerPreferencia('privadoDetalhes'));
+  useEffect(() => { salvarPreferencia('modoPrivado', modoPrivado); }, [modoPrivado]);
+  useEffect(() => { salvarPreferencia('privadoTotais', privadoTotais); }, [privadoTotais]);
+  useEffect(() => { salvarPreferencia('privadoDetalhes', privadoDetalhes); }, [privadoDetalhes]);
   const [statusPlanilha, setStatusPlanilha] = useState(null); // null=modo local, 'ok'=sincronizando, 'erro'=falhou
   const [saldosMensais, setSaldosMensais] = useState(null); // { JANEIRO: 3111.69, ... } — editável na tela
 
