@@ -1238,21 +1238,18 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, transacoes, saldosMensais, salvarSaldoMensal }) {
-  const [saldoMesSelecionado, setSaldoMesSelecionado] = useState(MESES[MESES.length - 1]);
+  const [editandoSaldos, setEditandoSaldos] = useState(false);
+  const [saldoEditMes, setSaldoEditMes] = useState(null);
   const [saldoEditValor, setSaldoEditValor] = useState('');
-  const [saldoToast, setSaldoToast] = useState(false);
 
-  useEffect(() => {
-    setSaldoEditValor(formatBRLNumber((saldosMensais || {})[saldoMesSelecionado] || 0));
-  }, [saldoMesSelecionado, saldosMensais]);
-
+  function iniciarEdicaoSaldo(mes) {
+    setSaldoEditMes(mes);
+    setSaldoEditValor(formatBRLNumber((saldosMensais || {})[mes] || 0));
+  }
   function salvarEdicaoSaldo() {
     const num = parseBRLInput(saldoEditValor);
-    if (num != null && salvarSaldoMensal) {
-      salvarSaldoMensal(saldoMesSelecionado, num);
-      setSaldoToast(true);
-      setTimeout(() => setSaldoToast(false), 2200);
-    }
+    if (num != null && salvarSaldoMensal) salvarSaldoMensal(saldoEditMes, num);
+    setSaldoEditMes(null);
   }
 
   const inadimplencia = useMemo(() => {
@@ -1320,38 +1317,44 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
       )}
 
       {/* EDIÇÃO MANUAL DO SALDO MENSAL — o saldo não dá pra calcular sozinho a partir dos
-          lançamentos (não bate com o extrato real), então fica editável aqui, escolhendo o mês */}
-      <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '14px 18px' }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 10 }}>
-          💰 Saldo em conta (confira no extrato do banco)
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'end' }}>
-          <div style={{ display: 'grid', gap: 4 }}>
-            <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>MÊS</label>
-            <select value={saldoMesSelecionado} onChange={e => setSaldoMesSelecionado(e.target.value)} style={{
-              border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 11px', fontSize: 13.5,
-              fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink,
-            }}>
-              {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
-            </select>
+          lançamentos (não bate com o extrato real), então fica editável aqui, mês a mês */}
+      <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
+        <button onClick={() => setEditandoSaldos(v => !v)} style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '11px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
+          fontSize: 12.5, fontWeight: 700, color: COLORS.ink,
+        }}>
+          <span>💰 Editar saldo em conta de cada mês (confira no extrato do banco)</span>
+          <ChevronDown size={16} style={{ transform: editandoSaldos ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+        </button>
+        {editandoSaldos && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 1, background: COLORS.lineSoft }}>
+            {MESES.map(mes => {
+              const emEdicao = saldoEditMes === mes;
+              const valorAtual = (saldosMensais || {})[mes] || 0;
+              return (
+                <div key={mes} style={{ background: COLORS.paperCard, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 600 }}>{MESES_ABREV[mes]}</span>
+                  {emEdicao ? (
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      <input autoFocus value={saldoEditValor} onChange={e => setSaldoEditValor(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoSaldo(); if (e.key === 'Escape') setSaldoEditMes(null); }}
+                        className="mono" style={{ width: 90, border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '4px 6px', fontSize: 12.5 }} />
+                      <button onClick={salvarEdicaoSaldo} style={{ background: COLORS.green, border: 'none', borderRadius: 5, padding: '4px 6px', cursor: 'pointer' }}>
+                        <Check size={12} color="#FFFFFF" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => iniciarEdicaoSaldo(mes)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.ink }}>{formatBRL(valorAtual)}</span>
+                      <Pencil size={11} color={COLORS.inkSoft} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <div style={{ display: 'grid', gap: 4 }}>
-            <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>VALOR (R$)</label>
-            <input value={saldoEditValor} onChange={e => setSaldoEditValor(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoSaldo(); }}
-              className="mono" style={{
-                border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 11px', fontSize: 13.5,
-                fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 130,
-              }} />
-          </div>
-          <button onClick={salvarEdicaoSaldo} style={{
-            background: COLORS.ink, color: '#FFFFFF', border: 'none', borderRadius: 7, padding: '10px 16px',
-            fontWeight: 600, fontSize: 13.5, cursor: 'pointer', height: 39,
-          }}>Salvar</button>
-          {saldoToast && (
-            <span style={{ color: COLORS.green, fontSize: 12.5, fontWeight: 600, alignSelf: 'center' }}>✓ Saldo salvo!</span>
-          )}
-        </div>
+        )}
       </div>
 
       <div className="grid-charts-a" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
