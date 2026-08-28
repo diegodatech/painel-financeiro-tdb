@@ -162,6 +162,18 @@ const Pencil = ({ size = 16, color = "currentColor", style }) => (
     <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
   </svg>
 );
+const Eye = ({ size = 16, color = "currentColor", style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </svg>
+);
+const EyeOff = ({ size = 16, color = "currentColor", style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+    <line x1="1" y1="1" x2="23" y2="23"></line>
+  </svg>
+);
 const Check = ({ size = 16, color = "currentColor", style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
     <polyline points="20 6 9 17 4 12"></polyline>
@@ -463,6 +475,13 @@ function formatBRL(v) {
   return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+// versão "privada" do formatBRL: quando oculto=true, mostra bolinhas no lugar do valor
+// (útil pra não deixar o valor visível se alguém estiver olhando por cima do ombro)
+function formatBRLPrivado(v, oculto) {
+  if (!oculto) return formatBRL(v);
+  return 'R$ ••••••';
+}
+
 function formatBRLShort(v) {
   const n = Number(v) || 0;
   if (Math.abs(n) >= 1000) return 'R$ ' + (n/1000).toLocaleString('pt-BR', {maximumFractionDigits:1}) + 'k';
@@ -651,6 +670,7 @@ function PainelFinanceiro() {
   const [transacoes, setTransacoes] = useState(null);
   const [loading, setLoading] = useState(true);
   const [storageOk, setStorageOk] = useState(true);
+  const [modoPrivado, setModoPrivado] = useState(false); // esconde os valores (bolinhas) quando ligado
   const [statusPlanilha, setStatusPlanilha] = useState(null); // null=modo local, 'ok'=sincronizando, 'erro'=falhou
   const [saldosMensais, setSaldosMensais] = useState(null); // { JANEIRO: 3111.69, ... } — editável na tela
 
@@ -1176,6 +1196,7 @@ function PainelFinanceiro() {
             formErro={formErro} formOk={formOk}
             saldosMensais={saldosMensais}
             salvarSaldoMensal={salvarSaldoMensal}
+            modoPrivado={modoPrivado} setModoPrivado={setModoPrivado}
           />
         ) : tab === 'mensalidades' ? (
           <Mensalidades
@@ -1185,6 +1206,7 @@ function PainelFinanceiro() {
             editarLancamento={editarLancamento}
             removerLancamento={removerLancamento}
             adicionarEntrada={adicionarEntrada}
+            modoPrivado={modoPrivado} setModoPrivado={setModoPrivado}
           />
         ) : (
           <Orcamento transacoes={transacoes} />
@@ -1194,7 +1216,7 @@ function PainelFinanceiro() {
   );
 }
 
-function KPIStrip({ items, extra }) {
+function KPIStrip({ items, extra, oculto }) {
   return (
     <div className="grid-kpi" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
       {items.map((c, i) => (
@@ -1205,7 +1227,7 @@ function KPIStrip({ items, extra }) {
             </div>
             <span style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase' }}>{c.label}</span>
           </div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 600, color: c.cor }}>{formatBRL(c.valor)}</div>
+          <div className="mono" style={{ fontSize: 20, fontWeight: 600, color: c.cor }}>{formatBRLPrivado(c.valor, oculto)}</div>
         </div>
       ))}
       {extra}
@@ -1491,7 +1513,7 @@ function Lancamentos(props) {
     mesesAbertos, toggleMes, removerLancamento, editarLancamento,
     novoMes, setNovoMes, novaCategoria, setNovaCategoria, novoTipo, setNovoTipo,
     novoValor, setNovoValor, novoStatus, setNovoStatus, adicionarLancamento,
-    formErro, formOk, saldosMensais, salvarSaldoMensal,
+    formErro, formOk, saldosMensais, salvarSaldoMensal, modoPrivado, setModoPrivado,
   } = props;
 
   const [editandoId, setEditandoId] = useState(null);
@@ -1567,10 +1589,20 @@ function Lancamentos(props) {
 
       {/* KPIs DO MÊS EM FOCO */}
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 8 }}>
-          Resumo de {kpisMes.mesAlvo.charAt(0) + kpisMes.mesAlvo.slice(1).toLowerCase()}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+            Resumo de {kpisMes.mesAlvo.charAt(0) + kpisMes.mesAlvo.slice(1).toLowerCase()}
+          </div>
+          <button onClick={() => setModoPrivado(v => !v)} title={modoPrivado ? 'Mostrar valores' : 'Esconder valores'} style={{
+            background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            color: COLORS.inkSoft, fontSize: 11.5, fontWeight: 600,
+          }}>
+            {modoPrivado ? <EyeOff size={15} /> : <Eye size={15} />}
+            {modoPrivado ? 'Valores ocultos' : 'Ocultar valores'}
+          </button>
         </div>
         <KPIStrip
+          oculto={modoPrivado}
           items={[
             { label: 'Entradas do mês', valor: kpisMes.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
             { label: 'Saídas do mês', valor: kpisMes.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
@@ -1695,7 +1727,7 @@ function Lancamentos(props) {
                   {mes.charAt(0) + mes.slice(1).toLowerCase()} <span style={{ fontSize: 12.5, color: COLORS.inkSoft, fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>({itens.length} lançamentos)</span>
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span className="mono" style={{ fontSize: 13.5, fontWeight: 600, color: totalMes >= 0 ? COLORS.green : COLORS.red }}>{formatBRL(totalMes)}</span>
+                  <span className="mono" style={{ fontSize: 13.5, fontWeight: 600, color: totalMes >= 0 ? COLORS.green : COLORS.red }}>{formatBRLPrivado(totalMes, modoPrivado)}</span>
                   <ChevronDown size={16} color={COLORS.inkSoft} style={{ transform: aberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
                 </div>
               </button>
@@ -1764,7 +1796,7 @@ function Lancamentos(props) {
                         }}>lançar valor</button>
                       ) : (
                         <span className="mono" style={{ fontWeight: 600, color: t.tipo === 'Entrada' ? COLORS.green : COLORS.ink, minWidth: 100, textAlign: 'right' }}>
-                          {t.tipo === 'Entrada' ? '+' : '−'} {formatBRL(t.valor)}
+                          {t.tipo === 'Entrada' ? '+' : '−'} {formatBRLPrivado(t.valor, modoPrivado)}
                         </span>
                       )}
 
@@ -1821,7 +1853,7 @@ function formatarData(iso) {
 function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, iniciarEdicao, cancelarEdicao, salvarEdicao, darBaixa, darNota, removerLancamento,
   valorEdit, setValorEdit, valorCheioEdit, setValorCheioEdit, statusEdit, setStatusEdit, bancoEdit, setBancoEdit,
   paiEdit, setPaiEdit, tirarNotaEdit, setTirarNotaEdit, convenioEdit, setConvenioEdit, dataEdit, setDataEdit,
-  okEdit, setOkEdit, inputStyle }) {
+  okEdit, setOkEdit, inputStyle, modoPrivado }) {
 
   const th = { padding: '9px 8px', fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'left', whiteSpace: 'nowrap' };
   const td = { padding: '8px 8px', fontSize: 12, color: COLORS.ink, borderTop: `1px solid ${COLORS.lineSoft}`, verticalAlign: 'middle' };
@@ -1953,12 +1985,12 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                       ) : t.valor != null ? (
                         <span style={{ whiteSpace: 'nowrap' }}>
                           {t.valorCheio && t.valorCheio !== t.valor && (
-                            <span style={{ color: COLORS.inkSoft, fontWeight: 400, marginRight: 5 }}>{formatBRL(t.valorCheio)} →</span>
+                            <span style={{ color: COLORS.inkSoft, fontWeight: 400, marginRight: 5 }}>{formatBRLPrivado(t.valorCheio, modoPrivado)} →</span>
                           )}
-                          <span style={{ fontWeight: 700 }}>{formatBRL(t.valor)}</span>
+                          <span style={{ fontWeight: 700 }}>{formatBRLPrivado(t.valor, modoPrivado)}</span>
                         </span>
                       ) : t.valorCheio ? (
-                        <span style={{ whiteSpace: 'nowrap', color: COLORS.gold, fontWeight: 700 }}>{formatBRL(t.valorCheio)}</span>
+                        <span style={{ whiteSpace: 'nowrap', color: COLORS.gold, fontWeight: 700 }}>{formatBRLPrivado(t.valorCheio, modoPrivado)}</span>
                       ) : (
                         <span style={{ color: COLORS.inkSoft }}>—</span>
                       )}
@@ -2117,7 +2149,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
   );
 }
 
-function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, removerLancamento, adicionarEntrada }) {
+function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, removerLancamento, adicionarEntrada, modoPrivado, setModoPrivado }) {
   const [filtroMes, setFiltroMes] = useState('AGOSTO');
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -2245,14 +2277,23 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
   return (
     <div style={{ display: 'grid', gap: 20 }}>
       <Toast mensagem={toastMsg} />
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button onClick={() => setModoPrivado(v => !v)} title={modoPrivado ? 'Mostrar valores' : 'Esconder valores'} style={{
+          background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+          color: COLORS.inkSoft, fontSize: 11.5, fontWeight: 600,
+        }}>
+          {modoPrivado ? <EyeOff size={15} /> : <Eye size={15} />}
+          {modoPrivado ? 'Valores ocultos' : 'Ocultar valores'}
+        </button>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
         <div style={{ background: COLORS.redBg, border: `1px solid ${COLORS.red}22`, borderRadius: 10, padding: '14px 16px' }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.red, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Pendentes</div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: COLORS.red }}>{resumo.qtdPendente} · {formatBRL(resumo.valorPendente)}</div>
+          <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: COLORS.red }}>{resumo.qtdPendente} · {formatBRLPrivado(resumo.valorPendente, modoPrivado)}</div>
         </div>
         <div style={{ background: COLORS.greenBg, border: `1px solid ${COLORS.green}22`, borderRadius: 10, padding: '14px 16px' }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.green, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Recebidos</div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: COLORS.green }}>{resumo.qtdPago} · {formatBRL(resumo.valorPago)}</div>
+          <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: COLORS.green }}>{resumo.qtdPago} · {formatBRLPrivado(resumo.valorPago, modoPrivado)}</div>
         </div>
       </div>
 
@@ -2410,8 +2451,8 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
         ))}
       </datalist>
 
-      <TabelaMensalidades titulo="Alunos" itens={alunosLista} mostrarDetalhes {...linhaHandlers} />
-      <TabelaMensalidades titulo="Empresas / Convênios" itens={empresasLista} mostrarDetalhes={false} {...linhaHandlers} />
+      <TabelaMensalidades titulo="Alunos" itens={alunosLista} mostrarDetalhes {...linhaHandlers} modoPrivado={modoPrivado} />
+      <TabelaMensalidades titulo="Empresas / Convênios" itens={empresasLista} mostrarDetalhes={false} {...linhaHandlers} modoPrivado={modoPrivado} />
     </div>
   );
 }
