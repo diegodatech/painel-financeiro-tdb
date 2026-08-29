@@ -3555,6 +3555,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
   const [novoValor, setNovoValor] = useState('');
   const [novoValorCheio, setNovoValorCheio] = useState('');
   const [novoBanco, setNovoBanco] = useState('SICOOB');
+  const [bancoOutroModo, setBancoOutroModo] = useState(false);
   const [novoStatus, setNovoStatus] = useState('Pago');
   const [formErro, setFormErro] = useState('');
 
@@ -3804,10 +3805,16 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '1 1 110px' }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>BANCO</label>
-              <select value={novoBanco} onChange={e => setNovoBanco(e.target.value)} style={inputStyle}>
+              <select value={bancoOutroModo ? 'Outro' : novoBanco} onChange={e => {
+                if (e.target.value === 'Outro') { setBancoOutroModo(true); setNovoBanco(''); }
+                else { setBancoOutroModo(false); setNovoBanco(e.target.value); }
+              }} style={inputStyle}>
                 <option value="">— nenhum —</option>
                 {BANCOS.map(b => <option key={b} value={b}>{b}</option>)}
               </select>
+              {bancoOutroModo && (
+                <input autoFocus value={novoBanco} onChange={e => setNovoBanco(e.target.value.toUpperCase())} placeholder="Nome do banco" style={inputStyle} />
+              )}
             </div>
             <div style={{ display: 'grid', gap: 4, flex: '1 1 100px' }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>STATUS</label>
