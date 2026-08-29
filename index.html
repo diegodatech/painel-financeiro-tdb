@@ -1799,7 +1799,13 @@ function PainelFinanceiro() {
       let jaRodou = false;
       try {
         const marker = await window.storage.get('auto_lancamentos_v15', false);
-        jaRodou = !!(marker && marker.value === 'true');
+        const marcadorTrue = !!(marker && marker.value === 'true');
+        // se o marcador diz "já rodou" mas não sobrou NENHUM lançamento de Set-Dez,
+        // é sinal de que os dados se perderam depois (ex: sobrescrita entre aparelhos)
+        // — nesse caso, trata como "não rodou" e deixa repor sozinho
+        const mesesFuturos = ['SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+        const temAlgumFuturo = transacoes.some(t => mesesFuturos.includes(t.mes));
+        jaRodou = marcadorTrue && temAlgumFuturo;
       } catch (e) { /* chave ainda não existe */ }
       if (jaRodou) return;
 
