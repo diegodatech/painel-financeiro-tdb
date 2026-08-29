@@ -3698,8 +3698,24 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
               <input value={novoPai} onChange={e => setNovoPai(capitalizarPalavras(e.target.value))} placeholder="Opcional"
                 disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
-            <div style={{ display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 }}>
+            <div style={{ display: 'grid', gap: 4, flex: '1 1 220px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 }}>
               <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CONVÊNIO</label>
+              {tabelaValores && (
+                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                  {Object.values(tabelaValores).map(g => (
+                    <button key={g.nome} type="button" disabled={novoTipoOrigem !== 'Aluno'}
+                      onClick={() => setNovoConvenio(g.nome.toUpperCase())}
+                      style={{
+                        background: novoConvenio.toUpperCase() === g.nome.toUpperCase() ? COLORS.inkButton : COLORS.lineSoft,
+                        color: novoConvenio.toUpperCase() === g.nome.toUpperCase() ? '#FFFFFF' : COLORS.inkSoft,
+                        border: 'none', borderRadius: 20, padding: '5px 12px', fontSize: 11.5, fontWeight: 600,
+                        cursor: novoTipoOrigem === 'Aluno' ? 'pointer' : 'not-allowed',
+                      }}>
+                      {g.nome}
+                    </button>
+                  ))}
+                </div>
+              )}
               <input value={novoConvenio} onChange={e => setNovoConvenio(capitalizarPalavras(e.target.value))} placeholder="PARTICULAR"
                 list="convenios-lista" disabled={novoTipoOrigem !== 'Aluno'} style={inputStyle} spellCheck="true" lang="pt-BR" />
             </div>
