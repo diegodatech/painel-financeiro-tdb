@@ -956,19 +956,27 @@ function Compras() {
       yy += 16 * escala;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(fonteItem);
       itens.forEach((it, i) => {
-        if (yy > 800) { doc.addPage(); yy = 50; }
-        if (i % 2 === 1) { doc.setFillColor(250, 246, 249); doc.rect(x, yy - 10 * escala, largura, alturaLinha, 'F'); }
+        // calcula quantas linhas o nome vai ocupar de verdade (pode quebrar em 2 se for comprido),
+        // pra reservar a altura certa e não deixar o próximo item escrever por cima
+        const linhasNome = doc.splitTextToSize(String(it.nome), larguraNome);
+        const alturaBlocoNome = linhasNome.length * alturaLinha;
+
+        if (yy + alturaBlocoNome > 800) { doc.addPage(); yy = 50; }
+        if (i % 2 === 1) { doc.setFillColor(250, 246, 249); doc.rect(x, yy - 10 * escala, largura, alturaBlocoNome, 'F'); }
+
         doc.setTextColor(...roxo);
-        doc.text(String(it.nome), x + 4, yy, { maxWidth: larguraNome });
+        doc.text(linhasNome, x + 4, yy, { lineHeightFactor: 1.15 });
         doc.setFont('helvetica', 'bold'); doc.setTextColor(...dourado);
         doc.text(`${it.comprar} ${it.unidade || ''}`.trim(), x + largura - 4, yy, { align: 'right' });
         doc.setFont('helvetica', 'normal');
-        yy += alturaLinha;
+        yy += alturaBlocoNome;
+
         if (it.observacao) {
           doc.setFontSize(7.5 * escala); doc.setTextColor(...roxoClaro);
-          doc.text(it.observacao, x + 4, yy, { maxWidth: larguraNome });
+          const linhasObs = doc.splitTextToSize(it.observacao, larguraNome);
+          doc.text(linhasObs, x + 4, yy, { lineHeightFactor: 1.15 });
           doc.setFontSize(fonteItem);
-          yy += 11 * escala;
+          yy += linhasObs.length * 11 * escala;
         }
       });
       return yy;
@@ -1010,7 +1018,7 @@ function Compras() {
       const metade = Math.ceil(itensParaComprar.length / 2);
       const alturaDisponivel = 790 - y;
       const escalaCalculada = alturaDisponivel / (metade * 15 + 20);
-      const escalaRancho = Math.max(1, Math.min(1.9, escalaCalculada));
+      const escalaRancho = Math.max(1, Math.min(1.35, escalaCalculada));
       desenharColuna(itensParaComprar.slice(0, metade), 35, y, 258, escalaRancho);
       desenharColuna(itensParaComprar.slice(metade), 302, y, 258, escalaRancho);
     } else {
