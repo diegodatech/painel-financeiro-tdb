@@ -942,30 +942,33 @@ function Compras() {
     const fundoClaro = [243, 233, 241];
 
     // desenha uma "coluna" de itens (usada tanto pra layout de 1 coluna quanto de 2, lado a lado)
-    function desenharColuna(itens, x, yInicio, largura) {
+    function desenharColuna(itens, x, yInicio, largura, escala) {
+      escala = escala || 1;
       let yy = yInicio;
       const larguraNome = largura - 90;
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...roxoClaro);
+      const fonteItem = 9.5 * escala;
+      const alturaLinha = 15 * escala;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9 * escala); doc.setTextColor(...roxoClaro);
       doc.setFillColor(...fundoClaro);
-      doc.rect(x, yy - 11, largura, 16, 'F');
+      doc.rect(x, yy - 11, largura, 16 * escala, 'F');
       doc.text('ITEM', x + 4, yy);
       doc.text('COMPRAR', x + largura - 4, yy, { align: 'right' });
-      yy += 16;
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+      yy += 16 * escala;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(fonteItem);
       itens.forEach((it, i) => {
         if (yy > 800) { doc.addPage(); yy = 50; }
-        if (i % 2 === 1) { doc.setFillColor(250, 246, 249); doc.rect(x, yy - 10, largura, 15, 'F'); }
+        if (i % 2 === 1) { doc.setFillColor(250, 246, 249); doc.rect(x, yy - 10 * escala, largura, alturaLinha, 'F'); }
         doc.setTextColor(...roxo);
         doc.text(String(it.nome), x + 4, yy, { maxWidth: larguraNome });
         doc.setFont('helvetica', 'bold'); doc.setTextColor(...dourado);
         doc.text(`${it.comprar} ${it.unidade || ''}`.trim(), x + largura - 4, yy, { align: 'right' });
         doc.setFont('helvetica', 'normal');
-        yy += 15;
+        yy += alturaLinha;
         if (it.observacao) {
-          doc.setFontSize(7.5); doc.setTextColor(...roxoClaro);
+          doc.setFontSize(7.5 * escala); doc.setTextColor(...roxoClaro);
           doc.text(it.observacao, x + 4, yy, { maxWidth: larguraNome });
-          doc.setFontSize(9.5);
-          yy += 11;
+          doc.setFontSize(fonteItem);
+          yy += 11 * escala;
         }
       });
       return yy;
@@ -1001,10 +1004,15 @@ function Compras() {
       doc.setTextColor(...roxoClaro);
       doc.text('Nenhum item com quantidade pra comprar definida.', 35, y);
     } else if (subTab === 'rancho') {
-      // Rancho costuma ter muitos itens — divide em 2 colunas lado a lado, usando quase toda a largura da A4
+      // Rancho costuma ter muitos itens — divide em 2 colunas lado a lado, usando quase toda a largura da A4.
+      // A altura da linha se ajusta sozinha conforme a quantidade de itens, pra não sobrar
+      // uma folha em branco enorme quando a lista tiver poucos itens marcados pra comprar.
       const metade = Math.ceil(itensParaComprar.length / 2);
-      desenharColuna(itensParaComprar.slice(0, metade), 35, y, 258);
-      desenharColuna(itensParaComprar.slice(metade), 302, y, 258);
+      const alturaDisponivel = 790 - y;
+      const escalaCalculada = alturaDisponivel / (metade * 15 + 20);
+      const escalaRancho = Math.max(1, Math.min(1.9, escalaCalculada));
+      desenharColuna(itensParaComprar.slice(0, metade), 35, y, 258, escalaRancho);
+      desenharColuna(itensParaComprar.slice(metade), 302, y, 258, escalaRancho);
     } else {
       desenharColuna(itensParaComprar, 35, y, 525);
     }
