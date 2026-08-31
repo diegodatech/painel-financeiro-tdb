@@ -2887,6 +2887,7 @@ function Lancamentos(props) {
   const [editandoHistoricoOriginal, setEditandoHistoricoOriginal] = useState(null);
   const [historicoEdit, setHistoricoEdit] = useState('');
   const [contaDigitada, setContaDigitada] = useState(false);
+  const [categoriaEdit, setCategoriaEdit] = useState('');
   const [saldoMesEdit, setSaldoMesEdit] = useState(MESES[MESES.length - 1]);
   const [saldoValorEdit, setSaldoValorEdit] = useState('');
   const [saldoSalvoToast, setSaldoSalvoToast] = useState(false);
@@ -2923,6 +2924,7 @@ function Lancamentos(props) {
     setEditandoHistoricoOriginal(t.historico || null);
     setHistoricoEdit(t.historico || '');
     setContaDigitada(false);
+    setCategoriaEdit(t.categoria);
   }
   function cancelarEdicao() {
     setEditandoId(null);
@@ -2939,7 +2941,10 @@ function Lancamentos(props) {
       const base = historico || formatBRLNumber(editandoValorOriginal);
       historico = `${base}${termo}=${formatBRLNumber(valorFinal)}`;
     }
-    editarLancamento(id, { valor: valorFinal, status: statusEdit, historico });
+    // proteção: se por acaso o campo de nome ficar vazio, mantém o nome original em vez
+    // de apagar — nunca perde o lançamento por causa de um campo vazio sem querer
+    const categoriaFinal = categoriaEdit.trim() || null;
+    editarLancamento(id, { valor: valorFinal, status: statusEdit, historico, ...(categoriaFinal ? { categoria: categoriaFinal } : {}) });
     setEditandoId(null);
   }
 
@@ -3120,7 +3125,13 @@ function Lancamentos(props) {
                       background: semValor && !emEdicao ? '#FFFBF0' : 'transparent',
                     }}>
                       <div>
-                        <span style={{ color: COLORS.ink }}>{t.categoria}</span>
+                        {emEdicao ? (
+                          <input value={categoriaEdit} onChange={e => setCategoriaEdit(e.target.value)}
+                            spellCheck="true" lang="pt-BR"
+                            style={{ ...inputStyle, padding: '5px 8px', fontSize: 13.5, width: '100%', maxWidth: 280, boxSizing: 'border-box', marginBottom: 4 }} />
+                        ) : (
+                          <span style={{ color: COLORS.ink }}>{t.categoria}</span>
+                        )}
                         {emEdicao ? (
                           (historicoEdit || t.historico) && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
@@ -3230,7 +3241,7 @@ function formatarData(iso) {
 function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, iniciarEdicao, cancelarEdicao, salvarEdicao, darBaixa, darNota, removerLancamento,
   valorEdit, setValorEdit, valorCheioEdit, setValorCheioEdit, statusEdit, setStatusEdit, bancoEdit, setBancoEdit,
   paiEdit, setPaiEdit, tirarNotaEdit, setTirarNotaEdit, convenioEdit, setConvenioEdit, dataEdit, setDataEdit,
-  okEdit, setOkEdit, inputStyle, modoPrivado }) {
+  okEdit, setOkEdit, inputStyle, modoPrivado, nomeEdit, setNomeEdit }) {
 
   const th = { padding: '9px 8px', fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'left', whiteSpace: 'nowrap' };
   const td = { padding: '8px 8px', fontSize: 12, color: COLORS.ink, borderTop: `1px solid ${COLORS.lineSoft}`, verticalAlign: 'middle' };
@@ -3288,7 +3299,13 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                       padding: '8px 10px',
                       boxSizing: 'border-box'
                     }}>
-                      {nomeExibicao(t.categoria)}
+                      {emEdicao ? (
+                        <input value={nomeEdit} onChange={e => setNomeEdit(e.target.value)}
+                          spellCheck="true" lang="pt-BR"
+                          style={{ ...inputStyle, padding: '5px 8px', fontSize: 13, width: '100%', minWidth: 140, boxSizing: 'border-box' }} />
+                      ) : (
+                        nomeExibicao(t.categoria)
+                      )}
                     </td>
                     {mostrarDetalhes && (
                       <td style={td}>
@@ -3561,6 +3578,8 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
   const [convenioEdit, setConvenioEdit] = useState('PARTICULAR');
   const [dataEdit, setDataEdit] = useState('');
   const [okEdit, setOkEdit] = useState('');
+  const [nomeEdit, setNomeEdit] = useState('');
+  const [prefixoEdit, setPrefixoEdit] = useState('');
 
   const [novoTipoOrigem, setNovoTipoOrigem] = useState('Aluno');
   const [novoNome, setNovoNome] = useState('');
@@ -3619,15 +3638,21 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
     setConvenioEdit(t.convenio || 'PARTICULAR');
     setDataEdit(t.data || '');
     setOkEdit(t.ok || (t.status === 'Pago' ? 'OK' : ''));
+    setNomeEdit(nomeExibicao(t.categoria));
+    setPrefixoEdit(t.categoria.startsWith('Mensalidade - ') ? 'Mensalidade - ' : t.categoria.startsWith('Convênio - ') ? 'Convênio - ' : '');
   }
   function cancelarEdicao() { setEditandoId(null); }
   function salvarEdicao(id) {
     const valorFinal = parseBRLInput(valorEdit);
     const valorCheioFinal = parseBRLInput(valorCheioEdit);
+    // proteção: se o nome ficar vazio sem querer, não sobrescreve — mantém como estava
+    const nomeFinal = nomeEdit.trim();
+    const categoriaFinal = nomeFinal ? (prefixoEdit + nomeFinal.toUpperCase()) : null;
     editarLancamento(id, {
       valor: valorFinal,
       valorCheio: valorCheioFinal,
       status: statusEdit, banco: bancoEdit, pai: paiEdit, tirarNota: tirarNotaEdit, convenio: convenioEdit, data: dataEdit || null, ok: okEdit || null,
+      ...(categoriaFinal ? { categoria: categoriaFinal } : {}),
     });
     setEditandoId(null);
   }
@@ -3665,6 +3690,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
     valorEdit, setValorEdit, valorCheioEdit, setValorCheioEdit,
     statusEdit, setStatusEdit, bancoEdit, setBancoEdit,
     paiEdit, setPaiEdit, tirarNotaEdit, setTirarNotaEdit, convenioEdit, setConvenioEdit, dataEdit, setDataEdit, okEdit, setOkEdit, inputStyle,
+    nomeEdit, setNomeEdit,
   };
 
   return (
