@@ -843,10 +843,13 @@ function Compras() {
   const [subTab, setSubTab] = useState('frutas');
   const [dados, setDados] = useState(null);
   const [busca, setBusca] = useState('');
-  const [novoItem, setNovoItem] = useState({ nome: '', estoque: '', comprar: '', unidade: '', observacao: '' });
+  const [novoItem, setNovoItem] = useState({ nome: '', estoque: '', comprar: '', unidade: '', observacao: '', categoria: '' });
   const [editandoId, setEditandoId] = useState(null);
   const [editItem, setEditItem] = useState({});
   const [toastMsg, setToastMsg] = useState(null);
+  // guarda qual linha está "marcada" em cada sub-aba (Frutas/Rancho/Limpeza), separadamente —
+  // assim trocar de aba e voltar não perde onde você tinha parado
+  const [linhaSelecionada, setLinhaSelecionada] = useState({ frutas: null, rancho: null, limpeza: null });
 
   useEffect(() => {
     (async () => {
@@ -915,15 +918,27 @@ function Compras() {
   // tudo junto num bloco só, como já era antes.
   const CATEGORIA_DISPLAY = { 'VERDURAS': 'Verduras', 'FRUTAS': 'Frutas', 'Alimentos': 'Alimentos', 'Limpeza': 'Limpeza' };
   const categoriasDistintas = [...new Set(itensFiltrados.map(it => it.categoria).filter(Boolean))];
+  const categoriasConhecidas = ['VERDURAS', 'FRUTAS', 'Alimentos', 'Limpeza'];
   const gruposParaExibir = categoriasDistintas.length > 1
-    ? ['VERDURAS', 'FRUTAS', 'Alimentos', 'Limpeza']
-        .filter(c => categoriasDistintas.includes(c))
-        .map(c => ({ nome: CATEGORIA_DISPLAY[c] || c, itens: itensFiltrados.filter(it => it.categoria === c) }))
+    ? [
+        ...categoriasConhecidas
+          .filter(c => categoriasDistintas.includes(c))
+          .map(c => ({ nome: CATEGORIA_DISPLAY[c] || c, itens: itensFiltrados.filter(it => it.categoria === c) })),
+        // qualquer item com categoria fora do esperado (ou vazia) cai aqui, em vez de
+        // sumir silenciosamente da lista
+        ...(itensFiltrados.some(it => !categoriasConhecidas.includes(it.categoria))
+          ? [{ nome: 'Outros', itens: itensFiltrados.filter(it => !categoriasConhecidas.includes(it.categoria)) }]
+          : []),
+      ]
     : [{ nome: itensFiltrados.length === 1 ? 'Item' : 'Itens', itens: itensFiltrados }];
 
   function atualizarFornecedor(valor) {
     salvar({ ...dados, [subTab]: { ...dados[subTab], fornecedor: valor } });
   }
+
+  const opcoesCategoria = subTab === 'rancho' ? ['Alimentos', 'Limpeza']
+    : subTab === 'frutas' ? ['VERDURAS', 'FRUTAS']
+    : []; // limpeza (aba) é uma categoria só, não precisa escolher
 
   function adicionarItem(e) {
     e.preventDefault();
@@ -936,10 +951,10 @@ function Compras() {
       comprar: novoItem.comprar === '' ? null : parseFloat(String(novoItem.comprar).replace(',', '.')),
       unidade: novoItem.unidade.trim(),
       observacao: novoItem.observacao.trim(),
-      categoria: null,
+      categoria: opcoesCategoria.length > 0 ? (novoItem.categoria || opcoesCategoria[0]) : null,
     };
     salvar({ ...dados, [subTab]: { ...dados[subTab], itens: [...listaAtual.itens, item] } });
-    setNovoItem({ nome: '', estoque: '', comprar: '', unidade: '', observacao: '' });
+    setNovoItem({ nome: '', estoque: '', comprar: '', unidade: '', observacao: '', categoria: '' });
     mostrarToast(`✓ ${item.nome} adicionado!`);
   }
 
@@ -1062,14 +1077,52 @@ function Compras() {
       doc.text('Nenhum item com quantidade pra comprar definida.', 35, y);
     } else if (subTab === 'rancho') {
       // Rancho costuma ter muitos itens — divide em 2 colunas lado a lado, usando quase toda a largura da A4.
-      // A altura da linha se ajusta sozinha conforme a quantidade de itens, pra não sobrar
-      // uma folha em branco enorme quando a lista tiver poucos itens marcados pra comprar.
+      // Antes de desenhar, medimos a altura REAL que cada coluna vai ocupar (considerando nomes compridos
+      // que quebram em mais de uma linha) e escolhemos o maior tamanho de letra que ainda cabe tudo numa
+      // página só — isso evita que os últimos itens "vazem" pra uma segunda folha.
+      function medirAlturaColuna(itens, largura, escala) {
+        const larguraNome = largura - 90;
+        const fonteItem = 9.5 * escala;
+        const alturaLinha = 15 * escala;
+        let altura = 16 * escala; // cabeçalho da coluna
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(fonteItem);
+        itens.forEach(it => {
+          const linhasNome = doc.splitTextToSize(String(it.nome), larguraNome);
+          altura += linhasNome.length * alturaLinha;
+          if (it.observacao) {
+            doc.setFontSize(7.5 * escala);
+            const linhasObs = doc.splitTextToSize(it.observacao, larguraNome);
+            altura += linhasObs.length * 11 * escala;
+            doc.setFontSize(fonteItem);
+          }
+        });
+        return altura;
+      }
+
       const metade = Math.ceil(itensParaComprar.length / 2);
+      const colEsquerda = itensParaComprar.slice(0, metade);
+      const colDireita = itensParaComprar.slice(metade);
       const alturaDisponivel = 790 - y;
-      const escalaCalculada = alturaDisponivel / (metade * 15 + 20);
-      const escalaRancho = Math.max(1, Math.min(1.35, escalaCalculada));
-      desenharColuna(itensParaComprar.slice(0, metade), 35, y, 258, escalaRancho);
-      desenharColuna(itensParaComprar.slice(metade), 302, y, 258, escalaRancho);
+
+      // testa escalas de 1.35 até 0.6, em passos pequenos, e usa a maior que ainda cabe
+      // as duas colunas inteiras dentro da altura disponível na página
+      let escalaRancho = 0.6;
+      for (let s = 1.35; s >= 0.6; s -= 0.01) {
+        const alturaEsq = medirAlturaColuna(colEsquerda, 258, s);
+        const alturaDir = medirAlturaColuna(colDireita, 258, s);
+        if (Math.max(alturaEsq, alturaDir) <= alturaDisponivel) {
+          escalaRancho = s;
+          break;
+        }
+      }
+
+      const paginaInicial = doc.internal.getCurrentPageInfo().pageNumber;
+      desenharColuna(colEsquerda, 35, y, 258, escalaRancho);
+      // se a coluna esquerda estourou e criou página nova, a direita precisa voltar
+      // pra página inicial — senão ela "gruda" na página nova errada e tudo desalinha
+      doc.setPage(paginaInicial);
+      desenharColuna(colDireita, 302, y, 258, escalaRancho);
     } else {
       desenharColuna(itensParaComprar, 35, y, 525);
     }
@@ -1150,6 +1203,14 @@ function Compras() {
           <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>OBSERVAÇÃO</label>
           <input value={novoItem.observacao} onChange={e => setNovoItem({ ...novoItem, observacao: e.target.value })} placeholder="Opcional" spellCheck="true" lang="pt-BR" style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' }} />
         </div>
+        {opcoesCategoria.length > 0 && (
+          <div style={{ display: 'grid', gap: 4, flex: '1 1 130px' }}>
+            <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CATEGORIA</label>
+            <select value={novoItem.categoria || opcoesCategoria[0]} onChange={e => setNovoItem({ ...novoItem, categoria: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box', background: '#FFFDF8', color: COLORS.ink }}>
+              {opcoesCategoria.map(c => <option key={c} value={c}>{CATEGORIA_DISPLAY[c] || c}</option>)}
+            </select>
+          </div>
+        )}
         <button type="submit" style={{ background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer', height: 37, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Plus size={14} /> Adicionar
         </button>
@@ -1169,7 +1230,18 @@ function Compras() {
           {itensDoGrupo.length === 0 ? (
             <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: '30px 0', fontSize: 13.5 }}>Nenhum item encontrado.</div>
           ) : itensDoGrupo.map(item => (
-            <div key={item.id} className="compras-linha" style={{ display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '10px 18px', borderTop: `1px solid ${COLORS.lineSoft}` }}>
+            <div key={item.id} className="compras-linha"
+              onClick={() => editandoId !== item.id && setLinhaSelecionada(s => ({ ...s, [subTab]: item.id }))}
+              onDoubleClick={() => editandoId !== item.id && setLinhaSelecionada(s => ({ ...s, [subTab]: null }))}
+              style={{
+                display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '10px 18px',
+                borderTop: `1px solid ${COLORS.lineSoft}`, cursor: editandoId === item.id ? 'default' : 'pointer',
+                borderLeft: linhaSelecionada[subTab] === item.id ? '3px solid #E0AE3C' : '3px solid transparent',
+                background: linhaSelecionada[subTab] === item.id ? 'rgba(224, 174, 60, 0.16)' : 'transparent',
+                backdropFilter: linhaSelecionada[subTab] === item.id ? 'blur(6px)' : 'none',
+                boxShadow: linhaSelecionada[subTab] === item.id ? 'inset 0 1px 0 rgba(255,255,255,0.5)' : 'none',
+                transition: 'background 0.15s ease',
+              }}>
               {editandoId === item.id ? (
                 <>
                   <div style={{ display: 'grid', gap: 6 }}>
@@ -1200,25 +1272,25 @@ function Compras() {
                   {temColunaEstoque && (
                     item.estoque != null ? (
                       <span style={{
-                        fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
-                        padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', justifySelf: 'start', textAlign: 'center',
+                        fontSize: 14, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
+                        padding: '8px 17px', borderRadius: 20, whiteSpace: 'nowrap', justifySelf: 'start', textAlign: 'center',
                       }}>{item.estoque}</span>
                     ) : (
                       <span style={{
-                        fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
-                        padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', opacity: 0.4, justifySelf: 'start',
+                        fontSize: 14, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
+                        padding: '8px 17px', borderRadius: 20, whiteSpace: 'nowrap', opacity: 0.4, justifySelf: 'start',
                       }}>—</span>
                     )
                   )}
                   {item.comprar != null && item.comprar > 0 ? (
                     <span style={{
-                      fontSize: 12.5, fontWeight: 700, color: COLORS.gold, background: COLORS.goldSoft,
-                      padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', justifySelf: 'start', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                      fontSize: 14, fontWeight: 700, color: COLORS.gold, background: COLORS.goldSoft,
+                      padding: '8px 17px', borderRadius: 20, whiteSpace: 'nowrap', justifySelf: 'start', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>{item.comprar} {item.unidade}</span>
                   ) : (
                     <span style={{
-                      fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
-                      padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', opacity: 0.4, justifySelf: 'start',
+                      fontSize: 14, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
+                      padding: '8px 17px', borderRadius: 20, whiteSpace: 'nowrap', opacity: 0.4, justifySelf: 'start',
                     }}>—</span>
                   )}
                   <div style={{ display: 'flex', gap: 2, justifySelf: 'end' }}>
