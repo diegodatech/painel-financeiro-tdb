@@ -2262,6 +2262,7 @@ function PainelFinanceiro() {
       if (!grupos[t.mes]) grupos[t.mes] = [];
       grupos[t.mes].push(t);
     });
+    Object.values(grupos).forEach(lista => lista.sort((a, b) => a.categoria.localeCompare(b.categoria, 'pt-BR')));
     return MESES.filter(m => grupos[m]).map(m => ({ mes: m, itens: grupos[m] }));
   }, [transacoesFiltradas]);
 
