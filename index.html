@@ -908,6 +908,19 @@ function Compras() {
       return a.nome.localeCompare(b.nome, 'pt-BR');
     });
 
+  // quando existe mais de uma categoria real dentro da lista (ex: Alimentos e Limpeza
+  // dentro do Rancho, ou Verduras e Frutas), separa em blocos visuais distintos, cada
+  // um com seu próprio cabeçalho e contador — igual "Alunos" e "Empresas/Convênios"
+  // ficam separados em Mensalidades. Quando só tem uma categoria (ou nenhuma), mostra
+  // tudo junto num bloco só, como já era antes.
+  const CATEGORIA_DISPLAY = { 'VERDURAS': 'Verduras', 'FRUTAS': 'Frutas', 'Alimentos': 'Alimentos', 'Limpeza': 'Limpeza' };
+  const categoriasDistintas = [...new Set(itensFiltrados.map(it => it.categoria).filter(Boolean))];
+  const gruposParaExibir = categoriasDistintas.length > 1
+    ? ['VERDURAS', 'FRUTAS', 'Alimentos', 'Limpeza']
+        .filter(c => categoriasDistintas.includes(c))
+        .map(c => ({ nome: CATEGORIA_DISPLAY[c] || c, itens: itensFiltrados.filter(it => it.categoria === c) }))
+    : [{ nome: itensFiltrados.length === 1 ? 'Item' : 'Itens', itens: itensFiltrados }];
+
   function atualizarFornecedor(valor) {
     salvar({ ...dados, [subTab]: { ...dados[subTab], fornecedor: valor } });
   }
@@ -1142,77 +1155,82 @@ function Compras() {
         </button>
       </form>
 
-      <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
-        <div className="compras-linha" style={{ display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '11px 18px', background: COLORS.lineSoft, fontSize: 11, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-          <span>{itensFiltrados.length} {itensFiltrados.length === 1 ? 'item' : 'itens'}</span>
-          {temColunaEstoque && <span>Estoque</span>}
-          <span>Comprar</span>
-          <span></span>
-        </div>
-        {itensFiltrados.length === 0 ? (
-          <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: '30px 0', fontSize: 13.5 }}>Nenhum item encontrado.</div>
-        ) : itensFiltrados.map(item => (
-          <div key={item.id} className="compras-linha" style={{ display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '10px 18px', borderTop: `1px solid ${COLORS.lineSoft}` }}>
-            {editandoId === item.id ? (
-              <>
-                <div style={{ display: 'grid', gap: 6 }}>
-                  <input value={editItem.nome} onChange={e => setEditItem({ ...editItem, nome: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', width: '100%' }} />
-                  <input value={editItem.observacao} onChange={e => setEditItem({ ...editItem, observacao: e.target.value })} placeholder="Observação (opcional)" style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 12, boxSizing: 'border-box', width: '100%' }} />
-                </div>
-                {temColunaEstoque && (
-                  <input value={editItem.estoque} onChange={e => setEditItem({ ...editItem, estoque: e.target.value })} placeholder="Estoque" className="mono" style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', width: '100%' }} />
-                )}
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input value={editItem.comprar} onChange={e => setEditItem({ ...editItem, comprar: e.target.value })} placeholder="Qtd" className="mono" style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', width: 70 }} />
-                  <select value={editItem.unidade} onChange={e => setEditItem({ ...editItem, unidade: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', background: '#FFFDF8', color: COLORS.ink, flex: 1 }}>
-                    <option value="">Unid.</option>
-                    {unidadesDisponiveis.map(u => <option key={u} value={u}>{u}</option>)}
-                  </select>
-                </div>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button onClick={() => salvarEdicaoItem(item.id)} style={{ background: COLORS.green, border: 'none', borderRadius: 6, padding: '6px 8px', cursor: 'pointer', display: 'flex' }}><Check size={13} color="#FFFFFF" /></button>
-                  <button onClick={() => setEditandoId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: COLORS.inkSoft, display: 'flex' }}><X size={15} /></button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <span style={{ fontWeight: 600, color: COLORS.ink, fontSize: 13.5 }}>{item.nome}</span>
-                  {item.observacao && <div style={{ fontSize: 11, color: COLORS.inkSoft }}>{item.observacao}</div>}
-                </div>
-                {temColunaEstoque && (
-                  item.estoque != null ? (
+      {gruposParaExibir.map(({ nome: nomeGrupo, itens: itensDoGrupo }) => (
+        <div key={nomeGrupo} style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '11px 18px', background: COLORS.goldSoft, fontSize: 13, fontWeight: 700, color: COLORS.ink }}>
+            {nomeGrupo} ({itensDoGrupo.length})
+          </div>
+          <div className="compras-linha" style={{ display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '9px 18px', background: COLORS.lineSoft, fontSize: 11, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+            <span>Item</span>
+            {temColunaEstoque && <span>Estoque</span>}
+            <span>Comprar</span>
+            <span></span>
+          </div>
+          {itensDoGrupo.length === 0 ? (
+            <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: '30px 0', fontSize: 13.5 }}>Nenhum item encontrado.</div>
+          ) : itensDoGrupo.map(item => (
+            <div key={item.id} className="compras-linha" style={{ display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '10px 18px', borderTop: `1px solid ${COLORS.lineSoft}` }}>
+              {editandoId === item.id ? (
+                <>
+                  <div style={{ display: 'grid', gap: 6 }}>
+                    <input value={editItem.nome} onChange={e => setEditItem({ ...editItem, nome: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', width: '100%' }} />
+                    <input value={editItem.observacao} onChange={e => setEditItem({ ...editItem, observacao: e.target.value })} placeholder="Observação (opcional)" style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 12, boxSizing: 'border-box', width: '100%' }} />
+                  </div>
+                  {temColunaEstoque && (
+                    <input value={editItem.estoque} onChange={e => setEditItem({ ...editItem, estoque: e.target.value })} placeholder="Estoque" className="mono" style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', width: '100%' }} />
+                  )}
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input value={editItem.comprar} onChange={e => setEditItem({ ...editItem, comprar: e.target.value })} placeholder="Qtd" className="mono" style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', width: 70 }} />
+                    <select value={editItem.unidade} onChange={e => setEditItem({ ...editItem, unidade: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', background: '#FFFDF8', color: COLORS.ink, flex: 1 }}>
+                      <option value="">Unid.</option>
+                      {unidadesDisponiveis.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button onClick={() => salvarEdicaoItem(item.id)} style={{ background: COLORS.green, border: 'none', borderRadius: 6, padding: '6px 8px', cursor: 'pointer', display: 'flex' }}><Check size={13} color="#FFFFFF" /></button>
+                    <button onClick={() => setEditandoId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: COLORS.inkSoft, display: 'flex' }}><X size={15} /></button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <span style={{ fontWeight: 600, color: COLORS.ink, fontSize: 13.5 }}>{item.nome}</span>
+                    {item.observacao && <div style={{ fontSize: 11, color: COLORS.inkSoft }}>{item.observacao}</div>}
+                  </div>
+                  {temColunaEstoque && (
+                    item.estoque != null ? (
+                      <span style={{
+                        fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
+                        padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', justifySelf: 'start', textAlign: 'center',
+                      }}>{item.estoque}</span>
+                    ) : (
+                      <span style={{
+                        fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
+                        padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', opacity: 0.4, justifySelf: 'start',
+                      }}>—</span>
+                    )
+                  )}
+                  {item.comprar != null && item.comprar > 0 ? (
                     <span style={{
-                      fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
-                      padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', justifySelf: 'start', textAlign: 'center',
-                    }}>{item.estoque}</span>
+                      fontSize: 12.5, fontWeight: 700, color: COLORS.gold, background: COLORS.goldSoft,
+                      padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', justifySelf: 'start', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>{item.comprar} {item.unidade}</span>
                   ) : (
                     <span style={{
                       fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
                       padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', opacity: 0.4, justifySelf: 'start',
                     }}>—</span>
-                  )
-                )}
-                {item.comprar != null && item.comprar > 0 ? (
-                  <span style={{
-                    fontSize: 12.5, fontWeight: 700, color: COLORS.gold, background: COLORS.goldSoft,
-                    padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', justifySelf: 'start', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{item.comprar} {item.unidade}</span>
-                ) : (
-                  <span style={{
-                    fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, background: COLORS.lineSoft,
-                    padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap', opacity: 0.4, justifySelf: 'start',
-                  }}>—</span>
-                )}
-                <div style={{ display: 'flex', gap: 2, justifySelf: 'end' }}>
-                  <button onClick={() => iniciarEdicao(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, opacity: 0.6, display: 'flex' }}><Pencil size={14} /></button>
-                  <button onClick={() => removerItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, opacity: 0.6, display: 'flex' }}><Trash2 size={14} color={COLORS.red} /></button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 2, justifySelf: 'end' }}>
+                    <button onClick={() => iniciarEdicao(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, opacity: 0.6, display: 'flex' }}><Pencil size={14} /></button>
+                    <button onClick={() => removerItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, opacity: 0.6, display: 'flex' }}><Trash2 size={14} color={COLORS.red} /></button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
