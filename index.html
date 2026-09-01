@@ -2914,27 +2914,6 @@ function Lancamentos(props) {
   const [historicoEdit, setHistoricoEdit] = useState('');
   const [contaDigitada, setContaDigitada] = useState(false);
   const [categoriaEdit, setCategoriaEdit] = useState('');
-  const [saldoMesEdit, setSaldoMesEdit] = useState(() => {
-    // mostra sempre o mês mais recente com movimento pago (mesma lógica usada em
-    // Visão Geral e no relatório) em vez de ficar fixo num mês qualquer
-    const atual = [...MESES].reverse().find(m => transacoes.some(t => t.mes === m && t.status === 'Pago'));
-    return atual || 'AGOSTO';
-  });
-  const [saldoValorEdit, setSaldoValorEdit] = useState('');
-  const [saldoSalvoToast, setSaldoSalvoToast] = useState(false);
-
-  useEffect(() => {
-    setSaldoValorEdit(formatBRLNumber((saldosMensais || {})[saldoMesEdit] || 0));
-  }, [saldoMesEdit, saldosMensais]);
-
-  function salvarSaldoDoMes() {
-    const num = parseBRLInput(saldoValorEdit);
-    if (num != null && salvarSaldoMensal) {
-      salvarSaldoMensal(saldoMesEdit, num);
-      setSaldoSalvoToast(true);
-      setTimeout(() => setSaldoSalvoToast(false), 2200);
-    }
-  }
 
   // KPIs do mês em foco (o que estiver escolhido no filtro; se for "todos", usa o mês mais recente com dados)
   const kpisMes = useMemo(() => {
@@ -3007,44 +2986,8 @@ function Lancamentos(props) {
             { label: 'Entradas do mês', valor: kpisMes.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
             { label: 'Saídas do mês', valor: kpisMes.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
             { label: 'Resultado do mês', valor: kpisMes.resultado, icon: kpisMes.resultado >= 0 ? TrendingUp : TrendingDown, cor: kpisMes.resultado >= 0 ? COLORS.green : COLORS.red, bg: kpisMes.resultado >= 0 ? COLORS.greenBg : COLORS.redBg },
+            { label: 'Saldo em conta', valor: kpisMes.saldo, icon: Wallet, cor: COLORS.ink, bg: COLORS.goldSoft },
           ]}
-          extra={
-            <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '14px 16px', boxShadow: '0 1px 2px rgba(31,59,54,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <div style={{ background: COLORS.goldSoft, borderRadius: 6, padding: 5, display: 'flex' }}>
-                  <Wallet size={13} color={COLORS.ink} />
-                </div>
-                <span style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase' }}>Saldo em conta</span>
-              </div>
-              {privadoTotais ? (
-                <div className="mono" style={{ fontSize: 15, fontWeight: 600, color: COLORS.ink, padding: '6px 0' }}>R$ ••••••</div>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <select value={saldoMesEdit} onChange={e => setSaldoMesEdit(e.target.value)} style={{
-                      border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 6px', fontSize: 12,
-                      fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 62,
-                    }}>
-                      {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
-                    </select>
-                    <input value={saldoValorEdit} onChange={e => setSaldoValorEdit(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') salvarSaldoDoMes(); }}
-                      className="mono" style={{
-                        border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 6px', fontSize: 13,
-                        fontFamily: 'Inter, sans-serif', background: '#FFFDF8', color: COLORS.ink, width: 78, minWidth: 0,
-                      }} />
-                    <button onClick={salvarSaldoDoMes} title="Salvar saldo" style={{
-                      background: COLORS.inkButton, border: 'none', borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', flexShrink: 0,
-                    }}>
-                      <Check size={13} color="#FFFFFF" />
-                    </button>
-                  </div>
-                  {saldoSalvoToast && <div style={{ color: COLORS.green, fontSize: 11, fontWeight: 600, marginTop: 4 }}>✓ Salvo!</div>}
-                </>
-              )}
-            </div>
-          }
         />
       </div>
 
