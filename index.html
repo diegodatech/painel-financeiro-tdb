@@ -2914,7 +2914,12 @@ function Lancamentos(props) {
   const [historicoEdit, setHistoricoEdit] = useState('');
   const [contaDigitada, setContaDigitada] = useState(false);
   const [categoriaEdit, setCategoriaEdit] = useState('');
-  const [saldoMesEdit, setSaldoMesEdit] = useState(MESES[MESES.length - 1]);
+  const [saldoMesEdit, setSaldoMesEdit] = useState(() => {
+    // mostra sempre o mês mais recente com movimento pago (mesma lógica usada em
+    // Visão Geral e no relatório) em vez de ficar fixo num mês qualquer
+    const atual = [...MESES].reverse().find(m => transacoes.some(t => t.mes === m && t.status === 'Pago'));
+    return atual || 'AGOSTO';
+  });
   const [saldoValorEdit, setSaldoValorEdit] = useState('');
   const [saldoSalvoToast, setSaldoSalvoToast] = useState(false);
 
