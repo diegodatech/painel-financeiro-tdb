@@ -884,7 +884,9 @@ function Compras() {
   const gridColunas = temColunaEstoque
     ? '1fr minmax(90px,150px) minmax(110px,190px) 60px'
     : '1fr minmax(110px,190px) 60px';
-  const itensFiltrados = listaAtual.itens.filter(it => !busca || it.nome.toLowerCase().includes(busca.toLowerCase()));
+  const itensFiltrados = listaAtual.itens
+    .filter(it => !busca || it.nome.toLowerCase().includes(busca.toLowerCase()))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
   function atualizarFornecedor(valor) {
     salvar({ ...dados, [subTab]: { ...dados[subTab], fornecedor: valor } });
@@ -1012,7 +1014,9 @@ function Compras() {
     doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 460, y);
     y += 24;
 
-    const itensParaComprar = listaAtual.itens.filter(it => it.comprar != null && it.comprar > 0);
+    const itensParaComprar = listaAtual.itens
+      .filter(it => it.comprar != null && it.comprar > 0)
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
     if (itensParaComprar.length === 0) {
       doc.setTextColor(...roxoClaro);
