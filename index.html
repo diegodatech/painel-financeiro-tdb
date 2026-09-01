@@ -55,6 +55,9 @@
       --c-lineSoft: #1C1A1F;
     }
     .dark-mode body { background: var(--c-paper); }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -124,6 +127,7 @@
           if (!cachePlanilha) cachePlanilha = {};
           cachePlanilha[key] = val;
           if (APPS_SCRIPT_URL && usandoPlanilha) {
+            window.__salvamentosPendentes = (window.__salvamentosPendentes || 0) + 1;
             try {
               await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
@@ -134,6 +138,8 @@
             } catch (e) {
               console.warn('Não consegui salvar na Planilha Google agora — fica salvo só neste navegador até a conexão voltar.', e);
               window.__statusPlanilha = 'erro';
+            } finally {
+              window.__salvamentosPendentes = Math.max(0, (window.__salvamentosPendentes || 1) - 1);
             }
           }
           return true;
@@ -1916,26 +1922,28 @@ function PainelFinanceiro() {
     }
   }
 
-  // "backup semanal" — em vez de baixar sozinho sem avisar (que alguns navegadores bloqueiam,
-  // por tratar como download automático suspeito), o painel só AVISA que já passou uma semana
-  // e mostra um botão fixo pra você confirmar com um toque. Mais transparente e sem bloqueio.
-  const [backupPendente, setBackupPendente] = useState(false);
+  // lembrete de backup — aparece toda vez que o painel termina de carregar (não fica
+  // esperando dias, é sempre que você abre), pra você lembrar de baixar uma cópia extra
+  const [mostrarLembreteBackup, setMostrarLembreteBackup] = useState(false);
   useEffect(() => {
-    if (!transacoes || transacoes.length === 0) return;
-    const UMA_SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
-    const ultimoStr = localStorage.getItem('painel_ultimoBackupAuto');
-    const ultimo = ultimoStr ? new Date(ultimoStr).getTime() : 0;
-    if (Date.now() - ultimo >= UMA_SEMANA_MS) {
-      setBackupPendente(true);
+    if (!loading && transacoes && transacoes.length > 0) {
+      setMostrarLembreteBackup(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transacoes != null]);
+  }, [loading]);
 
-  function confirmarBackupSemanal() {
-    exportarBackup();
-    localStorage.setItem('painel_ultimoBackupAuto', new Date().toISOString());
-    setBackupPendente(false);
-  }
+  // avisa ANTES de fechar a página, mas só se ainda tiver algum salvamento em andamento
+  // pra planilha — se já salvou tudo, não incomoda com pergunta à toa
+  useEffect(() => {
+    function aoTentarFechar(e) {
+      if ((window.__salvamentosPendentes || 0) > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    }
+    window.addEventListener('beforeunload', aoTentarFechar);
+    return () => window.removeEventListener('beforeunload', aoTentarFechar);
+  }, []);
 
   function exportarBackup() {
     if (!transacoes) return;
@@ -2262,8 +2270,18 @@ function PainelFinanceiro() {
 
   if (loading || pinConfigurado === null) {
     return (
-      <div style={{ background: COLORS.paper, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: COLORS.ink }}>
-        Carregando painel...
+      <div style={{ background: COLORS.paper, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: COLORS.ink, gap: 18, padding: 20, textAlign: 'center' }}>
+        <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{ height: 90, maxWidth: '90%', objectFit: 'contain' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 18, height: 18, borderRadius: '50%', border: `3px solid ${COLORS.lineSoft}`,
+            borderTopColor: COLORS.gold, animation: 'spin 0.8s linear infinite',
+          }} />
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Buscando seus dados na Planilha Google...</span>
+        </div>
+        <span style={{ fontSize: 12, color: COLORS.inkSoft, maxWidth: 320 }}>
+          Isso pode levar alguns segundos — é o Google que demora um pouco pra responder, não precisa recarregar a página.
+        </span>
       </div>
     );
   }
@@ -2281,17 +2299,7 @@ function PainelFinanceiro() {
   }
 
   return (
-    <div className={`painel-raiz${temaEscuro ? ' dark-mode' : ''}`} style={{ background: COLORS.paper, minHeight: '100vh', fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink, zoom: 0.92, paddingTop: backupPendente ? 38 : 0 }}>
-      {backupPendente && (
-        <button onClick={confirmarBackupSemanal} style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9998, width: '100%',
-          background: COLORS.inkButton, color: '#FFFFFF', border: 'none', cursor: 'pointer',
-          padding: '10px 16px', fontSize: 13, fontWeight: 600,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        }}>
-          💾 Seu backup semanal está pronto — toque aqui pra baixar
-        </button>
-      )}
+    <div className={`painel-raiz${temaEscuro ? ' dark-mode' : ''}`} style={{ background: COLORS.paper, minHeight: '100vh', fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink, zoom: 0.92 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         /* o "zoom" e uma propriedade nao-padrao que se comporta de forma inconsistente
@@ -2328,6 +2336,24 @@ function PainelFinanceiro() {
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background: ${COLORS.line}; border-radius: 4px; }
       `}</style>
+
+      {mostrarLembreteBackup && (
+        <div style={{
+          background: COLORS.goldSoft, borderBottom: `1px solid ${COLORS.gold}55`,
+          padding: '9px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 12.5, color: COLORS.ink }}>
+            💾 Lembrete: já faz um tempinho desde o seu último backup? É bom manter uma cópia atualizada.
+          </span>
+          <button onClick={() => { exportarBackup(); setMostrarLembreteBackup(false); }} style={{
+            background: COLORS.inkButton, color: '#FFFFFF', border: 'none', borderRadius: 6, padding: '4px 12px',
+            fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+          }}>Baixar backup agora</button>
+          <button onClick={() => setMostrarLembreteBackup(false)} style={{
+            background: 'none', border: 'none', color: COLORS.inkSoft, fontSize: 11.5, cursor: 'pointer', textDecoration: 'underline',
+          }}>Já fiz, obrigado</button>
+        </div>
+      )}
 
       {/* HEADER COM LOGO VETORIAL DA ESCOLA */}
                               <header style={{ background: '#FFFFFF', padding: '14px 24px 0', borderBottom: `1px solid ${COLORS.line}`, boxShadow: '0 2px 6px rgba(101,27,88,0.06)' }}>
