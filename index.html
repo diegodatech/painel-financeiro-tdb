@@ -57,6 +57,18 @@
     }
     .dark-mode body { background: var(--c-paper); }
     button { -webkit-tap-highlight-color: transparent; }
+    /* teclado de PIN: tamanho padrão pensado pro celular (já está ótimo), e cresce em telas
+       maiores (tablet/computador) pra ficar mais fácil de tocar com dedos maiores */
+    .pin-tecla { width: 64px; height: 64px; font-size: 22px; }
+    .pin-bolinha { width: 26px; height: 26px; }
+    @media (min-width: 700px) {
+      .pin-tecla { width: 84px; height: 84px; font-size: 28px; }
+      .pin-bolinha { width: 32px; height: 32px; }
+    }
+    @media (min-width: 1100px) {
+      .pin-tecla { width: 92px; height: 92px; font-size: 30px; }
+      .pin-bolinha { width: 36px; height: 36px; }
+    }
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -776,8 +788,8 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
 
       <div style={{ display: 'flex', gap: 16 }}>
         {[0, 1, 2, 3].map(i => (
-          <div key={i} style={{
-            width: 26, height: 26, borderRadius: '50%',
+          <div key={i} className="pin-bolinha" style={{
+            borderRadius: '50%',
             border: '2.5px solid #B85CA3',
             background: digitado.length > i ? '#B85CA3' : 'transparent',
           }} />
@@ -786,32 +798,27 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
 
       {erro && <div style={{ color: '#C1272D', fontSize: 12.5, fontWeight: 600 }}>{erro}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 64px)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', gap: 12 }}>
         {['1','2','3','4','5','6','7','8','9'].map(d => (
-          <button key={d} onClick={() => apertarDigito(d)} style={{
-            width: 64, height: 64, borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
-            fontSize: 22, fontWeight: 600, color: '#651B58', cursor: 'pointer',
+          <button key={d} className="pin-tecla" onClick={() => apertarDigito(d)} style={{
+            borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
+            fontWeight: 600, color: '#651B58', cursor: 'pointer',
             WebkitTapHighlightColor: 'transparent', outline: 'none', overflow: 'hidden',
           }}>{d}</button>
         ))}
         <div />
-        <button onClick={() => apertarDigito('0')} style={{
-          width: 64, height: 64, borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
-          fontSize: 22, fontWeight: 600, color: '#651B58', cursor: 'pointer',
+        <button className="pin-tecla" onClick={() => apertarDigito('0')} style={{
+          borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
+          fontWeight: 600, color: '#651B58', cursor: 'pointer',
           WebkitTapHighlightColor: 'transparent', outline: 'none', overflow: 'hidden',
         }}>0</button>
-        <button onClick={apagar} style={{
-          width: 64, height: 64, borderRadius: '50%', border: 'none', background: 'none',
-          fontSize: 14, fontWeight: 600, color: '#8A5C81', cursor: 'pointer',
+        <button className="pin-tecla" onClick={apagar} style={{
+          borderRadius: '50%', border: 'none', background: 'none',
+          fontWeight: 600, color: '#8A5C81', cursor: 'pointer',
           WebkitTapHighlightColor: 'transparent', outline: 'none', overflow: 'hidden',
         }}>⌫</button>
       </div>
 
-      {modo === 'entrar' && (
-        <button onClick={onDesbloquear} style={{ background: 'none', border: 'none', color: '#8A5C81', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', marginTop: 4 }}>
-          Continuar sem PIN por agora
-        </button>
-      )}
       {modo === 'escolher' && (
         <button onClick={onDesbloquear} style={{ background: 'none', border: 'none', color: '#8A5C81', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', marginTop: 4 }}>
           Pular, não quero usar PIN
