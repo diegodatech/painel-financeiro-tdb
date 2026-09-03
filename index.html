@@ -2100,7 +2100,7 @@ function BalaoValor({ label, valor, ativo, editValor, setEditValor, onClick, onS
     return (
       <span style={{
         background: COLORS.goldSoft, color: COLORS.gold, borderRadius: 20,
-        padding: '7px 16px', fontSize: 12.5, fontWeight: 700,
+        padding: '9px 19px', fontSize: 14, fontWeight: 700,
       }}>
         {label}: R$ ••••••
       </span>
@@ -2109,10 +2109,10 @@ function BalaoValor({ label, valor, ativo, editValor, setEditValor, onClick, onS
   return (
     <button onClick={onClick} style={{
       background: COLORS.goldSoft, color: COLORS.gold, border: 'none', borderRadius: 20,
-      padding: '7px 16px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+      padding: '9px 19px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
     }}>
       {label}: {formatBRL(valor)}
-      <Pencil size={11} style={{ opacity: 0.5 }} />
+      <Pencil size={12.5} style={{ opacity: 0.5 }} />
     </button>
   );
 }
