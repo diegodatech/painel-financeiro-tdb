@@ -4345,7 +4345,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                     )}
                     <td style={td}>
                       {emEdicao ? (
-                        <input type="date" value={dataEdit} onChange={e => setDataEdit(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') salvarEdicao(t.id); }} style={{ ...inputCell, width: 130 }} />
+                        <input type="date" value={dataEdit} onChange={e => setDataEdit(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') salvarEdicao(t.id); }} style={{ ...inputCell, width: 155, cursor: 'pointer' }} />
                       ) : formatarData(t.data)}
                     </td>
                     <td style={{ ...td, whiteSpace: 'nowrap', textAlign: 'center' }}>
