@@ -4544,6 +4544,10 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
     try { localStorage.setItem('painel_mensalidades_filtroMes', mes); } catch (e) {}
   };
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
+  const [filtroBanco, setFiltroBanco] = useState('TODOS');
+  const [filtroConvenio, setFiltroConvenio] = useState('TODOS');
+  const [filtroNota, setFiltroNota] = useState('TODOS');
+  const [filtroData, setFiltroData] = useState('');
   const [filtroTexto, setFiltroTexto] = useState('');
   const [toastMsg, setToastMsg] = useState(null);
   function mostrarToast(msg) {
@@ -4599,14 +4603,29 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
 
   const entradas = useMemo(() => transacoes.filter(t => t.tipo === 'Entrada'), [transacoes]);
 
+  // listas de opções pros filtros de Banco e Convênio — montadas a partir do que já existe
+  // nos lançamentos, então qualquer banco/convênio novo que apareça já entra sozinho na lista
+  const bancosDisponiveis = useMemo(() => {
+    const set = new Set(entradas.map(t => t.banco).filter(Boolean));
+    return [...set].sort();
+  }, [entradas]);
+  const conveniosDisponiveis = useMemo(() => {
+    const set = new Set(entradas.map(t => t.convenio).filter(Boolean));
+    return [...set].sort();
+  }, [entradas]);
+
   const semFiltroNenhum = filtroMes === 'TODOS' && !filtroTexto;
   const filtradasCompleto = useMemo(() => {
     return entradas
       .filter(t => filtroMes === 'TODOS' || t.mes === filtroMes)
       .filter(t => filtroStatus === 'TODOS' || t.status === filtroStatus)
+      .filter(t => filtroBanco === 'TODOS' || (filtroBanco === 'SEM_BANCO' ? !t.banco : t.banco === filtroBanco))
+      .filter(t => filtroConvenio === 'TODOS' || (filtroConvenio === 'SEM_CONVENIO' ? !t.convenio : t.convenio === filtroConvenio))
+      .filter(t => filtroNota === 'TODOS' || (filtroNota === 'SEM_NOTA' ? t.nota === undefined : t.nota === filtroNota))
+      .filter(t => !filtroData || formatarData(t.data).includes(filtroData.trim()) || (t.data || '').includes(filtroData.trim()))
       .filter(t => !filtroTexto || nomeExibicao(t.categoria).toLowerCase().includes(filtroTexto.toLowerCase()) || (t.pai || '').toLowerCase().includes(filtroTexto.toLowerCase()))
       .sort((a, b) => nomeExibicao(a.categoria).localeCompare(nomeExibicao(b.categoria)));
-  }, [entradas, filtroMes, filtroStatus, filtroTexto]);
+  }, [entradas, filtroMes, filtroStatus, filtroBanco, filtroConvenio, filtroNota, filtroData, filtroTexto]);
 
   const filtradas = semFiltroNenhum ? filtradasCompleto.slice(0, 100) : filtradasCompleto;
 
@@ -4878,6 +4897,12 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
           <input value={filtroTexto} onChange={e => setFiltroTexto(e.target.value)} placeholder="Buscar por aluno ou pai..."
             style={{ ...inputStyle, width: '100%', paddingLeft: 34, boxSizing: 'border-box' }} />
         </div>
+        <div style={{ position: 'relative', flex: '0 1 150px' }}>
+          <Search size={13} color={COLORS.inkSoft} style={{ position: 'absolute', left: 10, top: 12 }} />
+          <input value={filtroData} onChange={e => setFiltroData(e.target.value)} placeholder="Buscar por data..."
+            title="Busca pela data do pagamento (ex: 01/09 ou 01/09/2026)"
+            style={{ ...inputStyle, width: '100%', paddingLeft: 30, boxSizing: 'border-box' }} />
+        </div>
         <select value={filtroMes} onChange={e => setFiltroMes(e.target.value)} style={inputStyle}>
           <option value="TODOS">Todos os meses</option>
           {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
@@ -4886,6 +4911,22 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
           <option value="TODOS">Todos os status</option>
           <option value="Pago">Só pagos</option>
           <option value="Pendente">Só pendentes</option>
+        </select>
+        <select value={filtroBanco} onChange={e => setFiltroBanco(e.target.value)} style={inputStyle}>
+          <option value="TODOS">Todos os bancos</option>
+          <option value="SEM_BANCO">Sem banco</option>
+          {bancosDisponiveis.map(b => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <select value={filtroConvenio} onChange={e => setFiltroConvenio(e.target.value)} style={inputStyle}>
+          <option value="TODOS">Todos os convênios</option>
+          <option value="SEM_CONVENIO">Sem convênio</option>
+          {conveniosDisponiveis.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={filtroNota} onChange={e => setFiltroNota(e.target.value)} style={inputStyle}>
+          <option value="TODOS">Todas as notas</option>
+          <option value="Enviada">Nota enviada</option>
+          <option value="Pendente">Nota pendente</option>
+          <option value="SEM_NOTA">Sem nota (empresas)</option>
         </select>
         <button onClick={() => setPrivadoDetalhes(v => !v)} title={privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista'} style={{
           background: 'none', border: `1px solid ${COLORS.line}`, borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
