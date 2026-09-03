@@ -544,17 +544,22 @@ const COLORS = {
 
 const PIE_COLORS = ['#651B58', '#2E8C89'];
 
-// Aviso temporário de confirmação ("✓ Salvo com sucesso"), some sozinho depois de um tempo
-function Toast({ mensagem }) {
+// Aviso temporário de confirmação ("✓ Salvo com sucesso"), some sozinho depois de um tempo.
+// tipo 'ok' (verde, padrão) ou 'aviso' (dourado/laranja) — pra distinguir sucesso de alerta
+function Toast({ mensagem, tipo = 'ok' }) {
   if (!mensagem) return null;
+  const cores = tipo === 'aviso'
+    ? { fundo: '#B8842E', icone: '⚠' }
+    : { fundo: '#1F7A4D', icone: '✓' };
   return (
     <div style={{
       position: 'fixed', top: 18, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
-      background: '#1F7A4D', color: '#FFFFFF', padding: '11px 22px', borderRadius: 10,
+      background: cores.fundo, color: '#FFFFFF', padding: '11px 22px', borderRadius: 10,
       fontSize: 13.5, fontWeight: 600, boxShadow: '0 6px 20px rgba(0,0,0,0.22)',
       display: 'flex', alignItems: 'center', gap: 8, animation: 'toastIn 0.25s ease-out',
+      maxWidth: 420, textAlign: 'center',
     }}>
-      <span style={{ fontSize: 15 }}>✓</span>{mensagem}
+      <span style={{ fontSize: 15 }}>{cores.icone}</span>{mensagem}
     </div>
   );
 }
@@ -2642,13 +2647,13 @@ function PainelFinanceiro() {
     try {
       const resultado = await (window.storage.resync ? window.storage.resync() : Promise.resolve({ ok: true, total: 0 }));
       setMensagemSalvarAgora(resultado.ok
-        ? '✓ Tudo salvo na Planilha Google!'
-        : `⚠ ${resultado.falhas} item(ns) não sincronizaram agora, mas continuam salvos neste navegador.`);
+        ? { tipo: 'ok', texto: 'Tudo salvo com sucesso! Pode fechar o programa sem preocupação.' }
+        : { tipo: 'aviso', texto: `${resultado.falhas} item(ns) não sincronizaram agora, mas continuam salvos neste navegador. Tenta de novo daqui a pouco.` });
     } catch (e) {
-      setMensagemSalvarAgora('⚠ Não consegui salvar agora — verifique a conexão.');
+      setMensagemSalvarAgora({ tipo: 'aviso', texto: 'Não consegui salvar agora — verifique a conexão e tente de novo.' });
     }
     setSalvandoAgora(false);
-    setTimeout(() => setMensagemSalvarAgora(null), 4000);
+    setTimeout(() => setMensagemSalvarAgora(null), 9000);
   }
   const [modoPrivado, setModoPrivado] = useState(() => lerPreferencia('modoPrivado')); // esconde os valores (bolinhas) quando ligado — usado em Visão Geral e Orçamento
   // em Lançamentos e Mensalidades, os totais e a lista têm interruptores separados —
@@ -3445,11 +3450,7 @@ function PainelFinanceiro() {
             </div>
           </div>
 
-          {mensagemSalvarAgora && (
-            <div className="mono" style={{ color: mensagemSalvarAgora.startsWith('✓') ? COLORS.green : COLORS.gold, fontSize: 11.5, marginTop: 3, fontWeight: 700 }}>
-              {mensagemSalvarAgora}
-            </div>
-          )}
+          <Toast mensagem={mensagemSalvarAgora ? mensagemSalvarAgora.texto : null} tipo={mensagemSalvarAgora ? mensagemSalvarAgora.tipo : 'ok'} />
 
           <div className="mono" style={{ color: COLORS.red, fontSize: 11, marginTop: 3 }}>
             {!storageOk && <span>⚠ sem conexão com o armazenamento — alterações não vão salvar</span>}
