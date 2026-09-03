@@ -4149,16 +4149,16 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', minWidth: mostrarDetalhes ? 1220 : 750, borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '20%' }} />
-              {mostrarDetalhes && <col style={{ width: '6%' }} />}
+              <col style={{ width: '19%' }} />
+              {mostrarDetalhes && <col style={{ width: '5%' }} />}
               <col style={{ width: '15%' }} />
-              <col style={{ width: '7%' }} />
               <col style={{ width: '6%' }} />
-              {mostrarDetalhes && <col style={{ width: '13%' }} />}
-              {mostrarDetalhes && <col style={{ width: '11%' }} />}
-              {mostrarDetalhes && <col style={{ width: '8%' }} />}
-              <col style={{ width: '7%' }} />
-              <col style={{ width: '7%' }} />
+              <col style={{ width: '5%' }} />
+              {mostrarDetalhes && <col style={{ width: '12%' }} />}
+              {mostrarDetalhes && <col style={{ width: '10%' }} />}
+              {mostrarDetalhes && <col style={{ width: '7%' }} />}
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '9%' }} />
             </colgroup>
             <thead>
               <tr>
@@ -4345,7 +4345,9 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                     )}
                     <td style={td}>
                       {emEdicao ? (
-                        <input type="date" value={dataEdit} onChange={e => setDataEdit(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') salvarEdicao(t.id); }} style={{ ...inputCell, width: 155, cursor: 'pointer' }} />
+                        <input type="date" value={dataEdit} onChange={e => setDataEdit(e.target.value)}
+                          onClick={e => { try { e.target.showPicker(); } catch (err) {} }}
+                          onKeyDown={e => { if (e.key === 'Enter') salvarEdicao(t.id); }} style={{ ...inputCell, width: 135, cursor: 'pointer' }} />
                       ) : formatarData(t.data)}
                     </td>
                     <td style={{ ...td, whiteSpace: 'nowrap', textAlign: 'center' }}>
@@ -4442,7 +4444,15 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
 }
 
 function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, removerLancamento, adicionarEntrada, privadoTotais, setPrivadoTotais, privadoDetalhes, setPrivadoDetalhes }) {
-  const [filtroMes, setFiltroMes] = useState('AGOSTO');
+  // lembra o mês que você escolheu no filtro, mesmo trocando de aba e voltando —
+  // só usa AGOSTO como padrão na primeiríssima vez, antes de você escolher algo
+  const [filtroMes, setFiltroMesState] = useState(() => {
+    try { return localStorage.getItem('painel_mensalidades_filtroMes') || 'AGOSTO'; } catch (e) { return 'AGOSTO'; }
+  });
+  const setFiltroMes = (mes) => {
+    setFiltroMesState(mes);
+    try { localStorage.setItem('painel_mensalidades_filtroMes', mes); } catch (e) {}
+  };
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [filtroTexto, setFiltroTexto] = useState('');
   const [toastMsg, setToastMsg] = useState(null);
