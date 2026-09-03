@@ -4149,15 +4149,15 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', minWidth: mostrarDetalhes ? 1220 : 750, borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '19%' }} />
-              {mostrarDetalhes && <col style={{ width: '5%' }} />}
+              <col style={{ width: '18%' }} />
+              {mostrarDetalhes && <col style={{ width: '7%' }} />}
               <col style={{ width: '15%' }} />
               <col style={{ width: '6%' }} />
-              <col style={{ width: '5%' }} />
-              {mostrarDetalhes && <col style={{ width: '12%' }} />}
+              <col style={{ width: '8%' }} />
               {mostrarDetalhes && <col style={{ width: '10%' }} />}
-              {mostrarDetalhes && <col style={{ width: '7%' }} />}
-              <col style={{ width: '11%' }} />
+              {mostrarDetalhes && <col style={{ width: '9%' }} />}
+              {mostrarDetalhes && <col style={{ width: '9%' }} />}
+              <col style={{ width: '6%' }} />
               <col style={{ width: '9%' }} />
             </colgroup>
             <thead>
@@ -4186,7 +4186,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                       background: linhaSelecionada === t.id ? 'rgba(224, 174, 60, 0.16)' : (emEdicao ? '#FDF5FC' : 'transparent'),
                       transition: 'background 0.15s ease',
                     }}>
-                    <td style={{
+                    <td colSpan={emEdicao && mostrarDetalhes ? 2 : 1} style={{
                       ...td,
                       background: COLORS.goldSoft,
                       fontWeight: 700,
@@ -4205,9 +4205,9 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                         nomeExibicao(t.categoria)
                       )}
                     </td>
-                    {mostrarDetalhes && (
+                    {mostrarDetalhes && !emEdicao && (
                       <td style={td}>
-                        {!emEdicao && t.nota !== undefined && (
+                        {t.nota !== undefined && (
                           <button onClick={() => darNota(t.id)} title="Clique para alternar Nota enviada/pendente" style={{
                             border: `1px solid ${t.nota === 'Enviada' ? COLORS.green : COLORS.gold}44`, borderRadius: 20, padding: '3px 8px',
                             fontSize: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
@@ -4347,7 +4347,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                       {emEdicao ? (
                         <input type="date" value={dataEdit} onChange={e => setDataEdit(e.target.value)}
                           onClick={e => { try { e.target.showPicker(); } catch (err) {} }}
-                          onKeyDown={e => { if (e.key === 'Enter') salvarEdicao(t.id); }} style={{ ...inputCell, width: 135, cursor: 'pointer' }} />
+                          onKeyDown={e => { if (e.key === 'Enter') salvarEdicao(t.id); }} style={{ ...inputCell, width: 95, cursor: 'pointer' }} />
                       ) : formatarData(t.data)}
                     </td>
                     <td style={{ ...td, whiteSpace: 'nowrap', textAlign: 'center' }}>
