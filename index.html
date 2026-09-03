@@ -104,24 +104,30 @@
     // cai de volta pro localStorage (dados ficam só neste navegador).
     if (!window.storage) {
       let cachePlanilha = null;
-      let cacheCarregado = false;
+      let promiseCarregamento = null;
       let usandoPlanilha = !!APPS_SCRIPT_URL;
 
-      async function carregarDaPlanilha() {
-        if (cacheCarregado) return cachePlanilha;
-        cacheCarregado = true;
-        if (!APPS_SCRIPT_URL) { cachePlanilha = {}; return cachePlanilha; }
-        try {
-          const resp = await fetch(APPS_SCRIPT_URL, { method: 'GET' });
-          cachePlanilha = await resp.json();
-          window.__statusPlanilha = 'ok';
-        } catch (e) {
-          console.warn('Não consegui carregar da Planilha Google, usando dados locais deste navegador.', e);
-          cachePlanilha = {};
-          usandoPlanilha = false;
-          window.__statusPlanilha = 'erro';
-        }
-        return cachePlanilha;
+      // Todas as chamadas que acontecem "ao mesmo tempo" (ex: Compras, Valores, Lançamentos
+      // e Recibos pedindo seus dados juntos, assim que o painel abre) precisam esperar a
+      // MESMA busca na Planilha — se cada uma checasse e disparasse sua própria busca, só a
+      // primeira pegaria o dado real; as outras cairiam pro localStorage desatualizado.
+      function carregarDaPlanilha() {
+        if (promiseCarregamento) return promiseCarregamento;
+        promiseCarregamento = (async () => {
+          if (!APPS_SCRIPT_URL) { cachePlanilha = {}; return cachePlanilha; }
+          try {
+            const resp = await fetch(APPS_SCRIPT_URL, { method: 'GET' });
+            cachePlanilha = await resp.json();
+            window.__statusPlanilha = 'ok';
+          } catch (e) {
+            console.warn('Não consegui carregar da Planilha Google, usando dados locais deste navegador.', e);
+            cachePlanilha = {};
+            usandoPlanilha = false;
+            window.__statusPlanilha = 'erro';
+          }
+          return cachePlanilha;
+        })();
+        return promiseCarregamento;
       }
 
       window.storage = {
