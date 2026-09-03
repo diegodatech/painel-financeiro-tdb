@@ -164,6 +164,27 @@
             }
           }
           return true;
+        },
+        // força reenviar TUDO que está guardado neste navegador pra Planilha Google agora,
+        // de novo — útil como um "Salvar" manual (tipo Excel/Ctrl+S) pra quem quer ter certeza
+        // de que nada ficou só salvo localmente por causa de uma falha de conexão silenciosa
+        resync: async () => {
+          if (!APPS_SCRIPT_URL) return { ok: true, total: 0, falhas: 0 };
+          if (!cachePlanilha) await carregarDaPlanilha();
+          const entradas = Object.entries(cachePlanilha || {});
+          let falhas = 0;
+          for (const [key, val] of entradas) {
+            try {
+              await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ key, value: val }),
+              });
+            } catch (e) { falhas++; }
+          }
+          usandoPlanilha = true;
+          window.__statusPlanilha = falhas === 0 ? 'ok' : 'erro';
+          return { ok: falhas === 0, total: entradas.length, falhas };
         }
       };
     }
@@ -752,6 +773,22 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
     }
   }
   function apagar() { setDigitado(d => d.slice(0, -1)); setErro(''); }
+
+  // aceita digitação pelo teclado físico do computador (antes só funcionava clicando
+  // nos botões com o mouse) — números 0-9 digitam, Backspace apaga um dígito
+  useEffect(() => {
+    function aoPressionarTecla(e) {
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        apertarDigito(e.key);
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        apagar();
+      }
+    }
+    window.addEventListener('keydown', aoPressionarTecla);
+    return () => window.removeEventListener('keydown', aoPressionarTecla);
+  }, [digitado, modo, primeiroPin, pinConfigurado]);
 
   function confirmarDigitos(valor) {
     if (modo === 'entrar') {
@@ -2593,6 +2630,26 @@ function PainelFinanceiro() {
   const [transacoes, setTransacoes] = useState(null);
   const [loading, setLoading] = useState(true);
   const [storageOk, setStorageOk] = useState(true);
+  const [salvandoAgora, setSalvandoAgora] = useState(false);
+  const [mensagemSalvarAgora, setMensagemSalvarAgora] = useState(null);
+
+  // "Salvar agora" manual, tipo Ctrl+S do Excel — reenvia tudo que está guardado
+  // neste navegador pra Planilha Google de novo, mesmo o que já tinha sido salvo,
+  // pra garantir que nada ficou perdido só neste aparelho por causa de uma falha de rede
+  async function salvarTudoAgora() {
+    setSalvandoAgora(true);
+    setMensagemSalvarAgora(null);
+    try {
+      const resultado = await (window.storage.resync ? window.storage.resync() : Promise.resolve({ ok: true, total: 0 }));
+      setMensagemSalvarAgora(resultado.ok
+        ? '✓ Tudo salvo na Planilha Google!'
+        : `⚠ ${resultado.falhas} item(ns) não sincronizaram agora, mas continuam salvos neste navegador.`);
+    } catch (e) {
+      setMensagemSalvarAgora('⚠ Não consegui salvar agora — verifique a conexão.');
+    }
+    setSalvandoAgora(false);
+    setTimeout(() => setMensagemSalvarAgora(null), 4000);
+  }
   const [modoPrivado, setModoPrivado] = useState(() => lerPreferencia('modoPrivado')); // esconde os valores (bolinhas) quando ligado — usado em Visão Geral e Orçamento
   // em Lançamentos e Mensalidades, os totais e a lista têm interruptores separados —
   // assim dá pra esconder só o resumo geral e continuar vendo os valores individuais pra trabalhar
@@ -3364,8 +3421,35 @@ function PainelFinanceiro() {
               >
                 {temaEscuro ? '☀️ Modo claro' : '🌙 Modo escuro'}
               </button>
+              <button
+                onClick={salvarTudoAgora}
+                disabled={salvandoAgora}
+                title="Força salvar tudo na Planilha Google agora, igual o Ctrl+S do Excel — use se quiser ter certeza de que nada ficou só salvo neste computador"
+                style={{
+                  background: salvandoAgora ? COLORS.paperCard : COLORS.green,
+                  border: `1.5px solid ${COLORS.green}`,
+                  borderRadius: 8,
+                  padding: '6px 13px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: salvandoAgora ? COLORS.green : '#FFFFFF',
+                  cursor: salvandoAgora ? 'default' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}
+              >
+                {salvandoAgora ? '⏳ Salvando...' : '💾 Salvar agora'}
+              </button>
             </div>
           </div>
+
+          {mensagemSalvarAgora && (
+            <div className="mono" style={{ color: mensagemSalvarAgora.startsWith('✓') ? COLORS.green : COLORS.gold, fontSize: 11.5, marginTop: 3, fontWeight: 700 }}>
+              {mensagemSalvarAgora}
+            </div>
+          )}
 
           <div className="mono" style={{ color: COLORS.red, fontSize: 11, marginTop: 3 }}>
             {!storageOk && <span>⚠ sem conexão com o armazenamento — alterações não vão salvar</span>}
