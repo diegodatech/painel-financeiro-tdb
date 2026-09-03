@@ -24,6 +24,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
+    html, body { overflow-x: hidden; }
     :root {
       --c-paper: #FBF7FB;
       --c-paperCard: #FFFFFF;
@@ -3189,7 +3190,11 @@ function PainelFinanceiro() {
   }
 
   return (
-    <div className={`painel-raiz${temaEscuro ? ' dark-mode' : ''}`} style={{ background: COLORS.paper, minHeight: '100vh', fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink, zoom: 0.92 }}>
+    <div className={`painel-raiz${temaEscuro ? ' dark-mode' : ''}`} style={{
+      background: COLORS.paper, minHeight: '108.7vh', width: '108.7%',
+      fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink,
+      transform: 'scale(0.92)', transformOrigin: 'top left',
+    }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         /* o "zoom" e uma propriedade nao-padrao que se comporta de forma inconsistente
