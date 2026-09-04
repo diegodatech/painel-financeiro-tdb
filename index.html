@@ -1060,7 +1060,7 @@ function Recibos() {
 
   function mostrarToast(msg) {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2200);
+    setTimeout(() => setToastMsg(null), 4000);
   }
 
   if (!dados) {
@@ -1601,7 +1601,7 @@ function Compras() {
 
   function mostrarToast(msg) {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2500);
+    setTimeout(() => setToastMsg(null), 4000);
   }
 
   if (!dados) {
@@ -2238,7 +2238,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
 
   function mostrarToast(msg) {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2000);
+    setTimeout(() => setToastMsg(null), 4000);
   }
 
   if (!dados || !casos) {
@@ -3134,7 +3134,7 @@ function PainelFinanceiro() {
     setNovaCategoria('');
     setNovoValor('');
     setFormOk(true);
-    setTimeout(() => setFormOk(false), 2500);
+    setTimeout(() => setFormOk(false), 4000);
   }
 
   function removerLancamento(id) {
@@ -4581,7 +4581,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
   const [toastMsg, setToastMsg] = useState(null);
   function mostrarToast(msg) {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2600);
+    setTimeout(() => setToastMsg(null), 4000);
   }
 
   // carrega a tabela de referência de Valores (Particular/Convênios), só pra sugerir preço
@@ -5002,6 +5002,11 @@ function Orcamento({ transacoes, modoPrivado, setModoPrivado }) {
   const [novoValor, setNovoValor] = useState('');
   const [formErro, setFormErro] = useState('');
   const [buscaOrcamento, setBuscaOrcamento] = useState('');
+  const [toastMsg, setToastMsg] = useState(null);
+  function mostrarToast(msg) {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 4000);
+  }
 
   // lista das categorias de despesa (Fixa/Variável) já usadas em Lançamentos,
   // pra mostrar como sugestão de clique em vez de precisar digitar do zero
@@ -5074,6 +5079,7 @@ function Orcamento({ transacoes, modoPrivado, setModoPrivado }) {
     if (!num || num <= 0) { setFormErro('Coloque um valor válido.'); return; }
     if (orcamentos[cat] != null) { setFormErro('Essa categoria já tem orçamento — edite direto na lista abaixo.'); return; }
     salvarOrcamentos({ ...orcamentos, [cat]: num });
+    mostrarToast(`✓ Orçamento de ${cat} lançado!`);
     setNovaCategoria(''); setNovoValor('');
   }
 
@@ -5106,6 +5112,7 @@ function Orcamento({ transacoes, modoPrivado, setModoPrivado }) {
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
+      <Toast mensagem={toastMsg} />
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button onClick={() => setModoPrivado(v => !v)} title={modoPrivado ? 'Mostrar valores' : 'Esconder valores'} style={{
           background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
