@@ -4650,7 +4650,11 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
       .filter(t => filtroStatus === 'TODOS' || t.status === filtroStatus)
       .filter(t => filtroBanco === 'TODOS' || (filtroBanco === 'SEM_BANCO' ? !t.banco : t.banco === filtroBanco))
       .filter(t => filtroConvenio === 'TODOS' || (filtroConvenio === 'SEM_CONVENIO' ? !t.convenio : t.convenio === filtroConvenio))
-      .filter(t => filtroNota === 'TODOS' || (filtroNota === 'SEM_NOTA' ? t.nota === undefined : t.nota === filtroNota))
+      .filter(t => filtroNota === 'TODOS' || (
+        filtroNota === 'SEM_NOTA' ? t.nota === undefined
+        : filtroNota === 'PAGO_NOTA_PENDENTE' ? (t.status === 'Pago' && t.nota === 'Pendente')
+        : t.nota === filtroNota
+      ))
       .filter(t => !filtroData || formatarData(t.data).includes(filtroData.trim()) || (t.data || '').includes(filtroData.trim()))
       .filter(t => !filtroTexto || nomeExibicao(t.categoria).toLowerCase().includes(filtroTexto.toLowerCase()) || (t.pai || '').toLowerCase().includes(filtroTexto.toLowerCase()))
       .sort((a, b) => nomeExibicao(a.categoria).localeCompare(nomeExibicao(b.categoria)));
@@ -4951,8 +4955,10 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
           <option value="SEM_CONVENIO">Sem convênio</option>
           {conveniosDisponiveis.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <select value={filtroNota} onChange={e => setFiltroNota(e.target.value)} style={inputStyle}>
+        <select value={filtroNota} onChange={e => setFiltroNota(e.target.value)} style={inputStyle}
+          title="Dica: 'Pagou e falta nota' é ótimo pra ir emitindo as notas de quem já pagou, uma de cada vez">
           <option value="TODOS">Todas as notas</option>
+          <option value="PAGO_NOTA_PENDENTE">⭐ Pagou e falta nota</option>
           <option value="Enviada">Nota enviada</option>
           <option value="Pendente">Nota pendente</option>
           <option value="SEM_NOTA">Sem nota (empresas)</option>
