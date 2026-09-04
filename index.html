@@ -304,46 +304,17 @@ function abrevConvenio(nome) {
   return CONVENIO_ABREV[nome] || (nome.length > 11 ? nome.slice(0, 10) + '…' : nome);
 }
 
-// Todos os valores individuais extraídos das fotos da planilha
-const VALORES_FOTOS = [
-  615.00,
-  648.00,
-  905.00,
-  953.00,
-  1028.00,
-  1070.00,
-  1083.00,
-  1096.84,
-  1109.17,
-  1127.00,
-  1158.00,
-  1360.00,
-  1400.00,
-  1432.00,
-  1483.00,
-  1483.90,
-  1562.00,
-  2671.00,
-  2671.02,
-  2812.00,
-];
-
-// Combinações mais usadas (Valor Cheio → Valor com Desconto) e valores únicos das fotos
-const VALORES_PRESET = [
-  { cheio: 648, pago: 615 },
-  { cheio: 953, pago: 905 },
+// Valores avulsos/especiais (Valor Cheio → Valor com Desconto) que não se encaixam na Tabela
+// de Valores por convênio — usados como ponto de partida na primeira vez que o painel abre;
+// depois disso, quem manda é o que está salvo em 'valores_avulsos' (editável na aba Valores)
+const SEED_VALORES_AVULSOS = [
   { cheio: null, pago: 985 },
-  { cheio: 1083, pago: 1028 },
   { cheio: 1083, pago: 1083 },
   { cheio: null, pago: 1096.84 },
   { cheio: 1158, pago: 1109.17 },
-  { cheio: 1127, pago: 1070 },
-  { cheio: 1432, pago: 1360 },
   { cheio: null, pago: 1400 },
-  { cheio: 1562, pago: 1483 },
   { cheio: null, pago: 1483.90 },
   { cheio: 1562, pago: 1562 },
-  { cheio: 2812, pago: 2671 },
   { cheio: null, pago: 2671.02 },
 ];
 
@@ -2182,6 +2153,14 @@ function Valores({ modoPrivado, setModoPrivado }) {
   const [reajustePercentual, setReajustePercentual] = useState('');
   const [reajusteSelecionados, setReajusteSelecionados] = useState({});
   const [toastMsg, setToastMsg] = useState(null);
+  // valores avulsos/especiais (não ligados a um convênio) — o mesmo menu "Escolher valor"
+  // usado em Mensalidades pra lançar rapidinho, só que agora editável aqui
+  const [avulsos, setAvulsos] = useState(null);
+  const [novoAvulsoCheio, setNovoAvulsoCheio] = useState('');
+  const [novoAvulsoPago, setNovoAvulsoPago] = useState('');
+  const [editandoAvulso, setEditandoAvulso] = useState(null);
+  const [editAvulsoCheio, setEditAvulsoCheio] = useState('');
+  const [editAvulsoPago, setEditAvulsoPago] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -2207,6 +2186,17 @@ function Valores({ modoPrivado, setModoPrivado }) {
       } catch (e) {
         setCasos(SEED_CASOS_ESPECIAIS);
       }
+      try {
+        const r3 = await window.storage.get('valores_avulsos', false);
+        if (r3 && r3.value) {
+          setAvulsos(JSON.parse(r3.value));
+        } else {
+          setAvulsos(SEED_VALORES_AVULSOS);
+          await window.storage.set('valores_avulsos', JSON.stringify(SEED_VALORES_AVULSOS), false);
+        }
+      } catch (e) {
+        setAvulsos(SEED_VALORES_AVULSOS);
+      }
     })();
   }, []);
 
@@ -2218,6 +2208,43 @@ function Valores({ modoPrivado, setModoPrivado }) {
   async function salvarCasos(novosCasos) {
     setCasos(novosCasos);
     try { await window.storage.set('valores_casos_especiais', JSON.stringify(novosCasos), false); } catch (e) {}
+  }
+
+  async function salvarAvulsos(next) {
+    setAvulsos(next);
+    try { await window.storage.set('valores_avulsos', JSON.stringify(next), false); } catch (e) {}
+  }
+
+  function adicionarAvulso(e) {
+    e.preventDefault();
+    const pago = parseBRLInput(novoAvulsoPago);
+    if (!pago || pago <= 0) { mostrarToast('Coloque o valor pago (com desconto).'); return; }
+    const cheio = parseBRLInput(novoAvulsoCheio);
+    salvarAvulsos([...(avulsos || []), { cheio: cheio || null, pago }]);
+    setNovoAvulsoCheio(''); setNovoAvulsoPago('');
+    mostrarToast('✓ Valor avulso adicionado!');
+  }
+
+  function iniciarEdicaoAvulso(idx) {
+    setEditandoAvulso(idx);
+    setEditAvulsoCheio(avulsos[idx].cheio ? formatBRLNumber(avulsos[idx].cheio) : '');
+    setEditAvulsoPago(formatBRLNumber(avulsos[idx].pago));
+  }
+
+  function salvarEdicaoAvulso() {
+    const pago = parseBRLInput(editAvulsoPago);
+    if (!pago || pago <= 0) { setEditandoAvulso(null); return; }
+    const cheio = parseBRLInput(editAvulsoCheio);
+    const next = [...avulsos];
+    next[editandoAvulso] = { cheio: cheio || null, pago };
+    salvarAvulsos(next);
+    setEditandoAvulso(null);
+    mostrarToast('✓ Valor atualizado!');
+  }
+
+  function removerAvulso(idx) {
+    if (!window.confirm(`Remover "${rotuloPreset(avulsos[idx])}" da lista de valores avulsos?`)) return;
+    salvarAvulsos(avulsos.filter((_, i) => i !== idx));
   }
 
   function iniciarEdicaoNomeCaso(casoIdx, nomeAtual) {
@@ -2635,6 +2662,78 @@ function Valores({ modoPrivado, setModoPrivado }) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* VALORES AVULSOS / ESPECIAIS — combinações "Cheio → Pago" que não pertencem a
+          nenhum convênio (ex: mensalidade parcial, valor combinado avulso). É a mesma lista
+          que aparece no menu "Escolher valor" ao lançar mensalidades. */}
+      <div style={{ marginTop: 6 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
+          🏷️ Valores avulsos / especiais
+        </div>
+        <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 12 }}>
+          Combinações de valor (cheio → pago) que não são de nenhum convênio específico — aparecem no menu "Escolher valor" ao lançar uma mensalidade. Deixe o campo "Valor cheio" em branco se não houver desconto.
+        </div>
+        {avulsos === null ? (
+          <div style={{ color: COLORS.inkSoft, fontSize: 12.5 }}>Carregando...</div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+            {avulsos.map((p, idx) => (
+              <div key={idx} style={{
+                display: 'flex', alignItems: 'center', gap: 6, background: COLORS.paperCard,
+                border: `1px solid ${COLORS.line}`, borderRadius: 9, padding: '8px 10px',
+              }}>
+                {editandoAvulso === idx ? (
+                  <>
+                    <input autoFocus value={editAvulsoCheio} onChange={e => setEditAvulsoCheio(e.target.value)}
+                      placeholder="Cheio (opc.)" className="mono"
+                      onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoAvulso(); if (e.key === 'Escape') setEditandoAvulso(null); }}
+                      style={{ width: 90, border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 7px', fontSize: 12.5, boxSizing: 'border-box' }} />
+                    <span style={{ color: COLORS.inkSoft }}>→</span>
+                    <input value={editAvulsoPago} onChange={e => setEditAvulsoPago(e.target.value)}
+                      placeholder="Pago" className="mono"
+                      onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoAvulso(); if (e.key === 'Escape') setEditandoAvulso(null); }}
+                      style={{ width: 90, border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 7px', fontSize: 12.5, boxSizing: 'border-box' }} />
+                    <button onClick={salvarEdicaoAvulso} style={{ background: COLORS.green, border: 'none', borderRadius: 5, padding: '5px 7px', cursor: 'pointer', display: 'flex' }}>
+                      <Check size={12} color="#FFFFFF" />
+                    </button>
+                    <button onClick={() => setEditandoAvulso(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
+                      <X size={12} color={COLORS.inkSoft} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span onClick={() => iniciarEdicaoAvulso(idx)} className="mono" style={{ fontSize: 13, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' }}>
+                      {rotuloPreset(p)}
+                    </span>
+                    <button onClick={() => iniciarEdicaoAvulso(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4, display: 'flex' }}>
+                      <Pencil size={11} />
+                    </button>
+                    <button onClick={() => removerAvulso(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4, display: 'flex' }}>
+                      <Trash2 size={12} color={COLORS.red} />
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+            {avulsos.length === 0 && <div style={{ color: COLORS.inkSoft, fontSize: 12.5 }}>Nenhum valor avulso cadastrado ainda.</div>}
+          </div>
+        )}
+        <form onSubmit={adicionarAvulso} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end', background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: 14 }}>
+          <div style={{ display: 'grid', gap: 4, flex: '1 1 130px' }}>
+            <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>VALOR CHEIO (OPC.)</label>
+            <input value={novoAvulsoCheio} onChange={e => setNovoAvulsoCheio(e.target.value)} placeholder="0,00" className="mono"
+              style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ display: 'grid', gap: 4, flex: '1 1 130px' }}>
+            <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>VALOR PAGO</label>
+            <input value={novoAvulsoPago} onChange={e => setNovoAvulsoPago(e.target.value)} placeholder="0,00" className="mono"
+              style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' }} />
+          </div>
+          <button type="submit" style={{ background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer', height: 37, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Plus size={14} /> Adicionar
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -4256,7 +4355,7 @@ function formatarData(iso) {
 function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, iniciarEdicao, cancelarEdicao, salvarEdicao, darBaixa, darNota, removerLancamento,
   valorEdit, setValorEdit, valorCheioEdit, setValorCheioEdit, statusEdit, setStatusEdit, bancoEdit, setBancoEdit,
   paiEdit, setPaiEdit, tirarNotaEdit, setTirarNotaEdit, convenioEdit, setConvenioEdit, dataEdit, setDataEdit,
-  okEdit, setOkEdit, inputStyle, modoPrivado, nomeEdit, setNomeEdit }) {
+  okEdit, setOkEdit, inputStyle, modoPrivado, nomeEdit, setNomeEdit, avulsos }) {
 
   const th = { padding: '9px 8px', fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'left', whiteSpace: 'nowrap' };
   const td = { padding: '8px 8px', fontSize: 12, color: COLORS.ink, borderTop: `1px solid ${COLORS.lineSoft}`, verticalAlign: 'middle' };
@@ -4353,7 +4452,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                               if (e.target.value === '') return;
                               const val = e.target.value;
                               if (val.startsWith('p:')) {
-                                const p = VALORES_PRESET[Number(val.replace('p:', ''))];
+                                const p = (avulsos || SEED_VALORES_AVULSOS)[Number(val.replace('p:', ''))];
                                 setValorCheioEdit(p.cheio ? formatBRLNumber(p.cheio) : '');
                                 setValorEdit(formatBRLNumber(p.pago));
                               } else if (val.startsWith('v:')) {
@@ -4364,14 +4463,9 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                             style={{ ...inputCell, fontSize: 11, padding: '4px 6px', color: COLORS.gold, fontWeight: 700, background: COLORS.paperCard }}
                           >
                             <option value="">↓ Selecionar valor da lista...</option>
-                            <optgroup label="Combinações (Cheio → Pago)">
-                              {VALORES_PRESET.map((p, i) => (
+                            <optgroup label="Valores avulsos / especiais">
+                              {(avulsos || SEED_VALORES_AVULSOS).map((p, i) => (
                                 <option key={'p-' + i} value={'p:' + i}>{rotuloPreset(p)}</option>
-                              ))}
-                            </optgroup>
-                            <optgroup label="Valores Individuais das Fotos">
-                              {VALORES_FOTOS.map((v, i) => (
-                                <option key={'v-' + i} value={'v:' + v}>{formatBRL(v)}</option>
                               ))}
                             </optgroup>
                           </select>
@@ -4606,6 +4700,19 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
       }
     })();
   }, []);
+  // lista de "valores avulsos" (combinações especiais que não são de nenhum convênio) —
+  // é a mesma lista que fica editável na aba Valores, em 'valores_avulsos'
+  const [avulsos, setAvulsos] = useState(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('valores_avulsos', false);
+        setAvulsos(r && r.value ? JSON.parse(r.value) : SEED_VALORES_AVULSOS);
+      } catch (e) {
+        setAvulsos(SEED_VALORES_AVULSOS);
+      }
+    })();
+  }, []);
   const [sugestaoValor, setSugestaoValor] = useState('');
 
   const [editandoId, setEditandoId] = useState(null);
@@ -4651,6 +4758,23 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
     const set = new Set(entradas.map(t => t.convenio).filter(Boolean));
     return [...set].sort();
   }, [entradas]);
+
+  // valores conhecidos, pra sugerir enquanto digita (autocomplete nativo do navegador) —
+  // vem direto da Tabela de Valores e dos Avulsos, então sempre reflete o que está editado
+  const valoresConhecidos = useMemo(() => {
+    const set = new Set();
+    if (tabelaValores) {
+      Object.values(tabelaValores).forEach(g => g.grupos.forEach(sub => {
+        if (sub.comDesconto) set.add(sub.comDesconto);
+        if (sub.semDesconto) set.add(sub.semDesconto);
+      }));
+    }
+    (avulsos || SEED_VALORES_AVULSOS).forEach(p => {
+      if (p.cheio) set.add(p.cheio);
+      if (p.pago) set.add(p.pago);
+    });
+    return [...set].sort((a, b) => a - b);
+  }, [tabelaValores, avulsos]);
 
   const semFiltroNenhum = filtroMes === 'TODOS' && !filtroTexto;
   const filtradasCompleto = useMemo(() => {
@@ -4749,7 +4873,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
     valorEdit, setValorEdit, valorCheioEdit, setValorCheioEdit,
     statusEdit, setStatusEdit, bancoEdit, setBancoEdit,
     paiEdit, setPaiEdit, tirarNotaEdit, setTirarNotaEdit, convenioEdit, setConvenioEdit, dataEdit, setDataEdit, okEdit, setOkEdit, inputStyle,
-    nomeEdit, setNomeEdit,
+    nomeEdit, setNomeEdit, avulsos,
   };
 
   return (
@@ -4839,7 +4963,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
                   if (e.target.value === '') return;
                   const val = e.target.value;
                   if (val.startsWith('p:')) {
-                    const p = VALORES_PRESET[Number(val.replace('p:', ''))];
+                    const p = (avulsos || SEED_VALORES_AVULSOS)[Number(val.replace('p:', ''))];
                     setNovoValorCheio(p.cheio ? formatBRLNumber(p.cheio) : '');
                     setNovoValor(formatBRLNumber(p.pago));
                   } else if (val.startsWith('v:')) {
@@ -4866,14 +4990,9 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
                     )}
                   </optgroup>
                 )}
-                <optgroup label="Combinações (Cheio → Pago)">
-                  {VALORES_PRESET.map((p, i) => (
+                <optgroup label="Valores avulsos / especiais">
+                  {(avulsos || SEED_VALORES_AVULSOS).map((p, i) => (
                     <option key={'np-' + i} value={'p:' + i}>{rotuloPreset(p)}</option>
-                  ))}
-                </optgroup>
-                <optgroup label="Valores Individuais das Fotos">
-                  {VALORES_FOTOS.map((v, i) => (
-                    <option key={'nv-' + i} value={'v:' + v}>{formatBRL(v)}</option>
                   ))}
                 </optgroup>
               </select>
@@ -4990,7 +5109,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
         {CONVENIOS_CONHECIDOS.map(c => <option key={c} value={c} />)}
       </datalist>
       <datalist id="valores-fotos-lista">
-        {VALORES_FOTOS.map((v, i) => (
+        {valoresConhecidos.map((v, i) => (
           <option key={i} value={formatBRLNumber(v)} />
         ))}
       </datalist>
