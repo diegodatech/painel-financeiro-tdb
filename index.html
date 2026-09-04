@@ -546,21 +546,30 @@ const PIE_COLORS = ['#651B58', '#2E8C89'];
 
 // Aviso temporário de confirmação ("✓ Salvo com sucesso"), some sozinho depois de um tempo.
 // tipo 'ok' (verde, padrão) ou 'aviso' (dourado/laranja) — pra distinguir sucesso de alerta
+//
+// Usa um "portal" pra desenhar direto no <body> da página, por fora do painel-raiz.
+// Por quê: o painel-raiz tem um transform:scale() pra caber mais conteúdo na tela, e isso
+// faz o navegador tratar esse "position: fixed" como relativo ao painel (não à tela real).
+// No celular/tablet a página quase sempre cabe inteira, então por coincidência a mensagem
+// aparecia no lugar certo — mas no computador, com a página mais comprida e rolada pra
+// baixo pra preencher o formulário, ela subia grudada no topo do painel inteiro, bem acima
+// da parte visível da tela, e passava despercebida. O portal resolve isso de vez.
 function Toast({ mensagem, tipo = 'ok' }) {
   if (!mensagem) return null;
   const cores = tipo === 'aviso'
     ? { fundo: '#B8842E', icone: '⚠' }
     : { fundo: '#1F7A4D', icone: '✓' };
-  return (
+  return ReactDOM.createPortal(
     <div style={{
-      position: 'fixed', top: 18, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+      position: 'fixed', top: 18, left: '50%', transform: 'translateX(-50%)', zIndex: 99999,
       background: cores.fundo, color: '#FFFFFF', padding: '11px 22px', borderRadius: 10,
       fontSize: 13.5, fontWeight: 600, boxShadow: '0 6px 20px rgba(0,0,0,0.22)',
       display: 'flex', alignItems: 'center', gap: 8, animation: 'toastIn 0.25s ease-out',
-      maxWidth: 420, textAlign: 'center',
+      maxWidth: 420, textAlign: 'center', fontFamily: 'Inter, -apple-system, sans-serif',
     }}>
       <span style={{ fontSize: 15 }}>{cores.icone}</span>{mensagem}
-    </div>
+    </div>,
+    document.body
   );
 }
 
