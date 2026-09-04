@@ -2853,13 +2853,17 @@ function PainelFinanceiro() {
                 pai: info.pai || null, tirarNota: info.tirarNota || null, banco: null,
                 valorCheio: info.valorCheio || ENTRADAS_CONSISTENTES[categoria] || null,
                 convenio: info.convenio || null,
-                nota: null, data: null,
+                // alunos usam "nota" pra controlar se a nota fiscal foi enviada — igual ao formulário
+                // manual de "Adicionar", que também começa como 'Pendente' pra aluno
+                nota: 'Pendente', data: null,
               });
             } else {
               novos.push({
                 id: maxId, mes, categoria, tipo: 'Entrada', valor: null,
                 valorCheio: ENTRADAS_CONSISTENTES[categoria] || null,
-                status: 'Pendente', nota: 'Pendente', data: null,
+                // empresas/convênios não têm controle de nota — deixamos sem o campo (undefined),
+                // igual ao formulário manual, pra não aparecerem por engano no filtro "Nota pendente"
+                status: 'Pendente', data: null,
               });
             }
             existentes.add(mes + '|' + categoria);
@@ -2875,6 +2879,31 @@ function PainelFinanceiro() {
       } catch (e) { setStorageOk(false); }
     })();
   }, [transacoes === null]);
+
+  // Conserto: por um bug antigo na geração automática de meses futuros, alguns alunos
+  // ficaram com o campo de "nota" em branco (deveriam começar como 'Pendente') e alguns
+  // convênios/empresas (que não usam nota) ficaram marcados como 'Pendente' por engano —
+  // isso fazia o filtro "Nota pendente" mostrar convênios e esconder alunos. Roda sozinho,
+  // sempre que a lista carrega, e só grava de novo se realmente encontrar algo pra corrigir.
+  useEffect(() => {
+    if (!transacoes) return;
+    let mudou = false;
+    const corrigidos = transacoes.map(t => {
+      if (t.tipo !== 'Entrada') return t;
+      const ehAluno = t.categoria.startsWith('Mensalidade -');
+      if (ehAluno && (t.nota === null || t.nota === undefined)) {
+        mudou = true;
+        return { ...t, nota: 'Pendente' };
+      }
+      if (!ehAluno && t.nota !== undefined) {
+        mudou = true;
+        const { nota, ...resto } = t;
+        return resto;
+      }
+      return t;
+    });
+    if (mudou) persist(corrigidos);
+  }, [transacoes]);
 
   async function persist(next) {
     setTransacoes(next);
