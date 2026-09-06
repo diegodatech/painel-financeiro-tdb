@@ -167,13 +167,15 @@
         },
         // força reenviar TUDO que está guardado neste navegador pra Planilha Google agora,
         // de novo — útil como um "Salvar" manual (tipo Excel/Ctrl+S) pra quem quer ter certeza
-        // de que nada ficou só salvo localmente por causa de uma falha de conexão silenciosa
-        resync: async () => {
+        // de que nada ficou só salvo localmente por causa de uma falha de conexão silenciosa.
+        // onProgress(feitos, total), se passado, é chamado depois de cada item processado.
+        resync: async (onProgress) => {
           if (!APPS_SCRIPT_URL) return { ok: true, total: 0, falhas: 0 };
           if (!cachePlanilha) await carregarDaPlanilha();
           const entradas = Object.entries(cachePlanilha || {});
           let falhas = 0;
-          for (const [key, val] of entradas) {
+          for (let i = 0; i < entradas.length; i++) {
+            const [key, val] = entradas[i];
             try {
               await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
@@ -181,6 +183,7 @@
                 body: JSON.stringify({ key, value: val }),
               });
             } catch (e) { falhas++; }
+            if (onProgress) onProgress(i + 1, entradas.length);
           }
           usandoPlanilha = true;
           window.__statusPlanilha = falhas === 0 ? 'ok' : 'erro';
@@ -207,6 +210,16 @@ const Plus = ({ size = 16, color = "currentColor", style }) => (
 const Trash2 = ({ size = 16, color = "currentColor", style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
     <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>
+  </svg>
+);
+const RotateCcw = ({ size = 16, color = "currentColor", style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+  </svg>
+);
+const Paperclip = ({ size = 16, color = "currentColor", style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
   </svg>
 );
 const TrendingUp = ({ size = 16, color = "currentColor", style }) => (
@@ -864,7 +877,116 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
   );
 }
 
+// Modal pra trocar o PIN estando já logado — pede o PIN atual primeiro (confirma que é
+// mesmo você), depois pede o novo PIN duas vezes. Se ainda não tinha PIN, pula direto pro novo.
+function ModalAlterarPin({ pinAtual, onFechar, onSalvar }) {
+  const [etapa, setEtapa] = useState(pinAtual ? 'atual' : 'novo'); // 'atual' | 'novo' | 'confirmar'
+  const [digitado, setDigitado] = useState('');
+  const [novoPinTemp, setNovoPinTemp] = useState('');
+  const [erro, setErro] = useState('');
+  const [sucesso, setSucesso] = useState(false);
+
+  function apertar(d) {
+    if (digitado.length >= 4) return;
+    const novo = digitado + d;
+    setDigitado(novo);
+    setErro('');
+    if (novo.length === 4) setTimeout(() => confirmar(novo), 120);
+  }
+  function apagar() { setDigitado(v => v.slice(0, -1)); setErro(''); }
+
+  useEffect(() => {
+    function aoPressionarTecla(e) {
+      if (e.key >= '0' && e.key <= '9') { e.preventDefault(); apertar(e.key); }
+      else if (e.key === 'Backspace') { e.preventDefault(); apagar(); }
+      else if (e.key === 'Escape') { e.preventDefault(); onFechar(); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (digitado.length === 4) confirmar(digitado); }
+    }
+    window.addEventListener('keydown', aoPressionarTecla);
+    return () => window.removeEventListener('keydown', aoPressionarTecla);
+  }, [digitado, etapa, novoPinTemp]);
+
+  function confirmar(valor) {
+    if (etapa === 'atual') {
+      if (valor === pinAtual) {
+        setDigitado(''); setEtapa('novo');
+      } else {
+        setErro('PIN atual incorreto. Tenta de novo.');
+        setDigitado('');
+      }
+    } else if (etapa === 'novo') {
+      setNovoPinTemp(valor);
+      setDigitado('');
+      setEtapa('confirmar');
+    } else if (etapa === 'confirmar') {
+      if (valor === novoPinTemp) {
+        onSalvar(valor);
+        setSucesso(true);
+        setTimeout(onFechar, 1200);
+      } else {
+        setErro('Os PINs não bateram, vamos de novo.');
+        setDigitado(''); setNovoPinTemp(''); setEtapa('novo');
+      }
+    }
+  }
+
+  const titulo = sucesso ? '✓ PIN alterado com sucesso!'
+    : etapa === 'atual' ? 'Digite o PIN atual'
+    : etapa === 'novo' ? 'Digite o novo PIN'
+    : 'Confirme o novo PIN';
+
+  // usa portal pra desenhar direto no <body>, por fora do painel-raiz — senão o
+  // "position: fixed" fica relativo ao painel inteiro (que é bem mais alto que a tela
+  // por causa do zoom da página), e o modal aparece jogado lá embaixo, cortado
+  return ReactDOM.createPortal(
+    <div onClick={onFechar} style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#FFFDFB', borderRadius: 14, padding: '28px 24px', maxWidth: 320, width: 'min(320px, 92vw)',
+        textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+        fontFamily: 'Inter, -apple-system, sans-serif', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box',
+      }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#651B58' }}>🔒 {titulo}</div>
+        {!sucesso && (
+          <>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} style={{ width: 16, height: 16, borderRadius: '50%', border: '2.5px solid #B85CA3', background: digitado.length > i ? '#B85CA3' : 'transparent', flexShrink: 0 }} />
+              ))}
+            </div>
+            {erro && <div style={{ color: '#C1272D', fontSize: 12.5, fontWeight: 600 }}>{erro}</div>}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, justifyContent: 'center', maxWidth: 220, margin: '0 auto', width: '100%' }}>
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
+                <button key={d} onClick={() => apertar(d)} style={{
+                  aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
+                  fontWeight: 600, fontSize: 18, color: '#651B58', cursor: 'pointer', boxSizing: 'border-box',
+                }}>{d}</button>
+              ))}
+              <div />
+              <button onClick={() => apertar('0')} style={{
+                aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
+                fontWeight: 600, fontSize: 18, color: '#651B58', cursor: 'pointer', boxSizing: 'border-box',
+              }}>0</button>
+              <button onClick={apagar} style={{
+                aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: 'none', background: 'none',
+                fontWeight: 600, fontSize: 13, color: '#8A5C81', cursor: 'pointer', boxSizing: 'border-box',
+              }}>⌫</button>
+            </div>
+            <button onClick={onFechar} style={{ background: 'none', border: 'none', color: '#8A5C81', fontSize: 12.5, cursor: 'pointer', textDecoration: 'underline' }}>
+              Cancelar (ou aperte Esc)
+            </button>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function monthIndex(mes) { return MESES.indexOf(mes); }
+
 
 // lê/salva uma preferência (true/false) direto no aparelho, pra lembrar entre uma
 // visita e outra (ex: se os valores estavam ocultos, continuam ocultos ao reabrir)
@@ -1527,6 +1649,27 @@ function Compras() {
   // guarda qual linha está "marcada" em cada sub-aba (Frutas/Rancho/Limpeza), separadamente —
   // assim trocar de aba e voltar não perde onde você tinha parado
   const [linhaSelecionada, setLinhaSelecionada] = useState({ frutas: null, rancho: null, limpeza: null });
+  // lixeira temporária dos itens de compras apagados — restaura em até 30 dias
+  const [lixeiraCompras, setLixeiraCompras] = useState([]);
+  const [lixeiraCompraAberta, setLixeiraCompraAberta] = useState(false);
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('lixeira_compras', false);
+        const salva = r && r.value ? JSON.parse(r.value) : [];
+        const trintaDiasMs = 30 * 24 * 60 * 60 * 1000;
+        const limpa = salva.filter(item => Date.now() - new Date(item.apagadoEm).getTime() < trintaDiasMs);
+        setLixeiraCompras(limpa);
+        if (limpa.length !== salva.length) await window.storage.set('lixeira_compras', JSON.stringify(limpa), false);
+      } catch (e) {
+        setLixeiraCompras([]);
+      }
+    })();
+  }, []);
+  async function persistLixeiraCompras(next) {
+    setLixeiraCompras(next);
+    try { await window.storage.set('lixeira_compras', JSON.stringify(next), false); } catch (e) {}
+  }
 
   useEffect(() => {
     (async () => {
@@ -1678,8 +1821,20 @@ function Compras() {
 
   function removerItem(id) {
     const item = listaAtual.itens.find(i => i.id === id);
-    if (!window.confirm(`Tem certeza que quer remover "${item.nome}" da lista?`)) return;
+    if (!window.confirm(`Tem certeza que quer remover "${item.nome}" da lista?\n\nVai pra lixeira temporária — dá pra restaurar depois.`)) return;
+    persistLixeiraCompras([...lixeiraCompras, { id: 'lixc' + Date.now() + Math.random().toString(36).slice(2), subTab, item, apagadoEm: new Date().toISOString() }]);
     salvar({ ...dados, [subTab]: { ...dados[subTab], itens: listaAtual.itens.filter(it => it.id !== id) } });
+  }
+
+  function restaurarItemCompras(lixId) {
+    const entrada = lixeiraCompras.find(l => l.id === lixId);
+    if (!entrada) return;
+    salvar({ ...dados, [entrada.subTab]: { ...dados[entrada.subTab], itens: [...dados[entrada.subTab].itens, entrada.item] } });
+    persistLixeiraCompras(lixeiraCompras.filter(l => l.id !== lixId));
+  }
+
+  function apagarDefinitivoCompras(lixId) {
+    persistLixeiraCompras(lixeiraCompras.filter(l => l.id !== lixId));
   }
 
   function exportarPDFCompras() {
@@ -1955,6 +2110,47 @@ function Compras() {
           background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px',
           fontWeight: 600, fontSize: 13, cursor: 'pointer', height: 37,
         }}>📄 Exportar lista em PDF</button>
+        <div style={{ position: 'relative' }}>
+          <button onClick={() => setLixeiraCompraAberta(v => !v)} title="Lixeira — restaura itens apagados nos últimos 30 dias" style={{
+            background: COLORS.paperCard, border: `1.5px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 12px',
+            fontWeight: 700, fontSize: 12.5, cursor: 'pointer', height: 37, color: COLORS.inkSoft, display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <Trash2 size={13} /> Lixeira
+            {lixeiraCompras.length > 0 && (
+              <span style={{ background: COLORS.red, color: '#FFF', borderRadius: 999, fontSize: 10, fontWeight: 700, padding: '1px 6px' }}>{lixeiraCompras.length}</span>
+            )}
+          </button>
+          {lixeiraCompraAberta && (
+            <div style={{
+              position: 'absolute', top: '110%', left: 0, zIndex: 500, background: COLORS.paperCard,
+              border: `1px solid ${COLORS.line}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              width: 'min(280px, 92vw)', maxHeight: 320, overflowY: 'auto', padding: 10,
+            }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 8 }}>
+                🗑️ Itens apagados <span style={{ fontWeight: 500, color: COLORS.inkSoft, fontSize: 11 }}>(30 dias)</span>
+              </div>
+              {lixeiraCompras.length === 0 ? (
+                <div style={{ fontSize: 12, color: COLORS.inkSoft }}>Nada apagado recentemente.</div>
+              ) : (
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {[...lixeiraCompras].reverse().map(l => (
+                    <div key={l.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 9px' }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.item.nome}</div>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button onClick={() => restaurarItemCompras(l.id)} title="Restaurar" style={{ background: COLORS.green, border: 'none', borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
+                          <RotateCcw size={16} color="#FFFFFF" />
+                        </button>
+                        <button onClick={() => apagarDefinitivoCompras(l.id)} title="Apagar de vez" style={{ background: 'none', border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
+                          <X size={15} color={COLORS.red} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ position: 'relative' }}>
@@ -2164,6 +2360,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
   // calendário letivo: nº de dias letivos de cada mês, cadastrado uma vez e usado tanto
   // aqui (referência) quanto em Mensalidades (calcular mensalidade proporcional)
   const [diasLetivos, setDiasLetivos] = useState(null);
+  const [capacidadeMaxima, setCapacidadeMaxima] = useState(null);
   // convênios que representam várias vagas numa linha só (ex: Prefeitura com 15 vagas a
   // R$1.249 cada) — usado pra contar certo nos Indicadores da Visão geral, já que essa
   // linha aparece como "1 lançamento" mas na verdade vale por N alunos
@@ -2171,6 +2368,11 @@ function Valores({ modoPrivado, setModoPrivado }) {
   const [novoMultivaga, setNovoMultivaga] = useState({ nome: '', vagasTotais: '', vagasPreenchidas: '', valorPorAluno: '' });
   const [editandoMultivaga, setEditandoMultivaga] = useState(null);
   const [editMultivaga, setEditMultivaga] = useState({});
+  // categorias de despesa que contam como "alimentação" e "água/energia", pra calcular o
+  // custo por criança na Visão geral — vem das categorias que já existem em Lançamentos
+  const [categoriasDespesaDisponiveis, setCategoriasDespesaDisponiveis] = useState([]);
+  const [categoriasAlimentacao, setCategoriasAlimentacao] = useState(null);
+  const [categoriasAgua, setCategoriasAgua] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -2214,13 +2416,78 @@ function Valores({ modoPrivado, setModoPrivado }) {
         setDiasLetivos({});
       }
       try {
+        const rcap = await window.storage.get('capacidade_maxima', false);
+        setCapacidadeMaxima(rcap && rcap.value ? Number(rcap.value) : 0);
+      } catch (e) {
+        setCapacidadeMaxima(0);
+      }
+      try {
         const r5 = await window.storage.get('convenios_multivaga', false);
         setConveniosMultivaga(r5 && r5.value ? JSON.parse(r5.value) : []);
       } catch (e) {
         setConveniosMultivaga([]);
       }
+      let categoriasDisponiveis = [];
+      try {
+        const rt = await window.storage.get('transacoes_financas2026', false);
+        const todas = rt && rt.value ? JSON.parse(rt.value) : [];
+        // agrupa por nome "normalizado" (sem acento, sem espaço duplo, maiúsculo) — assim
+        // "Santa Clara", "SANTA CLARA " e "santa  clara" contam como a mesma categoria só uma vez
+        const mapa = new Map();
+        todas.filter(t => t.tipo !== 'Entrada' && t.categoria).forEach(t => {
+          const chave = normalizarTexto(t.categoria);
+          if (chave && !mapa.has(chave)) mapa.set(chave, t.categoria.trim());
+        });
+        categoriasDisponiveis = [...mapa.entries()]
+          .map(([chave, rotulo]) => ({ chave, rotulo }))
+          .sort((a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR'));
+        setCategoriasDespesaDisponiveis(categoriasDisponiveis);
+      } catch (e) {
+        setCategoriasDespesaDisponiveis([]);
+      }
+      try {
+        const rc = await window.storage.get('categorias_indicadores', false);
+        if (rc && rc.value) {
+          const parsed = JSON.parse(rc.value);
+          // normaliza o que já tinha sido salvo antes, pra continuar batendo certo mesmo
+          // que tenha sido gravado com uma grafia (acento/espaço) diferente da atual
+          setCategoriasAlimentacao((parsed.alimentacao || []).map(normalizarTexto));
+          setCategoriasAgua((parsed.agua || []).map(normalizarTexto));
+        } else {
+          // primeira vez: sugere marcado o que já bate com nomes comuns de mercado/água/luz,
+          // pra já vir configurado sem precisar clicar em nada
+          const bateAlimentacao = (c) => /MERCADO|SANTA CLARA|FRUTAS|RANCHO|ALIMENT/i.test(normalizarTexto(c));
+          const bateAgua = (c) => /^LUZ$|AGUA|ENERGIA/i.test(normalizarTexto(c));
+          const sugAlim = categoriasDisponiveis.filter(c => bateAlimentacao(c.rotulo)).map(c => c.chave);
+          const sugAgua = categoriasDisponiveis.filter(c => bateAgua(c.rotulo)).map(c => c.chave);
+          setCategoriasAlimentacao(sugAlim);
+          setCategoriasAgua(sugAgua);
+          if (sugAlim.length || sugAgua.length) {
+            await window.storage.set('categorias_indicadores', JSON.stringify({ alimentacao: sugAlim, agua: sugAgua }), false);
+          }
+        }
+      } catch (e) {
+        setCategoriasAlimentacao([]);
+        setCategoriasAgua([]);
+      }
     })();
   }, []);
+
+  async function salvarCategoriasIndicadores(alimentacao, agua) {
+    setCategoriasAlimentacao(alimentacao);
+    setCategoriasAgua(agua);
+    try { await window.storage.set('categorias_indicadores', JSON.stringify({ alimentacao, agua }), false); } catch (e) {}
+  }
+
+  function alternarCategoriaAlimentacao(cat) {
+    const next = categoriasAlimentacao.includes(cat) ? categoriasAlimentacao.filter(c => c !== cat) : [...categoriasAlimentacao, cat];
+    salvarCategoriasIndicadores(next, categoriasAgua);
+  }
+
+  function alternarCategoriaAgua(cat) {
+    const next = categoriasAgua.includes(cat) ? categoriasAgua.filter(c => c !== cat) : [...categoriasAgua, cat];
+    salvarCategoriasIndicadores(categoriasAlimentacao, next);
+  }
 
   async function salvar(novosDados) {
     setDados(novosDados);
@@ -2282,6 +2549,12 @@ function Valores({ modoPrivado, setModoPrivado }) {
     try { await window.storage.set('dias_letivos', JSON.stringify(next), false); } catch (e) {}
   }
 
+  async function salvarCapacidadeMaxima(valor) {
+    const num = Number(valor) || 0;
+    setCapacidadeMaxima(num);
+    try { await window.storage.set('capacidade_maxima', String(num), false); } catch (e) {}
+  }
+
   async function salvarConveniosMultivaga(next) {
     setConveniosMultivaga(next);
     try { await window.storage.set('convenios_multivaga', JSON.stringify(next), false); } catch (e) {}
@@ -2294,7 +2567,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
     const vagasPreenchidas = Number(novoMultivaga.vagasPreenchidas) || 0;
     const valorPorAluno = parseBRLInput(novoMultivaga.valorPorAluno) || 0;
     if (!nome || !valorPorAluno) { mostrarToast('Preencha o nome do convênio e o valor por aluno.'); return; }
-    salvarConveniosMultivaga([...(conveniosMultivaga || []), { nome, vagasTotais, vagasPreenchidas, valorPorAluno }]);
+    salvarConveniosMultivaga([...(conveniosMultivaga || []), { nome, vagasTotais, vagasPreenchidas, valorPorAluno, atualizadoEm: new Date().toISOString() }]);
     setNovoMultivaga({ nome: '', vagasTotais: '', vagasPreenchidas: '', valorPorAluno: '' });
     mostrarToast('✓ Convênio adicionado!');
   }
@@ -2314,7 +2587,14 @@ function Valores({ modoPrivado, setModoPrivado }) {
     const vagasPreenchidas = Number(editMultivaga.vagasPreenchidas) || 0;
     const valorPorAluno = parseBRLInput(editMultivaga.valorPorAluno) || 0;
     const next = [...conveniosMultivaga];
-    next[editandoMultivaga] = { nome, vagasTotais, vagasPreenchidas, valorPorAluno };
+    const anterior = next[editandoMultivaga];
+    // só atualiza a "data da última mexida" se o nº de vagas preenchidas realmente mudou —
+    // corrigir só o valor/aluno, por exemplo, não conta como "atualizei as vagas"
+    const mudouVagas = anterior.vagasPreenchidas !== vagasPreenchidas;
+    next[editandoMultivaga] = {
+      nome, vagasTotais, vagasPreenchidas, valorPorAluno,
+      atualizadoEm: mudouVagas ? new Date().toISOString() : (anterior.atualizadoEm || new Date().toISOString()),
+    };
     salvarConveniosMultivaga(next);
     setEditandoMultivaga(null);
     mostrarToast('✓ Atualizado!');
@@ -2323,6 +2603,13 @@ function Valores({ modoPrivado, setModoPrivado }) {
   function removerMultivaga(idx) {
     if (!window.confirm(`Remover "${conveniosMultivaga[idx].nome}" da lista de convênios com várias vagas?`)) return;
     salvarConveniosMultivaga(conveniosMultivaga.filter((_, i) => i !== idx));
+  }
+
+  // quantos dias desde a última vez que "vagas preenchidas" foi mexido de verdade
+  function diasDesdeAtualizacao(item) {
+    if (!item.atualizadoEm) return null;
+    const diffMs = Date.now() - new Date(item.atualizadoEm).getTime();
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
   }
 
   function iniciarEdicaoNomeCaso(casoIdx, nomeAtual) {
@@ -2814,6 +3101,27 @@ function Valores({ modoPrivado, setModoPrivado }) {
         </form>
       </div>
 
+      {/* CAPACIDADE MÁXIMA — usado pra calcular a Taxa de Ocupação na Visão geral
+          (alunos matriculados ÷ capacidade máxima) */}
+      <div style={{ marginTop: 6 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
+          🏫 Capacidade Máxima da Escola
+        </div>
+        <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 10 }}>
+          Quantas vagas a escola tem no total (todas as turmas somadas). Usado pra calcular a Taxa de Ocupação na Visão geral.
+        </div>
+        <input
+          type="number" min="0"
+          defaultValue={capacidadeMaxima || ''}
+          onBlur={e => salvarCapacidadeMaxima(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+          placeholder="ex: 65"
+          className="mono"
+          style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 14, boxSizing: 'border-box', width: 140 }}
+        />
+        <span style={{ fontSize: 12, color: COLORS.inkSoft, marginLeft: 8 }}>vagas no total</span>
+      </div>
+
       {/* CALENDÁRIO LETIVO — nº de dias letivos de cada mês, usado em Mensalidades pra
           calcular a mensalidade proporcional de quem entra ou sai no meio do mês */}
       <div style={{ marginTop: 6 }}>
@@ -2900,6 +3208,11 @@ function Valores({ modoPrivado, setModoPrivado }) {
                       <div className="mono" style={{ fontSize: 12, color: COLORS.inkSoft }}>
                         {item.vagasPreenchidas} de {item.vagasTotais} vagas preenchidas · {formatBRL(item.valorPorAluno)}/aluno · total atual: {formatBRL(item.vagasPreenchidas * item.valorPorAluno)}
                       </div>
+                      {diasDesdeAtualizacao(item) != null && diasDesdeAtualizacao(item) > 60 && (
+                        <div style={{ fontSize: 11.5, color: COLORS.red, fontWeight: 700, marginTop: 3 }}>
+                          ⚠ "Vagas preenchidas" não é atualizado há {diasDesdeAtualizacao(item)} dias — confira se ainda está certo
+                        </div>
+                      )}
                     </div>
                     <button onClick={() => iniciarEdicaoMultivaga(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, opacity: 0.5, display: 'flex' }}>
                       <Pencil size={13} />
@@ -2944,6 +3257,395 @@ function Valores({ modoPrivado, setModoPrivado }) {
           </button>
         </form>
       </div>
+
+      {/* CATEGORIAS DE ALIMENTAÇÃO E ÁGUA/ENERGIA — marca quais categorias de despesa (as
+          mesmas já lançadas em Lançamentos) contam pra calcular o custo por criança de
+          alimentação e de água/energia, mostrado nos Indicadores da Visão geral */}
+      <div style={{ marginTop: 6 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
+          🍽️ Categorias de Alimentação e Água/Energia
+        </div>
+        <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 12 }}>
+          Marque quais categorias de despesa (as mesmas que você já usa em Lançamentos) contam como alimentação e como água/energia. Isso é usado só pra calcular o custo por criança desses dois grupos, na Visão geral.
+        </div>
+        {categoriasAlimentacao === null ? (
+          <div style={{ color: COLORS.inkSoft, fontSize: 12.5 }}>Carregando...</div>
+        ) : categoriasDespesaDisponiveis.length === 0 ? (
+          <div style={{ color: COLORS.inkSoft, fontSize: 12.5 }}>Nenhuma categoria de despesa encontrada ainda em Lançamentos.</div>
+        ) : (
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 260px', background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 8, padding: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.ink, marginBottom: 6 }}>🥦 Alimentação</div>
+              <div style={{ display: 'grid', gap: 5, maxHeight: 220, overflowY: 'auto' }}>
+                {categoriasDespesaDisponiveis.map(cat => (
+                  <label key={cat.chave} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: COLORS.ink, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={categoriasAlimentacao.includes(cat.chave)} onChange={() => alternarCategoriaAlimentacao(cat.chave)}
+                      style={{ width: 14, height: 14, cursor: 'pointer' }} />
+                    {cat.rotulo}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: '1 1 260px', background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 8, padding: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.ink, marginBottom: 6 }}>💧 Água / Energia</div>
+              <div style={{ display: 'grid', gap: 5, maxHeight: 220, overflowY: 'auto' }}>
+                {categoriasDespesaDisponiveis.map(cat => (
+                  <label key={cat.chave} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: COLORS.ink, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={categoriasAgua.includes(cat.chave)} onChange={() => alternarCategoriaAgua(cat.chave)}
+                      style={{ width: 14, height: 14, cursor: 'pointer' }} />
+                    {cat.rotulo}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// categorias pra organizar os blocos de anotação, e "Folha A4" já indica que aquele
+// bloco é pensado pra ser exportado/impresso formatado (aviso, comunicado, etc)
+const CATEGORIAS_ANOTACAO = ['Rascunho', 'Folha A4', 'Contato', 'Aluno', 'Textos prontos', 'Outro'];
+// tamanho da caixa por categoria — cada uma tem um formato típico de conteúdo:
+// Contato costuma ser curto, Aluno costuma precisar de mais espaço pra observação.
+// Rascunho/Textos prontos/Outro não têm um formato típico, então ficam no padrão.
+const TAMANHO_CATEGORIA = { 'Contato': 'compacto', 'Aluno': 'medio', 'Folha A4': 'a4' };
+
+// Aba de Anotações: blocos de texto livre, nomeados pelo usuário — nada fixo, cada bloco
+// tem um título editável e um texto livre embaixo (contatos de e-mail, textos prontos,
+// observação de um aluno específico, o que for). Guardado em 'anotacoes_internas'.
+function Anotacoes() {
+  const [blocos, setBlocos] = useState(null);
+  const [editandoTitulo, setEditandoTitulo] = useState(null);
+  const [tituloEdit, setTituloEdit] = useState('');
+  const [toastMsg, setToastMsg] = useState(null);
+  const [enviandoAnexo, setEnviandoAnexo] = useState(null); // id do bloco que está enviando agora
+  const [filtroCategoria, setFiltroCategoria] = useState('TODAS');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('anotacoes_internas', false);
+        setBlocos(r && r.value ? JSON.parse(r.value) : []);
+      } catch (e) {
+        setBlocos([]);
+      }
+    })();
+  }, []);
+
+  function mostrarToast(msg) {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 4000);
+  }
+
+  async function salvar(next) {
+    setBlocos(next);
+    try { await window.storage.set('anotacoes_internas', JSON.stringify(next), false); } catch (e) {}
+  }
+
+  function novoBloco() {
+    const bloco = { id: 'nota' + Date.now() + Math.random().toString(36).slice(2), titulo: 'Novo bloco', texto: '', categoria: 'Rascunho' };
+    salvar([...(blocos || []), bloco]);
+    setEditandoTitulo(bloco.id);
+    setTituloEdit('Novo bloco');
+  }
+
+  function atualizarCategoria(id, categoria) {
+    salvar(blocos.map(b => b.id === id ? { ...b, categoria } : b));
+  }
+
+  // exporta um bloco como PDF em folha A4, formatado — pra imprimir ou mandar por e-mail
+  function exportarBlocoPDF(b) {
+    if (!window.jspdf) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const roxo = [101, 27, 88];
+    const margemX = 56;
+    const larguraUtil = 595 - margemX * 2;
+    let y = 70;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(...roxo);
+    doc.text(b.titulo, margemX, y);
+    y += 12;
+    doc.setDrawColor(...roxo); doc.setLineWidth(1.2);
+    doc.line(margemX, y, 595 - margemX, y);
+    y += 28;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11.5); doc.setTextColor(40, 40, 40);
+    const linhas = doc.splitTextToSize(b.texto || '(sem conteúdo)', larguraUtil);
+    linhas.forEach(linha => {
+      if (y > 780) { doc.addPage(); y = 60; }
+      doc.text(linha, margemX, y);
+      y += 17;
+    });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+    doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} pelo Painel Financeiro`, margemX, 822);
+    doc.save(`${(b.titulo || 'anotacao').replace(/[^\w\-]+/g, '_')}.pdf`);
+  }
+
+  function atualizarTexto(id, texto) {
+    salvar(blocos.map(b => b.id === id ? { ...b, texto } : b));
+  }
+
+  function iniciarEdicaoTitulo(b) {
+    setEditandoTitulo(b.id);
+    setTituloEdit(b.titulo);
+  }
+
+  function salvarTitulo(id) {
+    salvar(blocos.map(b => b.id === id ? { ...b, titulo: tituloEdit.trim() || 'Sem título' } : b));
+    setEditandoTitulo(null);
+  }
+
+  function removerBloco(id) {
+    const b = blocos.find(x => x.id === id);
+    if (!window.confirm(`Apagar o bloco "${b.titulo}"? Essa ação não pode ser desfeita.`)) return;
+    if (b.anexoNome) {
+      window.storage.delete('anotacao_anexo_' + id, false).catch(() => {});
+    }
+    salvar(blocos.filter(x => x.id !== id));
+    mostrarToast('Bloco apagado.');
+  }
+
+  // anexa um arquivo (PDF, imagem, etc) num bloco — guardado como texto (base64) numa
+  // chave separada, com limite de 3MB por causa do jeito que o armazenamento funciona aqui
+  const LIMITE_ANEXO = 3 * 1024 * 1024;
+  function anexarArquivo(id, arquivo) {
+    if (!arquivo) return;
+    if (arquivo.size > LIMITE_ANEXO) {
+      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 3MB por arquivo.`);
+      return;
+    }
+    setEnviandoAnexo(id);
+    const leitor = new FileReader();
+    leitor.onload = async () => {
+      try {
+        await window.storage.set('anotacao_anexo_' + id, JSON.stringify({ nome: arquivo.name, tipo: arquivo.type, dados: leitor.result }), false);
+        salvar(blocos.map(b => b.id === id ? { ...b, anexoNome: arquivo.name, anexoTipo: arquivo.type } : b));
+        mostrarToast(`✓ "${arquivo.name}" anexado!`);
+      } catch (e) {
+        mostrarToast('⚠ Não consegui anexar o arquivo — tenta de novo.');
+      }
+      setEnviandoAnexo(null);
+    };
+    leitor.onerror = () => { mostrarToast('⚠ Não consegui ler o arquivo.'); setEnviandoAnexo(null); };
+    leitor.readAsDataURL(arquivo);
+  }
+
+  async function abrirAnexo(id) {
+    try {
+      const r = await window.storage.get('anotacao_anexo_' + id, false);
+      if (!r || !r.value) { mostrarToast('⚠ Anexo não encontrado.'); return; }
+      const { dados } = JSON.parse(r.value);
+      window.open(dados, '_blank');
+    } catch (e) {
+      mostrarToast('⚠ Não consegui abrir o anexo.');
+    }
+  }
+
+  function removerAnexo(id) {
+    if (!window.confirm('Remover o arquivo anexado deste bloco?')) return;
+    window.storage.delete('anotacao_anexo_' + id, false).catch(() => {});
+    salvar(blocos.map(b => b.id === id ? { ...b, anexoNome: undefined, anexoTipo: undefined } : b));
+  }
+
+  if (blocos === null) {
+    return <div style={{ color: '#8A7A85', fontSize: 13.5, padding: 20 }}>Carregando...</div>;
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <Toast mensagem={toastMsg} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: COLORS.ink }}>📝 Anotações internas</div>
+          <div style={{ fontSize: 12.5, color: COLORS.inkSoft }}>
+            Espaço livre pra guardar o que quiser — contatos de e-mail, textos prontos, observações sobre um aluno, etc. Só a direção vê isso; não aparece em recibo nem em nota.
+          </div>
+        </div>
+        <button onClick={novoBloco} style={{
+          background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px',
+          fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+        }}>
+          <Plus size={14} /> Novo bloco
+        </button>
+      </div>
+
+      {blocos.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ fontSize: 12, color: COLORS.inkSoft, fontWeight: 600 }}>Filtrar por categoria:</label>
+          <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)} style={{
+            border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '6px 9px', fontSize: 12.5, background: COLORS.paperCard, color: COLORS.ink,
+          }}>
+            <option value="TODAS">Todas</option>
+            {CATEGORIAS_ANOTACAO.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      )}
+
+      {blocos.length === 0 ? (
+        <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 13.5 }}>
+          Nenhuma anotação ainda. Clique em "Novo bloco" pra começar.
+        </div>
+      ) : (() => {
+        const filtrados = blocos.filter(b => filtroCategoria === 'TODAS' || (b.categoria || 'Rascunho') === filtroCategoria);
+        const blocosA4 = filtrados.filter(b => TAMANHO_CATEGORIA[b.categoria] === 'a4');
+        const blocosCompactos = filtrados.filter(b => TAMANHO_CATEGORIA[b.categoria] === 'compacto');
+        const blocosMedios = filtrados.filter(b => TAMANHO_CATEGORIA[b.categoria] === 'medio');
+        const blocosPadrao = filtrados.filter(b => !TAMANHO_CATEGORIA[b.categoria]);
+
+        // cabeçalho (título + botões) — igual pros dois tamanhos de bloco. Botões grandes
+        // o bastante pra tocar bem com o dedo no celular/tablet (mín. ~36px de área de toque)
+        function cabecalho(b) {
+          const estiloBotao = {
+            background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 8,
+            cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, width: 36, height: 36, boxSizing: 'border-box',
+          };
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
+              {editandoTitulo === b.id ? (
+                <input
+                  autoFocus
+                  value={tituloEdit}
+                  onChange={e => setTituloEdit(e.target.value)}
+                  onBlur={() => salvarTitulo(b.id)}
+                  onKeyDown={e => { if (e.key === 'Enter') salvarTitulo(b.id); }}
+                  style={{ flex: '1 1 auto', minWidth: 100, border: `1px solid ${COLORS.gold}`, borderRadius: 6, padding: '7px 9px', fontSize: 15, fontWeight: 700, color: COLORS.ink, boxSizing: 'border-box' }}
+                />
+              ) : (
+                <div onClick={() => iniciarEdicaoTitulo(b)} title="Clique pra renomear" style={{
+                  fontSize: 15, fontWeight: 700, color: COLORS.ink, cursor: 'pointer', flex: '1 1 auto', minWidth: 60,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {b.titulo}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <button onClick={() => exportarBlocoPDF(b)} title="Exportar como PDF (folha A4)" style={{ ...estiloBotao, fontSize: 17 }}>
+                  📄
+                </button>
+                <label title="Anexar arquivo (PDF, imagem, doc — máx 3MB)" style={estiloBotao}>
+                  <Paperclip size={18} color={COLORS.ink} />
+                  <input type="file" onChange={e => { anexarArquivo(b.id, e.target.files[0]); e.target.value = ''; }} style={{ display: 'none' }} />
+                </label>
+                <button onClick={() => iniciarEdicaoTitulo(b)} title="Renomear" style={estiloBotao}>
+                  <Pencil size={17} color={COLORS.ink} />
+                </button>
+                <button onClick={() => removerBloco(b.id)} title="Apagar bloco" style={estiloBotao}>
+                  <Trash2 size={18} color={COLORS.red} />
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        // categoria + anexo — igual pros dois tamanhos também
+        function extras(b) {
+          return (
+            <>
+              <select value={b.categoria || 'Rascunho'} onChange={e => atualizarCategoria(b.id, e.target.value)} style={{
+                alignSelf: 'flex-start', border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 10px',
+                fontSize: 13, fontWeight: 600, color: COLORS.gold, background: COLORS.goldSoft, cursor: 'pointer', minHeight: 34,
+              }}>
+                {CATEGORIAS_ANOTACAO.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              {enviandoAnexo === b.id && (
+                <div style={{ fontSize: 12.5, color: COLORS.inkSoft }}>⏳ Anexando...</div>
+              )}
+              {b.anexoNome && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8, background: COLORS.paper,
+                  border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 10px', fontSize: 12.5,
+                }}>
+                  <Paperclip size={14} color={COLORS.inkSoft} style={{ flexShrink: 0 }} />
+                  <span onClick={() => abrirAnexo(b.id)} title="Abrir arquivo" style={{ color: COLORS.gold, fontWeight: 600, cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 auto' }}>
+                    {b.anexoNome}
+                  </span>
+                  <button onClick={() => removerAnexo(b.id)} title="Remover anexo" style={{
+                    background: COLORS.paperCard, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 6, cursor: 'pointer',
+                    padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, width: 28, height: 28, boxSizing: 'border-box',
+                  }}>
+                    <X size={14} color={COLORS.red} />
+                  </button>
+                </div>
+              )}
+            </>
+          );
+        }
+
+        // grade genérica de blocos "normais" (não-A4), reaproveitada pros 3 tamanhos —
+        // muda só a largura mínima da coluna e a altura mínima da caixa de texto
+        function grade(lista, larguraMin, alturaMin, placeholder) {
+          if (lista.length === 0) return null;
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${larguraMin}px, 1fr))`, gap: 14 }}>
+              {lista.map(b => (
+                <div key={b.id} style={{
+                  background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10,
+                  padding: 14, display: 'flex', flexDirection: 'column', gap: 8,
+                }}>
+                  {cabecalho(b)}
+                  {extras(b)}
+                  <textarea
+                    value={b.texto}
+                    onChange={e => atualizarTexto(b.id, e.target.value)}
+                    placeholder={placeholder}
+                    spellCheck="true" lang="pt-BR"
+                    style={{
+                      width: '100%', minHeight: alturaMin, border: `1px solid ${COLORS.line}`, borderRadius: 7,
+                      padding: 10, fontSize: 13, fontFamily: 'Inter, sans-serif', color: COLORS.ink,
+                      resize: 'vertical', boxSizing: 'border-box', background: COLORS.paper,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        return (
+          <>
+            {/* Blocos "Folha A4" — tamanho e proporção de uma folha A4 de verdade, um
+                embaixo do outro, pra caber o texto todo sem apertar */}
+            {blocosA4.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24, alignItems: 'center' }}>
+                {blocosA4.map(b => (
+                  <div key={b.id} style={{
+                    background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 8,
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.10)', padding: 36,
+                    display: 'flex', flexDirection: 'column', gap: 14,
+                    width: '100%', maxWidth: 1100, aspectRatio: '210 / 297',
+                  }}>
+                    {cabecalho(b)}
+                    {extras(b)}
+                    <textarea
+                      value={b.texto}
+                      onChange={e => atualizarTexto(b.id, e.target.value)}
+                      placeholder="Escreva aqui... (formato folha A4)"
+                      spellCheck="true" lang="pt-BR"
+                      style={{
+                        flex: '1 1 auto', minHeight: 0, width: '100%', border: `1px solid ${COLORS.line}`, borderRadius: 7,
+                        padding: 28, fontSize: 17, lineHeight: 1.75, fontFamily: 'Inter, sans-serif', color: COLORS.ink,
+                        resize: 'none', boxSizing: 'border-box', background: COLORS.paper,
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Contato — caixa compacta (geralmente é só nome/e-mail/telefone) */}
+            {grade(blocosCompactos, 220, 70, 'Nome, e-mail, telefone...')}
+
+            {/* Aluno — caixa média (observação em texto corrido) */}
+            {grade(blocosMedios, 320, 220, 'Escreva a observação...')}
+
+            {/* Rascunho / Textos prontos / Outro — tamanho padrão, sem formato fixo */}
+            {grade(blocosPadrao, 280, 140, 'Escreva aqui...')}
+          </>
+        );
+      })()}
     </div>
   );
 }
@@ -2954,6 +3656,80 @@ function PainelFinanceiro() {
   const [storageOk, setStorageOk] = useState(true);
   const [salvandoAgora, setSalvandoAgora] = useState(false);
   const [mensagemSalvarAgora, setMensagemSalvarAgora] = useState(null);
+  const [progressoSalvar, setProgressoSalvar] = useState(null); // { feitos, total }
+
+  // LIXEIRA TEMPORÁRIA — quando um lançamento (aluno, convênio ou conta) é apagado, guarda
+  // uma cópia aqui por 30 dias antes de sumir de vez, com opção de "Restaurar"
+  const [lixeira, setLixeira] = useState([]);
+  const [lixeiraAberta, setLixeiraAberta] = useState(false);
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('lixeira_temporaria', false);
+        const salva = r && r.value ? JSON.parse(r.value) : [];
+        // limpa sozinho o que já passou de 30 dias na lixeira
+        const trintaDiasMs = 30 * 24 * 60 * 60 * 1000;
+        const limpa = salva.filter(item => Date.now() - new Date(item.apagadoEm).getTime() < trintaDiasMs);
+        setLixeira(limpa);
+        if (limpa.length !== salva.length) {
+          await window.storage.set('lixeira_temporaria', JSON.stringify(limpa), false);
+        }
+      } catch (e) {
+        setLixeira([]);
+      }
+    })();
+  }, []);
+
+  async function persistLixeira(next) {
+    setLixeira(next);
+    try { await window.storage.set('lixeira_temporaria', JSON.stringify(next), false); } catch (e) {}
+  }
+
+  function restaurarDaLixeira(lixId) {
+    const entrada = lixeira.find(l => l.id === lixId);
+    if (!entrada) return;
+    persist([...transacoes, entrada.dados]);
+    persistLixeira(lixeira.filter(l => l.id !== lixId));
+  }
+
+  function apagarDefinitivoDaLixeira(lixId) {
+    persistLixeira(lixeira.filter(l => l.id !== lixId));
+  }
+
+  // BUSCA GLOBAL — digite um nome (aluno, convênio ou uma categoria de lançamento) e já
+  // pula pra aba certa com a busca daquela aba já preenchida, sem precisar adivinhar onde procurar
+  const [buscaGlobal, setBuscaGlobal] = useState('');
+  const [buscaGlobalAberta, setBuscaGlobalAberta] = useState(false);
+  const resultadosBuscaGlobal = useMemo(() => {
+    const termo = buscaGlobal.trim().toLowerCase();
+    if (!transacoes || termo.length < 2) return [];
+    const vistos = new Set();
+    const resultados = [];
+    transacoes.forEach(t => {
+      if (!t.categoria) return;
+      let aba = null, label = null, tipo = null;
+      if (t.categoria.startsWith('Mensalidade - ')) { aba = 'mensalidades'; label = nomeExibicao(t.categoria); tipo = 'Aluno'; }
+      else if (t.categoria.startsWith('Convênio - ')) { aba = 'mensalidades'; label = nomeExibicao(t.categoria); tipo = 'Convênio'; }
+      else if (t.tipo === 'Fixa' || t.tipo === 'Variável') { aba = 'lancamentos'; label = t.categoria; tipo = 'Conta'; }
+      if (!aba || !label) return;
+      const chave = aba + '|' + label.toLowerCase();
+      if (vistos.has(chave)) return;
+      if (label.toLowerCase().includes(termo) || (t.pai && t.pai.toLowerCase().includes(termo))) {
+        vistos.add(chave);
+        resultados.push({ aba, label, tipo, textoBusca: label });
+      }
+    });
+    return resultados.slice(0, 12);
+  }, [buscaGlobal, transacoes]);
+
+  function irParaResultadoBusca(res) {
+    setTab(res.aba);
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('painel-busca-ir', { detail: { aba: res.aba, texto: res.textoBusca } }));
+    }, 60);
+    setBuscaGlobal('');
+    setBuscaGlobalAberta(false);
+  }
 
   // "Salvar agora" manual, tipo Ctrl+S do Excel — reenvia tudo que está guardado
   // neste navegador pra Planilha Google de novo, mesmo o que já tinha sido salvo,
@@ -2961,8 +3737,11 @@ function PainelFinanceiro() {
   async function salvarTudoAgora() {
     setSalvandoAgora(true);
     setMensagemSalvarAgora(null);
+    setProgressoSalvar({ feitos: 0, total: 0 });
     try {
-      const resultado = await (window.storage.resync ? window.storage.resync() : Promise.resolve({ ok: true, total: 0 }));
+      const resultado = await (window.storage.resync
+        ? window.storage.resync((feitos, total) => setProgressoSalvar({ feitos, total }))
+        : Promise.resolve({ ok: true, total: 0 }));
       setMensagemSalvarAgora(resultado.ok
         ? { tipo: 'ok', texto: 'Tudo salvo com sucesso! Pode fechar o programa sem preocupação.' }
         : { tipo: 'aviso', texto: `${resultado.falhas} item(ns) não sincronizaram agora, mas continuam salvos neste navegador. Tenta de novo daqui a pouco.` });
@@ -2970,6 +3749,7 @@ function PainelFinanceiro() {
       setMensagemSalvarAgora({ tipo: 'aviso', texto: 'Não consegui salvar agora — verifique a conexão e tente de novo.' });
     }
     setSalvandoAgora(false);
+    setProgressoSalvar(null);
     setTimeout(() => setMensagemSalvarAgora(null), 9000);
   }
   const [modoPrivado, setModoPrivado] = useState(() => lerPreferencia('modoPrivado')); // esconde os valores (bolinhas) quando ligado — usado em Visão Geral e Orçamento
@@ -3012,6 +3792,7 @@ function PainelFinanceiro() {
     setPinConfigurado('');
     setDesbloqueado(true);
   }
+  const [modalPinAberto, setModalPinAberto] = useState(false);
   const [statusPlanilha, setStatusPlanilha] = useState(null); // null=modo local, 'ok'=sincronizando, 'erro'=falhou
   const [saldosMensais, setSaldosMensais] = useState(null); // { JANEIRO: 3111.69, ... } — editável na tela
 
@@ -3458,7 +4239,10 @@ function PainelFinanceiro() {
     const item = transacoes.find(t => t.id === id);
     const nome = item ? (item.categoria.replace('Mensalidade - ', '').replace('Convênio - ', '')) : 'este lançamento';
     const valorTexto = item && item.valor != null ? ` (${formatBRL(item.valor)})` : '';
-    if (!window.confirm(`Tem certeza que quer excluir "${nome}"${valorTexto}?\n\nEssa ação não pode ser desfeita.`)) return;
+    if (!window.confirm(`Tem certeza que quer excluir "${nome}"${valorTexto}?\n\nVai pra lixeira temporária — dá pra restaurar depois, se precisar.`)) return;
+    if (item) {
+      persistLixeira([...lixeira, { id: 'lix' + Date.now() + Math.random().toString(36).slice(2), rotulo: nome, dados: item, apagadoEm: new Date().toISOString() }]);
+    }
     persist(transacoes.filter(t => t.id !== id));
   }
 
@@ -3796,10 +4580,86 @@ function PainelFinanceiro() {
                   boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                 }}
               >
-                {salvandoAgora ? '⏳ Salvando...' : '💾 Salvar agora'}
+                {salvandoAgora
+                  ? (progressoSalvar && progressoSalvar.total > 0
+                      ? `⏳ Salvando... ${progressoSalvar.feitos}/${progressoSalvar.total} (${Math.round(progressoSalvar.feitos / progressoSalvar.total * 100)}%)`
+                      : '⏳ Salvando...')
+                  : '💾 Salvar agora'}
+              </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setLixeiraAberta(v => !v)}
+                  title="Lixeira temporária — restaura alunos, convênios ou contas apagados nos últimos 30 dias"
+                  style={{
+                    background: COLORS.paperCard, border: `1.5px solid ${COLORS.line}`, borderRadius: 8,
+                    padding: '6px 11px', fontSize: 12, fontWeight: 700, color: COLORS.inkSoft, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6, position: 'relative',
+                  }}
+                >
+                  <Trash2 size={14} /> Lixeira
+                  {lixeira.length > 0 && (
+                    <span style={{ background: COLORS.red, color: '#FFF', borderRadius: 999, fontSize: 10, fontWeight: 700, padding: '1px 6px', minWidth: 16, textAlign: 'center' }}>
+                      {lixeira.length}
+                    </span>
+                  )}
+                </button>
+                {lixeiraAberta && (
+                  <div style={{
+                    position: 'absolute', top: '110%', right: 0, zIndex: 500, background: COLORS.paperCard,
+                    border: `1px solid ${COLORS.line}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                    width: 'min(320px, 92vw)', maxHeight: 360, overflowY: 'auto', padding: 10,
+                  }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 8 }}>
+                      🗑️ Lixeira temporária <span style={{ fontWeight: 500, color: COLORS.inkSoft, fontSize: 11 }}>(some sozinho depois de 30 dias)</span>
+                    </div>
+                    {lixeira.length === 0 ? (
+                      <div style={{ fontSize: 12, color: COLORS.inkSoft }}>Nada apagado recentemente.</div>
+                    ) : (
+                      <div style={{ display: 'grid', gap: 6 }}>
+                        {[...lixeira].reverse().map(item => (
+                          <div key={item.id} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                            background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 9px',
+                          }}>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.rotulo}</div>
+                              <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
+                                apagado em {new Date(item.apagadoEm).toLocaleDateString('pt-BR')}
+                                {item.dados.valor != null && <> · {formatBRL(item.dados.valor)}</>}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                              <button onClick={() => restaurarDaLixeira(item.id)} title="Restaurar" style={{ background: COLORS.green, border: 'none', borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
+                                <RotateCcw size={16} color="#FFFFFF" />
+                              </button>
+                              <button onClick={() => apagarDefinitivoDaLixeira(item.id)} title="Apagar de vez" style={{ background: 'none', border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
+                                <X size={15} color={COLORS.red} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setModalPinAberto(true)}
+                title="Alterar o PIN de acesso do painel"
+                style={{
+                  background: COLORS.paperCard, border: `1.5px solid ${COLORS.line}`, borderRadius: 8,
+                  padding: '6px 11px', fontSize: 12, fontWeight: 700, color: COLORS.inkSoft, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                🔒 Alterar PIN
               </button>
             </div>
           </div>
+
+          {modalPinAberto && (
+            <ModalAlterarPin pinAtual={pinConfigurado} onFechar={() => setModalPinAberto(false)} onSalvar={definirPin} />
+          )}
 
           <Toast mensagem={mensagemSalvarAgora ? mensagemSalvarAgora.texto : null} tipo={mensagemSalvarAgora ? mensagemSalvarAgora.tipo : 'ok'} />
 
@@ -3812,10 +4672,45 @@ function PainelFinanceiro() {
             </div>
           )}
 
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: 420 }}>
+              <Search size={15} color={COLORS.inkSoft} style={{ position: 'absolute', left: 12, top: 11 }} />
+              <input
+                value={buscaGlobal}
+                onChange={e => { setBuscaGlobal(e.target.value); setBuscaGlobalAberta(true); }}
+                onFocus={() => setBuscaGlobalAberta(true)}
+                onBlur={() => setTimeout(() => setBuscaGlobalAberta(false), 150)}
+                placeholder="Buscar aluno, convênio ou conta... (pula direto pra aba certa)"
+                style={{
+                  width: '100%', boxSizing: 'border-box', border: `1px solid ${COLORS.line}`, borderRadius: 8,
+                  padding: '9px 12px 9px 34px', fontSize: 13, background: COLORS.paperCard,
+                }}
+              />
+              {buscaGlobalAberta && resultadosBuscaGlobal.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: '110%', left: 0, right: 0, zIndex: 500, background: COLORS.paperCard,
+                  border: `1px solid ${COLORS.line}`, borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                  maxHeight: 280, overflowY: 'auto',
+                }}>
+                  {resultadosBuscaGlobal.map((res, i) => (
+                    <div key={i} onClick={() => irParaResultadoBusca(res)} style={{
+                      padding: '9px 12px', cursor: 'pointer', fontSize: 13, color: COLORS.ink,
+                      borderTop: i > 0 ? `1px solid ${COLORS.lineSoft}` : 'none',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+                    }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{res.label}</span>
+                      <span style={{ fontSize: 10.5, color: COLORS.inkSoft, background: COLORS.lineSoft, borderRadius: 5, padding: '2px 7px', flexShrink: 0 }}>{res.tipo}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             {/* TABS */}
             <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
-              {[['visao','Visão geral'],['lancamentos','Lançamentos'],['mensalidades','Mensalidades'],['orcamento','Orçamento'],['compras','Compras'],['recibos','Recibos'],['valores','Valores']].map(([key,label]) => (
+              {[['visao','Visão geral'],['lancamentos','Lançamentos'],['mensalidades','Mensalidades'],['orcamento','Orçamento'],['compras','Compras'],['recibos','Recibos'],['valores','Valores'],['anotacoes','Anotações']].map(([key,label]) => (
                 <button key={key} onClick={() => setTab(key)}
                   style={{
                     padding: '9px 18px', borderRadius: '8px 8px 0 0', border: 'none', cursor: 'pointer',
@@ -3899,8 +4794,10 @@ function PainelFinanceiro() {
           <Compras />
         ) : tab === 'recibos' ? (
           <Recibos />
-        ) : (
+        ) : tab === 'valores' ? (
           <Valores modoPrivado={modoPrivadoValores} setModoPrivado={setModoPrivadoValores} />
+        ) : (
+          <Anotacoes />
         )}
       </main>
     </div>
@@ -3950,6 +4847,29 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
+// tooltip pro gráfico de alunos pagantes x ponto de equilíbrio — mostra "nº de alunos"
+// em vez de formatar como dinheiro (é a mesma unidade nos dois casos: contagem de alunos)
+const TooltipAlunos = ({ active, payload, label }) => {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div style={{ background: COLORS.inkButton, color: '#FFFDF8', padding: '7px 11px', borderRadius: 6, fontSize: 12 }} className="mono">
+      <div style={{ marginBottom: 3, opacity: 0.75 }}>{label}</div>
+      {payload.map((p, i) => (
+        <div key={i} style={{ color: p.color || '#FFF' }}>{p.name}: {p.value == null ? '—' : p.value} aluno{p.value === 1 ? '' : 's'}</div>
+      ))}
+    </div>
+  );
+};
+
+// ponto vermelho quando o mês teve menos alunos pagantes do que o ponto de equilíbrio
+// (ou seja, não cobriu as contas fixas naquele mês) — verde quando cobriu ou passou
+function DotAlunosPagantes(props) {
+  const { cx, cy, payload } = props;
+  if (cx == null || cy == null || payload.alunosPagantes == null || payload.pontoEquilibrio == null) return null;
+  const ruim = payload.alunosPagantes < payload.pontoEquilibrio;
+  return <circle cx={cx} cy={cy} r={4.5} fill={ruim ? COLORS.red : COLORS.green} stroke="#FFF" strokeWidth={1.5} />;
+}
+
 function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, transacoes, saldosMensais, salvarSaldoMensal, modoPrivado, setModoPrivado }) {
   const [editandoSaldos, setEditandoSaldos] = useState(true);
   const [saldoEditMes, setSaldoEditMes] = useState(null);
@@ -3975,6 +4895,42 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         setConveniosMultivaga(r && r.value ? JSON.parse(r.value) : []);
       } catch (e) {
         setConveniosMultivaga([]);
+      }
+    })();
+  }, []);
+
+  // avisa se "vagas preenchidas" de algum convênio não é mexido há mais de 60 dias —
+  // esse número é digitado à mão, então é fácil esquecer de atualizar
+  const conveniosDesatualizados = useMemo(() => {
+    return (conveniosMultivaga || [])
+      .filter(item => item.atualizadoEm)
+      .map(item => ({ nome: item.nome, dias: Math.floor((Date.now() - new Date(item.atualizadoEm).getTime()) / (1000 * 60 * 60 * 24)) }))
+      .filter(item => item.dias > 60);
+  }, [conveniosMultivaga]);
+
+  // categorias marcadas na aba Valores como "alimentação" e "água/energia" — usadas pra
+  // calcular o custo por criança desses dois grupos separadamente
+  const [categoriasIndicadores, setCategoriasIndicadores] = useState({ alimentacao: [], agua: [] });
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('categorias_indicadores', false);
+        setCategoriasIndicadores(r && r.value ? JSON.parse(r.value) : { alimentacao: [], agua: [] });
+      } catch (e) {
+        setCategoriasIndicadores({ alimentacao: [], agua: [] });
+      }
+    })();
+  }, []);
+
+  // capacidade máxima da escola (cadastrada na aba Valores) — usada pra Taxa de Ocupação
+  const [capacidadeMaxima, setCapacidadeMaxima] = useState(0);
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('capacidade_maxima', false);
+        setCapacidadeMaxima(r && r.value ? Number(r.value) : 0);
+      } catch (e) {
+        setCapacidadeMaxima(0);
       }
     })();
   }, []);
@@ -4072,10 +5028,15 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
       const pontoEquilibrio = ticketMedio > 0 ? Math.ceil(despesasFixas / ticketMedio) : null;
       const custoPorAluno = totalAlunosSoma > 0 ? despesasTotaisTotal / totalAlunosSoma : null;
       const extrasMedia = meses.reduce((s, m) => s + alunosExtrasDoMes(m).qtd, 0) / meses.length;
+      const despesasAlimentacaoTotal = doAno.filter(t => t.tipo !== 'Entrada' && (categoriasIndicadores.alimentacao || []).includes(normalizarTexto(t.categoria))).reduce((s, t) => s + (t.valor || 0), 0);
+      const despesasAguaTotal = doAno.filter(t => t.tipo !== 'Entrada' && (categoriasIndicadores.agua || []).includes(normalizarTexto(t.categoria))).reduce((s, t) => s + (t.valor || 0), 0);
+      const custoAlimentacaoPorAluno = totalAlunosSoma > 0 && categoriasIndicadores.alimentacao && categoriasIndicadores.alimentacao.length > 0 ? despesasAlimentacaoTotal / totalAlunosSoma : null;
+      const custoAguaPorAluno = totalAlunosSoma > 0 && categoriasIndicadores.agua && categoriasIndicadores.agua.length > 0 ? despesasAguaTotal / totalAlunosSoma : null;
+      const taxaOcupacaoAno = capacidadeMaxima > 0 ? Math.round(((totalAlunosSoma / meses.length) / capacidadeMaxima) * 1000) / 10 : null;
       return {
         mes: null, anual: true, qtdMeses: meses.length, despesasFixas, despesasTotais,
         totalAlunos: Math.round(totalAlunosSoma / meses.length), alunosDeConvenio: Math.round(extrasMedia),
-        ticketMedio, pontoEquilibrio, custoPorAluno,
+        ticketMedio, pontoEquilibrio, custoPorAluno, custoAlimentacaoPorAluno, custoAguaPorAluno, taxaOcupacao: taxaOcupacaoAno,
       };
     }
 
@@ -4093,8 +5054,47 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     const ticketMedio = qtdTicket ? somaTicket / qtdTicket : 0;
     const pontoEquilibrio = ticketMedio > 0 ? Math.ceil(despesasFixas / ticketMedio) : null;
     const custoPorAluno = totalAlunos > 0 ? despesasTotais / totalAlunos : null;
-    return { mes: mesAlvo, anual: false, despesasFixas, despesasTotais, totalAlunos, alunosDeConvenio: extra.qtd, ticketMedio, pontoEquilibrio, custoPorAluno };
-  }, [transacoes, mesIndicadores, mesesComMovimento, conveniosMultivaga]);
+    const despesasAlimentacao = doMes.filter(t => t.tipo !== 'Entrada' && (categoriasIndicadores.alimentacao || []).includes(normalizarTexto(t.categoria))).reduce((s, t) => s + (t.valor || 0), 0);
+    const despesasAgua = doMes.filter(t => t.tipo !== 'Entrada' && (categoriasIndicadores.agua || []).includes(normalizarTexto(t.categoria))).reduce((s, t) => s + (t.valor || 0), 0);
+    const custoAlimentacaoPorAluno = totalAlunos > 0 && categoriasIndicadores.alimentacao && categoriasIndicadores.alimentacao.length > 0 ? despesasAlimentacao / totalAlunos : null;
+    const custoAguaPorAluno = totalAlunos > 0 && categoriasIndicadores.agua && categoriasIndicadores.agua.length > 0 ? despesasAgua / totalAlunos : null;
+    const taxaOcupacao = capacidadeMaxima > 0 ? Math.round((totalAlunos / capacidadeMaxima) * 1000) / 10 : null;
+    return { mes: mesAlvo, anual: false, despesasFixas, despesasTotais, totalAlunos, alunosDeConvenio: extra.qtd, ticketMedio, pontoEquilibrio, custoPorAluno, custoAlimentacaoPorAluno, custoAguaPorAluno, taxaOcupacao };
+  }, [transacoes, mesIndicadores, mesesComMovimento, conveniosMultivaga, categoriasIndicadores, capacidadeMaxima]);
+
+  // série mensal de Custo por aluno e Ponto de equilíbrio, pra ver a evolução mês a mês
+  // (mesma conta do card de Indicadores, só que repetida pra cada mês com movimento)
+  const evolucaoIndicadores = useMemo(() => {
+    if (!transacoes || mesesComMovimento.length === 0) return [];
+    function alunosExtrasDoMes(mes) {
+      let qtd = 0, somaPagos = 0, qtdPagos = 0;
+      (conveniosMultivaga || []).forEach(item => {
+        const existe = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome));
+        if (!existe) return;
+        qtd += item.vagasPreenchidas;
+        const pago = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome) && t.status === 'Pago');
+        if (pago) { somaPagos += item.vagasPreenchidas * item.valorPorAluno; qtdPagos += item.vagasPreenchidas; }
+      });
+      return { qtd, somaPagos, qtdPagos };
+    }
+    return mesesComMovimento.map(mes => {
+      const doMes = transacoes.filter(t => t.mes === mes);
+      const despesasFixas = doMes.filter(t => t.tipo === 'Fixa').reduce((s, t) => s + (t.valor || 0), 0);
+      const despesasTotais = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
+      const alunosDoMes = doMes.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - '));
+      const alunosPagos = alunosDoMes.filter(t => t.status === 'Pago' && t.valor);
+      const extra = alunosExtrasDoMes(mes);
+      const totalAlunos = alunosDoMes.length + extra.qtd;
+      const somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0) + extra.somaPagos;
+      const qtdTicket = alunosPagos.length + extra.qtdPagos;
+      const ticketMedio = qtdTicket ? somaTicket / qtdTicket : 0;
+      return {
+        mesAbrev: MESES_ABREV[mes],
+        pontoEquilibrio: ticketMedio > 0 ? Math.ceil(despesasFixas / ticketMedio) : null,
+        alunosPagantes: qtdTicket > 0 ? qtdTicket : null,
+      };
+    });
+  }, [transacoes, mesesComMovimento, conveniosMultivaga]);
 
   const categoriasDespesa = useMemo(() => {
     if (!transacoes) return [];
@@ -4162,6 +5162,23 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         </div>
       )}
 
+      {conveniosDesatualizados.length > 0 && (
+        <div style={{
+          background: COLORS.goldSoft, border: `1.5px solid ${COLORS.gold}55`, borderRadius: 10,
+          padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+        }}>
+          <AlertTriangle size={20} color={COLORS.gold} style={{ flexShrink: 0 }} />
+          <div style={{ flex: '1 1 auto' }}>
+            <span style={{ fontWeight: 700, color: COLORS.ink, fontSize: 14 }}>
+              "Vagas preenchidas" desatualizada em {conveniosDesatualizados.length === 1 ? '1 convênio' : `${conveniosDesatualizados.length} convênios`}
+            </span>
+            <span style={{ color: COLORS.inkSoft, fontSize: 12.5, marginLeft: 8 }}>
+              — {conveniosDesatualizados.map(c => `${c.nome} (${c.dias} dias)`).join(', ')} · confira na aba Valores
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* INDICADORES: ponto de equilíbrio (nº de alunos pagantes pra cobrir as contas fixas)
           e custo por aluno (despesas totais ÷ nº de alunos matriculados) — por mês ou no
           ano todo (média mensal), à escolha */}
@@ -4206,6 +5223,39 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
                 {indicadores.alunosDeConvenio > 0 && (
                   <> ({indicadores.totalAlunos - indicadores.alunosDeConvenio} individuais + {indicadores.alunosDeConvenio} de convênio)</>
                 )}
+              </div>
+            </div>
+          )}
+          {indicadores && indicadores.custoAlimentacaoPorAluno != null && (
+            <div style={{ flex: '1 1 220px' }}>
+              <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>🥦 CUSTO DE ALIMENTAÇÃO/ALUNO</div>
+              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: COLORS.ink }}>
+                {formatBRLPrivado(indicadores.custoAlimentacaoPorAluno, modoPrivado)}
+              </div>
+              <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
+                categorias marcadas como alimentação{indicadores.anual ? '/mês (média)' : ''} ÷ {indicadores.totalAlunos} alunos
+              </div>
+            </div>
+          )}
+          {indicadores && indicadores.custoAguaPorAluno != null && (
+            <div style={{ flex: '1 1 220px' }}>
+              <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>💧 CUSTO DE ÁGUA/ENERGIA/ALUNO</div>
+              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: COLORS.ink }}>
+                {formatBRLPrivado(indicadores.custoAguaPorAluno, modoPrivado)}
+              </div>
+              <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
+                categorias marcadas como água/energia{indicadores.anual ? '/mês (média)' : ''} ÷ {indicadores.totalAlunos} alunos
+              </div>
+            </div>
+          )}
+          {indicadores && indicadores.taxaOcupacao != null && (
+            <div style={{ flex: '1 1 220px' }}>
+              <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>🏫 TAXA DE OCUPAÇÃO</div>
+              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: indicadores.taxaOcupacao >= 90 ? COLORS.green : (indicadores.taxaOcupacao >= 70 ? COLORS.gold : COLORS.red) }}>
+                {indicadores.taxaOcupacao}%
+              </div>
+              <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
+                {indicadores.totalAlunos} alunos {indicadores.anual ? '(média)' : 'matriculados'} de {capacidadeMaxima} vagas no total
               </div>
             </div>
           )}
@@ -4292,6 +5342,25 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
             </LineChart>
           </ResponsiveContainer>
         </CardChart>
+
+        {evolucaoIndicadores.length > 1 && (
+          <CardChart title="Alunos Pagantes x Ponto de Equilíbrio" height={180}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={evolucaoIndicadores} margin={{ top: 4, right: 6, left: -10, bottom: 0 }}>
+                <CartesianGrid stroke={COLORS.lineSoft} vertical={false} />
+                <XAxis dataKey="mesAbrev" tick={{ fontSize: 10, fill: COLORS.inkSoft }} axisLine={{ stroke: COLORS.line }} tickLine={false} />
+                <YAxis tick={{ fontSize: 9.5, fill: COLORS.inkSoft }} allowDecimals={false} axisLine={false} tickLine={false} />
+                <Tooltip content={<TooltipAlunos />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="pontoEquilibrio" name="Precisa (ponto de equilíbrio)" stroke={COLORS.inkSoft} strokeDasharray="4 3" strokeWidth={2} dot={{ r: 2.5, fill: COLORS.inkSoft }} connectNulls isAnimationActive={false} />
+                <Line type="monotone" dataKey="alunosPagantes" name="Tem (alunos pagantes)" stroke={COLORS.ink} strokeWidth={2} dot={<DotAlunosPagantes />} connectNulls isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+            <div style={{ fontSize: 10.5, color: COLORS.inkSoft, marginTop: 2 }}>
+              🔴 mês em que os alunos pagantes ficaram abaixo do necessário para cobrir as contas fixas · 🟢 mês em que cobriu ou passou
+            </div>
+          </CardChart>
+        )}
       </div>
 
             <div className="grid-charts-b" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
@@ -4402,6 +5471,16 @@ function Lancamentos(props) {
   // marca uma linha em dourado ao clicar — mesma lógica usada em Compras, útil pra
   // não se perder o lugar numa lista longa; duplo clique desmarca
   const [linhaSelecionada, setLinhaSelecionada] = useState(null);
+
+  // ouve a busca global do cabeçalho — se o usuário clicou num resultado que aponta pra
+  // esta aba, já preenche a busca local daqui com aquele nome
+  useEffect(() => {
+    function aoReceberBusca(e) {
+      if (e.detail && e.detail.aba === 'lancamentos') setFiltroTexto(e.detail.texto);
+    }
+    window.addEventListener('painel-busca-ir', aoReceberBusca);
+    return () => window.removeEventListener('painel-busca-ir', aoReceberBusca);
+  }, []);
 
   // KPIs do mês em foco (o que estiver escolhido no filtro; se for "todos", usa o mês mais recente com dados)
   const kpisMes = useMemo(() => {
@@ -4702,7 +5781,7 @@ function nomeExibicao(categoria) {
 // remove acentos e ignora maiúsculas/minúsculas — usado pra comparar nomes de convênio
 // sem depender de digitação idêntica (ex: "MUNICÍPIO" bate com "MUNICIPIO")
 function normalizarTexto(s) {
-  return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+  return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').toUpperCase().trim();
 }
 function tipoOrigem(categoria) {
   if (categoria.startsWith('Mensalidade - ')) return 'Aluno';
@@ -4719,7 +5798,14 @@ function formatarData(iso) {
 function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, iniciarEdicao, cancelarEdicao, salvarEdicao, darBaixa, darNota, removerLancamento,
   valorEdit, setValorEdit, valorCheioEdit, setValorCheioEdit, statusEdit, setStatusEdit, bancoEdit, setBancoEdit,
   paiEdit, setPaiEdit, tirarNotaEdit, setTirarNotaEdit, convenioEdit, setConvenioEdit, dataEdit, setDataEdit,
-  okEdit, setOkEdit, inputStyle, modoPrivado, nomeEdit, setNomeEdit, avulsos }) {
+  okEdit, setOkEdit, inputStyle, modoPrivado, nomeEdit, setNomeEdit, avulsos, diasLetivos }) {
+
+  // calculadora de mensalidade proporcional dentro da edição de um lançamento já existente
+  // (a mesma ideia que já existe no formulário de "Novo registro", só que aqui pra editar)
+  const [proporcionalAberto, setProporcionalAberto] = useState(false);
+  const [diasFrequentados, setDiasFrequentados] = useState('');
+  const [aplicarDescontoAvista, setAplicarDescontoAvista] = useState(false);
+  const [descontoAvista, setDescontoAvista] = useState('');
 
   const th = { padding: '9px 8px', fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'left', whiteSpace: 'nowrap' };
   const td = { padding: '8px 8px', fontSize: 12, color: COLORS.ink, borderTop: `1px solid ${COLORS.lineSoft}`, verticalAlign: 'middle' };
@@ -4769,7 +5855,8 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
               {itens.map(t => {
                 const emEdicao = editandoId === t.id;
                 return (
-                  <tr key={t.id}
+                  <React.Fragment key={t.id}>
+                  <tr
                     onClick={() => !emEdicao && setLinhaSelecionada(id => id === t.id ? id : t.id)}
                     onDoubleClick={() => !emEdicao && setLinhaSelecionada(null)}
                     style={{
@@ -5019,7 +6106,70 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                       )}
                     </td>
                   </tr>
-                );
+                  {emEdicao && mostrarDetalhes && (
+                    <tr>
+                      <td colSpan={10} style={{ padding: '0 8px 12px', borderTop: 'none' }}>
+                        <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 8, padding: 10 }}>
+                          <button type="button" onClick={() => setProporcionalAberto(v => !v)} style={{
+                            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                            color: COLORS.gold, fontSize: 11.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4,
+                          }}>
+                            🧮 Calcular mensalidade proporcional {proporcionalAberto ? '▲' : '▼'}
+                          </button>
+                          {proporcionalAberto && (
+                            diasLetivos[t.mes] ? (
+                              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'end', marginTop: 8 }}>
+                                <div style={{ fontSize: 11.5, color: COLORS.inkSoft, alignSelf: 'center' }}>
+                                  {MESES_ABREV[t.mes]} tem <b>{diasLetivos[t.mes]}</b> dias letivos.
+                                </div>
+                                <div style={{ display: 'grid', gap: 3 }}>
+                                  <label style={{ fontSize: 10, color: COLORS.inkSoft, fontWeight: 600 }}>DIAS FREQUENTADOS</label>
+                                  <input value={diasFrequentados} onChange={e => setDiasFrequentados(e.target.value)}
+                                    type="number" min="0" max={diasLetivos[t.mes]} placeholder="ex: 12" className="mono"
+                                    style={{ ...inputCell, width: 80 }} />
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, alignSelf: 'center' }}>
+                                  <input type="checkbox" id={'descAvista' + t.id} checked={aplicarDescontoAvista}
+                                    onChange={e => setAplicarDescontoAvista(e.target.checked)}
+                                    style={{ width: 14, height: 14, cursor: 'pointer' }} />
+                                  <label htmlFor={'descAvista' + t.id} style={{ fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                    desconto à vista de
+                                  </label>
+                                  <input value={descontoAvista} onChange={e => setDescontoAvista(e.target.value)}
+                                    type="number" min="0" max="100" step="0.5" placeholder="5" className="mono"
+                                    disabled={!aplicarDescontoAvista}
+                                    style={{ ...inputCell, width: 45, opacity: aplicarDescontoAvista ? 1 : 0.5 }} />
+                                  <span style={{ fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 600 }}>%</span>
+                                </div>
+                                <button type="button" onClick={() => {
+                                  const base = parseBRLInput(valorCheioEdit) || parseBRLInput(valorEdit);
+                                  const dias = Number(diasFrequentados);
+                                  const total = diasLetivos[t.mes];
+                                  if (!base || !dias || dias <= 0) return;
+                                  let proporcional = Math.round((base * Math.min(dias, total) / total) * 100) / 100;
+                                  if (aplicarDescontoAvista) {
+                                    const pct = parseBRLInput(descontoAvista) || 0;
+                                    proporcional = Math.round(proporcional * (1 - pct / 100) * 100) / 100;
+                                  }
+                                  if (!valorCheioEdit) setValorCheioEdit(formatBRLNumber(base));
+                                  setValorEdit(formatBRLNumber(proporcional));
+                                }} style={{
+                                  background: COLORS.gold, color: '#FFFFFF', border: 'none', borderRadius: 6, padding: '6px 10px',
+                                  fontWeight: 600, fontSize: 11, cursor: 'pointer', height: 31,
+                                }}>Aplicar no Valor Pago</button>
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: 11, color: COLORS.inkSoft, marginTop: 6 }}>
+                                Cadastre quantos dias letivos tem {MESES_ABREV[t.mes]} na aba <b>Valores</b> (seção "📅 Calendário letivo") pra poder calcular.
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
               })}
             </tbody>
           </table>
@@ -5045,6 +6195,15 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
   const [filtroNota, setFiltroNota] = useState('TODOS');
   const [filtroData, setFiltroData] = useState('');
   const [filtroTexto, setFiltroTexto] = useState('');
+  // ouve a busca global do cabeçalho — pula direto pra cá quando o resultado clicado
+  // é de aluno ou convênio, e já preenche a busca local com o nome
+  useEffect(() => {
+    function aoReceberBusca(e) {
+      if (e.detail && e.detail.aba === 'mensalidades') setFiltroTexto(e.detail.texto);
+    }
+    window.addEventListener('painel-busca-ir', aoReceberBusca);
+    return () => window.removeEventListener('painel-busca-ir', aoReceberBusca);
+  }, []);
   const [toastMsg, setToastMsg] = useState(null);
   function mostrarToast(msg) {
     setToastMsg(msg);
@@ -5254,7 +6413,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, editarLancamento, remover
     valorEdit, setValorEdit, valorCheioEdit, setValorCheioEdit,
     statusEdit, setStatusEdit, bancoEdit, setBancoEdit,
     paiEdit, setPaiEdit, tirarNotaEdit, setTirarNotaEdit, convenioEdit, setConvenioEdit, dataEdit, setDataEdit, okEdit, setOkEdit, inputStyle,
-    nomeEdit, setNomeEdit, avulsos,
+    nomeEdit, setNomeEdit, avulsos, diasLetivos,
   };
 
   return (
