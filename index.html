@@ -4927,6 +4927,7 @@ ${textoCompras}`;
   // filtros da aba lançamentos
   const [filtroMes, setFiltroMes] = useState('TODOS');
   const [filtroTexto, setFiltroTexto] = useState('');
+  const [filtroStatusLancamento, setFiltroStatusLancamento] = useState('TODOS'); // 'TODOS' | 'Pago' | 'Pendente'
   const [mesesAbertos, setMesesAbertos] = useState({});
 
   // form novo lançamento
@@ -5456,6 +5457,7 @@ ${textoCompras}`;
     return transacoes
       .filter(t => t.tipo !== 'Entrada')
       .filter(t => filtroMes === 'TODOS' || t.mes === filtroMes)
+      .filter(t => filtroStatusLancamento === 'TODOS' || t.status === filtroStatusLancamento)
       .filter(t => {
         if (!filtroTexto) return true;
         const busca = filtroTexto.toLowerCase().trim();
@@ -5468,7 +5470,7 @@ ${textoCompras}`;
         return false;
       })
       .sort((a,b) => monthIndex(a.mes) - monthIndex(b.mes) || a.categoria.localeCompare(b.categoria));
-  }, [transacoes, filtroMes, filtroTexto]);
+  }, [transacoes, filtroMes, filtroTexto, filtroStatusLancamento]);
 
   const agrupadoPorMes = useMemo(() => {
     const grupos = {};
@@ -5970,6 +5972,7 @@ ${textoCompras}`;
             transacoes={transacoes} agrupadoPorMes={agrupadoPorMes}
             filtroMes={filtroMes} setFiltroMes={setFiltroMes}
             filtroTexto={filtroTexto} setFiltroTexto={setFiltroTexto}
+            filtroStatusLancamento={filtroStatusLancamento} setFiltroStatusLancamento={setFiltroStatusLancamento}
             mesesAbertos={mesesAbertos} toggleMes={toggleMes}
             removerLancamento={removerLancamento}
             editarLancamento={editarLancamento}
@@ -6772,6 +6775,7 @@ const TIPO_BG = { 'Fixa': COLORS.goldSoft, 'Variável': COLORS.redBg, 'Entrada':
 function Lancamentos(props) {
   const {
     transacoes, agrupadoPorMes, filtroMes, setFiltroMes, filtroTexto, setFiltroTexto,
+    filtroStatusLancamento, setFiltroStatusLancamento,
     mesesAbertos, toggleMes, removerLancamento, editarLancamento,
     novoMes, setNovoMes, novaCategoria, setNovaCategoria, novoTipo, setNovoTipo,
     novoValor, setNovoValor, novoStatus, setNovoStatus, adicionarLancamento,
@@ -7032,6 +7036,23 @@ function Lancamentos(props) {
           <option value="TODOS">Todos os meses</option>
           {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
         </select>
+        <div style={{ display: 'flex', gap: 6, border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: 3, background: COLORS.paperCard, height: 39, boxSizing: 'border-box' }}>
+          {[
+            { valor: 'TODOS', rotulo: 'Todos' },
+            { valor: 'Pendente', rotulo: 'Pendente' },
+            { valor: 'Pago', rotulo: 'Pago' },
+          ].map(op => {
+            const ativo = filtroStatusLancamento === op.valor;
+            const corAtivo = op.valor === 'Pago' ? COLORS.green : op.valor === 'Pendente' ? COLORS.gold : COLORS.ink;
+            const bgAtivo = op.valor === 'Pago' ? COLORS.greenBg : op.valor === 'Pendente' ? COLORS.goldSoft : COLORS.lineSoft;
+            return (
+              <button key={op.valor} type="button" onClick={() => setFiltroStatusLancamento(op.valor)} style={{
+                border: 'none', borderRadius: 5, padding: '0 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                color: ativo ? corAtivo : COLORS.inkSoft, background: ativo ? bgAtivo : 'transparent',
+              }}>{op.rotulo}</button>
+            );
+          })}
+        </div>
         <button onClick={() => setPrivadoDetalhes(v => !v)} title={privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista'} style={{
           background: 'none', border: `1px solid ${COLORS.line}`, borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
           display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 12.5, fontWeight: 600, height: 39, boxSizing: 'border-box',
