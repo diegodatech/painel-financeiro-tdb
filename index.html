@@ -5568,6 +5568,11 @@ ${textoCompras}`;
         .aba-item, .aba-item:focus, .aba-item:active, .aba-item:focus-visible, .aba-item:hover {
           outline: none !important;
           -webkit-tap-highlight-color: transparent !important;
+          /* a borda colorida embaixo do cartão vem de uma variável CSS (--aba-cor) e é
+             forçada aqui com !important em todo estado do botão — isso garante que ela
+             nunca some, mesmo quando o navegador tenta aplicar um estilo próprio de
+             clique/toque/foco por cima do border definido via style do React */
+          border-bottom: 3px solid var(--aba-cor) !important;
         }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background: ${COLORS.line}; border-radius: 4px; }
@@ -5903,7 +5908,10 @@ ${textoCompras}`;
                       padding: '9px 4px 7px', borderRadius: 10, cursor: 'pointer',
                       background: ativo ? corFundo : COLORS.paperCard,
                       border: `1px solid ${ativo ? cor : COLORS.line}`,
-                      borderBottom: `3px solid ${cor}`,
+                      // a cor da borda inferior fica numa variável CSS; quem realmente
+                      // desenha o border-bottom é a regra .aba-item no <style> global,
+                      // com !important, pra ela nunca sumir depois de um clique/toque
+                      '--aba-cor': cor,
                       boxShadow: ativo ? `0 2px 6px ${cor}40` : 'none',
                       outline: 'none', WebkitTapHighlightColor: 'transparent',
                       WebkitAppearance: 'none', appearance: 'none',
@@ -8982,6 +8990,76 @@ function Contratos({ chamarIA }) {
               <div>
                 <label style={estiloLabel}>OBSERVAÇÕES</label>
                 <input value={c.observacoes || ''} onChange={e => atualizarCampo(c.id, 'observacoes', e.target.value)} placeholder="Opcional — condições, multa de rescisão, etc." style={estiloCampo} />
+              </div>
+
+              {/* CAMPOS DO CONTRATO DE MATRÍCULA/MENSALIDADE — os valores que costumam mudar
+                  de ano pra ano (matrícula, multas, anuidade, mensalidades, datas). Ficam aqui em
+                  cima, editáveis direto, pra não precisar abrir o modo de edição por cima do PDF
+                  toda vez que só um valor ou uma data muda de um ano pro outro. */}
+              <div style={{ borderTop: `1px dashed ${COLORS.lineSoft}`, paddingTop: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: 8 }}>
+                  📋 Valores do contrato de matrícula (opcional — preencha se for o contrato de aluno)
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 10 }}>
+                  <div>
+                    <label style={estiloLabel}>MATRÍCULA (ALUNOS NOVOS)</label>
+                    <input value={c.matriculaValor || ''} onChange={e => atualizarCampo(c.id, 'matriculaValor', e.target.value)}
+                      onBlur={e => atualizarCampo(c.id, 'matriculaValor', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
+                      placeholder="0,00" className="mono" style={estiloCampo} />
+                  </div>
+                  <div>
+                    <label style={estiloLabel}>MULTA POR ATRASO (POR DIA)</label>
+                    <input value={c.multaAtrasoDiario || ''} onChange={e => atualizarCampo(c.id, 'multaAtrasoDiario', e.target.value)}
+                      onBlur={e => atualizarCampo(c.id, 'multaAtrasoDiario', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
+                      placeholder="0,00" className="mono" style={estiloCampo} />
+                  </div>
+                  <div>
+                    <label style={estiloLabel}>VALOR HORA EXCEDENTE</label>
+                    <input value={c.valorHoraExcedente || ''} onChange={e => atualizarCampo(c.id, 'valorHoraExcedente', e.target.value)}
+                      onBlur={e => atualizarCampo(c.id, 'valorHoraExcedente', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
+                      placeholder="0,00" className="mono" style={estiloCampo} />
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 10 }}>
+                  <div>
+                    <label style={estiloLabel}>ANUIDADE INTEGRAL</label>
+                    <input value={c.anuidadeIntegral || ''} onChange={e => atualizarCampo(c.id, 'anuidadeIntegral', e.target.value)}
+                      onBlur={e => atualizarCampo(c.id, 'anuidadeIntegral', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
+                      placeholder="0,00" className="mono" style={estiloCampo} />
+                  </div>
+                  <div>
+                    <label style={estiloLabel}>ANUIDADE PARCIAL (À VISTA)</label>
+                    <input value={c.anuidadeParcial || ''} onChange={e => atualizarCampo(c.id, 'anuidadeParcial', e.target.value)}
+                      onBlur={e => atualizarCampo(c.id, 'anuidadeParcial', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
+                      placeholder="0,00" className="mono" style={estiloCampo} />
+                  </div>
+                  <div>
+                    <label style={estiloLabel}>MENSALIDADE INTEGRAL</label>
+                    <input value={c.mensalidadeIntegral || ''} onChange={e => atualizarCampo(c.id, 'mensalidadeIntegral', e.target.value)}
+                      onBlur={e => atualizarCampo(c.id, 'mensalidadeIntegral', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
+                      placeholder="0,00" className="mono" style={estiloCampo} />
+                  </div>
+                  <div>
+                    <label style={estiloLabel}>MENSALIDADE PARCIAL (À VISTA)</label>
+                    <input value={c.mensalidadeParcial || ''} onChange={e => atualizarCampo(c.id, 'mensalidadeParcial', e.target.value)}
+                      onBlur={e => atualizarCampo(c.id, 'mensalidadeParcial', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
+                      placeholder="0,00" className="mono" style={estiloCampo} />
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+                  <div>
+                    <label style={estiloLabel}>INÍCIO DO PAGAMENTO</label>
+                    <input value={c.inicioPagamento || ''} onChange={e => atualizarCampo(c.id, 'inicioPagamento', e.target.value)} placeholder="dd/mm/aaaa" className="mono" style={estiloCampo} />
+                  </div>
+                  <div>
+                    <label style={estiloLabel}>DESCONTO À VISTA ATÉ</label>
+                    <input value={c.descontoAvistaAte || ''} onChange={e => atualizarCampo(c.id, 'descontoAvistaAte', e.target.value)} placeholder="dd/mm/aaaa" className="mono" style={estiloCampo} />
+                  </div>
+                  <div>
+                    <label style={estiloLabel}>LOCAL E DATA DE ASSINATURA</label>
+                    <input value={c.localDataAssinatura || ''} onChange={e => atualizarCampo(c.id, 'localDataAssinatura', e.target.value)} placeholder="Ex: Carlos Barbosa, RS, 10 de fevereiro de 2026" style={estiloCampo} />
+                  </div>
+                </div>
               </div>
 
               {/* PDF ORIGINAL — visualizar e editar por cima (preencher campos em branco) */}
