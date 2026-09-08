@@ -143,11 +143,17 @@
         promiseCarregamento = (async () => {
           if (!APPS_SCRIPT_URL) { cachePlanilha = {}; return cachePlanilha; }
           try {
-            const resp = await fetch(APPS_SCRIPT_URL, { method: 'GET' });
+            // limite de 8 segundos — se a Planilha Google não responder nesse tempo (rede
+            // lenta, script fora do ar, CORS bloqueando, etc.), desiste e usa os dados
+            // salvos neste navegador em vez de travar o painel esperando pra sempre
+            const controlador = new AbortController();
+            const timeoutId = setTimeout(() => controlador.abort(), 8000);
+            const resp = await fetch(APPS_SCRIPT_URL, { method: 'GET', signal: controlador.signal });
+            clearTimeout(timeoutId);
             cachePlanilha = await resp.json();
             window.__statusPlanilha = 'ok';
           } catch (e) {
-            console.warn('Não consegui carregar da Planilha Google, usando dados locais deste navegador.', e);
+            console.warn('Não consegui carregar da Planilha Google (ou demorou demais), usando dados locais deste navegador.', e);
             cachePlanilha = {};
             usandoPlanilha = false;
             window.__statusPlanilha = 'erro';
@@ -177,14 +183,18 @@
           if (APPS_SCRIPT_URL && usandoPlanilha) {
             window.__salvamentosPendentes = (window.__salvamentosPendentes || 0) + 1;
             try {
+              const controlador = new AbortController();
+              const timeoutId = setTimeout(() => controlador.abort(), 8000);
               await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ key, value: val }),
+                signal: controlador.signal,
               });
+              clearTimeout(timeoutId);
               window.__statusPlanilha = 'ok';
             } catch (e) {
-              console.warn('Não consegui salvar na Planilha Google agora — fica salvo só neste navegador até a conexão voltar.', e);
+              console.warn('Não consegui salvar na Planilha Google agora (ou demorou demais) — fica salvo só neste navegador até a conexão voltar.', e);
               window.__statusPlanilha = 'erro';
             } finally {
               window.__salvamentosPendentes = Math.max(0, (window.__salvamentosPendentes || 1) - 1);
@@ -215,6 +225,45 @@
           usandoPlanilha = true;
           window.__statusPlanilha = falhas === 0 ? 'ok' : 'erro';
           return { ok: falhas === 0, total: entradas.length, falhas };
+        },
+        // apaga uma chave — usado pelos botões de "remover anexo", lixeira, etc. Faltava
+        // completamente antes (o painel só tinha get/set/resync), então todo apagar
+        // silenciosamente não fazia nada quando rodado fora do editor de artifacts.
+        delete: async (key) => {
+          try { localStorage.removeItem(key); } catch (e) {}
+          if (cachePlanilha) delete cachePlanilha[key];
+          if (APPS_SCRIPT_URL && usandoPlanilha) {
+            try {
+              const controlador = new AbortController();
+              const timeoutId = setTimeout(() => controlador.abort(), 8000);
+              await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ key, value: '', deletar: true }),
+                signal: controlador.signal,
+              });
+              clearTimeout(timeoutId);
+            } catch (e) {}
+          }
+          return true;
+        },
+        // lista as chaves salvas que começam com um prefixo — usado pelo histórico de
+        // compras (Evolução mês a mês) e por outras buscas de "todas as chaves tipo X".
+        // Também faltava por completo antes.
+        list: async (prefixo) => {
+          const chaves = new Set();
+          try {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && (!prefixo || k.startsWith(prefixo))) chaves.add(k);
+            }
+          } catch (e) {}
+          if (cachePlanilha) {
+            Object.keys(cachePlanilha).forEach(k => {
+              if (!prefixo || k.startsWith(prefixo)) chaves.add(k);
+            });
+          }
+          return { keys: Array.from(chaves) };
         }
       };
     }
