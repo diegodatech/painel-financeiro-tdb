@@ -6899,8 +6899,8 @@ function Lancamentos(props) {
           items={[
             { label: 'Entradas do mês', valor: kpisMes.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
             { label: 'Saídas do mês', valor: kpisMes.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
-            { label: 'Resultado do mês', valor: kpisMes.resultado, icon: kpisMes.resultado >= 0 ? TrendingUp : TrendingDown, cor: kpisMes.resultado >= 0 ? COLORS.green : COLORS.red, bg: kpisMes.resultado >= 0 ? COLORS.greenBg : COLORS.redBg },
-            { label: 'Saldo em conta', valor: kpisMes.saldo, icon: Wallet, cor: COLORS.ink, bg: COLORS.goldSoft },
+            { label: 'Resultado do mês', valor: kpisMes.resultado, icon: kpisMes.resultado >= 0 ? TrendingUp : TrendingDown, cor: COLORS.gold, bg: COLORS.goldSoft },
+            { label: 'Saldo em conta', valor: kpisMes.saldo, icon: Wallet, cor: '#4A5A58', bg: COLORS.lineSoft, destaque: true },
           ]}
         />
       </div>
