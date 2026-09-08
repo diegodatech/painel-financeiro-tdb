@@ -5560,6 +5560,15 @@ ${textoCompras}`;
         }
         input, select { outline: none; }
         input:focus, select:focus { border-color: ${COLORS.gold} !important; }
+        /* abas do menu principal: garante que a borda colorida embaixo do cartão nunca
+           suma depois de clicar/tocar. Em alguns navegadores (principalmente no celular),
+           um <button> que já recebeu foco/toque fica com um estado interno que pode
+           competir com o border definido via style — isso força a borda a ficar sempre
+           do jeito que o React mandou, clicado ou não */
+        .aba-item, .aba-item:focus, .aba-item:active, .aba-item:focus-visible, .aba-item:hover {
+          outline: none !important;
+          -webkit-tap-highlight-color: transparent !important;
+        }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background: ${COLORS.line}; border-radius: 4px; }
         .busca-liquid-glass {
@@ -5888,7 +5897,7 @@ ${textoCompras}`;
               ].map(([key, label, Icone, cor, corFundo]) => {
                 const ativo = tab === key;
                 return (
-                  <button key={key} onClick={() => setTab(key)}
+                  <button key={key} className="aba-item" onClick={() => setTab(key)}
                     style={{
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                       padding: '9px 4px 7px', borderRadius: 10, cursor: 'pointer',
@@ -5896,6 +5905,8 @@ ${textoCompras}`;
                       border: `1px solid ${ativo ? cor : COLORS.line}`,
                       borderBottom: `3px solid ${cor}`,
                       boxShadow: ativo ? `0 2px 6px ${cor}40` : 'none',
+                      outline: 'none', WebkitTapHighlightColor: 'transparent',
+                      WebkitAppearance: 'none', appearance: 'none',
                       transition: 'background 0.12s ease, box-shadow 0.12s ease',
                     }}>
                     <span style={{
