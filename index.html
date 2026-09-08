@@ -5545,9 +5545,13 @@ ${textoCompras}`;
           .painel-main table td, .painel-main table th { padding: 6px 7px !important; font-size: 11px !important; }
           .grid-form-lanc { grid-template-columns: 1fr !important; }
           .grid-kpi { grid-template-columns: repeat(2, 1fr) !important; }
+          .abas-menu { grid-template-columns: repeat(auto-fit, minmax(74px, 1fr)) !important; gap: 6px !important; }
         }
         @media (max-width: 600px) {
           .painel-main { padding: 8px 6px 24px !important; }
+          /* celular: 4 abas por linha, ficam quadradinhas e do mesmo tamanho — melhor
+             que deixar o navegador decidir quantas cabem, que às vezes sobra uma solta */
+          .abas-menu { grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; }
         }
         .serif { font-family: 'Baloo 2', 'Inter', sans-serif; }
         .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
@@ -5868,7 +5872,7 @@ ${textoCompras}`;
 
           <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 12 }}>
             {/* TABS EM CARTÕES */}
-            <div style={{
+            <div className="abas-menu" style={{
               display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(84px, 1fr))', gap: 8,
               width: '100%', maxWidth: 900, marginTop: 4,
             }}>
@@ -5887,14 +5891,15 @@ ${textoCompras}`;
                   <button key={key} onClick={() => setTab(key)}
                     style={{
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                      padding: '9px 4px 8px', borderRadius: 10, cursor: 'pointer',
-                      background: COLORS.paperCard,
+                      padding: '9px 4px 7px', borderRadius: 10, cursor: 'pointer',
+                      background: ativo ? corFundo : COLORS.paperCard,
                       border: `1px solid ${ativo ? cor : COLORS.line}`,
-                      borderBottom: `2.5px solid ${cor}`,
-                      boxShadow: ativo ? `0 2px 8px ${cor}33` : 'none',
+                      borderBottom: `3px solid ${cor}`,
+                      boxShadow: ativo ? `0 2px 6px ${cor}40` : 'none',
+                      transition: 'background 0.12s ease, box-shadow 0.12s ease',
                     }}>
                     <span style={{
-                      width: 30, height: 30, borderRadius: 8, background: corFundo,
+                      width: 30, height: 30, borderRadius: 8, background: ativo ? COLORS.paperCard : corFundo,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
                       <Icone size={16} color={cor} />
