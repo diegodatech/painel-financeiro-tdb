@@ -925,18 +925,27 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
   const [tentativasErradas, setTentativasErradas] = useState(0);
 
   function apertarDigito(d) {
-    if (digitado.length >= 4) return;
-    const novo = digitado + d;
-    setDigitado(novo);
+    // usa a forma funcional do setState (lê o valor mais recente na hora, em vez do
+    // "digitado" que ficou preso no fechamento da função) — evita que dois dígitos
+    // digitados rapidinho pelo teclado do computador se percam ou fiquem fora de ordem
+    setDigitado(atual => {
+      if (atual.length >= 4) return atual;
+      const novo = atual + d;
+      if (novo.length === 4) {
+        setTimeout(() => confirmarDigitos(novo), 120);
+      }
+      return novo;
+    });
     setErro('');
-    if (novo.length === 4) {
-      setTimeout(() => confirmarDigitos(novo), 120);
-    }
   }
   function apagar() { setDigitado(d => d.slice(0, -1)); setErro(''); }
 
   // aceita digitação pelo teclado físico do computador (antes só funcionava clicando
-  // nos botões com o mouse) — números 0-9 digitam, Backspace apaga um dígito
+  // nos botões com o mouse) — números 0-9 digitam, Backspace apaga um dígito.
+  // Importante: não coloca "digitado" nas dependências — isso recriava o ouvinte de
+  // teclado a cada dígito, e no computador (onde dá pra digitar rápido) o segundo
+  // dígito às vezes chegava antes do ouvinte ser atualizado, perdendo um dígito e
+  // fazendo o PIN dar "errado" mesmo estando certo.
   useEffect(() => {
     function aoPressionarTecla(e) {
       if (e.key >= '0' && e.key <= '9') {
@@ -949,7 +958,7 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
     }
     window.addEventListener('keydown', aoPressionarTecla);
     return () => window.removeEventListener('keydown', aoPressionarTecla);
-  }, [digitado, modo, primeiroPin, pinConfigurado]);
+  }, [modo, primeiroPin, pinConfigurado]);
 
   function confirmarDigitos(valor) {
     if (modo === 'entrar') {
@@ -1403,24 +1412,33 @@ function ModalAlterarPin({ pinAtual, onFechar, onSalvar }) {
   const [sucesso, setSucesso] = useState(false);
 
   function apertar(d) {
-    if (digitado.length >= 4) return;
-    const novo = digitado + d;
-    setDigitado(novo);
+    // forma funcional do setState — evita perder dígito quando a pessoa digita
+    // rápido pelo teclado do computador (veja explicação na TelaBloqueio)
+    setDigitado(atual => {
+      if (atual.length >= 4) return atual;
+      const novo = atual + d;
+      if (novo.length === 4) setTimeout(() => confirmar(novo), 120);
+      return novo;
+    });
     setErro('');
-    if (novo.length === 4) setTimeout(() => confirmar(novo), 120);
   }
   function apagar() { setDigitado(v => v.slice(0, -1)); setErro(''); }
 
+  const digitadoRef = useRef(digitado);
+  useEffect(() => { digitadoRef.current = digitado; }, [digitado]);
+
+  // não coloca "digitado" nas dependências — evita recriar o ouvinte a cada dígito
+  // (mesma correção aplicada na TelaBloqueio, veja o comentário lá)
   useEffect(() => {
     function aoPressionarTecla(e) {
       if (e.key >= '0' && e.key <= '9') { e.preventDefault(); apertar(e.key); }
       else if (e.key === 'Backspace') { e.preventDefault(); apagar(); }
       else if (e.key === 'Escape') { e.preventDefault(); onFechar(); }
-      else if (e.key === 'Enter') { e.preventDefault(); if (digitado.length === 4) confirmar(digitado); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (digitadoRef.current.length === 4) confirmar(digitadoRef.current); }
     }
     window.addEventListener('keydown', aoPressionarTecla);
     return () => window.removeEventListener('keydown', aoPressionarTecla);
-  }, [digitado, etapa, novoPinTemp]);
+  }, [etapa, novoPinTemp]);
 
   function confirmar(valor) {
     if (etapa === 'atual') {
