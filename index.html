@@ -1113,7 +1113,7 @@ function ModalConfigIA({ chaveAtual, onSalvar, onFechar }) {
 
 // Painel flutuante do Assistente de IA — chat simples que sempre manda o resumo
 // financeiro atual como contexto junto com a pergunta da pessoa
-function AssistenteIA({ temChave, onAbrirConfig, onFechar, chamarIA, montarContextoFinanceiro, gerarAlertaProativo }) {
+function AssistenteIA({ temChave, onAbrirConfig, onFechar, chamarIA, montarContextoFinanceiro, gerarAlertaProativo, perguntaInicial, onConsumirPerguntaInicial }) {
   const [mensagens, setMensagens] = useState([
     { autor: 'ia', texto: 'Oi! Pode me perguntar sobre os dados financeiros da escola — resultado do mês, maiores gastos, diagnóstico do ano, o que falta melhorar, etc. Também posso ajudar a ler um contrato ou sugerir categoria pra um lançamento, se você colar o texto aqui.' },
   ]);
@@ -1178,6 +1178,29 @@ function AssistenteIA({ temChave, onAbrirConfig, onFechar, chamarIA, montarConte
     }
   }
 
+  // lê em voz alta uma mensagem da IA (resumo em áudio) — usa a síntese de voz do próprio
+  // navegador, sem precisar de API nenhuma
+  const [falando, setFalando] = useState(null); // índice da mensagem sendo lida agora, ou null
+  function falarMensagem(texto, indice) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      window.alert('Seu navegador não suporta leitura em voz alta.');
+      return;
+    }
+    if (falando === indice) {
+      window.speechSynthesis.cancel();
+      setFalando(null);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texto.replace(/[📊🎯⚠️📄📈✓⏳💡]/g, ''));
+    utterance.lang = 'pt-BR';
+    utterance.rate = 1;
+    utterance.onend = () => setFalando(null);
+    utterance.onerror = () => setFalando(null);
+    setFalando(indice);
+    window.speechSynthesis.speak(utterance);
+  }
+
   // janela arrastável — mesma lógica da bolha flutuante, só que aqui move a janela inteira
   const [pos, setPos] = useState({ x: 24, y: 90 });
   const arrastandoRef = useRef(false);
@@ -1208,8 +1231,7 @@ function AssistenteIA({ temChave, onAbrirConfig, onFechar, chamarIA, montarConte
     window.removeEventListener('touchend', aoSoltar);
   }
 
-  async function enviar() {
-    const texto = pergunta.trim();
+  async function enviarTexto(texto) {
     if (!texto || carregando) return;
     setMensagens(m => [...m, { autor: 'user', texto }]);
     setPergunta('');
@@ -1220,6 +1242,18 @@ function AssistenteIA({ temChave, onAbrirConfig, onFechar, chamarIA, montarConte
     setMensagens(m => [...m, { autor: 'ia', texto: resultado.erro ? `⚠ ${resultado.erro}` : resultado.texto }]);
     setCarregando(false);
   }
+  async function enviar() {
+    await enviarTexto(pergunta.trim());
+  }
+
+  // se a pessoa clicou em "Perguntar à IA" a partir da busca global, já manda a pergunta
+  // direto assim que o chat abre — sem precisar digitar de novo
+  useEffect(() => {
+    if (perguntaInicial && temChave) {
+      enviarTexto(perguntaInicial);
+      if (onConsumirPerguntaInicial) onConsumirPerguntaInicial();
+    }
+  }, [perguntaInicial]);
 
   return ReactDOM.createPortal(
     <div
@@ -1261,8 +1295,17 @@ function AssistenteIA({ temChave, onAbrirConfig, onFechar, chamarIA, montarConte
                 color: m.autor === 'user' ? '#FFFFFF' : '#14312E',
                 border: m.autor === 'user' ? 'none' : '1px solid rgba(255,255,255,0.5)',
                 borderRadius: 12, padding: '8px 12px', fontSize: 12.5, maxWidth: '85%', whiteSpace: 'pre-wrap', lineHeight: 1.42,
+                display: 'flex', alignItems: 'flex-start', gap: 6,
               }}>
-                {m.texto}
+                <span style={{ flex: '1 1 auto' }}>{m.texto}</span>
+                {m.autor === 'ia' && (
+                  <button onClick={() => falarMensagem(m.texto, i)} title={falando === i ? 'Parar leitura' : 'Ouvir em voz alta'} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 0, fontSize: 13,
+                    opacity: falando === i ? 1 : 0.5,
+                  }}>
+                    {falando === i ? '⏹️' : '🔊'}
+                  </button>
+                )}
               </div>
             ))}
             {carregando && (
@@ -2098,6 +2141,9 @@ function Compras({ chamarIA }) {
   const [editItem, setEditItem] = useState({});
   const [toastMsg, setToastMsg] = useState(null);
   const [gravandoDitado, setGravandoDitado] = useState(false);
+  const [mostrarEvolucao, setMostrarEvolucao] = useState(false);
+  const [historicoMensalCompras, setHistoricoMensalCompras] = useState(null); // [{ chave, label, dados }]
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false);
   const [interpretandoDitado, setInterpretandoDitado] = useState(false);
   const reconhecimentoDitadoRef = useRef(null);
   // guarda qual linha está "marcada" em cada sub-aba (Frutas/Rancho/Limpeza), separadamente —
@@ -2164,6 +2210,35 @@ function Compras({ chamarIA }) {
             await window.storage.set('compras_listas', JSON.stringify(carregado), false);
           }
         }
+
+        // VIRADA AUTOMÁTICA DE MÊS: se o mês calendário mudou desde a última vez que o
+        // painel foi aberto, grava um retrato do mês que terminou (mesmo que você não tenha
+        // mexido em nada) e zera o campo "comprar" de tudo, pra você começar o mês novo do
+        // zero — sem perder o histórico nem precisar apagar nada na mão.
+        const agora = new Date();
+        const chaveMesAtual = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
+        const rRef = await window.storage.get('compras_mes_referencia', false);
+        const mesReferenciaSalvo = rRef && rRef.value ? rRef.value : null;
+        if (mesReferenciaSalvo && mesReferenciaSalvo !== chaveMesAtual) {
+          // grava o retrato final do mês que terminou (garante que fica salvo mesmo que
+          // você não tenha editado nada depois da última vez)
+          try {
+            const retratoFinal = {};
+            Object.keys(carregado).forEach(sub => {
+              retratoFinal[sub] = (carregado[sub].itens || []).map(i => ({ nome: i.nome, comprar: i.comprar, unidade: i.unidade }));
+            });
+            await window.storage.set('compras_historico_' + mesReferenciaSalvo, JSON.stringify(retratoFinal), false);
+          } catch (e) {}
+          // zera só o "comprar" de cada item — mantém nome, estoque, unidade e categoria
+          const zerado = {};
+          Object.keys(carregado).forEach(sub => {
+            zerado[sub] = { ...carregado[sub], itens: (carregado[sub].itens || []).map(i => ({ ...i, comprar: null })) };
+          });
+          carregado = zerado;
+          await window.storage.set('compras_listas', JSON.stringify(carregado), false);
+        }
+        await window.storage.set('compras_mes_referencia', chaveMesAtual, false);
+
         setDados(carregado);
       } catch (e) {
         setDados(SEED_COMPRAS);
@@ -2174,6 +2249,17 @@ function Compras({ chamarIA }) {
   async function salvar(novosDados) {
     setDados(novosDados);
     try { await window.storage.set('compras_listas', JSON.stringify(novosDados), false); } catch (e) {}
+    // grava um "retrato" mensal das quantidades pedidas, pra IA poder comparar com meses
+    // anteriores depois (ex: "mês passado vocês compraram 15kg, esse mês só 6")
+    try {
+      const agora = new Date();
+      const chaveMes = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
+      const retrato = {};
+      Object.keys(novosDados).forEach(sub => {
+        retrato[sub] = (novosDados[sub].itens || []).map(i => ({ nome: i.nome, comprar: i.comprar, unidade: i.unidade }));
+      });
+      await window.storage.set('compras_historico_' + chaveMes, JSON.stringify(retrato), false);
+    } catch (e) {}
   }
 
   function mostrarToast(msg) {
@@ -2355,6 +2441,100 @@ function Compras({ chamarIA }) {
     if (nomesAdicionados.length) partes.push(`adicionei ${nomesAdicionados.join(', ')}`);
     if (nomesAtualizados.length) partes.push(`atualizei ${nomesAtualizados.join(', ')}`);
     mostrarToast(`✓ Ditado interpretado: ${partes.join(' e ')}.`);
+  }
+
+  // detecta itens que parecem ser o mesmo produto escrito de formas diferentes (ex: "BATATA
+  // BRANCA" e "BATATA BRANCA MAIS GRAÚDA") — a IA só aponta, não mexe em nada sozinha
+  const [detectandoDuplicatas, setDetectandoDuplicatas] = useState(false);
+  async function detectarDuplicatasIA() {
+    if (!chamarIA) return;
+    if (listaAtual.itens.length < 2) { mostrarToast('⚠ Essa lista tem poucos itens ainda.'); return; }
+    setDetectandoDuplicatas(true);
+    const nomes = listaAtual.itens.map(i => i.nome).join('\n');
+    const resultado = await chamarIA(
+      `Aqui está uma lista de itens de compras de uma escola. Aponte SOMENTE os pares que parecem ser o mesmo produto escrito de formas diferentes (ex: "BATATA BRANCA" e "BATATA BRANCA MAIS GRAÚDA", ou erros de digitação/plural). Responda em português, uma linha por par encontrado, formato "X ↔ Y". Se não achar nenhum par duvidoso, responda exatamente "nenhum".\n\nLISTA:\n${nomes}`
+    );
+    setDetectandoDuplicatas(false);
+    if (resultado.erro) { mostrarToast('⚠ ' + resultado.erro); return; }
+    const texto = resultado.texto.trim();
+    if (!texto || texto.toLowerCase().includes('nenhum')) {
+      mostrarToast('✓ Não achei nenhum item duplicado nessa lista.');
+    } else {
+      window.alert('Possíveis itens duplicados:\n\n' + texto);
+    }
+  }
+
+  // compara a quantidade pedida este mês com os meses anteriores (usando o histórico salvo
+  // automaticamente) e sugere ajustes — você confere e aplica só o que fizer sentido
+  const [sugerindoQuantidade, setSugerindoQuantidade] = useState(false);
+  async function sugerirQuantidadeIA() {
+    if (!chamarIA) return;
+    setSugerindoQuantidade(true);
+    try {
+      const lista = await window.storage.list('compras_historico_', false);
+      const chaves = (lista && lista.keys ? lista.keys : []).sort().reverse();
+      const agora = new Date();
+      const chaveAtual = 'compras_historico_' + agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
+      const chavesAnteriores = chaves.filter(k => k !== chaveAtual).slice(0, 2);
+      if (chavesAnteriores.length === 0) {
+        mostrarToast('⚠ Ainda não tem histórico de meses anteriores salvo — vai se acumulando conforme você for usando o painel.');
+        setSugerindoQuantidade(false);
+        return;
+      }
+      const historicos = [];
+      for (const chave of chavesAnteriores) {
+        const r = await window.storage.get(chave, false);
+        if (r && r.value) {
+          const dadosMes = JSON.parse(r.value);
+          const itensDoSub = dadosMes[subTab] || [];
+          historicos.push(`${chave.replace('compras_historico_', '')}: ` + itensDoSub.map(i => `${i.nome} ${i.comprar ?? '-'}${i.unidade || ''}`).join(', '));
+        }
+      }
+      const itensAtuais = listaAtual.itens.map(i => `${i.nome} (pedindo agora: ${i.comprar ?? 0}${i.unidade || ''})`).join('\n');
+      const resultado = await chamarIA(
+        `Compare a lista de compras deste mês com os meses anteriores e aponte só os itens em que a quantidade pedida este mês está bem diferente do padrão anterior (bem menor ou bem maior). Seja breve, uma linha por item, formato "NOME: mês passado X, agora Y — considera ajustar?". Se estiver tudo dentro do normal, responda "tudo dentro do padrão".\n\nHISTÓRICO DE MESES ANTERIORES:\n${historicos.join('\n')}\n\nLISTA ATUAL (${subTab}):\n${itensAtuais}`
+      );
+      setSugerindoQuantidade(false);
+      if (resultado.erro) { mostrarToast('⚠ ' + resultado.erro); return; }
+      window.alert(resultado.texto.trim() || 'Sem sugestões.');
+    } catch (e) {
+      setSugerindoQuantidade(false);
+      mostrarToast('⚠ Não consegui comparar com o histórico agora.');
+    }
+  }
+
+  // carrega TODOS os meses de histórico salvos (não só os 2 últimos) pra montar o gráfico
+  // de evolução — inclui o mês atual (em andamento) como último ponto do gráfico
+  async function carregarHistoricoCompleto() {
+    setCarregandoHistorico(true);
+    try {
+      const lista = await window.storage.list('compras_historico_', false);
+      const chaves = (lista && lista.keys ? lista.keys : []).sort(); // ordem cronológica
+      const meses = [];
+      for (const chave of chaves) {
+        const r = await window.storage.get(chave, false);
+        if (r && r.value) {
+          const [ano, mesNum] = chave.replace('compras_historico_', '').split('-');
+          meses.push({ chave: chave.replace('compras_historico_', ''), label: MESES_ABREV[MESES[Number(mesNum) - 1]] + '/' + ano.slice(2), dados: JSON.parse(r.value) });
+        }
+      }
+      // acrescenta o mês atual (em andamento, com os dados de agora) como último ponto,
+      // mesmo que ainda não tenha sido "fechado" pela virada automática de mês
+      const agora = new Date();
+      const chaveAtual = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
+      if (!meses.some(m => m.chave === chaveAtual) && dados) {
+        meses.push({ chave: chaveAtual, label: MESES_ABREV[MESES[agora.getMonth()]] + '/' + String(agora.getFullYear()).slice(2) + ' (em andamento)', dados });
+      }
+      setHistoricoMensalCompras(meses);
+    } catch (e) {
+      setHistoricoMensalCompras([]);
+    }
+    setCarregandoHistorico(false);
+  }
+
+  function abrirEvolucao() {
+    setMostrarEvolucao(true);
+    if (!historicoMensalCompras) carregarHistoricoCompleto();
   }
 
   function iniciarEdicao(item) {
@@ -2725,6 +2905,75 @@ function Compras({ chamarIA }) {
           <Mic size={16} color="#FFFFFF" />
           {gravandoDitado ? 'Ouvindo... fale os itens (ex: "3kg de banana, 2 pacotes de arroz")' : (interpretandoDitado ? '⏳ Interpretando o que você falou...' : 'Ditar itens pra IA preencher a lista')}
         </button>
+      )}
+
+      {chamarIA && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <button onClick={detectarDuplicatasIA} disabled={detectandoDuplicatas} style={{
+            flex: '1 1 200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            background: '#FFFFFF', color: COLORS.ink, border: `1px solid ${COLORS.line}`, borderRadius: 9, padding: '9px 12px',
+            fontSize: 12.5, fontWeight: 700, cursor: detectandoDuplicatas ? 'default' : 'pointer', opacity: detectandoDuplicatas ? 0.7 : 1,
+          }}>
+            <IconeGemini size={14} /> {detectandoDuplicatas ? 'Procurando...' : 'Detectar itens duplicados'}
+          </button>
+          <button onClick={sugerirQuantidadeIA} disabled={sugerindoQuantidade} style={{
+            flex: '1 1 200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            background: '#FFFFFF', color: COLORS.ink, border: `1px solid ${COLORS.line}`, borderRadius: 9, padding: '9px 12px',
+            fontSize: 12.5, fontWeight: 700, cursor: sugerindoQuantidade ? 'default' : 'pointer', opacity: sugerindoQuantidade ? 0.7 : 1,
+          }}>
+            <IconeGemini size={14} /> {sugerindoQuantidade ? 'Comparando com meses anteriores...' : 'Sugerir quantidade (baseado no histórico)'}
+          </button>
+        </div>
+      )}
+
+      <button onClick={() => mostrarEvolucao ? setMostrarEvolucao(false) : abrirEvolucao()} style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: COLORS.goldSoft,
+        color: COLORS.gold, border: 'none', borderRadius: 9, padding: '9px 12px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+      }}>
+        📈 {mostrarEvolucao ? 'Esconder evolução mês a mês' : 'Ver evolução de compras mês a mês'}
+      </button>
+
+      {mostrarEvolucao && (
+        <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: 16, display: 'grid', gap: 12 }}>
+          {carregandoHistorico ? (
+            <div style={{ textAlign: 'center', color: COLORS.inkSoft, fontSize: 12.5, padding: 20 }}>⏳ Carregando histórico...</div>
+          ) : !historicoMensalCompras || historicoMensalCompras.length === 0 ? (
+            <div style={{ textAlign: 'center', color: COLORS.inkSoft, fontSize: 12.5, padding: 20 }}>
+              Ainda não tem histórico salvo. Ele vai se acumulando automaticamente a cada mês que passar (e também toda vez que você editar e salvar a lista).
+            </div>
+          ) : (() => {
+            const totalPorMes = historicoMensalCompras.map(m => {
+              const itensDoSub = (m.dados[subTab] && m.dados[subTab].itens) || [];
+              const total = itensDoSub.reduce((s, i) => s + (Number(i.comprar) || 0), 0);
+              return { mes: m.label, total: Math.round(total * 10) / 10 };
+            });
+            const maiorMes = totalPorMes.length > 0 ? totalPorMes.reduce((a, b) => b.total > a.total ? b : a) : null;
+            return (
+              <>
+                <div style={{ fontSize: 12, color: COLORS.inkSoft }}>
+                  Soma da quantidade pedida por mês em <strong>{CATEGORIAS_COMPRAS.find(c => c.key === subTab)?.label || subTab}</strong> (unidades misturadas — kg, pacotes, etc. somados como número, é uma visão aproximada de volume).
+                  {maiorMes && <> Mês com mais compra: <strong>{maiorMes.mes}</strong> ({maiorMes.total}).</>}
+                </div>
+                {BarChart && (
+                  <div style={{ width: '100%', height: 220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={totalPorMes}>
+                        <CartesianGrid strokeDasharray="3 5" stroke={COLORS.lineSoft} />
+                        <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Bar dataKey="total" fill={COLORS.gold} radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+                <div style={{ fontSize: 11.5, color: COLORS.inkSoft }}>
+                  Quer saber a diferença item por item (ex: "quantos quilos de banana a mais/menos em relação ao mês passado")? Pergunta direto pra IA no chat — ela tem acesso a esse histórico completo.
+                </div>
+              </>
+            );
+          })()}
+        </div>
       )}
 
       <div style={{ position: 'relative' }}>
@@ -4331,6 +4580,7 @@ function PainelFinanceiro() {
   // Faz perguntas sobre os dados, sugere categorias, lê contratos e dá diagnósticos.
   const [geminiKey, setGeminiKey] = useState('');
   const [iaAberta, setIaAberta] = useState(false);
+  const [perguntaInicialIA, setPerguntaInicialIA] = useState(null); // pergunta vinda da busca global, pra já mandar assim que o chat abrir
   const [iaConfigAberta, setIaConfigAberta] = useState(false);
   useEffect(() => {
     (async () => {
@@ -4502,6 +4752,32 @@ function PainelFinanceiro() {
       }
     } catch (e) {}
 
+    // histórico de compras (Frutas/Rancho/Limpeza) mês a mês — pra IA responder coisas tipo
+    // "qual mês compramos mais rancho" ou "quantos quilos de banana a mais/menos que mês passado"
+    let textoCompras = '(ainda não tem histórico de compras salvo)';
+    try {
+      const listaChaves = await window.storage.list('compras_historico_', false);
+      const chaves = (listaChaves && listaChaves.keys ? listaChaves.keys : []).sort();
+      if (chaves.length > 0) {
+        const linhas = [];
+        for (const chave of chaves) {
+          const r = await window.storage.get(chave, false);
+          if (r && r.value) {
+            const mesRotulo = chave.replace('compras_historico_', '');
+            const dadosMes = JSON.parse(r.value);
+            ['frutas', 'rancho', 'limpeza'].forEach(sub => {
+              const itens = (dadosMes[sub] && dadosMes[sub].itens) || [];
+              const comQtd = itens.filter(i => i.comprar);
+              if (comQtd.length > 0) {
+                linhas.push(`${mesRotulo} [${sub}]: ` + comQtd.map(i => `${i.nome} ${i.comprar}${i.unidade || ''}`).join(', '));
+              }
+            });
+          }
+        }
+        if (linhas.length > 0) textoCompras = linhas.join('\n');
+      }
+    } catch (e) {}
+
     return `Dados financeiros da Escola Infantil Tempo de Brincar (em Reais, R$):
 
 RESULTADO POR MÊS:
@@ -4531,7 +4807,10 @@ TABELA DE VALORES DE MENSALIDADE (aba Valores):
 ${textoValores}
 
 CONTRATOS CADASTRADOS (aba Contratos):
-${textoContratos}`;
+${textoContratos}
+
+HISTÓRICO DE COMPRAS MÊS A MÊS (Frutas/Rancho/Limpeza, aba Compras):
+${textoCompras}`;
   }
 
   // resumo curto e automático (sem gastar chamada de IA) — mostrado assim que o chat abre,
@@ -4544,6 +4823,79 @@ ${textoContratos}`;
       const partes = [];
       if (linhaAlunos) partes.push('📊 ' + linhaAlunos.replace('Tem hoje: ', ''));
       if (linhaMeta) partes.push(linhaMeta.replace('Meta de lucro mensal: ', '🎯 Meta: '));
+
+      // mês de referência (o mais recente com despesa paga, mesma lógica do resto do painel)
+      const mesesComMov = MESES.filter(m => transacoes.some(t => t.mes === m));
+      const idxAtual = mesesComMov.length > 0 ? MESES.indexOf(mesesComMov[mesesComMov.length - 1]) : -1;
+
+      // 1) GASTOS FORA DO PADRÃO — compara cada categoria de despesa do mês atual com o mês
+      // anterior; avisa se mais que dobrou (e tinha um valor mínimo, pra não alarmar por um
+      // gasto de R$5 que virou R$12)
+      if (idxAtual > 0) {
+        const mesAtualNome = MESES[idxAtual];
+        const mesAnteriorNome = MESES[idxAtual - 1];
+        const porCategoria = (mes) => {
+          const mapa = {};
+          transacoes.filter(t => t.mes === mes && t.tipo !== 'Entrada' && t.status === 'Pago').forEach(t => {
+            const cat = nomeExibicao(t.categoria);
+            mapa[cat] = (mapa[cat] || 0) + (t.valor || 0);
+          });
+          return mapa;
+        };
+        const atualPorCat = porCategoria(mesAtualNome);
+        const anteriorPorCat = porCategoria(mesAnteriorNome);
+        const anomalias = [];
+        Object.keys(atualPorCat).forEach(cat => {
+          const valorAtual = atualPorCat[cat];
+          const valorAnterior = anteriorPorCat[cat] || 0;
+          if (valorAtual >= 150 && valorAnterior > 0 && valorAtual >= valorAnterior * 2) {
+            anomalias.push(`${cat} (${formatBRL(valorAnterior)} → ${formatBRL(valorAtual)}, ${Math.round(valorAtual / valorAnterior * 10) / 10}x)`);
+          }
+        });
+        if (anomalias.length > 0) {
+          partes.push('⚠️ Gastos fora do padrão em ' + MESES_ABREV[mesAtualNome] + ': ' + anomalias.slice(0, 3).join('; '));
+        }
+      }
+
+      // 2) CONTRATOS PERTO DO REAJUSTE — avisa se algum contrato reajusta neste mês ou no
+      // próximo, pra dar tempo de negociar/se preparar
+      try {
+        const rc = await window.storage.get('contratos_lista', false);
+        const contratos = rc && rc.value ? JSON.parse(rc.value) : [];
+        if (idxAtual >= 0 && contratos.length > 0) {
+          const mesAtualNome = MESES[idxAtual];
+          const mesProximoNome = MESES[(idxAtual + 1) % 12];
+          const proximosReajustes = contratos.filter(c => c.mesReajuste === mesAtualNome || c.mesReajuste === mesProximoNome);
+          if (proximosReajustes.length > 0) {
+            partes.push('📄 Reajuste chegando: ' + proximosReajustes.map(c => `${c.nome} (${MESES_ABREV[c.mesReajuste]}${c.percentualUltimoReajuste ? ', último foi ' + c.percentualUltimoReajuste + '%' : ''})`).join('; '));
+          }
+        }
+      } catch (e) {}
+
+      // 3) PROJEÇÃO DE CAIXA — média do resultado (entradas - saídas) dos últimos meses com
+      // dados, projetada até dezembro, somada ao saldo em conta mais recente
+      try {
+        if (idxAtual >= 1) {
+          const ultimosMeses = mesesComMov.slice(-3);
+          const resultados = ultimosMeses.map(m => {
+            const doMes = transacoes.filter(t => t.mes === m && t.status === 'Pago');
+            const entradas = doMes.filter(t => t.tipo === 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
+            const saidas = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
+            return entradas - saidas;
+          });
+          const mediaResultado = resultados.reduce((s, v) => s + v, 0) / resultados.length;
+          const rs = await window.storage.get('saldos_mensais', false);
+          const saldos = rs && rs.value ? JSON.parse(rs.value) : {};
+          const mesAtualNome = MESES[idxAtual];
+          const saldoAtual = saldos[mesAtualNome] || 0;
+          const mesesAteDezembro = 11 - idxAtual;
+          if (mesesAteDezembro > 0) {
+            const projecaoDezembro = saldoAtual + mediaResultado * mesesAteDezembro;
+            partes.push(`📈 No ritmo atual (média de ${formatBRL(mediaResultado)}/mês), o caixa de dezembro deve fechar perto de ${formatBRL(projecaoDezembro)}.`);
+          }
+        }
+      } catch (e) {}
+
       if (partes.length === 0) return null;
       return partes.join('\n');
     } catch (e) {
@@ -5408,7 +5760,7 @@ ${textoContratos}`;
                   padding: '10px 14px 10px 38px', fontSize: 13, color: '#14312E', position: 'relative',
                 }}
               />
-              {buscaGlobalAberta && resultadosBuscaGlobal.length > 0 && (
+              {buscaGlobalAberta && buscaGlobal.trim() && (
                 <div className="busca-liquid-glass" style={{
                   position: 'absolute', top: '116%', left: 0, right: 0, zIndex: 500,
                   borderRadius: 16, boxShadow: '0 12px 30px rgba(16,110,107,0.18)',
@@ -5424,6 +5776,23 @@ ${textoContratos}`;
                       <span style={{ fontSize: 10.5, color: COLORS.inkSoft, background: COLORS.lineSoft, borderRadius: 5, padding: '2px 7px', flexShrink: 0 }}>{res.tipo}</span>
                     </div>
                   ))}
+                  {chamarIA && (
+                    <div
+                      onClick={() => {
+                        setPerguntaInicialIA(buscaGlobal.trim());
+                        setIaAberta(true);
+                        setBuscaGlobal('');
+                        setBuscaGlobalAberta(false);
+                      }}
+                      style={{
+                        padding: '9px 12px', cursor: 'pointer', fontSize: 13, color: COLORS.gold, fontWeight: 700,
+                        borderTop: resultadosBuscaGlobal.length > 0 ? `1px solid ${COLORS.lineSoft}` : 'none',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <IconeGemini size={13} /> Perguntar à IA: "{buscaGlobal.trim()}"
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -5606,6 +5975,8 @@ ${textoContratos}`;
               chamarIA={chamarIA}
               montarContextoFinanceiro={montarContextoFinanceiro}
               gerarAlertaProativo={gerarAlertaProativo}
+              perguntaInicial={perguntaInicialIA}
+              onConsumirPerguntaInicial={() => setPerguntaInicialIA(null)}
             />
           )}
 
@@ -5726,6 +6097,7 @@ ${textoContratos}`;
             adicionarEntrada={adicionarEntrada}
             privadoTotais={privadoTotais} setPrivadoTotais={setPrivadoTotais}
             privadoDetalhes={privadoDetalhes} setPrivadoDetalhes={setPrivadoDetalhes}
+            chamarIA={chamarIA}
           />
         ) : tab === 'contratos' ? (
           <Contratos chamarIA={chamarIA} />
@@ -6521,6 +6893,62 @@ function Lancamentos(props) {
     setNovaCategoria(resultado.texto.trim().split('\n')[0].slice(0, 60));
   }
 
+  // dita por voz o lançamento inteiro (mês, categoria, tipo, valor, status) e a IA preenche
+  // o formulário — você só confere e clica em "Lançar"
+  const [gravandoLanc, setGravandoLanc] = useState(false);
+  const [interpretandoLanc, setInterpretandoLanc] = useState(false);
+  const reconhecimentoLancRef = useRef(null);
+  const suportaVozLanc = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  function alternarDitadoLancamento() {
+    if (!suportaVozLanc) { window.alert('Seu navegador não suporta gravação de voz. Tenta pelo Chrome ou Edge.'); return; }
+    if (typeof window !== 'undefined' && window.isSecureContext === false) {
+      window.alert('A gravação de voz só funciona em HTTPS. Se você abriu o arquivo local direto do celular/pasta, o navegador bloqueia o microfone por segurança.');
+      return;
+    }
+    if (gravandoLanc) { reconhecimentoLancRef.current && reconhecimentoLancRef.current.stop(); return; }
+    try {
+      const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new Reconhecedor();
+      rec.lang = 'pt-BR';
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.onstart = () => setGravandoLanc(true);
+      rec.onresult = e => interpretarDitadoLancamento(e.results[0][0].transcript);
+      rec.onerror = event => {
+        setGravandoLanc(false);
+        const motivos = { 'not-allowed': 'Permissão de microfone negada.', 'no-speech': 'Não ouvi nada, tenta de novo.', 'audio-capture': 'Nenhum microfone encontrado.', 'network': 'Sem conexão pra usar o reconhecimento de voz.' };
+        window.alert(motivos[event.error] || `Erro na gravação: ${event.error}`);
+      };
+      rec.onend = () => setGravandoLanc(false);
+      reconhecimentoLancRef.current = rec;
+      rec.start();
+    } catch (erro) {
+      setGravandoLanc(false);
+      window.alert('Não consegui iniciar a gravação: ' + erro.message);
+    }
+  }
+  async function interpretarDitadoLancamento(textoFalado) {
+    if (!chamarIA || !textoFalado || !textoFalado.trim()) return;
+    setInterpretandoLanc(true);
+    const categoriasConhecidas = Array.from(new Set((transacoes || []).map(t => t.categoria).filter(Boolean))).slice(0, 40).join(', ');
+    const resultado = await chamarIA(
+      `Transforme essa fala ditada em um lançamento de despesa financeira, em JSON puro, sem markdown, sem explicação. Chaves exatas: "mes" (nome do mês em português maiúsculo, ex: SETEMBRO — use ${novoMes} se não for mencionado), "categoria" (o nome do gasto, reaproveitando uma categoria já usada se fizer sentido: ${categoriasConhecidas}), "tipo" ("Fixa" se for um gasto recorrente mensal tipo aluguel/salário/internet, ou "Variável" se for um gasto avulso — use "${novoTipo}" se não der pra saber), "valor" (só número, ponto decimal, sem R$), "status" ("Pago" ou "Pendente" — use "Pago" se não for dito o contrário).\n\nFALA DITADA: "${textoFalado.trim()}"`
+    );
+    setInterpretandoLanc(false);
+    if (resultado.erro) { window.alert(resultado.erro); return; }
+    try {
+      const limpo = resultado.texto.replace(/```json|```/g, '').trim();
+      const d = JSON.parse(limpo);
+      if (d.mes && MESES.includes(d.mes)) setNovoMes(d.mes);
+      if (d.categoria) setNovaCategoria(String(d.categoria).toUpperCase());
+      if (d.tipo === 'Fixa' || d.tipo === 'Variável') setNovoTipo(d.tipo);
+      if (d.valor != null) setNovoValor(formatBRLNumber(Number(d.valor)));
+      if (d.status === 'Pago' || d.status === 'Pendente') setNovoStatus(d.status);
+    } catch (e) {
+      window.alert('A IA respondeu, mas não consegui ler o resultado. Tenta ditar de novo, mais devagar.');
+    }
+  }
+
   const [editandoId, setEditandoId] = useState(null);
   const [valorEdit, setValorEdit] = useState('');
   const [statusEdit, setStatusEdit] = useState('Pago');
@@ -6620,10 +7048,21 @@ function Lancamentos(props) {
       </div>
 
       <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '20px 22px', boxShadow: '0 1px 2px rgba(31,59,54,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           <Plus size={17} color={COLORS.gold} />
           <h3 className="serif" style={{ fontSize: 16, fontWeight: 600, margin: 0, color: '#14312E' }}>Novo lançamento</h3>
           <span style={{ fontSize: 12, color: COLORS.inkSoft }}>— anote aqui cada saque, compra ou entrada (aceita somas como 900+150)</span>
+          {chamarIA && (
+            <button type="button" onClick={alternarDitadoLancamento} disabled={interpretandoLanc} style={{
+              marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6,
+              background: gravandoLanc ? COLORS.red : (interpretandoLanc ? COLORS.inkSoft : COLORS.inkButton),
+              color: '#FFF', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700,
+              cursor: interpretandoLanc ? 'default' : 'pointer', animation: gravandoLanc ? 'pulsarMic 1s ease-in-out infinite' : 'none',
+            }}>
+              <Mic size={14} color="#FFF" />
+              {gravandoLanc ? 'Ouvindo...' : (interpretandoLanc ? 'Interpretando...' : 'Ditar lançamento')}
+            </button>
+          )}
         </div>
         <form onSubmit={adicionarLancamento} className="grid-form-lanc" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, alignItems: 'end' }}>
           <div style={{ display: 'grid', gap: 4 }}>
@@ -7273,7 +7712,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
   );
 }
 
-function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancamento, removerLancamento, adicionarEntrada, privadoTotais, setPrivadoTotais, privadoDetalhes, setPrivadoDetalhes }) {
+function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancamento, removerLancamento, adicionarEntrada, privadoTotais, setPrivadoTotais, privadoDetalhes, setPrivadoDetalhes, chamarIA }) {
   // lembra o mês que você escolheu no filtro, mesmo trocando de aba e voltando —
   // só usa AGOSTO como padrão na primeiríssima vez, antes de você escolher algo
   const [filtroMes, setFiltroMesState] = useState(() => {
@@ -7374,6 +7813,64 @@ function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancam
   const [bancoOutroModo, setBancoOutroModo] = useState(false);
   const [novoStatus, setNovoStatus] = useState('Pago');
   const [formErro, setFormErro] = useState('');
+
+  // dita por voz o registro de pagamento inteiro (nome, valor, banco, mês, status) e a IA
+  // preenche o formulário — você confere e clica em "Adicionar"
+  const [gravandoMens, setGravandoMens] = useState(false);
+  const [interpretandoMens, setInterpretandoMens] = useState(false);
+  const reconhecimentoMensRef = useRef(null);
+  const suportaVozMens = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  function alternarDitadoMensalidade() {
+    if (!suportaVozMens) { window.alert('Seu navegador não suporta gravação de voz. Tenta pelo Chrome ou Edge.'); return; }
+    if (typeof window !== 'undefined' && window.isSecureContext === false) {
+      window.alert('A gravação de voz só funciona em HTTPS. Se você abriu o arquivo local direto do celular/pasta, o navegador bloqueia o microfone por segurança.');
+      return;
+    }
+    if (gravandoMens) { reconhecimentoMensRef.current && reconhecimentoMensRef.current.stop(); return; }
+    try {
+      const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new Reconhecedor();
+      rec.lang = 'pt-BR';
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.onstart = () => setGravandoMens(true);
+      rec.onresult = e => interpretarDitadoMensalidade(e.results[0][0].transcript);
+      rec.onerror = event => {
+        setGravandoMens(false);
+        const motivos = { 'not-allowed': 'Permissão de microfone negada.', 'no-speech': 'Não ouvi nada, tenta de novo.', 'audio-capture': 'Nenhum microfone encontrado.', 'network': 'Sem conexão pra usar o reconhecimento de voz.' };
+        window.alert(motivos[event.error] || `Erro na gravação: ${event.error}`);
+      };
+      rec.onend = () => setGravandoMens(false);
+      reconhecimentoMensRef.current = rec;
+      rec.start();
+    } catch (erro) {
+      setGravandoMens(false);
+      window.alert('Não consegui iniciar a gravação: ' + erro.message);
+    }
+  }
+  async function interpretarDitadoMensalidade(textoFalado) {
+    if (!chamarIA || !textoFalado || !textoFalado.trim()) return;
+    setInterpretandoMens(true);
+    const resultado = await chamarIA(
+      `Transforme essa fala ditada em um registro de pagamento de mensalidade, em JSON puro, sem markdown, sem explicação. Chaves exatas: "tipo" ("Aluno" ou "Convênio" — use "Aluno" se não for mencionado), "nome" (nome da pessoa/empresa), "pai" (nome do responsável/pai, se for dito, senão null), "convenio" (nome do convênio se mencionado, ex: PARTICULAR, MUNICÍPIO — use "PARTICULAR" se não for dito), "mes" (mês em português maiúsculo, ex: SETEMBRO — use ${novoMes} se não mencionado), "valor" (só número, ponto decimal, sem R$), "banco" (nome do banco se mencionado, maiúsculo, senão null), "status" ("Pago" ou "Pendente" — use "Pago" se não for dito o contrário).\n\nFALA DITADA: "${textoFalado.trim()}"`
+    );
+    setInterpretandoMens(false);
+    if (resultado.erro) { window.alert(resultado.erro); return; }
+    try {
+      const limpo = resultado.texto.replace(/```json|```/g, '').trim();
+      const d = JSON.parse(limpo);
+      if (d.tipo === 'Aluno' || d.tipo === 'Convênio') setNovoTipoOrigem(d.tipo);
+      if (d.nome) setNovoNome(String(d.nome));
+      if (d.pai) setNovoPai(String(d.pai));
+      if (d.convenio) setNovoConvenio(String(d.convenio).toUpperCase());
+      if (d.mes && MESES.includes(d.mes)) setNovoMes(d.mes);
+      if (d.valor != null) setNovoValor(formatBRLNumber(Number(d.valor)));
+      if (d.banco) { setNovoBanco(String(d.banco).toUpperCase()); setBancoOutroModo(true); }
+      if (d.status === 'Pago' || d.status === 'Pendente') setNovoStatus(d.status);
+    } catch (e) {
+      window.alert('A IA respondeu, mas não consegui ler o resultado. Tenta ditar de novo, mais devagar.');
+    }
+  }
 
   const inputStyle = {
     border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 11px', fontSize: 13.5,
@@ -7534,10 +8031,21 @@ function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancam
       </div>
 
       <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '18px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
           <Plus size={16} color={COLORS.gold} />
           <h3 className="serif" style={{ fontSize: 15, fontWeight: 600, margin: 0, color: '#14312E' }}>Novo registro de entrada</h3>
           <span style={{ fontSize: 11.5, color: COLORS.inkSoft }}>— aceita contas nos valores (ex: 900+150 ou 1483-200)</span>
+          {chamarIA && (
+            <button type="button" onClick={alternarDitadoMensalidade} disabled={interpretandoMens} style={{
+              marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6,
+              background: gravandoMens ? COLORS.red : (interpretandoMens ? COLORS.inkSoft : COLORS.inkButton),
+              color: '#FFF', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700,
+              cursor: interpretandoMens ? 'default' : 'pointer', animation: gravandoMens ? 'pulsarMic 1s ease-in-out infinite' : 'none',
+            }}>
+              <Mic size={14} color="#FFF" />
+              {gravandoMens ? 'Ouvindo...' : (interpretandoMens ? 'Interpretando...' : 'Ditar registro')}
+            </button>
+          )}
         </div>
         <form onSubmit={submeterNovo} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
