@@ -165,11 +165,15 @@
 
       window.storage = {
         get: async (key) => {
-          if (APPS_SCRIPT_URL) {
-            const c = await carregarDaPlanilha();
-            if (c && c[key] !== undefined && c[key] !== null && c[key] !== '') {
-              return { value: c[key] };
-            }
+          // NÃO espera a Planilha Google responder antes de mostrar algo — isso é o que
+          // vinha travando/derrubando a página em conexões lentas. Usa direto o que já
+          // está salvo neste navegador (instantâneo) e, se a Planilha ainda não tiver sido
+          // consultada nesta sessão, dispara a busca dela em segundo plano (sem esperar).
+          if (APPS_SCRIPT_URL && cachePlanilha === null) {
+            carregarDaPlanilha().catch(() => {}); // dispara mas não trava esperando
+          }
+          if (cachePlanilha && cachePlanilha[key] !== undefined && cachePlanilha[key] !== null && cachePlanilha[key] !== '') {
+            return { value: cachePlanilha[key] };
           }
           try {
             const item = localStorage.getItem(key);
@@ -2189,18 +2193,19 @@ function Compras({ chamarIA }) {
   const [editandoId, setEditandoId] = useState(null);
   const [editItem, setEditItem] = useState({});
   const [toastMsg, setToastMsg] = useState(null);
-  const [gravandoDitado, setGravandoDitado] = useState(false);
-  const [mostrarEvolucao, setMostrarEvolucao] = useState(false);
-  const [historicoMensalCompras, setHistoricoMensalCompras] = useState(null); // [{ chave, label, dados }]
-  const [carregandoHistorico, setCarregandoHistorico] = useState(false);
-  const [interpretandoDitado, setInterpretandoDitado] = useState(false);
-  const reconhecimentoDitadoRef = useRef(null);
   // guarda qual linha está "marcada" em cada sub-aba (Frutas/Rancho/Limpeza), separadamente —
   // assim trocar de aba e voltar não perde onde você tinha parado
   const [linhaSelecionada, setLinhaSelecionada] = useState({ frutas: null, rancho: null, limpeza: null });
   // lixeira temporária dos itens de compras apagados — restaura em até 30 dias
   const [lixeiraCompras, setLixeiraCompras] = useState([]);
   const [lixeiraCompraAberta, setLixeiraCompraAberta] = useState(false);
+  // ditado por voz — clica, fala o que precisa mudar (ex: "muda o açúcar pra 5 quilos" ou
+  // "tira a manga da lista de frutas") e a IA acha o item certo em qualquer uma das três
+  // listas (Rancho, Frutas ou Limpeza) e já aplica a alteração, sem precisar digitar
+  const [gravandoCompra, setGravandoCompra] = useState(false);
+  const [interpretandoCompra, setInterpretandoCompra] = useState(false);
+  const reconhecimentoCompraRef = useRef(null);
+  const suportaVozCompra = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
   useEffect(() => {
     (async () => {
       try {
@@ -2260,34 +2265,6 @@ function Compras({ chamarIA }) {
           }
         }
 
-        // VIRADA AUTOMÁTICA DE MÊS: se o mês calendário mudou desde a última vez que o
-        // painel foi aberto, grava um retrato do mês que terminou (mesmo que você não tenha
-        // mexido em nada) e zera o campo "comprar" de tudo, pra você começar o mês novo do
-        // zero — sem perder o histórico nem precisar apagar nada na mão.
-        const agora = new Date();
-        const chaveMesAtual = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
-        const rRef = await window.storage.get('compras_mes_referencia', false);
-        const mesReferenciaSalvo = rRef && rRef.value ? rRef.value : null;
-        if (mesReferenciaSalvo && mesReferenciaSalvo !== chaveMesAtual) {
-          // grava o retrato final do mês que terminou (garante que fica salvo mesmo que
-          // você não tenha editado nada depois da última vez)
-          try {
-            const retratoFinal = {};
-            Object.keys(carregado).forEach(sub => {
-              retratoFinal[sub] = (carregado[sub].itens || []).map(i => ({ nome: i.nome, comprar: i.comprar, unidade: i.unidade }));
-            });
-            await window.storage.set('compras_historico_' + mesReferenciaSalvo, JSON.stringify(retratoFinal), false);
-          } catch (e) {}
-          // zera só o "comprar" de cada item — mantém nome, estoque, unidade e categoria
-          const zerado = {};
-          Object.keys(carregado).forEach(sub => {
-            zerado[sub] = { ...carregado[sub], itens: (carregado[sub].itens || []).map(i => ({ ...i, comprar: null })) };
-          });
-          carregado = zerado;
-          await window.storage.set('compras_listas', JSON.stringify(carregado), false);
-        }
-        await window.storage.set('compras_mes_referencia', chaveMesAtual, false);
-
         setDados(carregado);
       } catch (e) {
         setDados(SEED_COMPRAS);
@@ -2298,17 +2275,6 @@ function Compras({ chamarIA }) {
   async function salvar(novosDados) {
     setDados(novosDados);
     try { await window.storage.set('compras_listas', JSON.stringify(novosDados), false); } catch (e) {}
-    // grava um "retrato" mensal das quantidades pedidas, pra IA poder comparar com meses
-    // anteriores depois (ex: "mês passado vocês compraram 15kg, esse mês só 6")
-    try {
-      const agora = new Date();
-      const chaveMes = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
-      const retrato = {};
-      Object.keys(novosDados).forEach(sub => {
-        retrato[sub] = (novosDados[sub].itens || []).map(i => ({ nome: i.nome, comprar: i.comprar, unidade: i.unidade }));
-      });
-      await window.storage.set('compras_historico_' + chaveMes, JSON.stringify(retrato), false);
-    } catch (e) {}
   }
 
   function mostrarToast(msg) {
@@ -2363,6 +2329,118 @@ function Compras({ chamarIA }) {
     salvar({ ...dados, [subTab]: { ...dados[subTab], fornecedor: valor } });
   }
 
+  // microfone do ditado das compras — mesma lógica usada em Lançamentos/Mensagens
+  function alternarDitadoCompras() {
+    if (!suportaVozCompra) { window.alert('Seu navegador não suporta gravação de voz. Tenta pelo Chrome ou Edge.'); return; }
+    if (typeof window !== 'undefined' && window.isSecureContext === false) {
+      window.alert('A gravação de voz só funciona em HTTPS. Se você abriu o arquivo local direto do celular/pasta, o navegador bloqueia o microfone por segurança.');
+      return;
+    }
+    if (gravandoCompra) { reconhecimentoCompraRef.current && reconhecimentoCompraRef.current.stop(); return; }
+    try {
+      const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new Reconhecedor();
+      rec.lang = 'pt-BR';
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.onstart = () => setGravandoCompra(true);
+      rec.onresult = e => interpretarDitadoCompras(e.results[0][0].transcript);
+      rec.onerror = event => {
+        setGravandoCompra(false);
+        const motivos = { 'not-allowed': 'Permissão de microfone negada.', 'no-speech': 'Não ouvi nada, tenta de novo.', 'audio-capture': 'Nenhum microfone encontrado.', 'network': 'Sem conexão pra usar o reconhecimento de voz.' };
+        window.alert(motivos[event.error] || `Erro na gravação: ${event.error}`);
+      };
+      rec.onend = () => setGravandoCompra(false);
+      reconhecimentoCompraRef.current = rec;
+      rec.start();
+    } catch (erro) {
+      setGravandoCompra(false);
+      window.alert('Não consegui iniciar a gravação: ' + erro.message);
+    }
+  }
+
+  // manda a fala pra IA junto com todos os itens das três listas (rancho, frutas, limpeza)
+  // pra ela achar o item certo mesmo que a pessoa não fale o nome exatinho, e já aplica a
+  // mudança direto na lista certa — sem precisar trocar de aba nem digitar nada
+  async function interpretarDitadoCompras(textoFalado) {
+    if (!chamarIA || !textoFalado || !textoFalado.trim()) return;
+    setInterpretandoCompra(true);
+    const listaItens = ['rancho', 'frutas', 'limpeza']
+      .flatMap(chave => (dados[chave]?.itens || []).map(it => `${chave}#${it.id}: ${it.nome}`))
+      .join('\n');
+    const resultado = await chamarIA(
+      `Você ajuda a atualizar por comando de voz as listas de compras de uma escola infantil. Existem três listas: "rancho" (alimentos e produtos de limpeza da cozinha), "frutas" (frutas e verduras) e "limpeza" (material de limpeza/higiene do fornecedor Rosa Clean).\n\n` +
+      `ITENS JÁ CADASTRADOS (formato lista#id: nome):\n${listaItens}\n\n` +
+      `Aba aberta agora na tela: "${subTab}".\n\n` +
+      `Interprete o comando ditado abaixo e responda APENAS com um JSON puro, sem markdown, sem explicação nenhuma, com as chaves:\n` +
+      `"acao": "atualizar" (mudar um item que já existe na lista acima), "adicionar" (item novo, que não está na lista) ou "remover" (tirar um item existente da lista);\n` +
+      `"lista": "rancho", "frutas" ou "limpeza" — qual das três listas mexer (use a aba aberta se não ficar claro);\n` +
+      `"itemId": o número depois do # do item mais parecido encontrado na lista acima (obrigatório se ação for "atualizar" ou "remover"; null se "adicionar");\n` +
+      `"nome": nome do item, usado só quando a ação é "adicionar";\n` +
+      `"campo": qual campo mudar — "comprar" (quantidade a comprar, é o mais comum), "estoque" (quantidade em estoque, só existe na lista "rancho"), "observacao" (texto livre) ou "unidade" (tipo KG, UN, PACOTE);\n` +
+      `"valor": o novo valor (só número pra "comprar"/"estoque", texto pra "observacao"/"unidade");\n` +
+      `"categoria": só quando ação é "adicionar" — se a lista for "rancho", escolha "Alimentos" ou "Limpeza"; se for "frutas", escolha "VERDURAS" ou "FRUTAS"; senão null.\n\n` +
+      `Se não der pra entender o comando de jeito nenhum, responda só {"acao":"nao_entendi"}.\n\n` +
+      `COMANDO DITADO: "${textoFalado.trim()}"`
+    );
+    setInterpretandoCompra(false);
+    if (resultado.erro) { window.alert(resultado.erro); return; }
+    try {
+      const limpo = resultado.texto.replace(/```json|```/g, '').trim();
+      const d = JSON.parse(limpo);
+      if (!d.acao || d.acao === 'nao_entendi') {
+        window.alert('Não entendi o que mudar. Tenta ser mais específico, tipo "muda o açúcar pra 5 quilos" ou "tira a manga da lista".');
+        return;
+      }
+      const chaveLista = ['rancho', 'frutas', 'limpeza'].includes(d.lista) ? d.lista : subTab;
+      const listaDestino = dados[chaveLista];
+      if (!listaDestino) { window.alert('Não consegui identificar em qual lista mexer.'); return; }
+
+      if (d.acao === 'atualizar') {
+        const item = listaDestino.itens.find(it => it.id === Number(d.itemId));
+        if (!item) { window.alert('Não encontrei esse item na lista. Tenta de novo, falando o nome completo.'); return; }
+        const campo = ['comprar', 'estoque', 'observacao', 'unidade'].includes(d.campo) ? d.campo : 'comprar';
+        const valor = (campo === 'comprar' || campo === 'estoque')
+          ? (d.valor === '' || d.valor == null ? null : parseFloat(String(d.valor).replace(',', '.')))
+          : String(d.valor ?? '').trim();
+        salvar({ ...dados, [chaveLista]: { ...listaDestino, itens: listaDestino.itens.map(it => it.id === item.id ? { ...it, [campo]: valor } : it) } });
+        setSubTab(chaveLista);
+        setLinhaSelecionada(s => ({ ...s, [chaveLista]: item.id }));
+        mostrarToast(`✓ ${item.nome} atualizado por voz!`);
+      } else if (d.acao === 'adicionar') {
+        if (!d.nome || !String(d.nome).trim()) { window.alert('Não entendi o nome do item pra adicionar.'); return; }
+        const proximoId = Math.max(0, ...listaDestino.itens.map(i => i.id)) + 1;
+        const campo = ['comprar', 'estoque'].includes(d.campo) ? d.campo : 'comprar';
+        const valorNum = d.valor === '' || d.valor == null ? null : parseFloat(String(d.valor).replace(',', '.'));
+        const unidadesDaLista = CATEGORIAS_COMPRAS.find(c => c.key === chaveLista)?.unidades || ['UN'];
+        const item = {
+          id: proximoId,
+          nome: String(d.nome).trim(),
+          estoque: campo === 'estoque' ? valorNum : null,
+          comprar: campo === 'comprar' ? valorNum : null,
+          unidade: unidadesDaLista[0],
+          observacao: '',
+          categoria: chaveLista === 'rancho' ? (d.categoria === 'Limpeza' ? 'Limpeza' : 'Alimentos')
+            : chaveLista === 'frutas' ? (d.categoria === 'FRUTAS' ? 'FRUTAS' : 'VERDURAS')
+            : null,
+        };
+        salvar({ ...dados, [chaveLista]: { ...listaDestino, itens: [...listaDestino.itens, item] } });
+        setSubTab(chaveLista);
+        setLinhaSelecionada(s => ({ ...s, [chaveLista]: item.id }));
+        mostrarToast(`✓ ${item.nome} adicionado por voz!`);
+      } else if (d.acao === 'remover') {
+        const item = listaDestino.itens.find(it => it.id === Number(d.itemId));
+        if (!item) { window.alert('Não encontrei esse item pra remover. Tenta de novo, falando o nome completo.'); return; }
+        persistLixeiraCompras([...lixeiraCompras, { id: 'lixc' + Date.now() + Math.random().toString(36).slice(2), subTab: chaveLista, item, apagadoEm: new Date().toISOString() }]);
+        salvar({ ...dados, [chaveLista]: { ...listaDestino, itens: listaDestino.itens.filter(it => it.id !== item.id) } });
+        setSubTab(chaveLista);
+        mostrarToast(`🗑️ ${item.nome} removido por voz (dá pra restaurar na lixeira).`);
+      }
+    } catch (e) {
+      window.alert('A IA respondeu, mas não consegui ler o resultado. Tenta ditar de novo, mais devagar.');
+    }
+  }
+
   const opcoesCategoria = subTab === 'rancho' ? ['Alimentos', 'Limpeza']
     : subTab === 'frutas' ? ['VERDURAS', 'FRUTAS']
     : []; // limpeza (aba) é uma categoria só, não precisa escolher
@@ -2383,207 +2461,6 @@ function Compras({ chamarIA }) {
     salvar({ ...dados, [subTab]: { ...dados[subTab], itens: [...listaAtual.itens, item] } });
     setNovoItem({ nome: '', estoque: '', comprar: '', unidade: '', observacao: '', categoria: '' });
     mostrarToast(`✓ ${item.nome} adicionado!`);
-  }
-
-  // dita por voz (reconhecimento do navegador) e manda o texto pra IA interpretar
-  // e preencher a lista de compras da sub-aba atual (Frutas / Rancho / Limpeza)
-  const suportaVozCompras = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
-  function alternarDitado() {
-    if (!suportaVozCompras) {
-      window.alert('Seu navegador não suporta gravação de voz. Tenta pelo Chrome ou Edge.');
-      return;
-    }
-    if (typeof window !== 'undefined' && window.isSecureContext === false) {
-      window.alert('A gravação de voz só funciona em HTTPS (ou abrindo o arquivo local pelo Chrome como "localhost"). Se você abriu o arquivo direto do celular/pasta, o navegador bloqueia o microfone por segurança.');
-      return;
-    }
-    if (gravandoDitado) {
-      reconhecimentoDitadoRef.current && reconhecimentoDitadoRef.current.stop();
-      return;
-    }
-    try {
-      const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const rec = new Reconhecedor();
-      rec.lang = 'pt-BR';
-      rec.interimResults = false;
-      rec.maxAlternatives = 1;
-      rec.onstart = () => setGravandoDitado(true);
-      rec.onresult = e => {
-        const texto = e.results[0][0].transcript;
-        interpretarDitadoCompras(texto);
-      };
-      rec.onerror = event => {
-        setGravandoDitado(false);
-        const motivos = {
-          'not-allowed': 'Permissão de microfone negada. Vai em cima na barra de endereço, no cadeado/ícone do site, e libera o microfone pra essa página.',
-          'service-not-allowed': 'Permissão de microfone negada pelo navegador.',
-          'no-speech': 'Não ouvi nada. Tenta falar de novo, mais perto do microfone.',
-          'audio-capture': 'Não encontrei nenhum microfone disponível neste dispositivo.',
-          'network': 'Sem conexão com o serviço de reconhecimento de voz do Google (precisa de internet).',
-        };
-        mostrarToast('⚠ ' + (motivos[event.error] || `Erro na gravação: ${event.error}`));
-      };
-      rec.onend = () => setGravandoDitado(false);
-      reconhecimentoDitadoRef.current = rec;
-      rec.start();
-    } catch (erro) {
-      setGravandoDitado(false);
-      mostrarToast('⚠ Não consegui iniciar a gravação: ' + erro.message);
-    }
-  }
-
-  async function interpretarDitadoCompras(textoFalado) {
-    if (!chamarIA || !textoFalado || !textoFalado.trim()) return;
-    setInterpretandoDitado(true);
-    const nomesExistentes = listaAtual.itens.map(i => i.nome).join(', ') || '(lista vazia)';
-    const unidadesTexto = unidadesDisponiveis && unidadesDisponiveis.length > 0 ? unidadesDisponiveis.join(', ') : 'UN, KG, L, PCT, CX';
-    const resultado = await chamarIA(
-      `Você vai transformar uma fala ditada em uma lista de compras em formato JSON puro (array), sem markdown, sem explicação. A pessoa falou os itens que precisa comprar, possivelmente com quantidade e unidade. Para cada item retorne um objeto com: "nome" (em maiúsculas, nome do produto só, sem quantidade), "comprar" (número da quantidade, use ponto decimal, ou null se não foi dito), "unidade" (escolha a mais próxima entre estas opções: ${unidadesTexto} — ou deixe null se não der pra saber).\n\nItens que já existem nesta lista (pra você tentar casar o nome igual, se for o caso, em vez de duplicar): ${nomesExistentes}\n\nFALA DITADA: "${textoFalado.trim()}"\n\nResponda só com o array JSON, tipo: [{"nome":"BANANA","comprar":3,"unidade":"KG"}]`
-    );
-    setInterpretandoDitado(false);
-    if (resultado.erro) { mostrarToast('⚠ ' + resultado.erro); return; }
-    let itensDitados = [];
-    try {
-      const limpo = resultado.texto.replace(/```json|```/g, '').trim();
-      itensDitados = JSON.parse(limpo);
-      if (!Array.isArray(itensDitados)) throw new Error('não é array');
-    } catch (e) {
-      mostrarToast('⚠ A IA respondeu, mas não consegui ler a lista. Tenta ditar de novo, mais devagar.');
-      return;
-    }
-    if (itensDitados.length === 0) {
-      mostrarToast('⚠ Não entendi nenhum item. Tenta ditar de novo.');
-      return;
-    }
-
-    let itensAtualizados = [...listaAtual.itens];
-    let proximoId = Math.max(0, ...itensAtualizados.map(i => i.id)) + 1;
-    const nomesAdicionados = [];
-    const nomesAtualizados = [];
-    itensDitados.forEach(dito => {
-      if (!dito.nome) return;
-      const nomeNormalizado = normalizarTexto(dito.nome);
-      const idxExistente = itensAtualizados.findIndex(i => normalizarTexto(i.nome) === nomeNormalizado);
-      if (idxExistente >= 0) {
-        itensAtualizados[idxExistente] = {
-          ...itensAtualizados[idxExistente],
-          comprar: dito.comprar != null ? Number(dito.comprar) : itensAtualizados[idxExistente].comprar,
-          unidade: dito.unidade || itensAtualizados[idxExistente].unidade,
-        };
-        nomesAtualizados.push(itensAtualizados[idxExistente].nome);
-      } else {
-        const novo = {
-          id: proximoId++,
-          nome: String(dito.nome).trim().toUpperCase(),
-          estoque: null,
-          comprar: dito.comprar != null ? Number(dito.comprar) : null,
-          unidade: dito.unidade || '',
-          observacao: '',
-          categoria: opcoesCategoria.length > 0 ? opcoesCategoria[0] : null,
-        };
-        itensAtualizados.push(novo);
-        nomesAdicionados.push(novo.nome);
-      }
-    });
-    salvar({ ...dados, [subTab]: { ...dados[subTab], itens: itensAtualizados } });
-    const partes = [];
-    if (nomesAdicionados.length) partes.push(`adicionei ${nomesAdicionados.join(', ')}`);
-    if (nomesAtualizados.length) partes.push(`atualizei ${nomesAtualizados.join(', ')}`);
-    mostrarToast(`✓ Ditado interpretado: ${partes.join(' e ')}.`);
-  }
-
-  // detecta itens que parecem ser o mesmo produto escrito de formas diferentes (ex: "BATATA
-  // BRANCA" e "BATATA BRANCA MAIS GRAÚDA") — a IA só aponta, não mexe em nada sozinha
-  const [detectandoDuplicatas, setDetectandoDuplicatas] = useState(false);
-  async function detectarDuplicatasIA() {
-    if (!chamarIA) return;
-    if (listaAtual.itens.length < 2) { mostrarToast('⚠ Essa lista tem poucos itens ainda.'); return; }
-    setDetectandoDuplicatas(true);
-    const nomes = listaAtual.itens.map(i => i.nome).join('\n');
-    const resultado = await chamarIA(
-      `Aqui está uma lista de itens de compras de uma escola. Aponte SOMENTE os pares que parecem ser o mesmo produto escrito de formas diferentes (ex: "BATATA BRANCA" e "BATATA BRANCA MAIS GRAÚDA", ou erros de digitação/plural). Responda em português, uma linha por par encontrado, formato "X ↔ Y". Se não achar nenhum par duvidoso, responda exatamente "nenhum".\n\nLISTA:\n${nomes}`
-    );
-    setDetectandoDuplicatas(false);
-    if (resultado.erro) { mostrarToast('⚠ ' + resultado.erro); return; }
-    const texto = resultado.texto.trim();
-    if (!texto || texto.toLowerCase().includes('nenhum')) {
-      mostrarToast('✓ Não achei nenhum item duplicado nessa lista.');
-    } else {
-      window.alert('Possíveis itens duplicados:\n\n' + texto);
-    }
-  }
-
-  // compara a quantidade pedida este mês com os meses anteriores (usando o histórico salvo
-  // automaticamente) e sugere ajustes — você confere e aplica só o que fizer sentido
-  const [sugerindoQuantidade, setSugerindoQuantidade] = useState(false);
-  async function sugerirQuantidadeIA() {
-    if (!chamarIA) return;
-    setSugerindoQuantidade(true);
-    try {
-      const lista = await window.storage.list('compras_historico_', false);
-      const chaves = (lista && lista.keys ? lista.keys : []).sort().reverse();
-      const agora = new Date();
-      const chaveAtual = 'compras_historico_' + agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
-      const chavesAnteriores = chaves.filter(k => k !== chaveAtual).slice(0, 2);
-      if (chavesAnteriores.length === 0) {
-        mostrarToast('⚠ Ainda não tem histórico de meses anteriores salvo — vai se acumulando conforme você for usando o painel.');
-        setSugerindoQuantidade(false);
-        return;
-      }
-      const historicos = [];
-      for (const chave of chavesAnteriores) {
-        const r = await window.storage.get(chave, false);
-        if (r && r.value) {
-          const dadosMes = JSON.parse(r.value);
-          const itensDoSub = dadosMes[subTab] || [];
-          historicos.push(`${chave.replace('compras_historico_', '')}: ` + itensDoSub.map(i => `${i.nome} ${i.comprar ?? '-'}${i.unidade || ''}`).join(', '));
-        }
-      }
-      const itensAtuais = listaAtual.itens.map(i => `${i.nome} (pedindo agora: ${i.comprar ?? 0}${i.unidade || ''})`).join('\n');
-      const resultado = await chamarIA(
-        `Compare a lista de compras deste mês com os meses anteriores e aponte só os itens em que a quantidade pedida este mês está bem diferente do padrão anterior (bem menor ou bem maior). Seja breve, uma linha por item, formato "NOME: mês passado X, agora Y — considera ajustar?". Se estiver tudo dentro do normal, responda "tudo dentro do padrão".\n\nHISTÓRICO DE MESES ANTERIORES:\n${historicos.join('\n')}\n\nLISTA ATUAL (${subTab}):\n${itensAtuais}`
-      );
-      setSugerindoQuantidade(false);
-      if (resultado.erro) { mostrarToast('⚠ ' + resultado.erro); return; }
-      window.alert(resultado.texto.trim() || 'Sem sugestões.');
-    } catch (e) {
-      setSugerindoQuantidade(false);
-      mostrarToast('⚠ Não consegui comparar com o histórico agora.');
-    }
-  }
-
-  // carrega TODOS os meses de histórico salvos (não só os 2 últimos) pra montar o gráfico
-  // de evolução — inclui o mês atual (em andamento) como último ponto do gráfico
-  async function carregarHistoricoCompleto() {
-    setCarregandoHistorico(true);
-    try {
-      const lista = await window.storage.list('compras_historico_', false);
-      const chaves = (lista && lista.keys ? lista.keys : []).sort(); // ordem cronológica
-      const meses = [];
-      for (const chave of chaves) {
-        const r = await window.storage.get(chave, false);
-        if (r && r.value) {
-          const [ano, mesNum] = chave.replace('compras_historico_', '').split('-');
-          meses.push({ chave: chave.replace('compras_historico_', ''), label: MESES_ABREV[MESES[Number(mesNum) - 1]] + '/' + ano.slice(2), dados: JSON.parse(r.value) });
-        }
-      }
-      // acrescenta o mês atual (em andamento, com os dados de agora) como último ponto,
-      // mesmo que ainda não tenha sido "fechado" pela virada automática de mês
-      const agora = new Date();
-      const chaveAtual = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
-      if (!meses.some(m => m.chave === chaveAtual) && dados) {
-        meses.push({ chave: chaveAtual, label: MESES_ABREV[MESES[agora.getMonth()]] + '/' + String(agora.getFullYear()).slice(2) + ' (em andamento)', dados });
-      }
-      setHistoricoMensalCompras(meses);
-    } catch (e) {
-      setHistoricoMensalCompras([]);
-    }
-    setCarregandoHistorico(false);
-  }
-
-  function abrirEvolucao() {
-    setMostrarEvolucao(true);
-    if (!historicoMensalCompras) carregarHistoricoCompleto();
   }
 
   function iniciarEdicao(item) {
@@ -2900,6 +2777,20 @@ function Compras({ chamarIA }) {
           background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px',
           fontWeight: 600, fontSize: 13, cursor: 'pointer', height: 37,
         }}>📄 Exportar lista em PDF</button>
+        {chamarIA && (
+          <button onClick={alternarDitadoCompras} disabled={interpretandoCompra}
+            title='Clica e fala o que precisa mudar em qualquer uma das três listas, ex: "muda o açúcar pra 5 quilos" ou "tira a manga da lista"'
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: gravandoCompra ? COLORS.red : (interpretandoCompra ? COLORS.inkSoft : COLORS.inkButton),
+              color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px', height: 37,
+              fontWeight: 700, fontSize: 13, cursor: interpretandoCompra ? 'default' : 'pointer',
+              animation: gravandoCompra ? 'pulsarMic 1s ease-in-out infinite' : 'none',
+            }}>
+            <Mic size={14} color="#FFF" />
+            {gravandoCompra ? 'Ouvindo...' : (interpretandoCompra ? 'Interpretando...' : 'Ditar alteração')}
+          </button>
+        )}
         <div style={{ position: 'relative' }}>
           <button onClick={() => setLixeiraCompraAberta(v => !v)} title="Lixeira — restaura itens apagados nos últimos 30 dias" style={{
             background: COLORS.paperCard, border: `1.5px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 12px',
@@ -2942,88 +2833,6 @@ function Compras({ chamarIA }) {
           )}
         </div>
       </div>
-
-      {chamarIA && (
-        <button onClick={alternarDitado} disabled={interpretandoDitado} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          background: gravandoDitado ? COLORS.red : (interpretandoDitado ? COLORS.inkSoft : COLORS.inkButton),
-          color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '11px 16px', fontSize: 13, fontWeight: 700,
-          cursor: interpretandoDitado ? 'default' : 'pointer', width: '100%',
-          animation: gravandoDitado ? 'pulsarMic 1s ease-in-out infinite' : 'none',
-        }}>
-          <Mic size={16} color="#FFFFFF" />
-          {gravandoDitado ? 'Ouvindo... fale os itens (ex: "3kg de banana, 2 pacotes de arroz")' : (interpretandoDitado ? '⏳ Interpretando o que você falou...' : 'Ditar itens pra IA preencher a lista')}
-        </button>
-      )}
-
-      {chamarIA && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          <button onClick={detectarDuplicatasIA} disabled={detectandoDuplicatas} style={{
-            flex: '1 1 200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            background: '#FFFFFF', color: COLORS.ink, border: `1px solid ${COLORS.line}`, borderRadius: 9, padding: '9px 12px',
-            fontSize: 12.5, fontWeight: 700, cursor: detectandoDuplicatas ? 'default' : 'pointer', opacity: detectandoDuplicatas ? 0.7 : 1,
-          }}>
-            <IconeGemini size={14} /> {detectandoDuplicatas ? 'Procurando...' : 'Detectar itens duplicados'}
-          </button>
-          <button onClick={sugerirQuantidadeIA} disabled={sugerindoQuantidade} style={{
-            flex: '1 1 200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            background: '#FFFFFF', color: COLORS.ink, border: `1px solid ${COLORS.line}`, borderRadius: 9, padding: '9px 12px',
-            fontSize: 12.5, fontWeight: 700, cursor: sugerindoQuantidade ? 'default' : 'pointer', opacity: sugerindoQuantidade ? 0.7 : 1,
-          }}>
-            <IconeGemini size={14} /> {sugerindoQuantidade ? 'Comparando com meses anteriores...' : 'Sugerir quantidade (baseado no histórico)'}
-          </button>
-        </div>
-      )}
-
-      <button onClick={() => mostrarEvolucao ? setMostrarEvolucao(false) : abrirEvolucao()} style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: COLORS.goldSoft,
-        color: COLORS.gold, border: 'none', borderRadius: 9, padding: '9px 12px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
-      }}>
-        📈 {mostrarEvolucao ? 'Esconder evolução mês a mês' : 'Ver evolução de compras mês a mês'}
-      </button>
-
-      {mostrarEvolucao && (
-        <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: 16, display: 'grid', gap: 12 }}>
-          {carregandoHistorico ? (
-            <div style={{ textAlign: 'center', color: COLORS.inkSoft, fontSize: 12.5, padding: 20 }}>⏳ Carregando histórico...</div>
-          ) : !historicoMensalCompras || historicoMensalCompras.length === 0 ? (
-            <div style={{ textAlign: 'center', color: COLORS.inkSoft, fontSize: 12.5, padding: 20 }}>
-              Ainda não tem histórico salvo. Ele vai se acumulando automaticamente a cada mês que passar (e também toda vez que você editar e salvar a lista).
-            </div>
-          ) : (() => {
-            const totalPorMes = historicoMensalCompras.map(m => {
-              const itensDoSub = (m.dados[subTab] && m.dados[subTab].itens) || [];
-              const total = itensDoSub.reduce((s, i) => s + (Number(i.comprar) || 0), 0);
-              return { mes: m.label, total: Math.round(total * 10) / 10 };
-            });
-            const maiorMes = totalPorMes.length > 0 ? totalPorMes.reduce((a, b) => b.total > a.total ? b : a) : null;
-            return (
-              <>
-                <div style={{ fontSize: 12, color: COLORS.inkSoft }}>
-                  Soma da quantidade pedida por mês em <strong>{CATEGORIAS_COMPRAS.find(c => c.key === subTab)?.label || subTab}</strong> (unidades misturadas — kg, pacotes, etc. somados como número, é uma visão aproximada de volume).
-                  {maiorMes && <> Mês com mais compra: <strong>{maiorMes.mes}</strong> ({maiorMes.total}).</>}
-                </div>
-                {BarChart && (
-                  <div style={{ width: '100%', height: 220 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={totalPorMes}>
-                        <CartesianGrid strokeDasharray="3 5" stroke={COLORS.lineSoft} />
-                        <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip />
-                        <Bar dataKey="total" fill={COLORS.gold} radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-                <div style={{ fontSize: 11.5, color: COLORS.inkSoft }}>
-                  Quer saber a diferença item por item (ex: "quantos quilos de banana a mais/menos em relação ao mês passado")? Pergunta direto pra IA no chat — ela tem acesso a esse histórico completo.
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      )}
 
       <div style={{ position: 'relative' }}>
         <Search size={15} color={COLORS.inkSoft} style={{ position: 'absolute', left: 12, top: 11 }} />
