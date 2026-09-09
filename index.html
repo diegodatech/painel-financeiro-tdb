@@ -4232,11 +4232,11 @@ function Anotacoes({ chamarIA }) {
 
   // anexa um arquivo (PDF, imagem, etc) num bloco — guardado como texto (base64) numa
   // chave separada, com limite de 3MB por causa do jeito que o armazenamento funciona aqui
-  const LIMITE_ANEXO = 3 * 1024 * 1024;
+  const LIMITE_ANEXO = 15 * 1024 * 1024; // 15MB — antes era 3MB, sobra de quando ainda usava a Planilha Google (que tinha limite de caracteres por célula); o Google Drive não tem esse problema
   function anexarArquivo(id, arquivo) {
     if (!arquivo) return;
     if (arquivo.size > LIMITE_ANEXO) {
-      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 3MB por arquivo.`);
+      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 15MB por arquivo.`);
       return;
     }
     setEnviandoAnexo(id);
@@ -4361,7 +4361,7 @@ function Anotacoes({ chamarIA }) {
                   <span style={{ fontSize: 15, lineHeight: 1 }}>📄</span>
                   <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1 }}>PDF</span>
                 </button>
-                <label title="Anexar arquivo (PDF, imagem, doc — máx 3MB)" style={{ ...estiloBotao, flexDirection: 'column', gap: 1 }}>
+                <label title="Anexar arquivo (PDF, imagem, doc — máx 15MB)" style={{ ...estiloBotao, flexDirection: 'column', gap: 1 }}>
                   <Paperclip size={16} color={COLORS.ink} />
                   <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1 }}>Anexar</span>
                   <input type="file" onChange={e => { anexarArquivo(b.id, e.target.files[0]); e.target.value = ''; }} style={{ display: 'none' }} />
@@ -9015,11 +9015,11 @@ function Contratos({ chamarIA }) {
   }
 
   // anexa o PDF/imagem do contrato de verdade — mesmo esquema já usado em Anotações
-  const LIMITE_ANEXO = 3 * 1024 * 1024;
+  const LIMITE_ANEXO = 15 * 1024 * 1024; // 15MB — antes era 3MB, sobra de quando ainda usava a Planilha Google (que tinha limite de caracteres por célula); o Google Drive não tem esse problema
   function anexarArquivo(id, arquivo) {
     if (!arquivo) return;
     if (arquivo.size > LIMITE_ANEXO) {
-      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 3MB por arquivo.`);
+      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 15MB por arquivo.`);
       return;
     }
     setEnviandoAnexo(id);
@@ -9197,7 +9197,7 @@ function Contratos({ chamarIA }) {
                     <FileText size={15} color={COLORS.ink} />
                     <span style={estiloLegendaCard}>Exportar</span>
                   </button>
-                  <label title="Anexar o PDF/foto do contrato original (máx 3MB)" style={estiloBotaoCard}>
+                  <label title="Anexar o PDF/foto do contrato original (máx 15MB)" style={estiloBotaoCard}>
                     <Paperclip size={15} color={COLORS.ink} />
                     <span style={estiloLegendaCard}>Anexar</span>
                     <input type="file" onChange={e => { anexarArquivo(c.id, e.target.files[0]); e.target.value = ''; }} style={{ display: 'none' }} />
