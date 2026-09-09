@@ -20,6 +20,9 @@
   <script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
   <!-- jsPDF (gera o relatório em PDF) -->
   <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- pdf-lib (gera o PDF final do editor de Contratos com campos de formulário DE VERDADE,
+       editáveis em qualquer programa depois — não é só uma imagem com texto desenhado em cima) -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <!-- PDF.js (extrai texto de PDFs anexados, pra IA poder ler) -->
   <script src="https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
   <script>
@@ -196,7 +199,14 @@
             window.__salvamentosPendentes = (window.__salvamentosPendentes || 0) + 1;
             try {
               const controlador = new AbortController();
-              const timeoutId = setTimeout(() => controlador.abort(), 8000);
+              // anexos (PDF, fotos) em base64 pesam bem mais que um texto/número comum e
+              // demoram mais pra subir — 8s fixo dava timeout em conexões normais só por
+              // causa do tamanho do arquivo, não porque tinha algo errado. Agora o tempo de
+              // espera cresce com o tamanho do que está sendo salvo (mínimo 10s, até 45s
+              // pros anexos maiores).
+              const tamanhoKB = (val ? val.length : 0) / 1024;
+              const tempoEspera = Math.min(45000, Math.max(10000, tamanhoKB * 25));
+              const timeoutId = setTimeout(() => controlador.abort(), tempoEspera);
               const resp = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -8401,8 +8411,8 @@ CPF: _______________________________`,
 // arrastáveis, posicionados em cima — pra preencher os espaços em branco (nome, CPF, data etc.)
 // sem perder a aparência do documento. Ao exportar, gera um PDF novo com tudo "achatado" junto.
 function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
-  const [paginas, setPaginas] = useState(null); // [{ dataUrl, largura, altura }]
-  const [anotacoes, setAnotacoes] = useState([]); // [{ id, pagina, xPct, yPct, texto, tamanho }]
+  const [paginas, setPaginas] = useState(null); // [{ dataUrl, largura, altura, textos: [{texto,xPct,yPct,larguraPct,alturaPct}] }]
+  const [anotacoes, setAnotacoes] = useState([]); // [{ id, pagina, xPct, yPct, texto, tamanho, substituicao?, larguraPct?, alturaPct? }]
   const [carregando, setCarregando] = useState(true);
   const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -8413,6 +8423,7 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
     return `${dia} de ${mes}`;
   });
   const arrastandoRef = useRef(null); // { id, offsetX, offsetY }
+  const bytesOriginaisRef = useRef(null); // guarda os bytes crus do PDF original, pra exportar com pdf-lib depois
 
   const chaveAnotacoes = 'contrato_pdf_anotacoes_' + contratoId;
 
@@ -8428,7 +8439,8 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
         if (!window.pdfjsLib) { setErro('Biblioteca de leitura de PDF não carregou. Verifica sua conexão.'); setCarregando(false); return; }
         const base64 = dados.split(',')[1];
         const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-        const pdf = await window.pdfjsLib.getDocument({ data: bytes }).promise;
+        bytesOriginaisRef.current = bytes;
+        const pdf = await window.pdfjsLib.getDocument({ data: bytes.slice() }).promise;
         const paginasRenderizadas = [];
         for (let i = 1; i <= pdf.numPages; i++) {
           const pagina = await pdf.getPage(i);
@@ -8437,7 +8449,30 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           await pagina.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-          paginasRenderizadas.push({ dataUrl: canvas.toDataURL('image/png'), largura: viewport.width, altura: viewport.height });
+
+          // detecta a posição de cada texto já existente na página, pra deixar clicar em
+          // cima e SUBSTITUIR (em vez de só poder adicionar campo em espaço vazio). A conta
+          // combina a matriz de cada texto com a do viewport pra achar a posição final —
+          // mesmo jeito que o próprio PDF.js usa por dentro pra deixar o texto selecionável.
+          const conteudoTexto = await pagina.getTextContent();
+          const textos = [];
+          conteudoTexto.items.forEach(item => {
+            if (!item.str || !item.str.trim()) return;
+            const tx = window.pdfjsLib.Util.transform(viewport.transform, item.transform);
+            const alturaPx = Math.hypot(tx[2], tx[3]);
+            const larguraPx = item.width * Math.hypot(tx[0], tx[1]) / Math.hypot(item.transform[0], item.transform[1]);
+            const xPx = tx[4];
+            const yTopoPx = tx[5] - alturaPx;
+            textos.push({
+              texto: item.str,
+              xPct: (xPx / viewport.width) * 100,
+              yPct: (yTopoPx / viewport.height) * 100,
+              larguraPct: (larguraPx / viewport.width) * 100,
+              alturaPct: (alturaPx / viewport.height) * 100,
+            });
+          });
+
+          paginasRenderizadas.push({ dataUrl: canvas.toDataURL('image/png'), largura: viewport.width, altura: viewport.height, textos });
         }
         setPaginas(paginasRenderizadas);
 
@@ -8482,17 +8517,49 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
     salvarAnotacoes([...anotacoes, novo]);
     return novo.id;
   }
-  // clique direto na página: cria um campo bem ali, na hora, pronto pra digitar —
-  // é o jeito principal de editar (arrastar continua funcionando, mas é opcional)
+  // cria um campo que COBRE e SUBSTITUI um texto que já existia impresso no PDF — usado
+  // quando o clique cai em cima de um texto detectado (em vez de espaço em branco)
+  function adicionarSubstituicao(pagina, textoDetectado) {
+    const novo = {
+      id: 'campo' + Date.now() + Math.random().toString(36).slice(2), pagina,
+      xPct: textoDetectado.xPct, yPct: textoDetectado.yPct,
+      larguraPct: textoDetectado.larguraPct, alturaPct: textoDetectado.alturaPct,
+      texto: textoDetectado.texto, tamanho: 11, substituicao: true,
+    };
+    salvarAnotacoes([...anotacoes, novo]);
+    return novo.id;
+  }
+  // clique direto na página: se cair em cima de um texto que já existe no PDF, cria um
+  // campo pra SUBSTITUIR esse texto (pré-preenchido com o texto original, pra editar).
+  // Se cair em espaço vazio, cria um campo novo do zero — é o jeito principal de editar
+  // (arrastar continua funcionando, mas é opcional)
   function cliqueNaPagina(e, idx, containerEl) {
     if (e.target.closest('[data-campo-texto]')) return; // clicou em cima de um campo existente, não cria outro
     const rect = containerEl.getBoundingClientRect();
     const xPct = Math.max(0, Math.min(94, ((e.clientX - rect.left) / rect.width) * 100));
     const yPct = Math.max(0, Math.min(94, ((e.clientY - rect.top) / rect.height) * 100));
-    const id = adicionarCampo(idx, xPct, yPct);
+
+    const textosDaPagina = (paginas[idx] && paginas[idx].textos) || [];
+    const alvo = textosDaPagina.find(t =>
+      xPct >= t.xPct - 0.5 && xPct <= t.xPct + t.larguraPct + 0.5 &&
+      yPct >= t.yPct - 0.5 && yPct <= t.yPct + t.alturaPct + 0.5
+    );
+    // se já existe um campo de substituição pra esse mesmo texto detectado, não cria outro —
+    // só foca nele (evita duplicar cobertura em cima do mesmo trecho)
+    if (alvo) {
+      const jaExiste = anotacoes.find(a => a.pagina === idx && a.substituicao &&
+        Math.abs(a.xPct - alvo.xPct) < 0.3 && Math.abs(a.yPct - alvo.yPct) < 0.3);
+      if (jaExiste) {
+        const el = document.getElementById('campo-texto-' + jaExiste.id);
+        if (el) el.focus();
+        return;
+      }
+    }
+
+    const id = alvo ? adicionarSubstituicao(idx, alvo) : adicionarCampo(idx, xPct, yPct);
     setTimeout(() => {
       const el = document.getElementById('campo-texto-' + id);
-      if (el) el.focus();
+      if (el) { el.focus(); el.select(); }
     }, 50);
   }
   function atualizarCampo(id, mudancas) {
@@ -8528,28 +8595,71 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
     window.addEventListener('touchend', soltar);
   }
 
-  // exporta um PDF novo: cada página vira uma imagem de fundo (idêntica ao original,
-  // com logo e tudo) e os campos preenchidos são desenhados por cima, na posição exata
+  // exporta um PDF novo mantendo o arquivo original (vetor, não imagem) e adicionando
+  // campos de formulário DE VERDADE por cima — isso quer dizer que quem abrir esse PDF
+  // depois (Acrobat, Preview, etc.) consegue clicar nos campos e editar de novo, sempre
+  // que precisar, sem precisar voltar aqui no painel. Nos campos de substituição, cobre
+  // o texto antigo com um retângulo branco do tamanho exato do texto detectado antes de
+  // colocar o campo novo por cima, na mesma posição.
   async function exportarPdfEditado() {
-    if (!window.jspdf || !paginas) return;
+    if (!window.PDFLib || !bytesOriginaisRef.current) { mostrarToast('⚠ Biblioteca de PDF não carregou. Verifica sua conexão e tenta de novo.'); return; }
     setExportando(true);
     try {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-      const larguraA4 = 595.28, alturaA4 = 841.89;
-      paginas.forEach((pg, idx) => {
-        if (idx > 0) doc.addPage();
-        doc.addImage(pg.dataUrl, 'PNG', 0, 0, larguraA4, alturaA4);
-        anotacoes.filter(a => a.pagina === idx && a.texto.trim()).forEach(a => {
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(a.tamanho || 11);
-          doc.setTextColor(20, 20, 20);
-          const linhas = doc.splitTextToSize(a.texto, larguraA4 - (a.xPct / 100 * larguraA4) - 40);
-          doc.text(linhas, (a.xPct / 100) * larguraA4, (a.yPct / 100) * alturaA4);
+      const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+      const pdfDoc = await PDFDocument.load(bytesOriginaisRef.current.slice());
+      const form = pdfDoc.getForm();
+      const fonte = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const paginasPdf = pdfDoc.getPages();
+
+      anotacoes.filter(a => a.texto && a.texto.trim() && paginasPdf[a.pagina]).forEach((a, i) => {
+        const page = paginasPdf[a.pagina];
+        const { width: pw, height: ph } = page.getSize();
+        const xPdf = (a.xPct / 100) * pw;
+        const yTopoPdf = ph - (a.yPct / 100) * ph; // topo do campo, em coordenada de baixo-pra-cima (padrão do PDF)
+        const tamanho = a.tamanho || 11;
+
+        let largura, altura;
+        if (a.substituicao) {
+          const larguraDetectada = ((a.larguraPct || 10) / 100) * pw;
+          const alturaDetectada = ((a.alturaPct || 3) / 100) * ph;
+          // cobre o texto antigo com um retângulo branco um pouquinho maior que o
+          // detectado, pra não deixar sobrar nem um pedacinho da letra original na borda
+          page.drawRectangle({
+            x: xPdf - 2, y: yTopoPdf - alturaDetectada - 2, width: larguraDetectada + 6, height: alturaDetectada + 6,
+            color: rgb(1, 1, 1),
+          });
+          largura = Math.max(larguraDetectada + 40, 80); // um pouco mais larga que o original, pra caber texto maior
+          altura = alturaDetectada + 4;
+        } else {
+          largura = Math.max(120, a.texto.length * tamanho * 0.55);
+          altura = tamanho * 1.6;
+        }
+
+        const campoForm = form.createTextField('campo_' + (a.id || i));
+        campoForm.setText(a.texto);
+        campoForm.enableMultiline();
+        campoForm.addToPage(page, {
+          x: xPdf, y: yTopoPdf - altura, width: largura, height: altura,
+          font: fonte, textColor: rgb(0.08, 0.19, 0.18), borderWidth: 0,
         });
+        campoForm.setFontSize(tamanho);
       });
-      doc.save('contrato_preenchido.pdf');
-      mostrarToast('✓ PDF exportado com os campos preenchidos!');
+
+      // gera a aparência visual de cada campo — sem isso, o texto só aparece quando
+      // alguém clica dentro do campo; com isso, já aparece pronto ao só abrir o PDF
+      form.updateFieldAppearances(fonte);
+
+      const bytesFinal = await pdfDoc.save();
+      const blob = new Blob([bytesFinal], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'contrato_preenchido.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      mostrarToast('✓ PDF exportado! Os campos continuam editáveis em qualquer programa de PDF depois.');
     } catch (e) {
       mostrarToast('⚠ Não consegui exportar: ' + e.message);
     }
@@ -8578,7 +8688,7 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <div style={{ fontSize: 12, color: COLORS.inkSoft, flex: '1 1 auto' }}>
-          Clique em qualquer ponto da página (na linha em branco que quer preencher) pra criar um campo ali e escrever direto. Pra ajustar a posição depois, arraste pelo ⠿. Ao exportar, sai um PDF novo com tudo junto — igual ao original.
+          Clique em cima de um texto já existente pra <b>substituí-lo</b> (some o antigo, escreve o novo no lugar), ou num espaço em branco pra <b>adicionar</b> um campo novo. Pra ajustar a posição depois, arraste pelo ⠿. O PDF exportado mantém os campos editáveis — dá pra abrir em qualquer programa depois e mudar de novo, sem precisar voltar aqui.
         </div>
         <button onClick={exportarPdfEditado} disabled={exportando} style={{
           background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 8, padding: '9px 16px',
@@ -8592,7 +8702,7 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
       {paginas.map((pg, idx) => (
         <div key={idx} style={{ display: 'grid', gap: 6 }}>
           <div style={{ fontSize: 11.5, color: COLORS.inkSoft, textAlign: 'center' }}>
-            👆 Clique em qualquer ponto da página {idx + 1} pra criar um campo de texto ali e já digitar
+            👆 Clique num texto pra substituir, ou num espaço vazio pra adicionar um campo — página {idx + 1}
           </div>
           <div
             id={'pagina-pdf-' + contratoId + '-' + idx}
@@ -8609,7 +8719,14 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
                 key={a.id}
                 data-campo-texto
                 onClick={e => e.stopPropagation()}
-                style={{
+                style={a.substituicao ? {
+                  // campo de SUBSTITUIÇÃO: fundo quase opaco (parecido com o retângulo branco
+                  // que vai cobrir o texto antigo na exportação), pra já mostrar como vai ficar
+                  position: 'absolute', left: a.xPct + '%', top: a.yPct + '%',
+                  width: 'calc(' + (a.larguraPct || 10) + '% + 24px)', minWidth: 90,
+                  background: 'rgba(255,255,255,0.96)', border: `1.5px dashed ${COLORS.green}`, borderRadius: 3,
+                  padding: 1, display: 'flex', alignItems: 'flex-start', gap: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                } : {
                   position: 'absolute', left: a.xPct + '%', top: a.yPct + '%', minWidth: 90,
                   background: 'rgba(193,92,160,0.10)', border: `1.5px dashed ${COLORS.gold}`, borderRadius: 4,
                   padding: 2, display: 'flex', alignItems: 'flex-start', gap: 3,
@@ -8620,7 +8737,7 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
                   onTouchStart={e => iniciarArrasto(e, a, document.getElementById('pagina-pdf-' + contratoId + '-' + idx))}
                   title="Arrastar pra reposicionar"
                   style={{
-                    cursor: 'move', color: COLORS.gold, display: 'flex', alignItems: 'center', flexShrink: 0,
+                    cursor: 'move', color: a.substituicao ? COLORS.green : COLORS.gold, display: 'flex', alignItems: 'center', flexShrink: 0,
                     padding: '2px 0', touchAction: 'none',
                   }}
                 >
@@ -8635,7 +8752,7 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
                   style={{
                     border: 'none', background: 'transparent', outline: 'none', resize: 'both',
                     fontSize: (a.tamanho || 11) * 1.3, fontFamily: 'Inter, sans-serif', color: '#14312E',
-                    minWidth: 80, minHeight: 18, padding: '1px 3px',
+                    minWidth: 80, minHeight: 18, padding: '1px 3px', flex: a.substituicao ? '1 1 auto' : undefined,
                   }}
                 />
                 <button onClick={() => removerCampo(a.id)} title="Remover campo" style={{
@@ -8660,7 +8777,8 @@ function Contratos({ chamarIA }) {
   const [toastMsg, setToastMsg] = useState(null);
   const [enviandoAnexo, setEnviandoAnexo] = useState(null);
   const [busca, setBusca] = useState('');
-  const [expandido, setExpandido] = useState({}); // { [id]: true } — mostra/esconde o texto completo do contrato
+  const [expandido, setExpandido] = useState({}); // { [id]: true } — mostra/esconde o PDF original
+  const [modoTexto, setModoTexto] = useState({}); // { [id]: true } — mostra/esconde o editor de texto (cláusulas)
   const [analisandoIA, setAnalisandoIA] = useState(null); // id do contrato sendo analisado agora
   const [corrigindoIA, setCorrigindoIA] = useState(null); // id do contrato tendo a ortografia corrigida agora
   const [gerandoClausulaIA, setGerandoClausulaIA] = useState(null); // id do contrato recebendo nova cláusula agora
@@ -8802,11 +8920,15 @@ function Contratos({ chamarIA }) {
     mostrarToast('✓ Ortografia corrigida! Confira o texto atualizado abaixo.');
   }
 
-  // pede pra IA redigir uma cláusula nova (tema informado pelo usuário) e adiciona ao final do texto do contrato
+  // pede pra IA redigir uma cláusula nova (tema informado pelo usuário) e insere no ponto
+  // onde o cursor estava no texto — assim dá pra inserir uma cláusula nova no MEIO de duas
+  // já existentes, não só no final. Se não tiver cursor ativo no campo, cai pro final mesmo.
   async function sugerirClausulaIA(c) {
     if (!chamarIA) return;
-    const tema = window.prompt('Sobre o que é a nova cláusula? (ex: "reajuste anual pelo IGP-M", "multa por rescisão antecipada", "prazo de aviso prévio")');
+    const tema = window.prompt('Sobre o que é a nova cláusula? (ex: "reajuste anual pelo IGP-M", "multa por rescisão antecipada", "prazo de aviso prévio")\n\nDica: clique no texto do contrato, no ponto entre as duas cláusulas onde quer inserir, ANTES de responder aqui — assim a cláusula nova entra exatamente ali.');
     if (!tema || !tema.trim()) return;
+    const textarea = document.getElementById('texto-contrato-' + c.id);
+    const posCursor = (textarea && document.activeElement === textarea) ? textarea.selectionStart : null;
     setGerandoClausulaIA(c.id);
     const resultado = await chamarIA(
       `Você é um redator de contratos em português do Brasil. Com base no contrato abaixo (pra manter o mesmo estilo, numeração e tom), redija UMA cláusula nova sobre o seguinte tema: "${tema.trim()}". Responda APENAS com o texto da cláusula pronta pra ser inserida no contrato (incluindo número de cláusula seguindo a numeração já usada no texto, se houver), sem explicações, sem markdown.\n\nCONTRATO ATUAL:\n${c.texto || '(contrato ainda vazio, redija a cláusula de forma independente)'}`
@@ -8815,10 +8937,21 @@ function Contratos({ chamarIA }) {
     if (resultado.erro) { mostrarToast('⚠ ' + resultado.erro); return; }
     const clausula = resultado.texto.trim();
     if (!clausula) { mostrarToast('⚠ A IA não retornou nada. Tenta de novo.'); return; }
-    const novoTexto = (c.texto || '').trim() ? c.texto.trim() + '\n\n' + clausula : clausula;
+    const textoAtual = c.texto || '';
+    let novoTexto, inseridaNoMeio = false;
+    if (posCursor != null && posCursor > 0 && posCursor < textoAtual.length) {
+      const antes = textoAtual.slice(0, posCursor);
+      const depois = textoAtual.slice(posCursor);
+      const quebraAntes = antes.endsWith('\n\n') ? '' : (antes.endsWith('\n') ? '\n' : '\n\n');
+      const quebraDepois = depois.startsWith('\n\n') ? '' : (depois.startsWith('\n') ? '\n' : '\n\n');
+      novoTexto = antes + quebraAntes + clausula + quebraDepois + depois;
+      inseridaNoMeio = true;
+    } else {
+      novoTexto = textoAtual.trim() ? textoAtual.trim() + '\n\n' + clausula : clausula;
+    }
     atualizarCampo(c.id, 'texto', novoTexto);
-    setExpandido(prev => ({ ...prev, [c.id]: true }));
-    mostrarToast('✓ Cláusula adicionada ao final do texto! Confira e ajuste se precisar.');
+    setModoTexto(prev => ({ ...prev, [c.id]: true }));
+    mostrarToast(inseridaNoMeio ? '✓ Cláusula inserida no ponto onde estava o cursor! Confira e ajuste se precisar.' : '✓ Cláusula adicionada ao final do texto! Confira e ajuste se precisar. (Dica: clique no texto no ponto exato antes de pedir a próxima, pra inserir no meio.)');
   }
 
   // anexa o PDF/imagem do contrato de verdade — mesmo esquema já usado em Anotações
@@ -8874,7 +9007,7 @@ function Contratos({ chamarIA }) {
         return;
       }
       atualizarCampo(c.id, 'texto', texto);
-      setExpandido(prev => ({ ...prev, [c.id]: true }));
+      setModoTexto(prev => ({ ...prev, [c.id]: true }));
       mostrarToast('✓ Texto extraído do PDF! Agora pode usar os botões de IA nele.');
     } catch (e) {
       mostrarToast('⚠ Não consegui ler esse PDF: ' + e.message);
@@ -8928,7 +9061,6 @@ function Contratos({ chamarIA }) {
   }
 
   const filtrados = contratos.filter(c => !busca || (c.nome + ' ' + (c.fornecedor || '')).toLowerCase().includes(busca.toLowerCase()));
-  const totalMensal = contratos.reduce((s, c) => s + (parseBRLInput(c.valorMensal) || 0), 0);
 
   const estiloBotaoIcone = {
     background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 8,
@@ -8965,9 +9097,6 @@ function Contratos({ chamarIA }) {
           <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar contrato ou fornecedor..." style={{
             border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 11px', fontSize: 13, width: 260, boxSizing: 'border-box',
           }} />
-          <div style={{ fontSize: 12.5, color: COLORS.inkSoft }}>
-            Total mensal em contratos: <span className="mono" style={{ fontWeight: 700, color: '#14312E' }}>{formatBRL(totalMensal)}</span>
-          </div>
         </div>
       )}
 
@@ -9049,109 +9178,6 @@ function Contratos({ chamarIA }) {
                 </button>
               )}
 
-              {/* CAMPOS ESTRUTURADOS */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
-                <div>
-                  <label style={estiloLabel}>FORNECEDOR</label>
-                  <input value={c.fornecedor || ''} onChange={e => atualizarCampo(c.id, 'fornecedor', e.target.value)} placeholder="Nome do fornecedor" style={estiloCampo} />
-                </div>
-                <div>
-                  <label style={estiloLabel}>VALOR MENSAL</label>
-                  <input value={c.valorMensal || ''} onChange={e => atualizarCampo(c.id, 'valorMensal', e.target.value)}
-                    onBlur={e => atualizarCampo(c.id, 'valorMensal', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
-                    placeholder="0,00" className="mono" style={estiloCampo} />
-                </div>
-                <div>
-                  <label style={estiloLabel}>DIA DO VENCIMENTO</label>
-                  <input value={c.diaVencimento || ''} onChange={e => atualizarCampo(c.id, 'diaVencimento', e.target.value)} placeholder="Ex: 10" className="mono" style={estiloCampo} />
-                </div>
-                <div>
-                  <label style={estiloLabel}>MÊS DE REAJUSTE</label>
-                  <select value={c.mesReajuste || ''} onChange={e => atualizarCampo(c.id, 'mesReajuste', e.target.value)} style={estiloCampo}>
-                    <option value="">— não sei —</option>
-                    {MESES.map(m => <option key={m} value={m}>{MESES_ABREV[m]}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={estiloLabel}>ÚLTIMO REAJUSTE (%)</label>
-                  <input value={c.percentualUltimoReajuste || ''} onChange={e => atualizarCampo(c.id, 'percentualUltimoReajuste', e.target.value)} placeholder="Ex: 8" className="mono" style={estiloCampo} />
-                </div>
-              </div>
-              <div>
-                <label style={estiloLabel}>OBSERVAÇÕES</label>
-                <input value={c.observacoes || ''} onChange={e => atualizarCampo(c.id, 'observacoes', e.target.value)} placeholder="Opcional — condições, multa de rescisão, etc." style={estiloCampo} />
-              </div>
-
-              {/* CAMPOS DO CONTRATO DE MATRÍCULA/MENSALIDADE — os valores que costumam mudar
-                  de ano pra ano (matrícula, multas, anuidade, mensalidades, datas). Ficam aqui em
-                  cima, editáveis direto, pra não precisar abrir o modo de edição por cima do PDF
-                  toda vez que só um valor ou uma data muda de um ano pro outro. */}
-              <div style={{ borderTop: `1px dashed ${COLORS.lineSoft}`, paddingTop: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: 8 }}>
-                  📋 Valores do contrato de matrícula (opcional — preencha se for o contrato de aluno)
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 10 }}>
-                  <div>
-                    <label style={estiloLabel}>MATRÍCULA (ALUNOS NOVOS)</label>
-                    <input value={c.matriculaValor || ''} onChange={e => atualizarCampo(c.id, 'matriculaValor', e.target.value)}
-                      onBlur={e => atualizarCampo(c.id, 'matriculaValor', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
-                      placeholder="0,00" className="mono" style={estiloCampo} />
-                  </div>
-                  <div>
-                    <label style={estiloLabel}>MULTA POR ATRASO (POR DIA)</label>
-                    <input value={c.multaAtrasoDiario || ''} onChange={e => atualizarCampo(c.id, 'multaAtrasoDiario', e.target.value)}
-                      onBlur={e => atualizarCampo(c.id, 'multaAtrasoDiario', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
-                      placeholder="0,00" className="mono" style={estiloCampo} />
-                  </div>
-                  <div>
-                    <label style={estiloLabel}>VALOR HORA EXCEDENTE</label>
-                    <input value={c.valorHoraExcedente || ''} onChange={e => atualizarCampo(c.id, 'valorHoraExcedente', e.target.value)}
-                      onBlur={e => atualizarCampo(c.id, 'valorHoraExcedente', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
-                      placeholder="0,00" className="mono" style={estiloCampo} />
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 10 }}>
-                  <div>
-                    <label style={estiloLabel}>ANUIDADE INTEGRAL</label>
-                    <input value={c.anuidadeIntegral || ''} onChange={e => atualizarCampo(c.id, 'anuidadeIntegral', e.target.value)}
-                      onBlur={e => atualizarCampo(c.id, 'anuidadeIntegral', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
-                      placeholder="0,00" className="mono" style={estiloCampo} />
-                  </div>
-                  <div>
-                    <label style={estiloLabel}>ANUIDADE PARCIAL (À VISTA)</label>
-                    <input value={c.anuidadeParcial || ''} onChange={e => atualizarCampo(c.id, 'anuidadeParcial', e.target.value)}
-                      onBlur={e => atualizarCampo(c.id, 'anuidadeParcial', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
-                      placeholder="0,00" className="mono" style={estiloCampo} />
-                  </div>
-                  <div>
-                    <label style={estiloLabel}>MENSALIDADE INTEGRAL</label>
-                    <input value={c.mensalidadeIntegral || ''} onChange={e => atualizarCampo(c.id, 'mensalidadeIntegral', e.target.value)}
-                      onBlur={e => atualizarCampo(c.id, 'mensalidadeIntegral', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
-                      placeholder="0,00" className="mono" style={estiloCampo} />
-                  </div>
-                  <div>
-                    <label style={estiloLabel}>MENSALIDADE PARCIAL (À VISTA)</label>
-                    <input value={c.mensalidadeParcial || ''} onChange={e => atualizarCampo(c.id, 'mensalidadeParcial', e.target.value)}
-                      onBlur={e => atualizarCampo(c.id, 'mensalidadeParcial', formatBRLNumber(parseBRLInput(e.target.value) || 0))}
-                      placeholder="0,00" className="mono" style={estiloCampo} />
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-                  <div>
-                    <label style={estiloLabel}>INÍCIO DO PAGAMENTO</label>
-                    <input value={c.inicioPagamento || ''} onChange={e => atualizarCampo(c.id, 'inicioPagamento', e.target.value)} placeholder="dd/mm/aaaa" className="mono" style={estiloCampo} />
-                  </div>
-                  <div>
-                    <label style={estiloLabel}>DESCONTO À VISTA ATÉ</label>
-                    <input value={c.descontoAvistaAte || ''} onChange={e => atualizarCampo(c.id, 'descontoAvistaAte', e.target.value)} placeholder="dd/mm/aaaa" className="mono" style={estiloCampo} />
-                  </div>
-                  <div>
-                    <label style={estiloLabel}>LOCAL E DATA DE ASSINATURA</label>
-                    <input value={c.localDataAssinatura || ''} onChange={e => atualizarCampo(c.id, 'localDataAssinatura', e.target.value)} placeholder="Ex: Carlos Barbosa, RS, 10 de fevereiro de 2026" style={estiloCampo} />
-                  </div>
-                </div>
-              </div>
-
               {/* PDF ORIGINAL — visualizar e editar por cima (preencher campos em branco) */}
               {c.anexoNome && c.anexoTipo && c.anexoTipo.includes('pdf') ? (
                 <>
@@ -9169,6 +9195,73 @@ function Contratos({ chamarIA }) {
               ) : (
                 <div style={{ fontSize: 12, color: COLORS.inkSoft, fontStyle: 'italic' }}>
                   Anexa o PDF desse contrato (botão do clipe lá em cima) pra poder visualizar e preencher os campos em branco direto por cima dele.
+                </div>
+              )}
+
+              {/* MODO TEXTO — pra quando as cláusulas mudam com frequência. Diferente do editor
+                  de PDF (que trabalha em cima da imagem da página e não consegue "empurrar"
+                  conteúdo pra abrir espaço), aqui o contrato é texto puro: inserir uma cláusula
+                  nova em qualquer ponto — inclusive no meio de duas já existentes — é só clicar
+                  no lugar certo e digitar ou usar a IA. Ao exportar, gera um PDF novo e limpo,
+                  formatado do zero (não é mais o PDF/scan original). */}
+              <button onClick={() => setModoTexto(m => ({ ...m, [c.id]: !m[c.id] }))} style={{
+                background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+                color: COLORS.ink, fontSize: 12, fontWeight: 700, padding: 0, justifySelf: 'start',
+              }}>
+                <ChevronDown size={14} style={{ transform: modoTexto[c.id] ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+                {modoTexto[c.id] ? 'Esconder edição de cláusulas (texto)' : '📝 Editar cláusulas como texto (inserir no meio, reordenar, etc.)'}
+              </button>
+
+              {modoTexto[c.id] && (
+                <div style={{ display: 'grid', gap: 10, background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: 14 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {c.anexoNome && c.anexoTipo && c.anexoTipo.includes('pdf') && (
+                      <button onClick={() => extrairTextoDoAnexo(c)} disabled={extraindoTextoId === c.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 5, background: '#FFF', border: `1px solid ${COLORS.line}`,
+                        borderRadius: 7, padding: '7px 11px', cursor: extraindoTextoId === c.id ? 'default' : 'pointer',
+                        fontWeight: 700, fontSize: 11.5, color: COLORS.ink, opacity: extraindoTextoId === c.id ? 0.6 : 1,
+                      }}>
+                        <FileText size={13} /> {extraindoTextoId === c.id ? 'Extraindo...' : 'Puxar texto do PDF anexado'}
+                      </button>
+                    )}
+                    <button onClick={() => corrigirOrtografiaIA(c)} disabled={corrigindoIA === c.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 5, background: '#FFF', border: `1px solid ${COLORS.line}`,
+                      borderRadius: 7, padding: '7px 11px', cursor: corrigindoIA === c.id ? 'default' : 'pointer',
+                      fontWeight: 700, fontSize: 11.5, color: COLORS.ink, opacity: corrigindoIA === c.id ? 0.6 : 1,
+                    }}>
+                      <IconeGemini size={13} /> {corrigindoIA === c.id ? 'Corrigindo...' : 'Corrigir ortografia (IA)'}
+                    </button>
+                    <button onClick={() => sugerirClausulaIA(c)} disabled={gerandoClausulaIA === c.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 5, background: COLORS.gold, border: 'none',
+                      borderRadius: 7, padding: '7px 11px', cursor: gerandoClausulaIA === c.id ? 'default' : 'pointer',
+                      fontWeight: 700, fontSize: 11.5, color: '#FFF', opacity: gerandoClausulaIA === c.id ? 0.7 : 1,
+                    }}>
+                      <IconeGemini size={13} /> {gerandoClausulaIA === c.id ? 'Redigindo...' : 'Sugerir cláusula nova (IA)'}
+                    </button>
+                    <button onClick={() => exportarContratoPDF(c)} style={{
+                      display: 'flex', alignItems: 'center', gap: 5, background: COLORS.inkButton, border: 'none',
+                      borderRadius: 7, padding: '7px 11px', cursor: 'pointer', fontWeight: 700, fontSize: 11.5, color: '#FFF',
+                    }}>
+                      <FileText size={13} /> Exportar PDF deste texto
+                    </button>
+                  </div>
+
+                  <textarea
+                    id={'texto-contrato-' + c.id}
+                    value={c.texto || ''}
+                    onChange={e => atualizarCampo(c.id, 'texto', e.target.value)}
+                    placeholder="Cole aqui o texto completo do contrato, ou clique em “Puxar texto do PDF anexado” acima. Depois é só editar, apagar, ou clicar no ponto exato entre duas cláusulas e usar “Sugerir cláusula nova” pra inserir ali."
+                    rows={14}
+                    style={{
+                      border: `1px solid ${COLORS.line}`, borderRadius: 8, padding: '12px 14px', fontSize: 13,
+                      lineHeight: 1.6, fontFamily: 'Inter, sans-serif', color: '#14312E', resize: 'vertical',
+                      boxSizing: 'border-box', width: '100%',
+                    }}
+                  />
+
+                  <div style={{ fontSize: 11.5, color: COLORS.inkSoft, background: COLORS.paper, borderRadius: 7, padding: '9px 11px', lineHeight: 1.5 }}>
+                    💡 <b>Como usar:</b> pra inserir uma cláusula nova no meio de duas já existentes, clique com o mouse bem no ponto do texto onde ela deve entrar (entre um parágrafo e outro) e, com o cursor ali piscando, use o botão "Sugerir cláusula nova (IA)" — ela entra exatamente naquele ponto. Se preferir escrever você mesmo, é só digitar direto na caixa de texto, do jeitinho que quiser. O "Exportar PDF deste texto" sempre gera um documento novo, formatado do zero — não mexe no PDF/scan original anexado.
+                  </div>
                 </div>
               )}
             </div>
