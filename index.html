@@ -123,7 +123,7 @@
     // Se deixar como está (vazio), o painel funciona só localmente, do
     // jeito que já funcionava antes (sem sincronizar entre aparelhos).
     // ====================================================================
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfigipnVm4bigXRfvYBZiHeZHB_zh3E5ZBbqDfxa5nPGFgHaEqJIQx5uZBOoTSZjrHaQ/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec";
     window.APPS_SCRIPT_URL_CONFIGURADA = !!APPS_SCRIPT_URL;
 
     // Polyfill do window.storage — tenta usar a Planilha Google como banco
@@ -153,10 +153,11 @@
             cachePlanilha = await resp.json();
             window.__statusPlanilha = 'ok';
           } catch (e) {
-            console.warn('Não consegui carregar da Planilha Google (ou demorou demais), usando dados locais deste navegador.', e);
+            console.warn('Não consegui carregar do Google Drive (ou demorou demais), usando dados locais deste navegador.', e);
             cachePlanilha = {};
             usandoPlanilha = false;
             window.__statusPlanilha = 'erro';
+            window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder (conexão lenta)' : String(e && e.message || e);
           }
           return cachePlanilha;
         })();
@@ -189,17 +190,31 @@
             try {
               const controlador = new AbortController();
               const timeoutId = setTimeout(() => controlador.abort(), 8000);
-              await fetch(APPS_SCRIPT_URL, {
+              const resp = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ key, value: val }),
                 signal: controlador.signal,
               });
               clearTimeout(timeoutId);
-              window.__statusPlanilha = 'ok';
+              // o Apps Script pode responder com HTTP 200 mesmo quando o script deu erro
+              // internamente (ele captura o erro e devolve { ok: false, erro: '...' }) —
+              // por isso é preciso checar o corpo da resposta, não só se o fetch "funcionou"
+              let corpo = null;
+              try { corpo = await resp.json(); } catch (e2) {}
+              if (resp.ok && corpo && corpo.ok !== false) {
+                window.__statusPlanilha = 'ok';
+                window.__ultimoErroSync = null;
+              } else {
+                const motivo = (corpo && corpo.erro) ? corpo.erro : ('HTTP ' + resp.status);
+                console.warn('A Planilha/Drive Google recusou salvar esta chave:', key, motivo);
+                window.__statusPlanilha = 'erro';
+                window.__ultimoErroSync = motivo;
+              }
             } catch (e) {
-              console.warn('Não consegui salvar na Planilha Google agora (ou demorou demais) — fica salvo só neste navegador até a conexão voltar.', e);
+              console.warn('Não consegui salvar no Google Drive agora (ou demorou demais) — fica salvo só neste navegador até a conexão voltar.', e);
               window.__statusPlanilha = 'erro';
+              window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder (conexão lenta)' : String(e && e.message || e);
             } finally {
               window.__salvamentosPendentes = Math.max(0, (window.__salvamentosPendentes || 1) - 1);
             }
@@ -4532,9 +4547,12 @@ function PainelFinanceiro() {
     function alunosExtrasDoMes(mes) {
       let qtd = 0, somaPagos = 0, qtdPagos = 0;
       (conveniosMultivaga || []).forEach(item => {
-        const existe = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome));
-        if (!existe) return;
-        qtd += item.vagasPreenchidas;
+        // conta as vagas preenchidas SEMPRE — "vagas preenchidas" já é o número real de
+        // alunos matriculados por esse convênio (ex: Prefeitura), atualizado manualmente
+        // na aba Valores. Antes só contava se existisse um lançamento daquele mês com o
+        // nome batendo exatamente, então alunos da Prefeitura sumiam da Taxa de Ocupação
+        // sempre que não havia lançamento — mesmo estando matriculados de verdade.
+        qtd += item.vagasPreenchidas || 0;
         const pago = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome) && t.status === 'Pago');
         if (pago) { somaPagos += item.vagasPreenchidas * item.valorPorAluno; qtdPagos += item.vagasPreenchidas; }
       });
@@ -4915,13 +4933,28 @@ ${textoCompras}`;
   }
   const [modalPinAberto, setModalPinAberto] = useState(false);
   const [statusPlanilha, setStatusPlanilha] = useState(null); // null=modo local, 'ok'=sincronizando, 'erro'=falhou
+  const [motivoErroSync, setMotivoErroSync] = useState(null);
+  const [avisoErroSync, setAvisoErroSync] = useState(false); // aviso grande que aparece na 1ª falha
   const [saldosMensais, setSaldosMensais] = useState(null); // { JANEIRO: 3111.69, ... } — editável na tela
 
   useEffect(() => {
     if (!window.APPS_SCRIPT_URL_CONFIGURADA) return;
-    const t = setInterval(() => setStatusPlanilha(window.__statusPlanilha || null), 1500);
+    let ultimoStatus = null;
+    const t = setInterval(() => {
+      const s = window.__statusPlanilha || null;
+      setStatusPlanilha(s);
+      setMotivoErroSync(window.__ultimoErroSync || null);
+      // só dispara o aviso grande quando MUDA pra erro (não fica repetindo a cada 1.5s)
+      if (s === 'erro' && ultimoStatus !== 'erro') setAvisoErroSync(true);
+      ultimoStatus = s;
+    }, 1500);
     return () => clearInterval(t);
   }, []);
+  useEffect(() => {
+    if (!avisoErroSync) return;
+    const t2 = setTimeout(() => setAvisoErroSync(false), 7000);
+    return () => clearTimeout(t2);
+  }, [avisoErroSync]);
   const [tab, setTab] = useState('visao');
 
   // filtros da aba lançamentos
@@ -5630,15 +5663,24 @@ ${textoCompras}`;
               <div style={{ fontSize: 11, color: COLORS.inkSoft }}>Painel financeiro</div>
             </div>
             {statusPlanilha && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999,
-                background: statusPlanilha === 'ok' ? COLORS.greenBg : COLORS.goldSoft,
-                border: `1px solid ${statusPlanilha === 'ok' ? COLORS.green : COLORS.gold}55`,
-                fontSize: 11, fontWeight: 700, color: statusPlanilha === 'ok' ? COLORS.green : COLORS.gold,
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusPlanilha === 'ok' ? COLORS.green : COLORS.gold, display: 'block', flexShrink: 0 }} />
-                {statusPlanilha === 'ok' ? 'Sincronizado' : 'Salvo só neste navegador'}
+              <span
+                title={statusPlanilha === 'ok' ? 'Os dados estão sendo salvos no Google Drive normalmente.' : ('Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato'))}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999,
+                  background: statusPlanilha === 'ok' ? COLORS.greenBg : COLORS.redBg,
+                  border: `1px solid ${statusPlanilha === 'ok' ? COLORS.green : COLORS.red}55`,
+                  fontSize: 11, fontWeight: 700, color: statusPlanilha === 'ok' ? COLORS.green : COLORS.red,
+                  cursor: 'help',
+                }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusPlanilha === 'ok' ? COLORS.green : COLORS.red, display: 'block', flexShrink: 0 }} />
+                {statusPlanilha === 'ok' ? '✓ Sincronizado (Google Drive)' : '⚠ Falha ao sincronizar — salvo só aqui'}
               </span>
+            )}
+            {avisoErroSync && (
+              <Toast
+                mensagem={'Não consegui salvar no Google Drive agora' + (motivoErroSync ? (': ' + motivoErroSync) : '') + '. Os dados ficaram salvos só neste navegador até a conexão voltar.'}
+                tipo="aviso"
+              />
             )}
 
             {/* BUSCA — sozinha, à direita */}
@@ -6235,7 +6277,10 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
   // Pode ser calculado pra um mês específico ou pro ano todo (média mensal).
   const mesesComMovimento = useMemo(() => {
     if (!transacoes) return [];
-    return MESES.filter(m => transacoes.some(t => t.mes === m && t.tipo === 'Entrada' && t.status === 'Pago'));
+    // considera o mês "com movimento" se tiver QUALQUER mensalidade lançada (paga ou
+    // pendente) — antes só contava mensalidade já paga, então um aluno novo cuja primeira
+    // mensalidade ainda está pendente podia fazer o mês inteiro sumir dos Indicadores
+    return MESES.filter(m => transacoes.some(t => t.mes === m && t.categoria && t.categoria.startsWith('Mensalidade - ')));
   }, [transacoes]);
 
   const [mesIndicadores, setMesIndicadores] = useState(() => {
@@ -6249,17 +6294,18 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     if (!transacoes || mesesComMovimento.length === 0) return null;
 
     // soma quantos "alunos extras" um convênio multivaga representa num mês específico —
-    // só conta se esse convênio realmente tem lançamento naquele mês (senão não estava ativo)
+    // conta as vagas preenchidas SEMPRE, mesmo sem lançamento naquele mês. "Vagas
+    // preenchidas" já é o número real de alunos matriculados (ex: Prefeitura), atualizado
+    // manualmente na aba Valores — não devia depender de existir lançamento pra contar.
     function alunosExtrasDoMes(mes) {
       let qtd = 0;
       let somaPagos = 0;
       let qtdPagos = 0;
       (conveniosMultivaga || []).forEach(item => {
+        qtd += item.vagasPreenchidas || 0;
         // t.categoria dos convênios vem com prefixo "Convênio - " escondido (a tela só
-        // mostra o nome sem o prefixo), então comparamos pelo nome já "traduzido"
-        const existe = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome));
-        if (!existe) return;
-        qtd += item.vagasPreenchidas;
+        // mostra o nome sem o prefixo), então comparamos pelo nome já "traduzido" —
+        // isso aqui só afeta o quanto entra na conta do ticket médio (valor pago)
         const pago = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome) && t.status === 'Pago');
         if (pago) { somaPagos += item.vagasPreenchidas * item.valorPorAluno; qtdPagos += item.vagasPreenchidas; }
       });
@@ -7364,11 +7410,27 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                               } else if (val.startsWith('v:')) {
                                 const v = Number(val.replace('v:', ''));
                                 setValorEdit(formatBRLNumber(v));
+                              } else if (val.startsWith('t:')) {
+                                const [gKey, gIdx] = val.replace('t:', '').split('|');
+                                const g = tabelaValores[gKey].grupos[Number(gIdx)];
+                                setValorCheioEdit(formatBRLNumber(g.semDesconto));
+                                setValorEdit(formatBRLNumber(g.comDesconto));
                               }
                             }}
                             style={{ ...inputCell, fontSize: 11, padding: '4px 6px', color: COLORS.gold, fontWeight: 700, background: COLORS.paperCard }}
                           >
                             <option value="">↓ Selecionar valor da lista...</option>
+                            {tabelaValores && (
+                              <optgroup label="📋 Tabela de Valores (Particular/Convênios)">
+                                {Object.entries(tabelaValores).map(([gKey, g]) =>
+                                  g.grupos.map((sub, gIdx) => (
+                                    <option key={`et-${gKey}-${gIdx}`} value={`t:${gKey}|${gIdx}`}>
+                                      {g.nome} — {sub.titulo}: {formatBRL(sub.comDesconto)} / {formatBRL(sub.semDesconto)}
+                                    </option>
+                                  ))
+                                )}
+                              </optgroup>
+                            )}
                             <optgroup label="Valores avulsos / especiais">
                               {(avulsos || SEED_VALORES_AVULSOS).map((p, i) => (
                                 <option key={'p-' + i} value={'p:' + i}>{rotuloPreset(p)}</option>
