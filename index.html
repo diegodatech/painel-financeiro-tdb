@@ -197,7 +197,11 @@
           cachePlanilha[key] = val;
           if (APPS_SCRIPT_URL && usandoPlanilha) {
             window.__salvamentosPendentes = (window.__salvamentosPendentes || 0) + 1;
-            try {
+            // tenta salvar no Drive; se der timeout (conexão lenta/instável), tenta MAIS
+            // UMA VEZ automaticamente antes de desistir — muita "falha" era só uma
+            // oscilação passageira da rede que na segunda tentativa já resolvia sozinha,
+            // sem precisar incomodar ninguém com aviso de erro
+            async function tentarSalvar(tentativaNumero) {
               const controlador = new AbortController();
               // anexos (PDF, fotos) em base64 pesam bem mais que um texto/número comum e
               // demoram mais pra subir — 8s fixo dava timeout em conexões normais só por
@@ -207,31 +211,39 @@
               const tamanhoKB = (val ? val.length : 0) / 1024;
               const tempoEspera = Math.min(45000, Math.max(10000, tamanhoKB * 25));
               const timeoutId = setTimeout(() => controlador.abort(), tempoEspera);
-              const resp = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ key, value: val }),
-                signal: controlador.signal,
-              });
-              clearTimeout(timeoutId);
-              // o Apps Script pode responder com HTTP 200 mesmo quando o script deu erro
-              // internamente (ele captura o erro e devolve { ok: false, erro: '...' }) —
-              // por isso é preciso checar o corpo da resposta, não só se o fetch "funcionou"
-              let corpo = null;
-              try { corpo = await resp.json(); } catch (e2) {}
-              if (resp.ok && corpo && corpo.ok !== false) {
-                window.__statusPlanilha = 'ok';
-                window.__ultimoErroSync = null;
-              } else {
+              try {
+                const resp = await fetch(APPS_SCRIPT_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                  body: JSON.stringify({ key, value: val }),
+                  signal: controlador.signal,
+                });
+                clearTimeout(timeoutId);
+                // o Apps Script pode responder com HTTP 200 mesmo quando o script deu erro
+                // internamente (ele captura o erro e devolve { ok: false, erro: '...' }) —
+                // por isso é preciso checar o corpo da resposta, não só se o fetch "funcionou"
+                let corpo = null;
+                try { corpo = await resp.json(); } catch (e2) {}
+                if (resp.ok && corpo && corpo.ok !== false) {
+                  window.__statusPlanilha = 'ok';
+                  window.__ultimoErroSync = null;
+                  return;
+                }
                 const motivo = (corpo && corpo.erro) ? corpo.erro : ('HTTP ' + resp.status);
+                if (tentativaNumero === 1) { await tentarSalvar(2); return; }
                 console.warn('A Planilha/Drive Google recusou salvar esta chave:', key, motivo);
                 window.__statusPlanilha = 'erro';
                 window.__ultimoErroSync = motivo;
+              } catch (e) {
+                clearTimeout(timeoutId);
+                if (tentativaNumero === 1) { await tentarSalvar(2); return; }
+                console.warn('Não consegui salvar no Google Drive agora (ou demorou demais) — fica salvo só neste navegador até a conexão voltar.', e);
+                window.__statusPlanilha = 'erro';
+                window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder, mesmo depois de tentar 2 vezes (conexão lenta)' : String(e && e.message || e);
               }
-            } catch (e) {
-              console.warn('Não consegui salvar no Google Drive agora (ou demorou demais) — fica salvo só neste navegador até a conexão voltar.', e);
-              window.__statusPlanilha = 'erro';
-              window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder (conexão lenta)' : String(e && e.message || e);
+            }
+            try {
+              await tentarSalvar(1);
             } finally {
               window.__salvamentosPendentes = Math.max(0, (window.__salvamentosPendentes || 1) - 1);
             }
