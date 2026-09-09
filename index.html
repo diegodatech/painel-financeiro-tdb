@@ -186,6 +186,28 @@
           if (cachePlanilha && cachePlanilha[key] !== undefined && cachePlanilha[key] !== null && cachePlanilha[key] !== '') {
             return { value: cachePlanilha[key] };
           }
+          // anexos grandes (PDF, fotos) ficam de propósito FORA do carregamento em massa
+          // (ver carregarDaPlanilha) pra abertura do painel não ficar lenta lendo vários
+          // megabytes que talvez nem sejam usados nessa sessão. Em vez disso, buscam-se
+          // individualmente aqui, só quando alguém realmente pede aquela chave específica
+          // — por exemplo, ao abrir um contrato pra ver o PDF anexado.
+          if (APPS_SCRIPT_URL && usandoPlanilha && key.indexOf('anexo_') !== -1) {
+            try {
+              const controlador = new AbortController();
+              const timeoutId = setTimeout(() => controlador.abort(), 25000);
+              const resp = await fetch(APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key), { signal: controlador.signal });
+              clearTimeout(timeoutId);
+              const corpo = await resp.json();
+              if (corpo && corpo[key] !== undefined) {
+                if (!cachePlanilha) cachePlanilha = {};
+                cachePlanilha[key] = corpo[key];
+                try { localStorage.setItem(key, corpo[key]); } catch (e2) {}
+                return { value: corpo[key] };
+              }
+            } catch (e) {
+              console.warn('Não consegui buscar o anexo "' + key + '" no Drive agora — tentando o que tiver salvo localmente.', e);
+            }
+          }
           try {
             const item = localStorage.getItem(key);
             return item !== null ? { value: item } : null;
