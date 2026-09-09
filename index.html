@@ -143,11 +143,13 @@
         promiseCarregamento = (async () => {
           if (!APPS_SCRIPT_URL) { cachePlanilha = {}; return cachePlanilha; }
           try {
-            // limite de 8 segundos — se a Planilha Google não responder nesse tempo (rede
-            // lenta, script fora do ar, CORS bloqueando, etc.), desiste e usa os dados
-            // salvos neste navegador em vez de travar o painel esperando pra sempre
+            // limite de 18 segundos nesta PRIMEIRA busca — o Google Apps Script às vezes
+            // "acorda" devagar (cold start) na primeira chamada depois de ficar um tempo
+            // parado, principalmente na versão que usa Drive (tem que achar/criar a pasta).
+            // 8s era curto demais e causava avisos de erro falsos que sumiam sozinhos
+            // pouco depois. Se realmente não responder, cai pros dados salvos localmente.
             const controlador = new AbortController();
-            const timeoutId = setTimeout(() => controlador.abort(), 8000);
+            const timeoutId = setTimeout(() => controlador.abort(), 18000);
             const resp = await fetch(APPS_SCRIPT_URL, { method: 'GET', signal: controlador.signal });
             clearTimeout(timeoutId);
             cachePlanilha = await resp.json();
@@ -166,12 +168,17 @@
 
       window.storage = {
         get: async (key) => {
-          // NÃO espera a Planilha Google responder antes de mostrar algo — isso é o que
-          // vinha travando/derrubando a página em conexões lentas. Usa direto o que já
-          // está salvo neste navegador (instantâneo) e, se a Planilha ainda não tiver sido
-          // consultada nesta sessão, dispara a busca dela em segundo plano (sem esperar).
+          // Espera a primeira busca no Drive terminar antes de decidir usar o dado local.
+          // ANTES isso disparava a busca e seguia direto pro localStorage sem esperar —
+          // então, mesmo com a Planilha/Drive respondendo rápido, o painel quase sempre
+          // acabava usando o dado local (vazio, num navegador novo) porque a resposta da
+          // rede nunca chega tão rápido quanto o código síncrono que roda logo em seguida.
+          // Era exatamente isso que fazia um aparelho novo abrir "sem nenhum lançamento"
+          // mesmo com tudo certo no Drive. Continua limitado pelos 18s de timeout lá em
+          // cima, então não trava pra sempre numa conexão ruim — só demora um pouco mais
+          // na primeira vez que abre.
           if (APPS_SCRIPT_URL && cachePlanilha === null) {
-            carregarDaPlanilha().catch(() => {}); // dispara mas não trava esperando
+            await carregarDaPlanilha().catch(() => {});
           }
           if (cachePlanilha && cachePlanilha[key] !== undefined && cachePlanilha[key] !== null && cachePlanilha[key] !== '') {
             return { value: cachePlanilha[key] };
