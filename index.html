@@ -9062,11 +9062,13 @@ function Contratos({ chamarIA }) {
 
   const filtrados = contratos.filter(c => !busca || (c.nome + ' ' + (c.fornecedor || '')).toLowerCase().includes(busca.toLowerCase()));
 
-  const estiloBotaoIcone = {
-    background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 8,
-    cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0, width: 36, height: 36, boxSizing: 'border-box',
+  // mesmo visual dos botões do cabeçalho (Backup, Carregar, CSV...): ícone em cima,
+  // nome pequeno embaixo, dentro de um contêiner arredondado
+  const estiloBotaoCard = {
+    background: 'transparent', border: 'none', borderRadius: 8, padding: '4px 9px',
+    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
   };
+  const estiloLegendaCard = { fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' };
   const estiloCampo = {
     border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '7px 9px', fontSize: 12.5,
     fontFamily: 'Inter, sans-serif', background: COLORS.paper, color: '#14312E', width: '100%', boxSizing: 'border-box',
@@ -9130,19 +9132,23 @@ function Contratos({ chamarIA }) {
                     📄 {c.nome}
                   </div>
                 )}
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                  <button onClick={() => exportarContratoPDF(c)} title="Exportar contrato como PDF (folha A4)" style={{ ...estiloBotaoIcone, fontSize: 17 }}>
-                    📄
+                <div className="busca-liquid-glass" style={{ display: 'flex', alignItems: 'center', gap: 2, borderRadius: 14, padding: '5px 6px', flexShrink: 0 }}>
+                  <button onClick={() => exportarContratoPDF(c)} title="Exportar contrato como PDF (folha A4)" style={estiloBotaoCard}>
+                    <FileText size={15} color={COLORS.ink} />
+                    <span style={estiloLegendaCard}>Exportar</span>
                   </button>
-                  <label title="Anexar o PDF/foto do contrato original (máx 3MB)" style={estiloBotaoIcone}>
-                    <Paperclip size={18} color={COLORS.ink} />
+                  <label title="Anexar o PDF/foto do contrato original (máx 3MB)" style={estiloBotaoCard}>
+                    <Paperclip size={15} color={COLORS.ink} />
+                    <span style={estiloLegendaCard}>Anexar</span>
                     <input type="file" onChange={e => { anexarArquivo(c.id, e.target.files[0]); e.target.value = ''; }} style={{ display: 'none' }} />
                   </label>
-                  <button onClick={() => iniciarEdicaoTitulo(c)} title="Renomear" style={estiloBotaoIcone}>
-                    <Pencil size={17} color={COLORS.ink} />
+                  <button onClick={() => iniciarEdicaoTitulo(c)} title="Renomear" style={estiloBotaoCard}>
+                    <Pencil size={15} color={COLORS.ink} />
+                    <span style={estiloLegendaCard}>Renomear</span>
                   </button>
-                  <button onClick={() => removerContrato(c.id)} title="Apagar contrato" style={estiloBotaoIcone}>
-                    <Trash2 size={18} color={COLORS.red} />
+                  <button onClick={() => removerContrato(c.id)} title="Apagar contrato" style={estiloBotaoCard}>
+                    <Trash2 size={15} color={COLORS.red} />
+                    <span style={estiloLegendaCard}>Apagar</span>
                   </button>
                 </div>
               </div>
