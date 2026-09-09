@@ -145,25 +145,32 @@
         if (promiseCarregamento) return promiseCarregamento;
         promiseCarregamento = (async () => {
           if (!APPS_SCRIPT_URL) { cachePlanilha = {}; return cachePlanilha; }
-          try {
-            // limite de 18 segundos nesta PRIMEIRA busca — o Google Apps Script às vezes
-            // "acorda" devagar (cold start) na primeira chamada depois de ficar um tempo
-            // parado, principalmente na versão que usa Drive (tem que achar/criar a pasta).
-            // 8s era curto demais e causava avisos de erro falsos que sumiam sozinhos
-            // pouco depois. Se realmente não responder, cai pros dados salvos localmente.
-            const controlador = new AbortController();
-            const timeoutId = setTimeout(() => controlador.abort(), 18000);
-            const resp = await fetch(APPS_SCRIPT_URL, { method: 'GET', signal: controlador.signal });
-            clearTimeout(timeoutId);
-            cachePlanilha = await resp.json();
-            window.__statusPlanilha = 'ok';
-          } catch (e) {
-            console.warn('Não consegui carregar do Google Drive (ou demorou demais), usando dados locais deste navegador.', e);
-            cachePlanilha = {};
-            usandoPlanilha = false;
-            window.__statusPlanilha = 'erro';
-            window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder (conexão lenta)' : String(e && e.message || e);
+          // tenta carregar; se der timeout, tenta MAIS UMA VEZ antes de desistir — mesma
+          // lógica de resiliência que já existe pra salvar, agora também pro carregamento
+          async function tentarCarregar(tentativaNumero) {
+            try {
+              // limite de 18 segundos nesta busca — o Google Apps Script às vezes "acorda"
+              // devagar (cold start) na primeira chamada depois de ficar um tempo parado,
+              // principalmente na versão que usa Drive (tem que achar/criar a pasta, e ler
+              // o conteúdo de cada arquivo salvo). 8s era curto demais e causava avisos de
+              // erro falsos que sumiam sozinhos pouco depois.
+              const controlador = new AbortController();
+              const timeoutId = setTimeout(() => controlador.abort(), 18000);
+              const resp = await fetch(APPS_SCRIPT_URL, { method: 'GET', signal: controlador.signal });
+              clearTimeout(timeoutId);
+              cachePlanilha = await resp.json();
+              window.__statusPlanilha = 'ok';
+              window.__ultimoErroSync = null;
+            } catch (e) {
+              if (tentativaNumero === 1) { await tentarCarregar(2); return; }
+              console.warn('Não consegui carregar do Google Drive (ou demorou demais, mesmo depois de tentar 2 vezes), usando dados locais deste navegador.', e);
+              cachePlanilha = {};
+              usandoPlanilha = false;
+              window.__statusPlanilha = 'erro';
+              window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder, mesmo depois de tentar 2 vezes (conexão lenta ou script muito carregado)' : String(e && e.message || e);
+            }
           }
+          await tentarCarregar(1);
           return cachePlanilha;
         })();
         return promiseCarregamento;
@@ -228,10 +235,12 @@
               // anexos (PDF, fotos) em base64 pesam bem mais que um texto/número comum e
               // demoram mais pra subir — 8s fixo dava timeout em conexões normais só por
               // causa do tamanho do arquivo, não porque tinha algo errado. Agora o tempo de
-              // espera cresce com o tamanho do que está sendo salvo (mínimo 10s, até 45s
-              // pros anexos maiores).
+              // espera cresce com o tamanho do que está sendo salvo (mínimo 10s, até 2
+              // minutos pros anexos maiores — o teto era só 45s antes, curto demais depois
+              // que o limite de anexo subiu pra 15MB; um PDF grande sempre dava timeout,
+              // mesmo tentando de novo, porque as duas tentativas usavam o mesmo teto baixo)
               const tamanhoKB = (val ? val.length : 0) / 1024;
-              const tempoEspera = Math.min(45000, Math.max(10000, tamanhoKB * 25));
+              const tempoEspera = Math.min(120000, Math.max(10000, tamanhoKB * 25));
               const timeoutId = setTimeout(() => controlador.abort(), tempoEspera);
               try {
                 const resp = await fetch(APPS_SCRIPT_URL, {
@@ -443,6 +452,11 @@ const FileSpreadsheet = ({ size = 16, color = "currentColor", style }) => (
 const FileText = ({ size = 16, color = "currentColor", style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line><line x1="9" y1="11" x2="10" y2="11"></line>
+  </svg>
+);
+const ImageIcon = ({ size = 16, color = "currentColor", style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
   </svg>
 );
 const Moon = ({ size = 16, color = "currentColor", style }) => (
@@ -4519,6 +4533,221 @@ function Anotacoes({ chamarIA }) {
   );
 }
 
+/**
+ * ARQUIVOS — aba dedicada só a guardar PDFs e imagens (fotos de documentos,
+ * comprovantes soltos, etc.), separada das Anotações. Cada item é um
+ * "cartão": um título + um arquivo anexado, com botões pra anexar/substituir
+ * e exportar (baixar) de volta. Pensada pra crescer no futuro pra aceitar
+ * vídeos curtos também — por enquanto, só PDF e imagem.
+ */
+function Arquivos() {
+  const [itens, setItens] = useState(null);
+  const [toastMsg, setToastMsg] = useState(null);
+  const [enviandoAnexo, setEnviandoAnexo] = useState(null); // id do item enviando arquivo agora
+  const [exportandoId, setExportandoId] = useState(null); // id do item exportando agora
+  const [editandoTitulo, setEditandoTitulo] = useState(null);
+  const [tituloEdit, setTituloEdit] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('arquivos_galeria_lista', false);
+        setItens(r && r.value ? JSON.parse(r.value) : []);
+      } catch (e) {
+        setItens([]);
+      }
+    })();
+  }, []);
+
+  function mostrarToast(msg) {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 4000);
+  }
+
+  async function salvar(next) {
+    setItens(next);
+    try { await window.storage.set('arquivos_galeria_lista', JSON.stringify(next), false); } catch (e) {}
+  }
+
+  function novoItem() {
+    const item = { id: 'arq' + Date.now() + Math.random().toString(36).slice(2), titulo: 'Novo arquivo', criadoEm: new Date().toISOString() };
+    salvar([...(itens || []), item]);
+    setEditandoTitulo(item.id);
+    setTituloEdit('Novo arquivo');
+  }
+
+  function iniciarEdicaoTitulo(item) {
+    setEditandoTitulo(item.id);
+    setTituloEdit(item.titulo);
+  }
+
+  function salvarTitulo(id) {
+    salvar(itens.map(i => i.id === id ? { ...i, titulo: tituloEdit.trim() || 'Sem título' } : i));
+    setEditandoTitulo(null);
+  }
+
+  function removerItem(id) {
+    const item = itens.find(i => i.id === id);
+    if (!window.confirm(`Apagar "${item.titulo}"? Essa ação não pode ser desfeita.`)) return;
+    if (item.anexoNome) window.storage.delete('galeria_item_anexo_' + id, false).catch(() => {});
+    salvar(itens.filter(i => i.id !== id));
+    mostrarToast('Arquivo apagado.');
+  }
+
+  // por enquanto só imagem e PDF (vídeo é ideia pra mais adiante); 15MB de limite —
+  // suficiente pra foto de celular e a maioria dos PDFs escaneados
+  const LIMITE_ANEXO = 15 * 1024 * 1024;
+  const TIPOS_ACEITOS = ['application/pdf', 'image/'];
+  function anexarArquivo(id, arquivo) {
+    if (!arquivo) return;
+    const tipoOk = TIPOS_ACEITOS.some(t => arquivo.type.startsWith(t));
+    if (!tipoOk) {
+      mostrarToast(`⚠ "${arquivo.name}" não é PDF nem imagem. Por enquanto essa aba só aceita esses dois tipos.`);
+      return;
+    }
+    if (arquivo.size > LIMITE_ANEXO) {
+      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 15MB por arquivo.`);
+      return;
+    }
+    setEnviandoAnexo(id);
+    const leitor = new FileReader();
+    leitor.onload = async () => {
+      try {
+        // o nome da chave tem "anexo_" de propósito — assim o carregamento em massa do
+        // painel pula esse arquivo (que pode ser grande) e só busca quando precisar,
+        // igual já funciona pros anexos de Contratos e Anotações
+        await window.storage.set('galeria_item_anexo_' + id, JSON.stringify({ nome: arquivo.name, tipo: arquivo.type, dados: leitor.result }), false);
+        salvar(itens.map(i => i.id === id ? { ...i, anexoNome: arquivo.name, anexoTipo: arquivo.type } : i));
+        mostrarToast(`✓ "${arquivo.name}" anexado!`);
+      } catch (e) {
+        mostrarToast('⚠ Não consegui anexar o arquivo — tenta de novo.');
+      }
+      setEnviandoAnexo(null);
+    };
+    leitor.onerror = () => { mostrarToast('⚠ Não consegui ler o arquivo.'); setEnviandoAnexo(null); };
+    leitor.readAsDataURL(arquivo);
+  }
+
+  // "Exportar" = baixar o arquivo de volta pro computador/celular, com o nome original
+  async function exportarArquivo(item) {
+    setExportandoId(item.id);
+    try {
+      const r = await window.storage.get('galeria_item_anexo_' + item.id, false);
+      if (!r || !r.value) { mostrarToast('⚠ Arquivo não encontrado.'); setExportandoId(null); return; }
+      const { dados, nome } = JSON.parse(r.value);
+      const link = document.createElement('a');
+      link.href = dados;
+      link.download = nome || (item.titulo + '.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      mostrarToast('✓ Exportado!');
+    } catch (e) {
+      mostrarToast('⚠ Não consegui exportar: ' + e.message);
+    }
+    setExportandoId(null);
+  }
+
+  if (itens === null) {
+    return <div style={{ color: '#8A7A85', fontSize: 13.5, padding: 20 }}>Carregando...</div>;
+  }
+
+  const estiloBotao = {
+    background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 8,
+    cursor: 'pointer', padding: '5px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+    flexShrink: 0, width: 56, height: 44, boxSizing: 'border-box',
+  };
+
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <Toast mensagem={toastMsg} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: '#14312E' }}>🖼️ Arquivos</div>
+          <div style={{ fontSize: 12.5, color: COLORS.inkSoft }}>
+            Guarde PDFs e fotos de documentos aqui — comprovantes soltos, papéis escaneados, o que precisar. Separado das Anotações, só pra arquivo.
+          </div>
+        </div>
+        <button onClick={novoItem} style={{
+          background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px',
+          fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+        }}>
+          <Plus size={14} /> Novo arquivo
+        </button>
+      </div>
+
+      {itens.length === 0 ? (
+        <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 13.5 }}>
+          Nenhum arquivo ainda. Clique em "Novo arquivo" pra começar.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+          {itens.map(item => (
+            <div key={item.id} style={{
+              background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 12,
+              padding: 12, display: 'grid', gap: 10, alignContent: 'start',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+                {editandoTitulo === item.id ? (
+                  <input
+                    autoFocus value={tituloEdit} onChange={e => setTituloEdit(e.target.value)}
+                    onBlur={() => salvarTitulo(item.id)}
+                    onKeyDown={e => { if (e.key === 'Enter') salvarTitulo(item.id); }}
+                    style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13.5, fontWeight: 700, flex: '1 1 auto', minWidth: 0 }}
+                  />
+                ) : (
+                  <div onClick={() => iniciarEdicaoTitulo(item)} title="Clique pra renomear" style={{
+                    fontSize: 13.5, fontWeight: 700, color: '#14312E', cursor: 'text', flex: '1 1 auto', minWidth: 0,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {item.titulo}
+                  </div>
+                )}
+              </div>
+
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                background: COLORS.paper, border: `1px dashed ${COLORS.lineSoft}`, borderRadius: 8, padding: '18px 8px', minHeight: 70,
+              }}>
+                {item.anexoNome ? (
+                  <>
+                    {item.anexoTipo && item.anexoTipo.startsWith('image/')
+                      ? <ImageIcon size={22} color={COLORS.ink} />
+                      : <FileText size={22} color={COLORS.ink} />}
+                    <span style={{ fontSize: 11.5, color: COLORS.inkSoft, textAlign: 'center', wordBreak: 'break-word', maxWidth: '100%' }}>{item.anexoNome}</span>
+                  </>
+                ) : (
+                  <span style={{ fontSize: 12, color: COLORS.inkSoft, fontStyle: 'italic' }}>Nenhum arquivo anexado ainda</span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <label title="Anexar/substituir arquivo (PDF ou imagem — máx 15MB)" style={estiloBotao}>
+                  {enviandoAnexo === item.id ? <span style={{ fontSize: 10 }}>...</span> : <Paperclip size={16} color={COLORS.ink} />}
+                  <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1 }}>Anexar</span>
+                  <input type="file" accept="application/pdf,image/*" onChange={e => { anexarArquivo(item.id, e.target.files[0]); e.target.value = ''; }} style={{ display: 'none' }} />
+                </label>
+                <button onClick={() => exportarArquivo(item)} disabled={!item.anexoNome || exportandoId === item.id} title="Exportar (baixar o arquivo)" style={{ ...estiloBotao, opacity: !item.anexoNome ? 0.4 : 1, cursor: !item.anexoNome ? 'default' : 'pointer' }}>
+                  <Download size={16} color={COLORS.ink} />
+                  <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1 }}>{exportandoId === item.id ? '...' : 'Exportar'}</span>
+                </button>
+                <button onClick={() => iniciarEdicaoTitulo(item)} title="Renomear" style={estiloBotao}>
+                  <Pencil size={15} color={COLORS.ink} />
+                  <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1 }}>Renomear</span>
+                </button>
+                <button onClick={() => removerItem(item.id)} title="Apagar" style={estiloBotao}>
+                  <Trash2 size={16} color={COLORS.red} />
+                  <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.red, lineHeight: 1 }}>Apagar</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PainelFinanceiro() {
   const [transacoes, setTransacoes] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -6020,6 +6249,7 @@ ${textoCompras}`;
                 ['recibos', 'Recibos', Receipt, '#6B4FC4', '#ECE8FA'],
                 ['valores', 'Valores', Tag, '#1C9E8F', '#DEF5F1'],
                 ['anotacoes', 'Anotações', NotebookText, '#B87A1A', '#FCEFDD'],
+                ['arquivos', 'Arquivos', ImageIcon, '#5B8DEF', '#E7EEFC'],
               ].map(([key, label, Icone, cor, corFundo]) => {
                 const ativo = tab === key;
                 return (
@@ -6129,8 +6359,10 @@ ${textoCompras}`;
           <Recibos chamarIA={chamarIA} />
         ) : tab === 'valores' ? (
           <Valores modoPrivado={modoPrivadoValores} setModoPrivado={setModoPrivadoValores} />
-        ) : (
+        ) : tab === 'anotacoes' ? (
           <Anotacoes chamarIA={chamarIA} />
+        ) : (
+          <Arquivos />
         )}
       </main>
     </div>
