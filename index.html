@@ -949,12 +949,21 @@ function LogoEscola() {
 // Tela de PIN — protege o painel de quem só tem o link mas não sabe o código.
 // Não é uma segurança "à prova de hacker" (é tudo no navegador, sem servidor de verdade),
 // mas já impede o acesso casual de alguém que só encontrou/recebeu o link.
-function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPin }) {
+function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPin, valorInicial }) {
   const [modo, setModo] = useState(pinConfigurado ? 'entrar' : 'escolher'); // 'entrar' | 'escolher' | 'confirmar'
-  const [digitado, setDigitado] = useState('');
+  const [digitado, setDigitado] = useState(valorInicial || '');
   const [primeiroPin, setPrimeiroPin] = useState('');
   const [erro, setErro] = useState('');
   const [tentativasErradas, setTentativasErradas] = useState(0);
+
+  // se já vieram os 4 dígitos digitados ANTES da tela terminar de carregar, confirma
+  // sozinho assim que montar — sem isso, a pessoa via as 4 bolinhas já preenchidas mas
+  // precisava apertar mais alguma coisa pra realmente destravar
+  useEffect(() => {
+    if (modo === 'entrar' && valorInicial && valorInicial.length === 4) {
+      confirmarDigitos(valorInicial);
+    }
+  }, []);
 
   function apertarDigito(d) {
     // usa a forma funcional do setState (lê o valor mais recente na hora, em vez do
@@ -4481,6 +4490,21 @@ function PainelFinanceiro() {
   const [loading, setLoading] = useState(true);
   const [storageOk, setStorageOk] = useState(true);
   const [salvandoAgora, setSalvandoAgora] = useState(false);
+  // captura dígitos digitados no teclado ANTES da tela de PIN terminar de carregar (o
+  // carregamento pode levar alguns segundos, e se a pessoa começar a digitar a senha
+  // cedo demais — antes da tela "de verdade" estar pronta pra escutar o teclado — esses
+  // primeiros toques se perdiam sem nenhum aviso, dando a impressão de precisar digitar
+  // duas vezes. Guarda aqui e repassa pra tela de PIN assim que ela montar.
+  const pinAntecipadoRef = useRef('');
+  useEffect(() => {
+    function capturarCedo(e) {
+      if (e.key >= '0' && e.key <= '9' && pinAntecipadoRef.current.length < 4) {
+        pinAntecipadoRef.current += e.key;
+      }
+    }
+    window.addEventListener('keydown', capturarCedo);
+    return () => window.removeEventListener('keydown', capturarCedo);
+  }, []);
   const [mensagemSalvarAgora, setMensagemSalvarAgora] = useState(null);
   const [progressoSalvar, setProgressoSalvar] = useState(null); // { feitos, total }
 
@@ -5562,6 +5586,7 @@ ${textoCompras}`;
     return (
       <TelaBloqueio
         pinConfigurado={pinConfigurado}
+        valorInicial={pinAntecipadoRef.current}
         onDesbloquear={() => setDesbloqueado(true)}
         onDefinirPin={definirPin}
         onRemoverPin={removerPin}
@@ -5681,16 +5706,17 @@ ${textoCompras}`;
             </div>
             {statusPlanilha && (
               <span
-                title={statusPlanilha === 'ok' ? 'Os dados estão sendo salvos no Google Drive normalmente.' : ('Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato'))}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999,
                   background: statusPlanilha === 'ok' ? COLORS.greenBg : COLORS.redBg,
                   border: `1px solid ${statusPlanilha === 'ok' ? COLORS.green : COLORS.red}55`,
                   fontSize: 11, fontWeight: 700, color: statusPlanilha === 'ok' ? COLORS.green : COLORS.red,
-                  cursor: 'help',
+                  flexWrap: 'wrap', maxWidth: 420,
                 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusPlanilha === 'ok' ? COLORS.green : COLORS.red, display: 'block', flexShrink: 0 }} />
-                {statusPlanilha === 'ok' ? '✓ Sincronizado (Google Drive)' : '⚠ Falha ao sincronizar — salvo só aqui'}
+                {statusPlanilha === 'ok'
+                  ? '✓ Sincronizado (Google Drive)'
+                  : ('⚠ Falha ao sincronizar — salvo só aqui. Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato'))}
               </span>
             )}
             {avisoErroSync && (
