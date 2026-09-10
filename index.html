@@ -296,7 +296,7 @@
               // que o limite de anexo subiu pra 15MB; um PDF grande sempre dava timeout,
               // mesmo tentando de novo, porque as duas tentativas usavam o mesmo teto baixo)
               const tamanhoKB = (val ? val.length : 0) / 1024;
-              const tempoEspera = Math.min(120000, Math.max(10000, tamanhoKB * 25));
+              const tempoEspera = Math.min(180000, Math.max(10000, tamanhoKB * 25));
               const timeoutId = setTimeout(() => controlador.abort(), tempoEspera);
               try {
                 const resp = await fetch(APPS_SCRIPT_URL, {
@@ -862,9 +862,15 @@ const PIE_COLORS = ['#106E6B', '#C15CA0'];
 // aparecia no lugar certo — mas no computador, com a página mais comprida e rolada pra
 // baixo pra preencher o formulário, ela subia grudada no topo do painel inteiro, bem acima
 // da parte visível da tela, e passava despercebida. O portal resolve isso de vez.
-function Toast({ mensagem, tipo = 'ok' }) {
+function Toast({ mensagem, tipo }) {
   if (!mensagem) return null;
-  const cores = tipo === 'aviso'
+  // detecta a cor certa pelo próprio símbolo no começo da mensagem (⚠ = aviso/erro,
+  // ✓ = sucesso) em vez de depender de cada tela lembrar de passar "tipo" certinho —
+  // era exatamente essa a causa de mensagens de ERRO aparecerem em VERDE (como se
+  // fosse sucesso): a maioria das telas nunca passava "tipo", então o padrão 'ok'
+  // (verde) era usado sempre, mesmo pra mensagens que começavam com ⚠.
+  const tipoReal = tipo || (mensagem.trim().startsWith('⚠') ? 'aviso' : 'ok');
+  const cores = tipoReal === 'aviso'
     ? { fundo: '#B8842E', icone: '⚠' }
     : { fundo: '#1F7A4D', icone: '✓' };
   return ReactDOM.createPortal(
@@ -4327,11 +4333,11 @@ function Anotacoes({ chamarIA }) {
 
   // anexa um arquivo (PDF, imagem, etc) num bloco — guardado como texto (base64) numa
   // chave separada, com limite de 3MB por causa do jeito que o armazenamento funciona aqui
-  const LIMITE_ANEXO = 15 * 1024 * 1024; // 15MB — antes era 3MB, sobra de quando ainda usava a Planilha Google (que tinha limite de caracteres por célula); o Google Drive não tem esse problema
+  const LIMITE_ANEXO = 25 * 1024 * 1024; // 25MB — o teto real é o do Google Apps Script (~50MB por requisição); como o arquivo cresce ~33% ao virar base64 pra guardar, 25MB de arquivo original vira uns 33MB no envio, deixando boa margem de segurança
   function anexarArquivo(id, arquivo) {
     if (!arquivo) return;
     if (arquivo.size > LIMITE_ANEXO) {
-      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 15MB por arquivo.`);
+      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 25MB por arquivo.`);
       return;
     }
     setEnviandoAnexo(id);
@@ -4456,7 +4462,7 @@ function Anotacoes({ chamarIA }) {
                   <span style={{ fontSize: 15, lineHeight: 1 }}>📄</span>
                   <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1 }}>PDF</span>
                 </button>
-                <label title="Anexar arquivo (PDF, imagem, doc — máx 15MB)" style={{ ...estiloBotao, flexDirection: 'column', gap: 1 }}>
+                <label title="Anexar arquivo (PDF, imagem, doc — máx 25MB)" style={{ ...estiloBotao, flexDirection: 'column', gap: 1 }}>
                   <Paperclip size={16} color={COLORS.ink} />
                   <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1 }}>Anexar</span>
                   <input type="file" onChange={e => { anexarArquivo(b.id, e.target.files[0]); e.target.value = ''; }} style={{ display: 'none' }} />
@@ -4677,7 +4683,7 @@ function Arquivos() {
 
   // por enquanto só imagem e PDF (vídeo é ideia pra mais adiante); 15MB de limite —
   // suficiente pra foto de celular e a maioria dos PDFs escaneados
-  const LIMITE_ANEXO = 15 * 1024 * 1024;
+  const LIMITE_ANEXO = 25 * 1024 * 1024; // 25MB — mesmo raciocínio das outras abas: margem segura abaixo do teto do Google Apps Script
   const TIPOS_ACEITOS = ['application/pdf', 'image/'];
   function anexarArquivo(id, arquivo) {
     if (!arquivo) return;
@@ -4687,7 +4693,7 @@ function Arquivos() {
       return;
     }
     if (arquivo.size > LIMITE_ANEXO) {
-      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 15MB por arquivo.`);
+      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 25MB por arquivo.`);
       return;
     }
     setEnviandoAnexo(id);
@@ -4803,7 +4809,7 @@ function Arquivos() {
               </div>
 
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <label title="Anexar/substituir arquivo (PDF ou imagem — máx 15MB)" style={estiloBotao}>
+                <label title="Anexar/substituir arquivo (PDF ou imagem — máx 25MB)" style={estiloBotao}>
                   {enviandoAnexo === item.id ? <span style={{ fontSize: 10 }}>...</span> : <Paperclip size={16} color={COLORS.ink} />}
                   <span style={{ fontSize: 8.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1 }}>Anexar</span>
                   <input type="file" accept="application/pdf,image/*" onChange={e => { anexarArquivo(item.id, e.target.files[0]); e.target.value = ''; }} style={{ display: 'none' }} />
@@ -9342,11 +9348,11 @@ function Contratos({ chamarIA }) {
   }
 
   // anexa o PDF/imagem do contrato de verdade — mesmo esquema já usado em Anotações
-  const LIMITE_ANEXO = 15 * 1024 * 1024; // 15MB — antes era 3MB, sobra de quando ainda usava a Planilha Google (que tinha limite de caracteres por célula); o Google Drive não tem esse problema
+  const LIMITE_ANEXO = 25 * 1024 * 1024; // 25MB — o teto real é o do Google Apps Script (~50MB por requisição); como o arquivo cresce ~33% ao virar base64 pra guardar, 25MB de arquivo original vira uns 33MB no envio, deixando boa margem de segurança
   function anexarArquivo(id, arquivo) {
     if (!arquivo) return;
     if (arquivo.size > LIMITE_ANEXO) {
-      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 15MB por arquivo.`);
+      mostrarToast(`⚠ "${arquivo.name}" é muito grande (${(arquivo.size / 1024 / 1024).toFixed(1)}MB). O limite é 25MB por arquivo.`);
       return;
     }
     setEnviandoAnexo(id);
@@ -9524,7 +9530,7 @@ function Contratos({ chamarIA }) {
                     <FileText size={15} color={COLORS.ink} />
                     <span style={estiloLegendaCard}>Exportar</span>
                   </button>
-                  <label title="Anexar o PDF/foto do contrato original (máx 15MB)" style={estiloBotaoCard}>
+                  <label title="Anexar o PDF/foto do contrato original (máx 25MB)" style={estiloBotaoCard}>
                     <Paperclip size={15} color={COLORS.ink} />
                     <span style={estiloLegendaCard}>Anexar</span>
                     <input type="file" onChange={e => { anexarArquivo(c.id, e.target.files[0]); e.target.value = ''; }} style={{ display: 'none' }} />
