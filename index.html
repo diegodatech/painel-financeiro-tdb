@@ -121,285 +121,457 @@
 
   <script>
     // ====================================================================
-    // ENDEREÇO DO SEU APP SCRIPT (Google Sheets) — troque pela URL que você
-    // copiou depois de implantar o script (termina em /exec).
-    // Se deixar como está (vazio), o painel funciona só localmente, do
-    // jeito que já funcionava antes (sem sincronizar entre aparelhos).
+    // SINCRONIZAÇÃO CENTRAL — Google Drive / Apps Script v4
+    //
+    // IMPORTANTE: mantenha aqui a URL /exec da implantação ATIVA.
+    // Ao atualizar o Apps Script, edite a implantação existente para uma
+    // NOVA VERSÃO. A URL continua a mesma.
     // ====================================================================
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec";
     window.APPS_SCRIPT_URL_CONFIGURADA = !!APPS_SCRIPT_URL;
 
-    // Polyfill do window.storage — tenta usar a Planilha Google como banco
-    // de dados central; se não tiver URL configurada ou der erro de rede,
-    // cai de volta pro localStorage (dados ficam só neste navegador).
+    // Este bloco substitui o armazenamento antigo. A ideia é simples:
+    // 1) sempre guarda primeiro no aparelho;
+    // 2) cada chave ganha uma versão local monotônica;
+    // 3) gravações são enfileiradas, nunca disputam o mesmo arquivo ao mesmo tempo;
+    // 4) o servidor usa LockService + metadados para impedir sobrescrita concorrente;
+    // 5) uma alteração só sai de "pendente" depois de o Apps Script confirmar;
+    // 6) falha de leitura NUNCA vira cache vazio — isso evita o falso "Tudo salvo".
     if (!window.storage) {
       let cachePlanilha = null;
-      let promiseCarregamento = null;
+      let carregamentoEmAndamento = null;
+      let filaEscrita = Promise.resolve();
+      let contadorVersao = 0;
+      let cacheCarregadoComSucesso = false;
       let usandoPlanilha = !!APPS_SCRIPT_URL;
 
-      // ================================================================
-      // CONTROLE DE PENDÊNCIAS — guarda (no localStorage, sobrevive a fechar
-      // a aba) quais chaves foram alteradas aqui mas ainda não confirmaram
-      // que chegaram no Drive. Isso resolve um problema sério: sem isso, se
-      // salvar falhasse (mesmo que só uma vez) e depois o painel recarregasse
-      // os dados do Drive, a versão antiga da nuvem sobrescrevia silenciosamente
-      // a alteração mais recente feita aqui — a pessoa via o dado "voltar atrás"
-      // sem nenhum aviso (ex: uma mensalidade marcada como paga "sumindo").
-      // Agora, enquanto uma chave está pendente, ela nunca é sobrescrita pelo
-      // que vem do Drive, e o painel tenta reenviá-la sozinho assim que puder.
-      // ================================================================
-      const CHAVE_PENDENCIAS = '__pendencias_sync_v1';
+      const CHAVE_PENDENCIAS = '__pendencias_sync_v2';
+      const CHAVE_VERSOES = '__versoes_sync_v2';
+      const CHAVE_CLIENTE = '__cliente_sync_v2';
+
       function lerPendencias() {
         try {
           const bruto = localStorage.getItem(CHAVE_PENDENCIAS);
-          return bruto ? new Set(JSON.parse(bruto)) : new Set();
+          const lista = bruto ? JSON.parse(bruto) : [];
+          return new Set(Array.isArray(lista) ? lista : []);
         } catch (e) { return new Set(); }
       }
+
       function salvarPendencias(conjunto) {
         try { localStorage.setItem(CHAVE_PENDENCIAS, JSON.stringify(Array.from(conjunto))); } catch (e) {}
         window.__pendenciasSync = conjunto.size;
       }
+
       function marcarPendente(key) {
         const p = lerPendencias();
         p.add(key);
         salvarPendencias(p);
       }
-      function marcarSincronizado(key) {
+
+      function marcarSincronizado(key, versaoConfirmada) {
+        // Só tira da fila se a versão que voltou do servidor ainda for a versão
+        // mais nova desta chave. Se o usuário alterou novamente enquanto a rede
+        // trabalhava, a nova alteração continua pendente.
+        const atual = lerVersoes()[key];
+        if (versaoConfirmada && atual && Number(atual) !== Number(versaoConfirmada)) return;
         const p = lerPendencias();
         if (p.has(key)) { p.delete(key); salvarPendencias(p); }
       }
-      window.__pendenciasSync = lerPendencias().size;
 
-      // Todas as chamadas que acontecem "ao mesmo tempo" (ex: Compras, Valores, Lançamentos
-      // e Recibos pedindo seus dados juntos, assim que o painel abre) precisam esperar a
-      // MESMA busca na Planilha — se cada uma checasse e disparasse sua própria busca, só a
-      // primeira pegaria o dado real; as outras cairiam pro localStorage desatualizado.
-      function carregarDaPlanilha() {
-        if (promiseCarregamento) return promiseCarregamento;
-        promiseCarregamento = (async () => {
-          if (!APPS_SCRIPT_URL) { cachePlanilha = {}; return cachePlanilha; }
-          // tenta carregar; se der timeout, tenta MAIS UMA VEZ antes de desistir — mesma
-          // lógica de resiliência que já existe pra salvar, agora também pro carregamento
-          async function tentarCarregar(tentativaNumero) {
+      function lerVersoes() {
+        try {
+          const bruto = localStorage.getItem(CHAVE_VERSOES);
+          const obj = bruto ? JSON.parse(bruto) : {};
+          return obj && typeof obj === 'object' ? obj : {};
+        } catch (e) { return {}; }
+      }
+
+      function novaVersao(key) {
+        const versoes = lerVersoes();
+        const anterior = Number(versoes[key]) || 0;
+        const agora = Date.now();
+        contadorVersao = Math.max(contadorVersao + 1, 1);
+        const versao = Math.max(agora, anterior + 1, agora + contadorVersao);
+        versoes[key] = versao;
+        try { localStorage.setItem(CHAVE_VERSOES, JSON.stringify(versoes)); } catch (e) {}
+        return versao;
+      }
+
+      function clienteId() {
+        try {
+          let id = localStorage.getItem(CHAVE_CLIENTE);
+          if (!id) {
+            id = 'painel-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+            localStorage.setItem(CHAVE_CLIENTE, id);
+          }
+          return id;
+        } catch (e) {
+          return 'painel-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+        }
+      }
+
+      window.__pendenciasSync = lerPendencias().size;
+      window.__statusPlanilha = null;
+      window.__ultimoErroSync = null;
+
+      function timeoutFetch(url, opcoes, ms) {
+        const controlador = new AbortController();
+        const timer = setTimeout(() => controlador.abort(), ms);
+        return fetch(url, { ...(opcoes || {}), signal: controlador.signal })
+          .finally(() => clearTimeout(timer));
+      }
+
+      async function lerRespostaJSON(resp) {
+        let corpo = null;
+        try { corpo = await resp.json(); } catch (e) {}
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        if (!corpo || corpo.ok === false) throw new Error((corpo && corpo.erro) || 'Resposta inválida do Apps Script.');
+        return corpo;
+      }
+
+      async function carregarDaPlanilha() {
+        if (!APPS_SCRIPT_URL) {
+          cachePlanilha = {};
+          cacheCarregadoComSucesso = false;
+          return cachePlanilha;
+        }
+        if (carregamentoEmAndamento) return carregamentoEmAndamento;
+
+        carregamentoEmAndamento = (async () => {
+          let ultimoErro = null;
+          for (let tentativa = 1; tentativa <= 3; tentativa++) {
             try {
-              // limite de 18 segundos nesta busca — o Google Apps Script às vezes "acorda"
-              // devagar (cold start) na primeira chamada depois de ficar um tempo parado,
-              // principalmente na versão que usa Drive (tem que achar/criar a pasta, e ler
-              // o conteúdo de cada arquivo salvo). 8s era curto demais e causava avisos de
-              // erro falsos que sumiam sozinhos pouco depois.
-              const controlador = new AbortController();
-              const timeoutId = setTimeout(() => controlador.abort(), 18000);
-              const resp = await fetch(APPS_SCRIPT_URL, { method: 'GET', signal: controlador.signal });
-              clearTimeout(timeoutId);
-              cachePlanilha = await resp.json();
+              // 25 s cobre cold start + leitura do Drive sem tornar a abertura infinita.
+              const corpo = await lerRespostaJSON(await timeoutFetch(
+                APPS_SCRIPT_URL,
+                { method: 'GET', cache: 'no-store' },
+                25000
+              ));
+
+              if (!corpo.dados || typeof corpo.dados !== 'object' || Array.isArray(corpo.dados)) {
+                throw new Error('O servidor respondeu sem um banco de dados válido.');
+              }
+
+              cachePlanilha = corpo.dados;
+              cacheCarregadoComSucesso = true;
+              usandoPlanilha = true;
               window.__statusPlanilha = 'ok';
               window.__ultimoErroSync = null;
-              // reconcilia alterações pendentes de uma sessão anterior (a aba foi fechada,
-              // ou o navegador travou, antes de confirmar que a mudança chegou no Drive) —
-              // sem isso, o dado antigo vindo do Drive sobrescreveria silenciosamente a
-              // versão mais nova que só existia aqui
+
+              // Reaplica localmente o que ainda não foi confirmado no Drive.
+              // Não usamos "cache = {}" em caso de erro: isso é justamente o que
+              // fazia o botão Salvar acreditar que não havia nada para enviar.
               const pendentes = lerPendencias();
-              if (pendentes.size > 0) {
-                pendentes.forEach(chavePendente => {
-                  let valorLocal = null;
-                  try { valorLocal = localStorage.getItem(chavePendente); } catch (e2) {}
-                  if (valorLocal !== null) {
-                    cachePlanilha[chavePendente] = valorLocal;
-                    // reenvia sozinho, em segundo plano, sem travar a abertura do painel
-                    window.storage.set(chavePendente, valorLocal).catch(() => {});
+              pendentes.forEach(key => {
+                try {
+                  const local = localStorage.getItem(key);
+                  if (local !== null) cachePlanilha[key] = local;
+                } catch (e) {}
+              });
+
+              // Reenvio em segundo plano, serializado pela mesma fila das gravações normais.
+              if (pendentes.size) {
+                pendentes.forEach(key => {
+                  let local = null;
+                  try { local = localStorage.getItem(key); } catch (e) {}
+                  if (local !== null) {
+                    const versao = Number(lerVersoes()[key]) || Date.now();
+                    filaEscrita = filaEscrita.then(() => enviarSet_(key, local, versao, false)).catch(() => {});
                   }
                 });
               }
+
+              return cachePlanilha;
             } catch (e) {
-              if (tentativaNumero === 1) { await tentarCarregar(2); return; }
-              console.warn('Não consegui carregar do Google Drive (ou demorou demais, mesmo depois de tentar 2 vezes), usando dados locais deste navegador por enquanto.', e);
-              cachePlanilha = {};
-              // IMPORTANTE: não desliga o Drive pro resto da sessão aqui. Antes, uma falha
-              // no carregamento inicial (ex: cold start lento) deixava "usandoPlanilha =
-              // false" pra sempre — aí mesmo que a internet voltasse a funcionar segundos
-              // depois, TODO salvamento daquele momento em diante era pulado silenciosamente
-              // (só ficava salvo no navegador), sem nenhum aviso, até a pessoa recarregar a
-              // página inteira. Agora cada "salvar" continua tentando o Drive de novo por
-              // conta própria (com suas próprias 2 tentativas) — se a rede se recuperar, a
-              // sincronização volta a funcionar sozinha, sem precisar recarregar nada.
-              window.__statusPlanilha = 'erro';
-              window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder, mesmo depois de tentar 2 vezes (conexão lenta ou script muito carregado)' : String(e && e.message || e);
+              ultimoErro = e;
+              if (tentativa < 3) await new Promise(r => setTimeout(r, 900 * tentativa));
             }
           }
-          await tentarCarregar(1);
-          return cachePlanilha;
+
+          cacheCarregadoComSucesso = false;
+          // MUITO IMPORTANTE: null significa "não consegui ler o Drive".
+          // Nunca transformar isso em {}.
+          cachePlanilha = null;
+          usandoPlanilha = !!APPS_SCRIPT_URL;
+          window.__statusPlanilha = 'erro';
+          window.__ultimoErroSync = ultimoErro && ultimoErro.name === 'AbortError'
+            ? 'O Google Drive demorou mais que o limite de resposta.'
+            : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Falha ao carregar o Google Drive.');
+          return null;
         })();
-        return promiseCarregamento;
+
+        try {
+          return await carregamentoEmAndamento;
+        } finally {
+          carregamentoEmAndamento = null;
+        }
+      }
+
+      async function enviarSet_(key, val, versao, marcarFila) {
+        if (!APPS_SCRIPT_URL) return { ok: true, accepted: false, localOnly: true };
+        if (marcarFila !== false) marcarPendente(key);
+
+        const tamanhoKB = (val ? String(val).length : 0) / 1024;
+        const limite = Math.min(180000, Math.max(15000, 15000 + tamanhoKB * 30));
+        let ultimoErro = null;
+
+        for (let tentativa = 1; tentativa <= 3; tentativa++) {
+          try {
+            const resp = await timeoutFetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                acao: 'set',
+                key,
+                value: val,
+                updatedAt: Number(versao) || Date.now(),
+                clientId: clienteId(),
+              }),
+            }, limite);
+            const corpo = await lerRespostaJSON(resp);
+
+            if (corpo.accepted === false && corpo.stale) {
+              // Outra máquina gravou uma versão mais nova. Não fingimos sucesso:
+              // buscamos o estado real antes de liberar a pendência.
+              window.__statusPlanilha = 'erro';
+              window.__ultimoErroSync = 'Outra alteração mais recente já foi gravada no Drive. Recarregando para conferir.';
+              const resolvido = await resolverConflitoStale_(key, corpo.serverUpdatedAt);
+              return { ok: false, stale: true, resolvido };
+            }
+
+            window.__statusPlanilha = 'ok';
+            window.__ultimoErroSync = null;
+            if (cachePlanilha) cachePlanilha[key] = val;
+            marcarSincronizado(key, versao);
+            return { ok: true, accepted: true };
+          } catch (e) {
+            ultimoErro = e;
+            if (tentativa < 3) await new Promise(r => setTimeout(r, 1000 * tentativa));
+          }
+        }
+
+        window.__statusPlanilha = 'erro';
+        window.__ultimoErroSync = ultimoErro && ultimoErro.name === 'AbortError'
+          ? 'O Google Drive demorou para responder. A alteração ficou protegida neste aparelho e será reenviada.'
+          : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Não foi possível sincronizar.');
+        marcarPendente(key);
+        return { ok: false, erro: window.__ultimoErroSync };
+      }
+
+      async function resolverConflitoStale_(key, serverUpdatedAt) {
+        // O servidor informou que existe uma versão mais nova. Neste cenário
+        // preservamos o dado central em vez de ficar reenviando a versão antiga
+        // indefinidamente. O valor do Drive passa a ser a nova referência local.
+        try {
+          const corpo = await lerRespostaJSON(await timeoutFetch(
+            APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key),
+            { method: 'GET', cache: 'no-store' },
+            45000
+          ));
+          const dados = corpo && corpo.dados ? corpo.dados : {};
+          if (Object.prototype.hasOwnProperty.call(dados, key)) {
+            if (!cachePlanilha) cachePlanilha = {};
+            cachePlanilha[key] = dados[key];
+            try { localStorage.setItem(key, dados[key]); } catch (e) {}
+          } else {
+            if (cachePlanilha) delete cachePlanilha[key];
+            try { localStorage.removeItem(key); } catch (e) {}
+          }
+          const versoes = lerVersoes();
+          versoes[key] = Number(serverUpdatedAt) || Date.now();
+          try { localStorage.setItem(CHAVE_VERSOES, JSON.stringify(versoes)); } catch (e) {}
+          const pendentes = lerPendencias();
+          pendentes.delete(key);
+          salvarPendencias(pendentes);
+          return true;
+        } catch (e) {
+          marcarPendente(key);
+          return false;
+        }
+      }
+
+      async function enviarDelete_(key, versao) {
+        if (!APPS_SCRIPT_URL) return { ok: true, localOnly: true };
+        marcarPendente(key);
+        let ultimoErro = null;
+        for (let tentativa = 1; tentativa <= 3; tentativa++) {
+          try {
+            const resp = await timeoutFetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                acao: 'delete', key, deletar: true,
+                updatedAt: Number(versao) || Date.now(), clientId: clienteId(),
+              }),
+            }, 30000);
+            const corpo = await lerRespostaJSON(resp);
+            if (corpo.accepted === false && corpo.stale) {
+              window.__statusPlanilha = 'erro';
+              window.__ultimoErroSync = 'A exclusão ficou atrás de uma alteração mais nova no Drive. Nada foi apagado à força.';
+              const resolvido = await resolverConflitoStale_(key, corpo.serverUpdatedAt);
+              return { ok: false, stale: true, resolvido };
+            }
+            marcarSincronizado(key, versao);
+            window.__statusPlanilha = 'ok';
+            window.__ultimoErroSync = null;
+            return { ok: true };
+          } catch (e) {
+            ultimoErro = e;
+            if (tentativa < 3) await new Promise(r => setTimeout(r, 1000 * tentativa));
+          }
+        }
+        window.__statusPlanilha = 'erro';
+        window.__ultimoErroSync = String((ultimoErro && ultimoErro.message) || ultimoErro || 'Não foi possível apagar no Drive.');
+        marcarPendente(key);
+        return { ok: false, erro: window.__ultimoErroSync };
       }
 
       window.storage = {
         get: async (key) => {
-          // Espera a primeira busca no Drive terminar antes de decidir usar o dado local.
-          // ANTES isso disparava a busca e seguia direto pro localStorage sem esperar —
-          // então, mesmo com a Planilha/Drive respondendo rápido, o painel quase sempre
-          // acabava usando o dado local (vazio, num navegador novo) porque a resposta da
-          // rede nunca chega tão rápido quanto o código síncrono que roda logo em seguida.
-          // Era exatamente isso que fazia um aparelho novo abrir "sem nenhum lançamento"
-          // mesmo com tudo certo no Drive. Continua limitado pelos 18s de timeout lá em
-          // cima, então não trava pra sempre numa conexão ruim — só demora um pouco mais
-          // na primeira vez que abre.
-          if (APPS_SCRIPT_URL && cachePlanilha === null) {
-            await carregarDaPlanilha().catch(() => {});
-          }
-          if (cachePlanilha && cachePlanilha[key] !== undefined && cachePlanilha[key] !== null && cachePlanilha[key] !== '') {
-            return { value: cachePlanilha[key] };
-          }
-          // anexos grandes (PDF, fotos) ficam de propósito FORA do carregamento em massa
-          // (ver carregarDaPlanilha) pra abertura do painel não ficar lenta lendo vários
-          // megabytes que talvez nem sejam usados nessa sessão. Em vez disso, buscam-se
-          // individualmente aqui, só quando alguém realmente pede aquela chave específica
-          // — por exemplo, ao abrir um contrato pra ver o PDF anexado.
-          if (APPS_SCRIPT_URL && usandoPlanilha && key.indexOf('anexo_') !== -1) {
+          // Se esta chave foi alterada localmente e ainda está pendente, ela é a fonte
+          // mais recente. Isso evita o Drive antigo aparecer por cima dela.
+          const pendentes = lerPendencias();
+          if (pendentes.has(key)) {
             try {
-              const controlador = new AbortController();
-              const timeoutId = setTimeout(() => controlador.abort(), 25000);
-              const resp = await fetch(APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key), { signal: controlador.signal });
-              clearTimeout(timeoutId);
-              const corpo = await resp.json();
-              if (corpo && corpo[key] !== undefined) {
+              const local = localStorage.getItem(key);
+              if (local !== null) return { value: local };
+            } catch (e) {}
+          }
+
+          if (APPS_SCRIPT_URL && !cacheCarregadoComSucesso) {
+            await carregarDaPlanilha();
+          }
+
+          if (cacheCarregadoComSucesso && cachePlanilha && Object.prototype.hasOwnProperty.call(cachePlanilha, key)) {
+            const valor = cachePlanilha[key];
+            try { if (valor !== undefined && valor !== null) localStorage.setItem(key, valor); } catch (e) {}
+            return { value: valor };
+          }
+
+          // Anexos grandes não entram no GET em massa. Busca sob demanda.
+          if (APPS_SCRIPT_URL && key.indexOf('anexo_') !== -1) {
+            try {
+              const corpo = await lerRespostaJSON(await timeoutFetch(
+                APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key),
+                { method: 'GET', cache: 'no-store' },
+                45000
+              ));
+              if (corpo.dados && Object.prototype.hasOwnProperty.call(corpo.dados, key)) {
                 if (!cachePlanilha) cachePlanilha = {};
-                cachePlanilha[key] = corpo[key];
-                try { localStorage.setItem(key, corpo[key]); } catch (e2) {}
-                return { value: corpo[key] };
+                cachePlanilha[key] = corpo.dados[key];
+                try { localStorage.setItem(key, corpo.dados[key]); } catch (e) {}
+                return { value: corpo.dados[key] };
               }
             } catch (e) {
-              console.warn('Não consegui buscar o anexo "' + key + '" no Drive agora — tentando o que tiver salvo localmente.', e);
+              console.warn('Não consegui buscar o anexo no Drive agora:', e);
             }
           }
+
           try {
-            const item = localStorage.getItem(key);
-            return item !== null ? { value: item } : null;
+            const local = localStorage.getItem(key);
+            return local !== null ? { value: local } : null;
           } catch (e) { return null; }
         },
+
         set: async (key, val) => {
+          // Guarda primeiro no aparelho. Se o aplicativo fechar agora, a alteração
+          // continua disponível e marcada como pendente.
           try { localStorage.setItem(key, val); } catch (e) {}
           if (!cachePlanilha) cachePlanilha = {};
           cachePlanilha[key] = val;
-          if (APPS_SCRIPT_URL && usandoPlanilha) {
-            window.__salvamentosPendentes = (window.__salvamentosPendentes || 0) + 1;
-            // tenta salvar no Drive; se der timeout (conexão lenta/instável), tenta MAIS
-            // UMA VEZ automaticamente antes de desistir — muita "falha" era só uma
-            // oscilação passageira da rede que na segunda tentativa já resolvia sozinha,
-            // sem precisar incomodar ninguém com aviso de erro
-            async function tentarSalvar(tentativaNumero) {
-              const controlador = new AbortController();
-              // anexos (PDF, fotos) em base64 pesam bem mais que um texto/número comum e
-              // demoram mais pra subir — 8s fixo dava timeout em conexões normais só por
-              // causa do tamanho do arquivo, não porque tinha algo errado. Agora o tempo de
-              // espera cresce com o tamanho do que está sendo salvo (mínimo 10s, até 2
-              // minutos pros anexos maiores — o teto era só 45s antes, curto demais depois
-              // que o limite de anexo subiu pra 15MB; um PDF grande sempre dava timeout,
-              // mesmo tentando de novo, porque as duas tentativas usavam o mesmo teto baixo)
-              const tamanhoKB = (val ? val.length : 0) / 1024;
-              const tempoEspera = Math.min(180000, Math.max(10000, tamanhoKB * 25));
-              const timeoutId = setTimeout(() => controlador.abort(), tempoEspera);
-              try {
-                const resp = await fetch(APPS_SCRIPT_URL, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                  body: JSON.stringify({ key, value: val }),
-                  signal: controlador.signal,
-                });
-                clearTimeout(timeoutId);
-                // o Apps Script pode responder com HTTP 200 mesmo quando o script deu erro
-                // internamente (ele captura o erro e devolve { ok: false, erro: '...' }) —
-                // por isso é preciso checar o corpo da resposta, não só se o fetch "funcionou"
-                let corpo = null;
-                try { corpo = await resp.json(); } catch (e2) {}
-                if (resp.ok && corpo && corpo.ok !== false) {
-                  window.__statusPlanilha = 'ok';
-                  window.__ultimoErroSync = null;
-                  marcarSincronizado(key);
-                  return;
-                }
-                const motivo = (corpo && corpo.erro) ? corpo.erro : ('HTTP ' + resp.status);
-                if (tentativaNumero === 1) { await tentarSalvar(2); return; }
-                console.warn('A Planilha/Drive Google recusou salvar esta chave:', key, motivo);
-                window.__statusPlanilha = 'erro';
-                window.__ultimoErroSync = motivo;
-                marcarPendente(key);
-              } catch (e) {
-                clearTimeout(timeoutId);
-                if (tentativaNumero === 1) { await tentarSalvar(2); return; }
-                console.warn('Não consegui salvar no Google Drive agora (ou demorou demais) — fica salvo só neste navegador até a conexão voltar.', e);
-                window.__statusPlanilha = 'erro';
-                window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder, mesmo depois de tentar 2 vezes (conexão lenta)' : String(e && e.message || e);
-                marcarPendente(key);
-              }
-            }
-            try {
-              await tentarSalvar(1);
-            } finally {
-              window.__salvamentosPendentes = Math.max(0, (window.__salvamentosPendentes || 1) - 1);
-            }
-          }
-          return true;
+          const versao = novaVersao(key);
+          marcarPendente(key);
+
+          if (!APPS_SCRIPT_URL) return true;
+
+          // Uma única fila global elimina a condição de corrida do antigo doPost:
+          // A lê o arquivo -> B lê o mesmo arquivo -> A salva -> B salva e apaga A.
+          filaEscrita = filaEscrita.then(async () => {
+            const atual = Number(lerVersoes()[key]) || versao;
+            // Se já houve uma alteração mais nova desta chave enquanto esta estava na fila,
+            // não vale a pena mandar a versão antiga.
+            if (atual !== versao) return { ok: true, ignorada: true };
+            return enviarSet_(key, val, versao, false);
+          }).catch(e => {
+            marcarPendente(key);
+            window.__statusPlanilha = 'erro';
+            window.__ultimoErroSync = String(e && e.message || e);
+            return { ok: false, erro: window.__ultimoErroSync };
+          });
+
+          // Não esperamos a rede para atualizar a tela, mas o Promise continua disponível
+          // para quem usa await window.storage.set().
+          return filaEscrita.then(() => true);
         },
-        // força reenviar TUDO que está guardado neste navegador pra Planilha Google agora,
-        // de novo — útil como um "Salvar" manual (tipo Excel/Ctrl+S) pra quem quer ter certeza
-        // de que nada ficou só salvo localmente por causa de uma falha de conexão silenciosa.
-        // onProgress(feitos, total), se passado, é chamado depois de cada item processado.
+
         resync: async (onProgress) => {
           if (!APPS_SCRIPT_URL) return { ok: true, total: 0, falhas: 0 };
-          if (!cachePlanilha) await carregarDaPlanilha();
-          const entradas = Object.entries(cachePlanilha || {});
-          let falhas = 0;
-          for (let i = 0; i < entradas.length; i++) {
-            const [key, val] = entradas[i];
-            try {
-              const resp = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ key, value: val }),
-              });
-              let corpo = null;
-              try { corpo = await resp.json(); } catch (e3) {}
-              if (resp.ok && corpo && corpo.ok !== false) {
-                marcarSincronizado(key);
-              } else {
-                falhas++;
-                marcarPendente(key);
-              }
-            } catch (e) { falhas++; marcarPendente(key); }
-            if (onProgress) onProgress(i + 1, entradas.length);
+
+          // Primeiro precisa existir uma leitura CONFIRMADA do Drive. Se não conseguiu,
+          // o botão não pode inventar que salvou.
+          const carregado = cacheCarregadoComSucesso ? cachePlanilha : await carregarDaPlanilha();
+          if (!cacheCarregadoComSucesso || !carregado) {
+            const p = lerPendencias();
+            return { ok: false, total: p.size, falhas: p.size || 1, erro: window.__ultimoErroSync || 'Não consegui ler o Google Drive.' };
           }
-          usandoPlanilha = true;
-          window.__statusPlanilha = falhas === 0 ? 'ok' : 'erro';
-          return { ok: falhas === 0, total: entradas.length, falhas };
+
+          const pendentes = Array.from(lerPendencias());
+          let falhas = 0;
+          let feitos = 0;
+
+          // Inclui também chaves que estejam em cache/local e cuja versão local seja
+          // mais nova que a última versão conhecida do servidor. Para não correr risco
+          // de sobrescrever dados antigos do Drive, só entram aqui as chaves pendentes.
+          const tarefas = pendentes.map(key => {
+            let valor = null;
+            try { valor = localStorage.getItem(key); } catch (e) {}
+            return { key, valor, versao: Number(lerVersoes()[key]) || Date.now() };
+          }).filter(x => x.valor !== null);
+
+          for (const tarefa of tarefas) {
+            const resultado = await enviarSet_(tarefa.key, tarefa.valor, tarefa.versao, false);
+            feitos++;
+            if (!resultado.ok) falhas++;
+            if (onProgress) onProgress(feitos, tarefas.length);
+          }
+
+          // Confirma novamente o estado central. Se a leitura falhar, não dizemos "tudo salvo".
+          if (falhas === 0) {
+            const verificado = await carregarDaPlanilha();
+            if (!cacheCarregadoComSucesso || !verificado) {
+              falhas++;
+            } else {
+              const restantes = lerPendencias().size;
+              if (restantes > 0) falhas = restantes;
+            }
+          }
+
+          const ok = falhas === 0 && lerPendencias().size === 0;
+          window.__statusPlanilha = ok ? 'ok' : 'erro';
+          if (ok) window.__ultimoErroSync = null;
+          return { ok, total: tarefas.length, falhas };
         },
-        // apaga uma chave — usado pelos botões de "remover anexo", lixeira, etc. Faltava
-        // completamente antes (o painel só tinha get/set/resync), então todo apagar
-        // silenciosamente não fazia nada quando rodado fora do editor de artifacts.
+
         delete: async (key) => {
           try { localStorage.removeItem(key); } catch (e) {}
           if (cachePlanilha) delete cachePlanilha[key];
-          if (APPS_SCRIPT_URL && usandoPlanilha) {
-            try {
-              const controlador = new AbortController();
-              // mesmo tempo de espera do carregamento (18s) — 8s era curto demais e podia
-              // dar falso positivo de "falha" num Drive que só estava demorando a acordar
-              const timeoutId = setTimeout(() => controlador.abort(), 18000);
-              await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ key, value: '', deletar: true }),
-                signal: controlador.signal,
-              });
-              clearTimeout(timeoutId);
-            } catch (e) {
-              console.warn('Não consegui apagar "' + key + '" no Drive agora — a exclusão fica só neste navegador até a conexão voltar.', e);
-            }
-          }
-          return true;
+          const versao = novaVersao(key);
+          marcarPendente(key);
+          if (!APPS_SCRIPT_URL) return true;
+
+          filaEscrita = filaEscrita.then(async () => {
+            const atual = Number(lerVersoes()[key]) || versao;
+            if (atual !== versao) return { ok: true, ignorada: true };
+            return enviarDelete_(key, versao);
+          }).catch(e => {
+            marcarPendente(key);
+            window.__statusPlanilha = 'erro';
+            window.__ultimoErroSync = String(e && e.message || e);
+            return { ok: false };
+          });
+          return filaEscrita.then(() => true);
         },
-        // lista as chaves salvas que começam com um prefixo — usado pelo histórico de
-        // compras (Evolução mês a mês) e por outras buscas de "todas as chaves tipo X".
-        // Também faltava por completo antes.
+
         list: async (prefixo) => {
           const chaves = new Set();
           try {
@@ -417,9 +589,8 @@
         }
       };
 
-      // avisa (com a caixinha nativa do navegador) se tentar fechar a aba com alguma
-      // alteração que ainda não confirmou que chegou no Drive — é a "verificação antes
-      // de fechar o programinha" que faltava. Não impede de fechar, só avisa.
+      // Se houver pendências, avisa antes de fechar. Não bloqueia o fechamento;
+      // apenas deixa claro que ainda existe algo esperando confirmação do Drive.
       window.addEventListener('beforeunload', (e) => {
         if ((window.__pendenciasSync || 0) > 0) {
           e.preventDefault();
