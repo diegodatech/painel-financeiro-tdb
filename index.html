@@ -4201,6 +4201,9 @@ function Anotacoes({ chamarIA }) {
   const [ocultarAnotacoes, setOcultarAnotacoes] = useState(false);
   const [corrigindoIA, setCorrigindoIA] = useState(null); // id do bloco tendo a ortografia corrigida agora
   const [extraindoTextoId, setExtraindoTextoId] = useState(null); // id do bloco tendo o PDF anexado lido agora
+  const [abrindoAnexoId, setAbrindoAnexoId] = useState(null); // id do bloco abrindo o anexo agora
+  const [previews, setPreviews] = useState({}); // { [id]: dataUrl } — miniaturas de imagem já buscadas
+  const [visualizando, setVisualizando] = useState(null); // { titulo, dataUrl } — imagem aberta em tela cheia
 
   useEffect(() => {
     (async () => {
@@ -4212,6 +4215,23 @@ function Anotacoes({ chamarIA }) {
       }
     })();
   }, []);
+
+  // busca a miniatura de cada IMAGEM anexada automaticamente (só imagem, PDF fica de
+  // fora de propósito, pra não deixar pesado baixando tudo à toa) assim que a lista
+  // carrega, pra já aparecer a prévia sem precisar clicar em nada
+  useEffect(() => {
+    if (!blocos) return;
+    blocos.forEach(b => {
+      if (b.anexoNome && b.anexoTipo && b.anexoTipo.startsWith('image/') && !previews[b.id]) {
+        window.storage.get('anotacao_anexo_' + b.id, false).then(r => {
+          if (r && r.value) {
+            const { dados } = JSON.parse(r.value);
+            setPreviews(p => ({ ...p, [b.id]: dados }));
+          }
+        }).catch(() => {});
+      }
+    });
+  }, [blocos]);
 
   function mostrarToast(msg) {
     setToastMsg(msg);
@@ -4356,15 +4376,44 @@ function Anotacoes({ chamarIA }) {
     leitor.readAsDataURL(arquivo);
   }
 
+  // clique no anexo: imagem abre em tela cheia aqui mesmo; qualquer outro tipo (PDF,
+  // doc, etc.) abre numa aba nova do navegador. Usa Blob URL em vez do dataURL direto
+  // no window.open — dataURL muito grande às vezes é bloqueado silenciosamente pelo
+  // navegador ao tentar abrir numa aba nova, principalmente em PDFs pesados
   async function abrirAnexo(id) {
+    setAbrindoAnexoId(id);
     try {
-      const r = await window.storage.get('anotacao_anexo_' + id, false);
-      if (!r || !r.value) { mostrarToast('⚠ Anexo não encontrado.'); return; }
-      const { dados } = JSON.parse(r.value);
-      window.open(dados, '_blank');
+      let dados = previews[id];
+      let tipo;
+      if (!dados) {
+        const r = await window.storage.get('anotacao_anexo_' + id, false);
+        if (!r || !r.value) { mostrarToast('⚠ Anexo não encontrado.'); setAbrindoAnexoId(null); return; }
+        const parsed = JSON.parse(r.value);
+        dados = parsed.dados;
+        tipo = parsed.tipo;
+      } else {
+        tipo = (blocos.find(b => b.id === id) || {}).anexoTipo;
+      }
+      const ehImagem = tipo && tipo.startsWith('image/');
+      if (ehImagem) {
+        if (!previews[id]) setPreviews(p => ({ ...p, [id]: dados }));
+        const bloco = blocos.find(b => b.id === id);
+        setVisualizando({ titulo: (bloco && bloco.anexoNome) || 'Anexo', dataUrl: dados });
+      } else {
+        const partes = dados.split(',');
+        const mimeMatch = partes[0].match(/data:(.*?);base64/);
+        const bytes = atob(partes[1]);
+        const array = new Uint8Array(bytes.length);
+        for (let i = 0; i < bytes.length; i++) array[i] = bytes.charCodeAt(i);
+        const blob = new Blob([array], { type: (mimeMatch && mimeMatch[1]) || 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      }
     } catch (e) {
-      mostrarToast('⚠ Não consegui abrir o anexo.');
+      mostrarToast('⚠ Não consegui abrir o anexo: ' + e.message);
     }
+    setAbrindoAnexoId(null);
   }
 
   function removerAnexo(id) {
@@ -4496,11 +4545,18 @@ function Anotacoes({ chamarIA }) {
               {b.anexoNome && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 8, background: COLORS.paper,
-                  border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 10px', fontSize: 12.5,
+                  border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: previews[b.id] ? 5 : '7px 10px', fontSize: 12.5,
                 }}>
-                  <Paperclip size={14} color={COLORS.inkSoft} style={{ flexShrink: 0 }} />
+                  {previews[b.id] ? (
+                    <img
+                      src={previews[b.id]} alt={b.anexoNome} onClick={() => abrirAnexo(b.id)} title="Clique pra ampliar"
+                      style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 5, cursor: 'pointer', flexShrink: 0 }}
+                    />
+                  ) : (
+                    <Paperclip size={14} color={COLORS.inkSoft} style={{ flexShrink: 0 }} />
+                  )}
                   <span onClick={() => abrirAnexo(b.id)} title="Abrir arquivo" style={{ color: COLORS.gold, fontWeight: 600, cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 auto' }}>
-                    {b.anexoNome}
+                    {abrindoAnexoId === b.id ? 'Abrindo...' : b.anexoNome}
                   </span>
                   <button onClick={() => removerAnexo(b.id)} title="Remover anexo" style={{
                     background: COLORS.paperCard, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 6, cursor: 'pointer',
@@ -4616,6 +4672,22 @@ function Anotacoes({ chamarIA }) {
           </>
         );
       })()}
+
+      {visualizando && (
+        <div
+          onClick={() => setVisualizando(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(20,20,20,0.88)', zIndex: 99998,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: 24, cursor: 'zoom-out',
+          }}
+        >
+          <div style={{ color: '#FFF', fontSize: 14, fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>
+            {visualizando.titulo} <span style={{ opacity: 0.7, fontWeight: 400 }}>— clique em qualquer lugar pra fechar</span>
+          </div>
+          <img src={visualizando.dataUrl} alt={visualizando.titulo} style={{ maxWidth: '92vw', maxHeight: '82vh', borderRadius: 8, boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -4632,8 +4704,11 @@ function Arquivos() {
   const [toastMsg, setToastMsg] = useState(null);
   const [enviandoAnexo, setEnviandoAnexo] = useState(null); // id do item enviando arquivo agora
   const [exportandoId, setExportandoId] = useState(null); // id do item exportando agora
+  const [abrindoId, setAbrindoId] = useState(null); // id do item abrindo agora (buscando o arquivo)
   const [editandoTitulo, setEditandoTitulo] = useState(null);
   const [tituloEdit, setTituloEdit] = useState('');
+  const [previews, setPreviews] = useState({}); // { [id]: dataUrl } — miniaturas de imagem já buscadas
+  const [visualizando, setVisualizando] = useState(null); // { titulo, dataUrl } — imagem aberta em tela cheia
 
   useEffect(() => {
     (async () => {
@@ -4645,6 +4720,23 @@ function Arquivos() {
       }
     })();
   }, []);
+
+  // busca a miniatura de cada IMAGEM automaticamente (só imagem, não PDF — PDF fica
+  // pesado demais pra baixar todo mundo de uma vez só de propósito) assim que a lista
+  // carrega, pra já aparecer a prévia sem precisar clicar em nada
+  useEffect(() => {
+    if (!itens) return;
+    itens.forEach(item => {
+      if (item.anexoNome && item.anexoTipo && item.anexoTipo.startsWith('image/') && !previews[item.id]) {
+        window.storage.get('galeria_item_anexo_' + item.id, false).then(r => {
+          if (r && r.value) {
+            const { dados } = JSON.parse(r.value);
+            setPreviews(p => ({ ...p, [item.id]: dados }));
+          }
+        }).catch(() => {});
+      }
+    });
+  }, [itens]);
 
   function mostrarToast(msg) {
     setToastMsg(msg);
@@ -4735,6 +4827,41 @@ function Arquivos() {
     setExportandoId(null);
   }
 
+  // clique no cartão do arquivo: imagem abre em tela cheia aqui mesmo; PDF abre numa
+  // aba nova do navegador (usa o visualizador de PDF nativo dele)
+  async function abrirArquivo(item) {
+    if (!item.anexoNome) return;
+    setAbrindoId(item.id);
+    try {
+      let dados = previews[item.id];
+      if (!dados) {
+        const r = await window.storage.get('galeria_item_anexo_' + item.id, false);
+        if (!r || !r.value) { mostrarToast('⚠ Arquivo não encontrado.'); setAbrindoId(null); return; }
+        dados = JSON.parse(r.value).dados;
+      }
+      const ehImagem = item.anexoTipo && item.anexoTipo.startsWith('image/');
+      if (ehImagem) {
+        if (!previews[item.id]) setPreviews(p => ({ ...p, [item.id]: dados }));
+        setVisualizando({ titulo: item.titulo, dataUrl: dados });
+      } else {
+        // dataURL -> Blob -> URL temporária, pra abrir numa aba nova (dataURL direto
+        // às vezes é bloqueado pelo navegador ao abrir em nova aba)
+        const partes = dados.split(',');
+        const mimeMatch = partes[0].match(/data:(.*?);base64/);
+        const bytes = atob(partes[1]);
+        const array = new Uint8Array(bytes.length);
+        for (let i = 0; i < bytes.length; i++) array[i] = bytes.charCodeAt(i);
+        const blob = new Blob([array], { type: (mimeMatch && mimeMatch[1]) || 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      }
+    } catch (e) {
+      mostrarToast('⚠ Não consegui abrir o arquivo: ' + e.message);
+    }
+    setAbrindoId(null);
+  }
+
   if (itens === null) {
     return <div style={{ color: '#8A7A85', fontSize: 13.5, padding: 20 }}>Carregando...</div>;
   }
@@ -4792,17 +4919,29 @@ function Arquivos() {
                 )}
               </div>
 
-              <div style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-                background: COLORS.paper, border: `1px dashed ${COLORS.lineSoft}`, borderRadius: 8, padding: '18px 8px', minHeight: 70,
-              }}>
+              <div
+                onClick={() => abrirArquivo(item)}
+                title={item.anexoNome ? 'Clique pra abrir' : ''}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  background: COLORS.paper, border: `1px dashed ${COLORS.lineSoft}`, borderRadius: 8,
+                  padding: previews[item.id] ? 0 : '18px 8px', minHeight: 70, overflow: 'hidden',
+                  cursor: item.anexoNome ? 'pointer' : 'default',
+                }}
+              >
                 {item.anexoNome ? (
-                  <>
-                    {item.anexoTipo && item.anexoTipo.startsWith('image/')
-                      ? <ImageIcon size={22} color={COLORS.ink} />
-                      : <FileText size={22} color={COLORS.ink} />}
-                    <span style={{ fontSize: 11.5, color: COLORS.inkSoft, textAlign: 'center', wordBreak: 'break-word', maxWidth: '100%' }}>{item.anexoNome}</span>
-                  </>
+                  previews[item.id] ? (
+                    <img src={previews[item.id]} alt={item.anexoNome} style={{ width: '100%', maxHeight: 160, objectFit: 'contain', display: 'block' }} />
+                  ) : (
+                    <>
+                      {abrindoId === item.id
+                        ? <span style={{ fontSize: 11, color: COLORS.inkSoft }}>Abrindo...</span>
+                        : (item.anexoTipo && item.anexoTipo.startsWith('image/')
+                          ? <ImageIcon size={22} color={COLORS.ink} />
+                          : <FileText size={22} color={COLORS.ink} />)}
+                      <span style={{ fontSize: 11.5, color: COLORS.inkSoft, textAlign: 'center', wordBreak: 'break-word', maxWidth: '100%' }}>{item.anexoNome}</span>
+                    </>
+                  )
                 ) : (
                   <span style={{ fontSize: 12, color: COLORS.inkSoft, fontStyle: 'italic' }}>Nenhum arquivo anexado ainda</span>
                 )}
@@ -4829,6 +4968,22 @@ function Arquivos() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {visualizando && (
+        <div
+          onClick={() => setVisualizando(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(20,20,20,0.88)', zIndex: 99998,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: 24, cursor: 'zoom-out',
+          }}
+        >
+          <div style={{ color: '#FFF', fontSize: 14, fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>
+            {visualizando.titulo} <span style={{ opacity: 0.7, fontWeight: 400 }}>— clique em qualquer lugar pra fechar</span>
+          </div>
+          <img src={visualizando.dataUrl} alt={visualizando.titulo} style={{ maxWidth: '92vw', maxHeight: '82vh', borderRadius: 8, boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }} />
         </div>
       )}
     </div>
