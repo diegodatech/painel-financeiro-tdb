@@ -2109,6 +2109,7 @@ const SEED_RECIBOS = {
     label: 'TEEC',
     titulo: 'RECIBO TRAMONTINA TEEC',
     valorPadrao: '458,07',
+    valorPadrao2: '23,67',
     temSegundaColuna: true,
     banco: [...BANCO_PADRAO_RECIBOS],
     data: '01 de setembro de 2026',
@@ -2121,6 +2122,7 @@ const SEED_RECIBOS = {
     label: 'CENTRAL DE ADM',
     titulo: 'RECIBO TRAMONTINA CENTRAL\nDE ADM',
     valorPadrao: '458,07',
+    valorPadrao2: '23,67',
     temSegundaColuna: true,
     banco: [...BANCO_PADRAO_RECIBOS],
     data: '01 de setembro de 2026',
@@ -2146,6 +2148,7 @@ const SEED_RECIBOS = {
     label: 'CUTELARIA',
     titulo: 'RECIBO TRAMONTINA\nCUTELARIA',
     valorPadrao: '458,07',
+    valorPadrao2: '23,67',
     temSegundaColuna: true,
     banco: [...BANCO_PADRAO_RECIBOS],
     data: '01 de setembro de 2026',
@@ -2242,6 +2245,14 @@ function Recibos({ chamarIA }) {
           const mesclado = { ...carregado };
           for (const chave of Object.keys(SEED_RECIBOS)) {
             if (!mesclado[chave]) { mesclado[chave] = SEED_RECIBOS[chave]; faltouAlgo = true; }
+            // v4.4: modelos com duas colunas de valor agora têm também um "valor padrão 2".
+            // Em instalações antigas esse campo não existia; recupera automaticamente o valor
+            // da primeira criança que já tenha valor2, sem alterar nenhum dado existente.
+            if (mesclado[chave] && mesclado[chave].temSegundaColuna && mesclado[chave].valorPadrao2 === undefined) {
+              const primeiraComValor2 = (mesclado[chave].rows || []).find(row => row && row.valor2 !== undefined && row.valor2 !== null && row.valor2 !== '');
+              mesclado[chave] = { ...mesclado[chave], valorPadrao2: primeiraComValor2 ? primeiraComValor2.valor2 : (SEED_RECIBOS[chave].valorPadrao2 || '') };
+              faltouAlgo = true;
+            }
           }
           if (faltouAlgo) {
             carregado = mesclado;
@@ -2276,6 +2287,18 @@ function Recibos({ chamarIA }) {
 
   function atualizarCampo(campo, valor) {
     salvar({ ...dados, [subTab]: { ...r, [campo]: valor } });
+  }
+
+  // v4.4 — permite editar o valor da 2ª coluna (ex.: R$ 23,67) diretamente no topo.
+  // Ao mudar o padrão, atualiza somente as crianças que ainda estavam usando o padrão
+  // anterior. Se alguma criança tiver um valor diferente personalizado, ele é preservado.
+  function atualizarValorPadrao2(valor) {
+    const anterior = r.valorPadrao2 !== undefined ? String(r.valorPadrao2) : '';
+    const rows = (r.rows || []).map(row => {
+      const atual = row && row.valor2 !== undefined && row.valor2 !== null ? String(row.valor2) : '';
+      return atual === anterior ? { ...row, valor2: valor } : row;
+    });
+    salvar({ ...dados, [subTab]: { ...r, valorPadrao2: valor, rows } });
   }
 
   // revisa/melhora o texto do título do recibo com IA — corrige ortografia e clareza,
@@ -2320,7 +2343,7 @@ function Recibos({ chamarIA }) {
   }
 
   function adicionarRow() {
-    const rows = [...r.rows, { pai: '', crianca: '', nascimento: '', valor: r.valorPadrao || '', valor2: '' }];
+    const rows = [...r.rows, { pai: '', crianca: '', nascimento: '', valor: r.valorPadrao || '', valor2: r.valorPadrao2 || '' }];
     salvar({ ...dados, [subTab]: { ...r, rows } });
   }
 
@@ -2616,6 +2639,16 @@ function Recibos({ chamarIA }) {
             <input value={r.valorPadrao} onChange={e => atualizarCampo('valorPadrao', e.target.value)} placeholder="Ex: 458,07"
               style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' }} />
           </div>
+          {r.temSegundaColuna && (
+            <div style={{ display: 'grid', gap: 4 }}>
+              <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>VALOR PADRÃO — 2ª COLUNA</label>
+              <input value={r.valorPadrao2 || ''} onChange={e => atualizarValorPadrao2(e.target.value)} placeholder="Ex: 23,67"
+                style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box' }} />
+              <div style={{ fontSize: 10.5, color: COLORS.inkSoft }}>
+                Ao alterar, atualiza as crianças que ainda usam o valor padrão anterior. Valores personalizados são mantidos.
+              </div>
+            </div>
+          )}
           <div style={{ display: 'grid', gap: 4 }}>
             <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>DATA DO DOCUMENTO</label>
             <div style={{ display: 'flex', gap: 6 }}>
