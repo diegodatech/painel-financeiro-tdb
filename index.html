@@ -5282,6 +5282,11 @@ function PainelFinanceiro() {
       const alunosDoMes = doMes.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - '));
       const alunosPagos = alunosDoMes.filter(t => t.status === 'Pago' && t.valor);
       const extra = alunosExtrasDoMes(mesAlvo);
+      // QUANTIDADE REAL DE ALUNOS / TAXA DE OCUPAÇÃO:
+      // soma os alunos particulares (lançamentos individuais de Mensalidade -)
+      // + as vagas preenchidas dos convênios multivaga cadastradas manualmente na aba Valores.
+      // Ex.: 57 particulares + 13 vagas preenchidas da Prefeitura = 70 alunos.
+      // Outros lançamentos de empresas/convênios na aba Mensalidades NÃO entram diretamente.
       const totalAlunos = alunosDoMes.length + extra.qtd;
       const somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0) + extra.somaPagos;
       const qtdTicket = alunosPagos.length + extra.qtdPagos;
@@ -7056,10 +7061,14 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
       const alunosPagos = doAno.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - ') && t.status === 'Pago' && t.valor);
       let somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0);
       let qtdTicket = alunosPagos.length;
+      // Média anual da quantidade real de alunos: particulares + vagas preenchidas
+      // dos convênios multivaga (ex.: Prefeitura), conforme informado manualmente na aba Valores.
       let totalAlunosSoma = meses.reduce((s, m) => s + transacoes.filter(t => t.mes === m && t.categoria && t.categoria.startsWith('Mensalidade - ')).length, 0);
       meses.forEach(m => {
         const extra = alunosExtrasDoMes(m);
         totalAlunosSoma += extra.qtd;
+        // O lançamento da empresa/convênio continua fora da contagem direta;
+        // somente as vagas preenchidas configuradas em Valores entram como alunos.
         somaTicket += extra.somaPagos;
         qtdTicket += extra.qtdPagos;
       });
@@ -7089,6 +7098,8 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     const alunosDoMes = doMes.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - '));
     const alunosPagos = alunosDoMes.filter(t => t.status === 'Pago' && t.valor);
     const extra = alunosExtrasDoMes(mesAlvo);
+    // Total de alunos da escola = particulares + vagas preenchidas da Prefeitura/convênios multivaga.
+    // Não conta lançamentos de empresas/convênios da aba Mensalidades como alunos adicionais.
     const totalAlunos = alunosDoMes.length + extra.qtd;
     const somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0) + extra.somaPagos;
     const qtdTicket = alunosPagos.length + extra.qtdPagos;
@@ -7110,11 +7121,13 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     function alunosExtrasDoMes(mes) {
       let qtd = 0, somaPagos = 0, qtdPagos = 0;
       (conveniosMultivaga || []).forEach(item => {
-        const existe = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome));
-        if (!existe) return;
-        qtd += item.vagasPreenchidas;
+        // As vagas preenchidas são o número real de alunos daquele convênio e são
+        // informadas manualmente na aba Valores. Portanto entram na ocupação mesmo
+        // quando ainda não existe um lançamento de pagamento no mês.
+        const vagas = Number(item.vagasPreenchidas) || 0;
+        qtd += vagas;
         const pago = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome) && t.status === 'Pago');
-        if (pago) { somaPagos += item.vagasPreenchidas * item.valorPorAluno; qtdPagos += item.vagasPreenchidas; }
+        if (pago) { somaPagos += vagas * (Number(item.valorPorAluno) || 0); qtdPagos += vagas; }
       });
       return { qtd, somaPagos, qtdPagos };
     }
@@ -7125,6 +7138,11 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
       const alunosDoMes = doMes.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - '));
       const alunosPagos = alunosDoMes.filter(t => t.status === 'Pago' && t.valor);
       const extra = alunosExtrasDoMes(mes);
+      // QUANTIDADE REAL DE ALUNOS / TAXA DE OCUPAÇÃO:
+      // soma os alunos particulares (lançamentos individuais de Mensalidade -)
+      // + as vagas preenchidas dos convênios multivaga cadastradas manualmente na aba Valores.
+      // Ex.: 57 particulares + 13 vagas preenchidas da Prefeitura = 70 alunos.
+      // Outros lançamentos de empresas/convênios na aba Mensalidades NÃO entram diretamente.
       const totalAlunos = alunosDoMes.length + extra.qtd;
       const somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0) + extra.somaPagos;
       const qtdTicket = alunosPagos.length + extra.qtdPagos;
