@@ -137,6 +137,39 @@
       let promiseCarregamento = null;
       let usandoPlanilha = !!APPS_SCRIPT_URL;
 
+      // ================================================================
+      // CONTROLE DE PENDÊNCIAS — guarda (no localStorage, sobrevive a fechar
+      // a aba) quais chaves foram alteradas aqui mas ainda não confirmaram
+      // que chegaram no Drive. Isso resolve um problema sério: sem isso, se
+      // salvar falhasse (mesmo que só uma vez) e depois o painel recarregasse
+      // os dados do Drive, a versão antiga da nuvem sobrescrevia silenciosamente
+      // a alteração mais recente feita aqui — a pessoa via o dado "voltar atrás"
+      // sem nenhum aviso (ex: uma mensalidade marcada como paga "sumindo").
+      // Agora, enquanto uma chave está pendente, ela nunca é sobrescrita pelo
+      // que vem do Drive, e o painel tenta reenviá-la sozinho assim que puder.
+      // ================================================================
+      const CHAVE_PENDENCIAS = '__pendencias_sync_v1';
+      function lerPendencias() {
+        try {
+          const bruto = localStorage.getItem(CHAVE_PENDENCIAS);
+          return bruto ? new Set(JSON.parse(bruto)) : new Set();
+        } catch (e) { return new Set(); }
+      }
+      function salvarPendencias(conjunto) {
+        try { localStorage.setItem(CHAVE_PENDENCIAS, JSON.stringify(Array.from(conjunto))); } catch (e) {}
+        window.__pendenciasSync = conjunto.size;
+      }
+      function marcarPendente(key) {
+        const p = lerPendencias();
+        p.add(key);
+        salvarPendencias(p);
+      }
+      function marcarSincronizado(key) {
+        const p = lerPendencias();
+        if (p.has(key)) { p.delete(key); salvarPendencias(p); }
+      }
+      window.__pendenciasSync = lerPendencias().size;
+
       // Todas as chamadas que acontecem "ao mesmo tempo" (ex: Compras, Valores, Lançamentos
       // e Recibos pedindo seus dados juntos, assim que o painel abre) precisam esperar a
       // MESMA busca na Planilha — se cada uma checasse e disparasse sua própria busca, só a
@@ -161,11 +194,34 @@
               cachePlanilha = await resp.json();
               window.__statusPlanilha = 'ok';
               window.__ultimoErroSync = null;
+              // reconcilia alterações pendentes de uma sessão anterior (a aba foi fechada,
+              // ou o navegador travou, antes de confirmar que a mudança chegou no Drive) —
+              // sem isso, o dado antigo vindo do Drive sobrescreveria silenciosamente a
+              // versão mais nova que só existia aqui
+              const pendentes = lerPendencias();
+              if (pendentes.size > 0) {
+                pendentes.forEach(chavePendente => {
+                  let valorLocal = null;
+                  try { valorLocal = localStorage.getItem(chavePendente); } catch (e2) {}
+                  if (valorLocal !== null) {
+                    cachePlanilha[chavePendente] = valorLocal;
+                    // reenvia sozinho, em segundo plano, sem travar a abertura do painel
+                    window.storage.set(chavePendente, valorLocal).catch(() => {});
+                  }
+                });
+              }
             } catch (e) {
               if (tentativaNumero === 1) { await tentarCarregar(2); return; }
-              console.warn('Não consegui carregar do Google Drive (ou demorou demais, mesmo depois de tentar 2 vezes), usando dados locais deste navegador.', e);
+              console.warn('Não consegui carregar do Google Drive (ou demorou demais, mesmo depois de tentar 2 vezes), usando dados locais deste navegador por enquanto.', e);
               cachePlanilha = {};
-              usandoPlanilha = false;
+              // IMPORTANTE: não desliga o Drive pro resto da sessão aqui. Antes, uma falha
+              // no carregamento inicial (ex: cold start lento) deixava "usandoPlanilha =
+              // false" pra sempre — aí mesmo que a internet voltasse a funcionar segundos
+              // depois, TODO salvamento daquele momento em diante era pulado silenciosamente
+              // (só ficava salvo no navegador), sem nenhum aviso, até a pessoa recarregar a
+              // página inteira. Agora cada "salvar" continua tentando o Drive de novo por
+              // conta própria (com suas próprias 2 tentativas) — se a rede se recuperar, a
+              // sincronização volta a funcionar sozinha, sem precisar recarregar nada.
               window.__statusPlanilha = 'erro';
               window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder, mesmo depois de tentar 2 vezes (conexão lenta ou script muito carregado)' : String(e && e.message || e);
             }
@@ -258,6 +314,7 @@
                 if (resp.ok && corpo && corpo.ok !== false) {
                   window.__statusPlanilha = 'ok';
                   window.__ultimoErroSync = null;
+                  marcarSincronizado(key);
                   return;
                 }
                 const motivo = (corpo && corpo.erro) ? corpo.erro : ('HTTP ' + resp.status);
@@ -265,12 +322,14 @@
                 console.warn('A Planilha/Drive Google recusou salvar esta chave:', key, motivo);
                 window.__statusPlanilha = 'erro';
                 window.__ultimoErroSync = motivo;
+                marcarPendente(key);
               } catch (e) {
                 clearTimeout(timeoutId);
                 if (tentativaNumero === 1) { await tentarSalvar(2); return; }
                 console.warn('Não consegui salvar no Google Drive agora (ou demorou demais) — fica salvo só neste navegador até a conexão voltar.', e);
                 window.__statusPlanilha = 'erro';
                 window.__ultimoErroSync = (e && e.name === 'AbortError') ? 'Demorou demais pra responder, mesmo depois de tentar 2 vezes (conexão lenta)' : String(e && e.message || e);
+                marcarPendente(key);
               }
             }
             try {
@@ -293,12 +352,20 @@
           for (let i = 0; i < entradas.length; i++) {
             const [key, val] = entradas[i];
             try {
-              await fetch(APPS_SCRIPT_URL, {
+              const resp = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ key, value: val }),
               });
-            } catch (e) { falhas++; }
+              let corpo = null;
+              try { corpo = await resp.json(); } catch (e3) {}
+              if (resp.ok && corpo && corpo.ok !== false) {
+                marcarSincronizado(key);
+              } else {
+                falhas++;
+                marcarPendente(key);
+              }
+            } catch (e) { falhas++; marcarPendente(key); }
             if (onProgress) onProgress(i + 1, entradas.length);
           }
           usandoPlanilha = true;
@@ -314,7 +381,9 @@
           if (APPS_SCRIPT_URL && usandoPlanilha) {
             try {
               const controlador = new AbortController();
-              const timeoutId = setTimeout(() => controlador.abort(), 8000);
+              // mesmo tempo de espera do carregamento (18s) — 8s era curto demais e podia
+              // dar falso positivo de "falha" num Drive que só estava demorando a acordar
+              const timeoutId = setTimeout(() => controlador.abort(), 18000);
               await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -322,7 +391,9 @@
                 signal: controlador.signal,
               });
               clearTimeout(timeoutId);
-            } catch (e) {}
+            } catch (e) {
+              console.warn('Não consegui apagar "' + key + '" no Drive agora — a exclusão fica só neste navegador até a conexão voltar.', e);
+            }
           }
           return true;
         },
@@ -345,6 +416,16 @@
           return { keys: Array.from(chaves) };
         }
       };
+
+      // avisa (com a caixinha nativa do navegador) se tentar fechar a aba com alguma
+      // alteração que ainda não confirmou que chegou no Drive — é a "verificação antes
+      // de fechar o programinha" que faltava. Não impede de fechar, só avisa.
+      window.addEventListener('beforeunload', (e) => {
+        if ((window.__pendenciasSync || 0) > 0) {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      });
     }
   </script>
 
@@ -5239,6 +5320,7 @@ ${textoCompras}`;
   const [statusPlanilha, setStatusPlanilha] = useState(null); // null=modo local, 'ok'=sincronizando, 'erro'=falhou
   const [motivoErroSync, setMotivoErroSync] = useState(null);
   const [avisoErroSync, setAvisoErroSync] = useState(false); // aviso grande que aparece na 1ª falha
+  const [pendenciasSync, setPendenciasSync] = useState(0); // quantas alterações ainda não confirmaram que chegaram no Drive
   const [saldosMensais, setSaldosMensais] = useState(null); // { JANEIRO: 3111.69, ... } — editável na tela
 
   useEffect(() => {
@@ -5248,6 +5330,7 @@ ${textoCompras}`;
       const s = window.__statusPlanilha || null;
       setStatusPlanilha(s);
       setMotivoErroSync(window.__ultimoErroSync || null);
+      setPendenciasSync(window.__pendenciasSync || 0);
       // só dispara o aviso grande quando MUDA pra erro (não fica repetindo a cada 1.5s)
       if (s === 'erro' && ultimoStatus !== 'erro') setAvisoErroSync(true);
       ultimoStatus = s;
@@ -5980,6 +6063,18 @@ ${textoCompras}`;
                 {statusPlanilha === 'ok'
                   ? '✓ Sincronizado (Google Drive)'
                   : ('⚠ Falha ao sincronizar — salvo só aqui. Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato'))}
+              </span>
+            )}
+            {pendenciasSync > 0 && (
+              <span
+                title="Essas alterações ainda não confirmaram que chegaram no Google Drive — o painel está tentando reenviar sozinho. Elas NÃO estão perdidas: ficam guardadas neste navegador até conseguir sincronizar."
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999,
+                  background: COLORS.goldBg || '#FCEFDD', border: `1px solid ${COLORS.gold}55`,
+                  fontSize: 11, fontWeight: 700, color: COLORS.gold,
+                }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.gold, display: 'block', flexShrink: 0 }} />
+                ⏳ {pendenciasSync} alteraç{pendenciasSync === 1 ? 'ão' : 'ões'} ainda não confirmada{pendenciasSync === 1 ? '' : 's'} no Drive
               </span>
             )}
             {avisoErroSync && (
