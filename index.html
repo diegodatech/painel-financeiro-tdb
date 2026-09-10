@@ -4352,7 +4352,7 @@ function Anotacoes({ chamarIA }) {
       }
       setEnviandoAnexo(null);
     };
-    leitor.onerror = () => { mostrarToast('⚠ Não consegui ler o arquivo.'); setEnviandoAnexo(null); };
+    leitor.onerror = () => { const detalhe = leitor.error ? (' (' + leitor.error.name + (leitor.error.message ? ': ' + leitor.error.message : '') + ')') : ''; mostrarToast('⚠ Não consegui ler o arquivo' + detalhe + '. Se o arquivo estiver no iCloud Drive/OneDrive, abra ele uma vez fora do navegador pra garantir que baixou por completo, e tenta de novo.'); setEnviandoAnexo(null); };
     leitor.readAsDataURL(arquivo);
   }
 
@@ -4711,7 +4711,7 @@ function Arquivos() {
       }
       setEnviandoAnexo(null);
     };
-    leitor.onerror = () => { mostrarToast('⚠ Não consegui ler o arquivo.'); setEnviandoAnexo(null); };
+    leitor.onerror = () => { const detalhe = leitor.error ? (' (' + leitor.error.name + (leitor.error.message ? ': ' + leitor.error.message : '') + ')') : ''; mostrarToast('⚠ Não consegui ler o arquivo' + detalhe + '. Se o arquivo estiver no iCloud Drive/OneDrive, abra ele uma vez fora do navegador pra garantir que baixou por completo, e tenta de novo.'); setEnviandoAnexo(null); };
     leitor.readAsDataURL(arquivo);
   }
 
@@ -9367,7 +9367,7 @@ function Contratos({ chamarIA }) {
       }
       setEnviandoAnexo(null);
     };
-    leitor.onerror = () => { mostrarToast('⚠ Não consegui ler o arquivo.'); setEnviandoAnexo(null); };
+    leitor.onerror = () => { const detalhe = leitor.error ? (' (' + leitor.error.name + (leitor.error.message ? ': ' + leitor.error.message : '') + ')') : ''; mostrarToast('⚠ Não consegui ler o arquivo' + detalhe + '. Se o arquivo estiver no iCloud Drive/OneDrive, abra ele uma vez fora do navegador pra garantir que baixou por completo, e tenta de novo.'); setEnviandoAnexo(null); };
     leitor.readAsDataURL(arquivo);
   }
   async function abrirAnexo(id) {
