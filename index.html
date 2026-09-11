@@ -246,6 +246,131 @@ html.dark-mode {
       border-color: rgba(255,255,255,.18) !important;
     }
 
+    /* PIN / SENHA — modo escuro */
+    .dark-mode .pin-screen {
+      background: #263336 !important;
+    }
+
+    .dark-mode .pin-card {
+      background: rgba(50,66,70,.88) !important;
+      border-color: rgba(255,255,255,.16) !important;
+      box-shadow:
+        0 14px 42px rgba(0,0,0,.34),
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
+    }
+
+    .dark-mode .pin-card .pin-bolinha {
+      background: rgba(255,255,255,.06) !important;
+      border-color: #F1ADD8 !important;
+    }
+
+    .dark-mode .pin-card .pin-tecla {
+      background: #415357 !important;
+      color: #FFFFFF !important;
+      border-color: rgba(255,255,255,.17) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
+    }
+
+    .dark-mode .pin-card .pin-tecla:hover {
+      background: #4B6064 !important;
+    }
+
+    .dark-mode .pin-modal-card {
+      background: #324246 !important;
+      color: #F7FBFA !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+    }
+
+    .dark-mode .pin-modal-key {
+      background: #415357 !important;
+      color: #FFFFFF !important;
+      border-color: rgba(255,255,255,.18) !important;
+    }
+
+    /* RECIBOS — formulário escuro, prévia do documento continua em papel branco */
+    .dark-mode .recibos-form {
+      background: #324246 !important;
+      border-color: rgba(255,255,255,.12) !important;
+      color: #F7FBFA !important;
+    }
+
+    .dark-mode .recibos-form label,
+    .dark-mode .recibos-form div {
+      color: inherit;
+    }
+
+    .dark-mode .recibo-preview {
+      background: #FFFFFF !important;
+      color: #222222 !important;
+      border-color: #1C9E8F !important;
+    }
+
+    .dark-mode .recibo-preview > div {
+      border-color: #C15CA0 !important;
+    }
+
+    .dark-mode .recibo-preview table {
+      background: #FFFFFF !important;
+      color: #222222 !important;
+    }
+
+    .dark-mode .recibo-preview table thead th {
+      background: #C15CA0 !important;
+      color: #FFFFFF !important;
+      border-color: #C15CA0 !important;
+    }
+
+    .dark-mode .recibo-preview table tbody tr,
+    .dark-mode .recibo-preview table tbody tr:nth-child(odd),
+    .dark-mode .recibo-preview table tbody tr:nth-child(even),
+    .dark-mode .recibo-preview table tbody tr:hover {
+      background: #FFFFFF !important;
+    }
+
+    .dark-mode .recibo-preview table tbody td {
+      background: #FFFFFF !important;
+      color: #222222 !important;
+      border-color: #D9D9D9 !important;
+    }
+
+    .dark-mode .recibo-preview strong,
+    .dark-mode .recibo-preview div,
+    .dark-mode .recibo-preview span {
+      text-shadow: none !important;
+    }
+
+    /* KPIs — corrige Resultado (Visão Geral) e Saldo em Conta (Lançamentos) no modo escuro */
+    .dark-mode .kpi-card {
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.04),
+        0 8px 20px rgba(0,0,0,.12) !important;
+    }
+
+    .dark-mode .kpi-card-destaque {
+      background: #3A4B4F !important;
+      border-color: rgba(255,255,255,.15) !important;
+      color: #F7FBFA !important;
+    }
+
+    .dark-mode .kpi-card-destaque .kpi-label {
+      color: #D3E0DE !important;
+    }
+
+    .dark-mode .kpi-card-destaque .kpi-value {
+      color: #FFFFFF !important;
+    }
+
+    .dark-mode .kpi-icon-box {
+      background: rgba(255,255,255,.08) !important;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .dark-mode .kpi-card:not(.kpi-card-destaque) .kpi-label {
+      color: #D0DEDC !important;
+    }
+
+
+
 
 
     @media (max-width: 700px) {
@@ -1843,7 +1968,7 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
     : 'Digite o mesmo PIN de novo, pra confirmar';
 
   return (
-    <div style={{
+    <div className="pin-screen" style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: '#EAF3F1', fontFamily: 'Inter, -apple-system, sans-serif', padding: 20,
       position: 'relative', overflow: 'hidden',
@@ -1852,7 +1977,7 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
       <div style={{ position: 'absolute', bottom: '-14%', right: '-10%', width: 300, height: 300, borderRadius: '50%', background: '#C15CA0', opacity: 0.30, filter: 'blur(55px)' }} />
       <div style={{ position: 'absolute', top: '30%', right: '8%', width: 140, height: 140, borderRadius: '50%', background: '#1C9E8F', opacity: 0.25, filter: 'blur(40px)' }} />
 
-      <div style={{
+      <div className="pin-card" style={{
         position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22, textAlign: 'center',
         background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(20px) saturate(1.7)', WebkitBackdropFilter: 'blur(20px) saturate(1.7)',
         border: '1px solid rgba(255,255,255,0.6)', borderRadius: 28, padding: '36px 30px',
@@ -2326,11 +2451,11 @@ function ModalAlterarPin({ pinAtual, onFechar, onSalvar }) {
   // "position: fixed" fica relativo ao painel inteiro (que é bem mais alto que a tela
   // por causa do zoom da página), e o modal aparece jogado lá embaixo, cortado
   return ReactDOM.createPortal(
-    <div onClick={onFechar} style={{
+    <div className="pin-modal-overlay" onClick={onFechar} style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999,
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box',
     }}>
-      <div onClick={e => e.stopPropagation()} style={{
+      <div className="pin-modal-card" onClick={e => e.stopPropagation()} style={{
         background: '#FFFDFB', borderRadius: 14, padding: '28px 24px', maxWidth: 320, width: 'min(320px, 92vw)',
         textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
         fontFamily: 'Inter, -apple-system, sans-serif', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box',
@@ -2346,13 +2471,13 @@ function ModalAlterarPin({ pinAtual, onFechar, onSalvar }) {
             {erro && <div style={{ color: '#C1272D', fontSize: 12.5, fontWeight: 600 }}>{erro}</div>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, justifyContent: 'center', maxWidth: 220, margin: '0 auto', width: '100%' }}>
               {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
-                <button key={d} onClick={() => apertar(d)} style={{
+                <button key={d} className="pin-modal-key" onClick={() => apertar(d)} style={{
                   aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
                   fontWeight: 600, fontSize: 18, color: COLORS.ink, cursor: 'pointer', boxSizing: 'border-box',
                 }}>{d}</button>
               ))}
               <div />
-              <button onClick={() => apertar('0')} style={{
+              <button className="pin-modal-key" onClick={() => apertar('0')} style={{
                 aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
                 fontWeight: 600, fontSize: 18, color: COLORS.ink, cursor: 'pointer', boxSizing: 'border-box',
               }}>0</button>
@@ -2823,7 +2948,7 @@ function Recibos({ chamarIA }) {
     : [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$']];
 
   return (
-    <div style={{ display: 'grid', gap: 20 }}>
+    <div className="recibos-view" style={{ display: 'grid', gap: 20 }}>
       <Toast mensagem={toastMsg} />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -2906,14 +3031,14 @@ function Recibos({ chamarIA }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(360px, 560px) minmax(400px, 620px)', gap: 24, alignItems: 'start' }}>
         {/* FORMULÁRIO EDITÁVEL */}
-        <div style={{ display: 'grid', gap: 14, background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 12, padding: 16 }}>
+        <div className="recibos-form" style={{ display: 'grid', gap: 14, background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 12, padding: 16 }}>
           <div style={{ display: 'grid', gap: 4 }}>
             <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>TÍTULO DO RECIBO (use quebra de linha se precisar de 2 linhas)</label>
             <textarea value={r.titulo} onChange={e => atualizarCampo('titulo', e.target.value)} rows={2}
               style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, fontFamily: 'inherit', resize: 'vertical' }} />
             {chamarIA && (
               <button onClick={revisarTituloIA} disabled={revisandoTitulo} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: '#FFFFFF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: COLORS.paperCard,
                 color: COLORS.ink, border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '7px 10px',
                 cursor: revisandoTitulo ? 'default' : 'pointer', fontWeight: 700, fontSize: 12, alignSelf: 'flex-start',
                 opacity: revisandoTitulo ? 0.7 : 1,
@@ -3016,7 +3141,7 @@ function Recibos({ chamarIA }) {
         </div>
 
         {/* PRÉVIA VISUAL */}
-        <div style={{
+        <div className="recibo-preview" style={{
           background: '#FFFFFF', borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
           border: '3px solid #1C9E8F', padding: 3,
         }}>
@@ -7880,7 +8005,7 @@ function KPIStrip({ items, extra, oculto }) {
   return (
     <div className="grid-kpi" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
       {items.map((c, i) => (
-        <div key={i} style={{
+        <div key={i} className={`kpi-card${c.destaque ? ' kpi-card-destaque' : ''}`} style={{
           background: c.destaque ? '#F3F5F5' : c.bg,
           border: c.destaque ? '1px solid #E2E8E7' : `1px solid ${c.cor}33`,
           borderLeft: `4px solid ${c.cor}`,
@@ -7888,12 +8013,12 @@ function KPIStrip({ items, extra, oculto }) {
           boxShadow: '0 1px 2px rgba(31,59,54,0.06)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <div style={{ background: '#FFFFFF', borderRadius: 6, padding: 5, display: 'flex' }}>
+            <div className="kpi-icon-box" style={{ background: '#FFFFFF', borderRadius: 6, padding: 5, display: 'flex' }}>
               <c.icon size={13} color={c.cor} />
             </div>
-            <span style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase' }}>{c.label}</span>
+            <span className="kpi-label" style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase' }}>{c.label}</span>
           </div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 600, color: c.destaque ? '#14312E' : c.cor }}>{formatBRLPrivado(c.valor, oculto)}</div>
+          <div className="mono kpi-value" style={{ fontSize: 20, fontWeight: 600, color: c.destaque ? '#14312E' : c.cor }}>{formatBRLPrivado(c.valor, oculto)}</div>
         </div>
       ))}
       {extra}
