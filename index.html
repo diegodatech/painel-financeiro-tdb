@@ -915,13 +915,15 @@ html.dark-mode {
 
         carregamentoEmAndamento = (async () => {
           let ultimoErro = null;
-          for (let tentativa = 1; tentativa <= 3; tentativa++) {
+          // No modo local-first a interface não fica presa esperando o Drive.
+          // Quando realmente precisamos do servidor (primeiro uso neste aparelho),
+          // fazemos no máximo 2 tentativas moderadas.
+          for (let tentativa = 1; tentativa <= 2; tentativa++) {
             try {
-              // 25 s cobre cold start + leitura do Drive sem tornar a abertura infinita.
               const corpo = await lerRespostaJSON(await timeoutFetch(
                 APPS_SCRIPT_URL,
                 { method: 'GET', cache: 'no-store' },
-                25000
+                15000
               ));
 
               if (!corpo.dados || typeof corpo.dados !== 'object' || Array.isArray(corpo.dados)) {
@@ -943,6 +945,17 @@ html.dark-mode {
                 try {
                   const local = localStorage.getItem(key);
                   if (local !== null) cachePlanilha[key] = local;
+                } catch (e) {}
+              });
+
+              // Espelha no armazenamento local tudo que veio confirmado do Drive,
+              // exceto chaves com alteração local pendente. Assim a próxima abertura
+              // é instantânea mesmo se a internet estiver lenta ou indisponível.
+              Object.keys(corpo.dados).forEach(key => {
+                if (pendentes.has(key) || String(key).indexOf('anexo_') !== -1) return;
+                try {
+                  const valor = corpo.dados[key];
+                  if (valor !== undefined && valor !== null) localStorage.setItem(key, valor);
                 } catch (e) {}
               });
 
@@ -1210,6 +1223,12 @@ html.dark-mode {
       window.__chaveAnualParaAno = chaveAnualParaAno_;
 
       window.storage = {
+        refreshDrive: async () => {
+          if (!APPS_SCRIPT_URL) return { ok:false, localOnly:true };
+          const r = await carregarDaPlanilha();
+          return { ok: !!(cacheCarregadoComSucesso && r), dados: r };
+        },
+
         get: async (key) => {
           key = resolverChaveAnual_(key);
           // Anexos usam IndexedDB porque localStorage costuma ter limite de poucos MB.
@@ -1238,6 +1257,18 @@ html.dark-mode {
             } catch (e) {}
           }
 
+          // LOCAL-FIRST: se já existe cópia local, abre imediatamente.
+          // A conferência com o Drive acontece em segundo plano e não bloqueia a escola.
+          let localRapido = null;
+          try { localRapido = localStorage.getItem(key); } catch (e) {}
+          if (localRapido !== null) {
+            if (APPS_SCRIPT_URL && !cacheCarregadoComSucesso && !carregamentoEmAndamento) {
+              carregarDaPlanilha().catch(() => {});
+            }
+            return { value: localRapido };
+          }
+
+          // Primeiro uso neste aparelho: sem cópia local, aí sim precisamos esperar o Drive.
           if (APPS_SCRIPT_URL && !cacheCarregadoComSucesso) {
             await carregarDaPlanilha();
           }
@@ -1322,11 +1353,15 @@ html.dark-mode {
             window.__ultimoErroSync = String(e && e.message || e);
             return { ok: false, erro: window.__ultimoErroSync };
           });
-          return filaEscrita.then(() => true);
+          // A gravação local já terminou. O Drive confirma em segundo plano.
+          return true;
         },
 
         resync: async (onProgress) => {
           if (!APPS_SCRIPT_URL) return { ok: true, total: 0, falhas: 0 };
+
+          // Espera somente a fila que já estava em andamento antes de fazer a conferência final.
+          try { await filaEscrita; } catch (e) {}
 
           // Primeiro precisa existir uma leitura CONFIRMADA do Drive. Se não conseguiu,
           // o botão não pode inventar que salvou.
@@ -7228,10 +7263,15 @@ ${textoContasPessoais}`;
   async function trocarExercicio(ano) {
     setMensagemExercicio(null);
     const y = Number(ano) || 2026;
+    if (y === exercicioAtual) return;
+    // Troca instantânea: muda o contexto anual e deixa os useEffects do App
+    // recarregarem somente as chaves daquele ano. Não recarrega a página e não pede PIN.
     window.__exercicioAtual = y;
-    setExercicioAtual(y);
     try { localStorage.setItem('painel_exercicio_atual', String(y)); } catch (e) {}
-    window.location.reload();
+    setLoading(true);
+    setTransacoes(null);
+    setExercicioAtual(y);
+    setTab('visao');
   }
 
   function chaveAno(base, ano) {
