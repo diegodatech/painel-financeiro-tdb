@@ -7148,6 +7148,14 @@ ${textoContasPessoais}`;
   const [preparandoAno, setPreparandoAno] = useState(false);
   const [mensagemExercicio, setMensagemExercicio] = useState(null);
 
+  // Avisos de exercício são temporários: não ficam presos na tela.
+  useEffect(() => {
+    if (!mensagemExercicio) return;
+    const tempo = mensagemExercicio.tipo === 'erro' ? 9000 : 5000;
+    const t = setTimeout(() => setMensagemExercicio(null), tempo);
+    return () => clearTimeout(t);
+  }, [mensagemExercicio]);
+
   useEffect(() => {
     (async () => {
       try {
@@ -7172,6 +7180,7 @@ ${textoContasPessoais}`;
   }, []);
 
   async function trocarExercicio(ano) {
+    setMensagemExercicio(null);
     const y = Number(ano) || 2026;
     try {
       localStorage.setItem('painel_exercicio_atual', String(y));
@@ -7290,7 +7299,26 @@ ${textoContasPessoais}`;
       await window.storage.set('painel_exercicios_v1', JSON.stringify(novaLista), false);
       setExercicios(novaLista);
       setPrepararAnoAberto(false);
-      setMensagemExercicio({ tipo:'ok', texto:`✓ ${novoAno} foi preparado sem alterar ${exercicioAtual}.` });
+
+      // A criação anual gera várias chaves. Antes de anunciar sucesso completo,
+      // aguarda a fila e faz uma reconciliação final com o Google Drive.
+      let syncFinal = { ok: true, total: 0, falhas: 0 };
+      try {
+        if (window.storage && window.storage.resync) {
+          syncFinal = await window.storage.resync();
+        }
+      } catch (e) {
+        syncFinal = { ok: false, falhas: 1, erro: String(e && e.message || e) };
+      }
+
+      if (syncFinal && syncFinal.ok) {
+        setMensagemExercicio({ tipo:'ok', texto:`✓ ${novoAno} foi preparado e sincronizado sem alterar ${exercicioAtual}.` });
+      } else {
+        setMensagemExercicio({
+          tipo:'aviso',
+          texto:`${novoAno} foi preparado neste aparelho sem alterar ${exercicioAtual}, mas ainda há item(ns) aguardando confirmação no Drive. Use “Salvar” quando a conexão estiver estável.`
+        });
+      }
     } catch (e) {
       setMensagemExercicio({ tipo:'erro', texto:'Não consegui preparar o novo exercício: ' + (e && e.message ? e.message : e) });
     } finally {
@@ -7492,7 +7520,9 @@ ${textoContasPessoais}`;
     const corrigidos = transacoes.map(t => {
       if (t.tipo !== 'Entrada') return t;
       const ehAluno = t.categoria.startsWith('Mensalidade -');
-      if (ehAluno && (t.nota === null || t.nota === undefined)) {
+      if (ehAluno && (t.nota === null || t.nota === undefined) && exercicioAtual === 2026) {
+        // Correção histórica exclusiva de 2026. Nos exercícios novos, nota/status
+        // começam em branco conforme a regra da virada anual.
         mudou = true;
         return { ...t, nota: 'Pendente' };
       }
@@ -7504,7 +7534,7 @@ ${textoContasPessoais}`;
       return t;
     });
     if (mudou) persist(corrigidos);
-  }, [transacoes]);
+  }, [transacoes, exercicioAtual]);
 
   async function persist(next) {
     const comExercicio = (Array.isArray(next) ? next : []).map(t => (t && t.exercicio == null ? { ...t, exercicio: exercicioAtual } : t));
@@ -9039,9 +9069,14 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     // 2) Distância até o ponto de equilíbrio no mês mais recente da série.
     const pe = (evolucaoIndicadores || []).find(e => e.mesAbrev === nomeMes) || (evolucaoIndicadores || [])[evolucaoIndicadores.length - 1];
     if (pe && pe.pontoEquilibrio != null && pe.alunosMatriculados != null) {
-      const falta = pe.pontoEquilibrio - pe.alunosMatriculados;
-      if (falta > 0) alertas.push({ nivel: 'alto', titulo: `Faltam ${falta} aluno${falta === 1 ? '' : 's'} para o ponto de equilíbrio`, detalhe: `${pe.alunosMatriculados} matriculados para uma necessidade estimada de ${pe.pontoEquilibrio}.` });
-      else alertas.push({ nivel: 'ok', titulo: `Ponto de equilíbrio atingido em ${nomeMes}`, detalhe: `${pe.alunosMatriculados} matriculados para uma necessidade estimada de ${pe.pontoEquilibrio}.` });
+      // Em exercício novo/em preparação, despesas e ticket podem estar zerados.
+      // Nesse caso "0 alunos necessários" não significa que o equilíbrio foi atingido:
+      // significa apenas que ainda não há base financeira suficiente para calcular.
+      if (Number(pe.pontoEquilibrio) > 0) {
+        const falta = pe.pontoEquilibrio - pe.alunosMatriculados;
+        if (falta > 0) alertas.push({ nivel: 'alto', titulo: `Faltam ${falta} aluno${falta === 1 ? '' : 's'} para o ponto de equilíbrio`, detalhe: `${pe.alunosMatriculados} matriculados para uma necessidade estimada de ${pe.pontoEquilibrio}.` });
+        else alertas.push({ nivel: 'ok', titulo: `Ponto de equilíbrio atingido em ${nomeMes}`, detalhe: `${pe.alunosMatriculados} matriculados para uma necessidade estimada de ${pe.pontoEquilibrio}.` });
+      }
     }
 
     // 3) Categorias de despesa muito acima da média dos 3 meses anteriores.
