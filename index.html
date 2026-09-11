@@ -8500,11 +8500,24 @@ function ModalPrepararExercicio({ anoOrigem, anoDestino, transacoes, carregando,
       return n;
     });
   }
-  return (
+  useEffect(() => {
+    // O painel principal usa transform/scale e cria um contexto de empilhamento próprio.
+    // Travamos a rolagem da página enquanto este modal estiver aberto; o conteúdo do
+    // próprio modal continua rolando normalmente.
+    const anterior = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = anterior; };
+  }, []);
+
+  // IMPORTANTE: desenha o modal diretamente no <body>, fora do painel que usa
+  // transform/scale. Assim nenhum KPI, card sticky, menu ou gráfico consegue ficar
+  // acima dele, mesmo que tenha z-index próprio.
+  return ReactDOM.createPortal(
     <div onMouseDown={e => { if (e.target === e.currentTarget && !carregando) onFechar(); }} style={{
-      position:'fixed',inset:0,zIndex:100000,background:'rgba(10,22,20,.62)',display:'flex',alignItems:'center',justifyContent:'center',padding:20
+      position:'fixed',inset:0,zIndex:2147483000,background:'rgba(10,22,20,.72)',display:'flex',alignItems:'center',justifyContent:'center',padding:'max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))',boxSizing:'border-box',isolation:'isolate'
     }}>
-      <div className="busca-liquid-glass" style={{width:'min(860px,96vw)',maxHeight:'90vh',overflow:'auto',borderRadius:18,padding:20,background:COLORS.paperCard}}>
+      <div className="busca-liquid-glass" onMouseDown={e=>e.stopPropagation()} style={{width:'min(860px,96vw)',height:'min(760px,92dvh)',maxHeight:'92dvh',display:'flex',flexDirection:'column',overflow:'hidden',borderRadius:18,background:COLORS.paperCard,boxShadow:'0 24px 80px rgba(0,0,0,.38)',border:`1px solid ${COLORS.line}`}}>
+        <div style={{overflowY:'auto',overscrollBehavior:'contain',WebkitOverflowScrolling:'touch',padding:'20px 20px 0',flex:'1 1 auto',minHeight:0}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12,marginBottom:14}}>
           <div>
             <div className="serif" style={{fontSize:23,fontWeight:800,color:COLORS.ink}}>Preparar exercício {anoDestino}</div>
@@ -8537,12 +8550,15 @@ function ModalPrepararExercicio({ anoOrigem, anoDestino, transacoes, carregando,
           <b style={{color:COLORS.ink}}>O que acontece:</b> nomes/fotos dos selecionados continuam; mensalidades começam sem valor, data e status; contas e lançamentos recorrentes viram modelos sem valores; Valores/convênios são copiados como base; o saldo final de {anoOrigem} fica registrado como saldo inicial de {anoDestino}. O histórico de {anoOrigem} não é alterado.
         </div>
 
-        <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:16,flexWrap:'wrap'}}>
-          <button onClick={onFechar} disabled={carregando} style={{border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:9,padding:'9px 14px',fontWeight:700,cursor:'pointer'}}>Cancelar</button>
-          <button onClick={()=>onConfirmar({selecionados:Array.from(selecionados),novosAlunos:novos})} disabled={carregando} style={{border:'none',background:COLORS.inkButton,color:'#fff',borderRadius:9,padding:'9px 15px',fontWeight:800,cursor:carregando?'default':'pointer',opacity:carregando ? .7 : 1}}>{carregando?'Preparando...':`Preparar ${anoDestino}`}</button>
+        <div style={{height:12}} />
+        </div>
+        <div style={{display:'flex',justifyContent:'flex-end',gap:8,flexWrap:'wrap',padding:'12px 20px calc(12px + env(safe-area-inset-bottom))',borderTop:`1px solid ${COLORS.line}`,background:COLORS.paperCard,flex:'0 0 auto',boxShadow:'0 -8px 24px rgba(31,59,54,.05)'}}>
+          <button onClick={onFechar} disabled={carregando} style={{border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:9,padding:'10px 14px',fontWeight:700,cursor:'pointer'}}>Cancelar</button>
+          <button onClick={()=>onConfirmar({selecionados:Array.from(selecionados),novosAlunos:novos})} disabled={carregando} style={{border:'none',background:COLORS.inkButton,color:'#fff',borderRadius:9,padding:'10px 15px',fontWeight:800,cursor:carregando?'default':'pointer',opacity:carregando ? .7 : 1}}>{carregando?'Preparando...':`Preparar ${anoDestino}`}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
