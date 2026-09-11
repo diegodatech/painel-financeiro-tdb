@@ -129,16 +129,29 @@
 
     /* CONTAS PESSOAIS — mesma experiência de arrastar horizontalmente usada nas tabelas de Mensalidades.
        Em tablet/celular, o usuário pode deslizar o dedo para esquerda/direita sem travar a página. */
+    .contas-pessoais-raiz,
+    .contas-pessoais-card {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .contas-pessoais-card {
+      overflow: hidden !important;
+    }
     .contas-pessoais-scroll {
       display: block;
-      overflow-x: scroll !important;
-      overflow-y: visible;
+      position: relative;
+      overflow-x: auto !important;
+      overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-x: contain;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+      contain: layout paint;
       touch-action: pan-x pan-y;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
+      overscroll-behavior-x: contain;
       scrollbar-width: auto;
       scrollbar-color: #159089 rgba(21,144,137,.12);
       scroll-behavior: auto;
@@ -158,12 +171,33 @@
     .contas-pessoais-scroll::-webkit-scrollbar-thumb:active {
       background: rgba(21,144,137,.92);
     }
+    @media (max-width: 1180px) {
+      .contas-pessoais-scroll::after {
+        content: '↔ deslize para ver os outros meses';
+        position: sticky;
+        left: 8px;
+        display: inline-block;
+        margin: 5px 0 0 8px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--c-inkSoft);
+        background: color-mix(in srgb, var(--c-paperCard) 82%, transparent);
+        border: 1px solid var(--c-line);
+        pointer-events: none;
+      }
+    }
     .contas-pessoais-scroll table {
       min-width: 1390px;
       width: 1390px !important;
       max-width: none !important;
     }
     @media (max-width: 1180px) {
+      .contas-pessoais-card {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+      }
       .contas-pessoais-scroll {
         width: 100% !important;
         max-width: 100% !important;
@@ -196,6 +230,10 @@
       }
     }
     @media (max-width: 600px) {
+      .contas-pessoais-card {
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+      }
       .contas-pessoais-scroll {
         width: 100% !important;
         max-width: 100% !important;
@@ -5479,14 +5517,31 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
 
   if (!contas) return <div style={{padding:40,textAlign:'center',color:COLORS.inkSoft}}>Carregando contas pessoais...</div>;
   const glass = { background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)', backdropFilter:'blur(18px) saturate(150%)', WebkitBackdropFilter:'blur(18px) saturate(150%)', border:'1px solid color-mix(in srgb, var(--c-line) 72%, transparent)', boxShadow:'0 10px 30px rgba(31,59,54,0.08)' };
-  return <div style={{display:'grid',gap:18}}>
-    <div className="busca-liquid-glass" style={{...glass,borderRadius:18,padding:'18px 18px 14px'}}>
+  return <div className="contas-pessoais-raiz" style={{
+    display:'grid',
+    gridTemplateColumns:'minmax(0, 1fr)',
+    gap:18,
+    width:'100%',
+    maxWidth:'100%',
+    minWidth:0,
+    boxSizing:'border-box'
+  }}>
+    <div className="busca-liquid-glass contas-pessoais-card" style={{
+      ...glass,
+      borderRadius:18,
+      padding:'18px 18px 14px',
+      width:'100%',
+      maxWidth:'100%',
+      minWidth:0,
+      boxSizing:'border-box',
+      overflow:'hidden'
+    }}>
       <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center',flexWrap:'wrap',marginBottom:14}}>
         <div>
           <div className="serif" style={{fontSize:22,fontWeight:700,color:COLORS.ink}}>👤 Contas Pessoais</div>
           <div style={{fontSize:13.5,color:COLORS.inkSoft}}>Janeiro a dezembro. Esta aba não interfere nos cálculos da escola.</div>
         </div>
-        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end',flex:'1 1 700px'}}>
+        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end',flex:'1 1 700px',minWidth:0,maxWidth:'100%'}}>
           {chamarIA && (
             <>
               <button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass"
