@@ -1202,6 +1202,7 @@ html.dark-mode {
       }
       function resolverChaveAnual_(key) {
         const k = String(key || '');
+        if (k.startsWith('@@raw:')) return k.slice(6);
         // Chaves já explicitamente versionadas nunca são remapeadas novamente.
         if (/__\d{4}$/.test(k) || /^transacoes_financas(?!2026)\d{4}$/.test(k)) return k;
         return chaveAnualParaAno_(k, window.__exercicioAtual || 2026);
@@ -7026,9 +7027,23 @@ ${textoContasPessoais}`;
     setMensagemSalvarAgora(null);
     setProgressoSalvar({ feitos: 0, total: 0 });
     try {
-      const resultado = await (window.storage.resync
-        ? window.storage.resync((feitos, total) => setProgressoSalvar({ feitos, total }))
-        : Promise.resolve({ ok: true, total: 0 }));
+      const qtdPendentesAntes = Number(window.__pendenciasSync || 0) + Number(window.__pendenciasAnexosSync || 0);
+      const resultado = qtdPendentesAntes > 0
+        ? await (window.storage.resync
+            ? window.storage.resync((feitos, total) => setProgressoSalvar({ feitos, total }))
+            : Promise.resolve({ ok: true, total: 0 }))
+        : await (async () => {
+            try {
+              if (window.__testarConexaoDrive) await window.__testarConexaoDrive();
+              window.__statusPlanilha = 'ok';
+              window.__ultimoErroSync = null;
+              return { ok: true, total: 0, falhas: 0 };
+            } catch(e) {
+              window.__statusPlanilha = 'erro';
+              window.__ultimoErroSync = String(e && e.message || e);
+              return { ok: false, total: 0, falhas: 1 };
+            }
+          })();
       setMensagemSalvarAgora(resultado.ok
         ? { tipo: 'ok', texto: 'Tudo salvo com sucesso! Pode fechar o programa sem preocupação.' }
         : { tipo: 'aviso', texto: `${resultado.falhas} item(ns) não sincronizaram agora, mas continuam salvos neste navegador. Tenta de novo daqui a pouco.` });
@@ -7173,7 +7188,12 @@ ${textoContasPessoais}`;
         const existe = lista.some(x => Number(x.ano) === exercicioAtual);
         if (!existe) {
           const fallback = lista.find(x => x.status === 'ATIVO') || lista[lista.length - 1];
-          if (fallback) await trocarExercicio(Number(fallback.ano));
+          if (fallback) {
+            const y = Number(fallback.ano);
+            window.__exercicioAtual = y;
+            setExercicioAtual(y);
+            try { localStorage.setItem('painel_exercicio_atual', String(y)); } catch(e) {}
+          }
         }
       } catch (e) {
         setExercicios([{ ano: 2026, status: 'ATIVO', criadoEm: new Date().toISOString() }]);
@@ -7181,20 +7201,48 @@ ${textoContasPessoais}`;
     })();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const base26 = await window.storage.get('@@raw:convenios_multivaga', false);
+        let vazio26 = true;
+        if (base26 && base26.value) {
+          try {
+            const arr = JSON.parse(base26.value);
+            vazio26 = !Array.isArray(arr) || arr.length === 0;
+          } catch(e) {}
+        }
+        if (vazio26) {
+          const copia27 = await window.storage.get('@@raw:convenios_multivaga__2027', false);
+          if (copia27 && copia27.value) {
+            const arr27 = JSON.parse(copia27.value);
+            if (Array.isArray(arr27) && arr27.length) {
+              await window.storage.set('@@raw:convenios_multivaga', JSON.stringify(arr27), false);
+            }
+          }
+        }
+      } catch(e) {}
+    })();
+  }, []);
+
   async function trocarExercicio(ano) {
     setMensagemExercicio(null);
     const y = Number(ano) || 2026;
-    try {
-      localStorage.setItem('painel_exercicio_atual', String(y));
-      await window.storage.set('painel_exercicio_atual', String(y), false);
-    } catch (e) {}
     window.__exercicioAtual = y;
     setExercicioAtual(y);
+    try { localStorage.setItem('painel_exercicio_atual', String(y)); } catch (e) {}
     window.location.reload();
   }
 
   function chaveAno(base, ano) {
     return window.__chaveAnualParaAno ? window.__chaveAnualParaAno(base, ano) : (Number(ano) === 2026 ? base : `${base}__${ano}`);
+  }
+
+  async function lerAnoExato_(base, ano) {
+    return window.storage.get('@@raw:' + chaveAno(base, ano), false);
+  }
+  async function salvarAnoExato_(base, ano, valor) {
+    return window.storage.set('@@raw:' + chaveAno(base, ano), valor, false);
   }
 
   async function prepararNovoExercicio({ selecionados, novosAlunos }) {
@@ -7209,7 +7257,7 @@ ${textoContasPessoais}`;
     try {
       // Evita duplicidade mesmo se a internet cair e o usuário tentar novamente.
       const chaveTxNovo = `transacoes_financas${novoAno}`;
-      const existente = await window.storage.get(chaveTxNovo, false);
+      const existente = await window.storage.get('@@raw:' + chaveTxNovo, false);
       if (existente && existente.value) throw new Error(`Já existem dados gravados para ${novoAno}. Nada foi duplicado.`);
 
       const nomesSelecionados = new Set((selecionados || []).map(String));
@@ -7259,16 +7307,16 @@ ${textoContasPessoais}`;
         }));
       });
 
-      await window.storage.set(chaveTxNovo, JSON.stringify(novas), false);
+      await window.storage.set('@@raw:' + chaveTxNovo, JSON.stringify(novas), false);
 
       // Copia configurações que devem continuar como base do próximo exercício.
       const copiarBases = ['valores_mensalidade','valores_avulsos','dias_letivos','capacidade_maxima','categorias_indicadores'];
       for (const base of copiarBases) {
-        const atual = await window.storage.get(base, false);
-        if (atual && atual.value != null) await window.storage.set(chaveAno(base, novoAno), atual.value, false);
+        const atual = await lerAnoExato_(base, exercicioAtual);
+        if (atual && atual.value != null) await salvarAnoExato_(base, novoAno, atual.value);
       }
       // Convênios: mantém cadastro/valores/vagas, mas inicia um histórico mensal novo.
-      const cv = await window.storage.get('convenios_multivaga', false);
+      const cv = await lerAnoExato_('convenios_multivaga', exercicioAtual);
       if (cv && cv.value) {
         let listaCv = [];
         try { listaCv = JSON.parse(cv.value); } catch(e) {}
@@ -7276,7 +7324,7 @@ ${textoContasPessoais}`;
           ...item,
           historicoVagas: { JANEIRO: Number(item.vagasPreenchidas) || 0 }
         }));
-        await window.storage.set(chaveAno('convenios_multivaga', novoAno), JSON.stringify(listaCv), false);
+        await salvarAnoExato_('convenios_multivaga', novoAno, JSON.stringify(listaCv));
       }
 
       // Saldo final do ano atual vira SALDO INICIAL do próximo (não é receita de janeiro).
@@ -7288,8 +7336,8 @@ ${textoContasPessoais}`;
             return vals.length ? vals[vals.length - 1] : 0;
           })();
       await window.storage.set(`saldo_inicial_exercicio__${novoAno}`, String(saldoRef || 0), false);
-      await window.storage.set(chaveAno('saldos_mensais', novoAno), JSON.stringify({}), false);
-      await window.storage.set(chaveAno('auto_lancamentos_v15', novoAno), 'true', false);
+      await salvarAnoExato_('saldos_mensais', novoAno, JSON.stringify({}));
+      await salvarAnoExato_('auto_lancamentos_v15', novoAno, 'true');
 
       const novaLista = [...exercicios, {
         ano: novoAno,
@@ -7302,25 +7350,10 @@ ${textoContasPessoais}`;
       setExercicios(novaLista);
       setPrepararAnoAberto(false);
 
-      // A criação anual gera várias chaves. Antes de anunciar sucesso completo,
-      // aguarda a fila e faz uma reconciliação final com o Google Drive.
-      let syncFinal = { ok: true, total: 0, falhas: 0 };
-      try {
-        if (window.storage && window.storage.resync) {
-          syncFinal = await window.storage.resync();
-        }
-      } catch (e) {
-        syncFinal = { ok: false, falhas: 1, erro: String(e && e.message || e) };
-      }
-
-      if (syncFinal && syncFinal.ok) {
-        setMensagemExercicio({ tipo:'ok', texto:`✓ ${novoAno} foi preparado e sincronizado sem alterar ${exercicioAtual}.` });
-      } else {
-        setMensagemExercicio({
-          tipo:'aviso',
-          texto:`${novoAno} foi preparado neste aparelho sem alterar ${exercicioAtual}, mas ainda há item(ns) aguardando confirmação no Drive. Use “Salvar” quando a conexão estiver estável.`
-        });
-      }
+      setMensagemExercicio({
+        tipo:'ok',
+        texto:`✓ ${novoAno} foi preparado sem alterar ${exercicioAtual}. Aguarde a sincronização ou use “Salvar”.`
+      });
     } catch (e) {
       setMensagemExercicio({ tipo:'erro', texto:'Não consegui preparar o novo exercício: ' + (e && e.message ? e.message : e) });
     } finally {
@@ -8135,7 +8168,9 @@ ${textoContasPessoais}`;
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusPlanilha === 'ok' ? COLORS.green : COLORS.red, display: 'block', flexShrink: 0 }} />
                 {statusPlanilha === 'ok'
                   ? '✓ Sincronizado (Google Drive)'
-                  : ('⚠ Falha ao sincronizar — salvo só aqui. Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato'))}
+                  : (pendenciasSync > 0
+                      ? ('⚠ Falha ao sincronizar — há alterações aguardando o Drive. Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato'))
+                      : ('⚠ Conexão com o Drive precisa ser verificada. Nenhuma alteração está pendente. Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato')))}
               </span>
             )}
             {pendenciasSync > 0 && (
