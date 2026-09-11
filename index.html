@@ -5279,8 +5279,13 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
           aplicadas++;
         }
       }
-      if (aplicadas) await salvar(next);
-      setRespostaIA((obj.mensagem || (aplicadas ? `✓ ${aplicadas} valor(es) preenchido(s).` : 'Não identifiquei valores para preencher.')));
+      if (aplicadas) {
+        await salvar(next);
+        setPerguntaIA('');
+      }
+      setRespostaIA(aplicadas
+        ? `✓ ${aplicadas} campo(s) atualizado(s) na tabela. ` + (obj.mensagem || '')
+        : '⚠ A IA respondeu, mas não encontrei uma conta/mês válido para alterar.');
     } catch(e) { setRespostaIA('⚠ A IA respondeu, mas não consegui aplicar automaticamente. Tente dizer, por exemplo: “Aluguel janeiro 1800 e internet janeiro 120”.'); }
     setProcessandoIA(false);
   }
@@ -5309,7 +5314,7 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
               <input value={perguntaIA} onChange={e=>setPerguntaIA(e.target.value)}
                 onKeyDown={e=>{if(e.key==='Enter')interpretarComIA();}}
                 placeholder='Digite: “Aluguel setembro 1.800”'
-                style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 12px',minWidth:220,maxWidth:330,flex:'0 1 300px',fontSize:13.5,background:'color-mix(in srgb, var(--c-paperCard) 78%, transparent)',color:COLORS.ink}}/>
+                style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 12px',minWidth:190,maxWidth:270,flex:'0 1 250px',fontSize:13.5,background:'color-mix(in srgb, var(--c-paperCard) 78%, transparent)',color:COLORS.ink}}/>
             </>
           )}
           <input value={novaConta} onChange={e=>setNovaConta(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')adicionarConta();}}
@@ -5321,7 +5326,13 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
         </div>
       </div>
       {respostaIA && <div style={{margin:'-4px 0 10px auto',maxWidth:720,padding:'8px 11px',borderRadius:11,background:'rgba(28,158,143,.11)',color:COLORS.ink,fontSize:12.5}}>{respostaIA}</div>}
-      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map((c,i)=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);const p=PALETA_CP[i%PALETA_CP.length];return <tr key={c.id} className="busca-liquid-glass" style={{background:p.bg,borderLeft:`3px solid ${p.cor}`}}><td style={{padding:'7px 10px',fontWeight:700,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input defaultValue={formatBRLNumber(c.valores?.[m]||0)} onBlur={e=>alterarValor(c.id,m,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:12.5}}/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={()=>renomear(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={()=>remover(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
+      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map((c,i)=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);const p=PALETA_CP[i%PALETA_CP.length];return <tr key={c.id} className="busca-liquid-glass" style={{background:p.bg,borderLeft:`3px solid ${p.cor}`}}><td style={{padding:'7px 10px',fontWeight:700,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input
+  key={`${c.id}-${m}-${Number(c.valores?.[m]||0)}`}
+  defaultValue={formatBRLNumber(c.valores?.[m]||0)}
+  onBlur={e=>alterarValor(c.id,m,e.target.value)}
+  onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}}
+  style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:12.5}}
+/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={()=>renomear(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={()=>remover(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:12}}>
       {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,s,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
