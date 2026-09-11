@@ -7220,7 +7220,8 @@ ${textoContasPessoais}`;
              que deixar o navegador decidir quantas cabem, que às vezes sobra uma solta */
           .abas-menu { grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; }
         }
-        .serif { font-family: 'Baloo 2', 'Inter', sans-serif; }
+        .painel-main { position: relative; z-index: 1; }
+    .serif { font-family: 'Baloo 2', 'Inter', sans-serif; }
         .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
         .ledger-lines {
           background-image: repeating-linear-gradient(180deg, transparent, transparent 27px, ${COLORS.line} 28px);
@@ -7382,7 +7383,10 @@ ${textoContasPessoais}`;
           </div>
 
           {/* BOTÕES DE BACKUP / SINCRONIZAÇÃO — chips de vidro líquido, ícone + nome */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12,
+            position: 'relative', zIndex: lixeiraAberta ? 10000 : 30, overflow: 'visible'
+          }}>
             <button
               onClick={salvarTudoAgora}
               disabled={salvandoAgora}
@@ -7457,8 +7461,11 @@ ${textoContasPessoais}`;
               </button>
             </div>
 
-            <div className="busca-liquid-glass" style={{ display: 'flex', alignItems: 'center', gap: 2, borderRadius: 14, padding: '5px 6px' }}>
-              <div style={{ position: 'relative' }}>
+            <div className="busca-liquid-glass" style={{
+              display: 'flex', alignItems: 'center', gap: 2, borderRadius: 14, padding: '5px 6px',
+              position: 'relative', zIndex: lixeiraAberta ? 10001 : 31, overflow: 'visible'
+            }}>
+              <div style={{ position: 'relative', zIndex: lixeiraAberta ? 10002 : 32, overflow: 'visible' }}>
                 <button
                   onClick={() => setLixeiraAberta(v => !v)}
                   title="Lixeira temporária — restaura alunos, convênios ou contas apagados nos últimos 30 dias"
@@ -7477,9 +7484,10 @@ ${textoContasPessoais}`;
                 </button>
                 {lixeiraAberta && (
                   <div style={{
-                    position: 'absolute', top: '116%', right: 0, zIndex: 500, background: COLORS.paperCard,
-                    border: `1px solid ${COLORS.line}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                    width: 'min(320px, 92vw)', maxHeight: 360, overflowY: 'auto', padding: 10,
+                    position: 'absolute', top: '116%', right: 0, zIndex: 10003, background: COLORS.paperCard,
+                    border: `1px solid ${COLORS.line}`, borderRadius: 10, boxShadow: '0 12px 34px rgba(0,0,0,0.22)',
+                    width: 'min(320px, 92vw)', maxHeight: 360, overflowY: 'auto', overflowX: 'hidden', padding: 10,
+                    isolation: 'isolate', transform: 'translateZ(0)',
                   }}>
                     <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 8 }}>
                       🗑️ Lixeira temporária <span style={{ fontWeight: 500, color: COLORS.inkSoft, fontSize: 11 }}>(some sozinho depois de 30 dias)</span>
