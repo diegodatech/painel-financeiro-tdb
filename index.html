@@ -70,23 +70,44 @@
       --c-line: #DCE7E5;
       --c-lineSoft: #EEF5F4;
     }
+    /* MODO ESCURO v4.6 — grafite suave, mantendo as cores do projeto.
+       A ideia é reduzir o brilho sem transformar o painel em preto. */
     .dark-mode {
       color-scheme: dark;
-      --c-paper: #14191B;
-      --c-paperCard: #1D2426;
-      --c-ink: #A8E8E2;
-      --c-inkSoft: #8FA9A6;
-      --c-inkButton: #1E9F97;
-      --c-gold: #E39BCB;
-      --c-goldSoft: #2A2027;
-      --c-green: #5BC2BE;
-      --c-greenBg: #12211F;
-      --c-red: #F0807A;
-      --c-redBg: #241315;
-      --c-line: #263230;
-      --c-lineSoft: #1A2020;
+      --c-paper: #273234;
+      --c-paperCard: #344143;
+      --c-ink: #C8F1EC;
+      --c-inkSoft: #B2C7C4;
+      --c-inkButton: #28A99F;
+      --c-gold: #F0A9D5;
+      --c-goldSoft: #493846;
+      --c-green: #70D4CA;
+      --c-greenBg: #304B48;
+      --c-red: #FF9B96;
+      --c-redBg: #513638;
+      --c-line: #526163;
+      --c-lineSoft: #3D4A4C;
     }
     .dark-mode body { background: var(--c-paper); }
+    .dark-mode .busca-liquid-glass {
+      background: rgba(74, 91, 94, 0.56) !important;
+      border-color: rgba(255,255,255,0.16) !important;
+      box-shadow:
+        0 8px 28px rgba(7, 24, 25, 0.16),
+        inset 0 1px 0 rgba(255,255,255,0.14) !important;
+      backdrop-filter: blur(20px) saturate(1.35) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(1.35) !important;
+    }
+    .dark-mode input,
+    .dark-mode textarea,
+    .dark-mode select {
+      background-color: rgba(71, 85, 88, 0.78) !important;
+      color: #F1FAF9 !important;
+      border-color: rgba(255,255,255,0.16) !important;
+    }
+    .dark-mode input::placeholder,
+    .dark-mode textarea::placeholder { color: #AFC0BE !important; }
+    .dark-mode table tbody tr { border-color: rgba(255,255,255,0.08); }
     button { -webkit-tap-highlight-color: transparent; }
     /* teclado de PIN: tamanho padrão pensado pro celular (já está ótimo), e cresce em telas
        maiores (tablet/computador) pra ficar mais fácil de tocar com dedos maiores */
@@ -5121,6 +5142,149 @@ function Anotacoes({ chamarIA }) {
  * e exportar (baixar) de volta. Pensada pra crescer no futuro pra aceitar
  * vídeos curtos também — por enquanto, só PDF e imagem.
  */
+
+
+function ContasPessoais({ chamarIA }) {
+  const MESES_CP = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  const ABREV_CP = {JANEIRO:'Jan',FEVEREIRO:'Fev','MARÇO':'Mar',ABRIL:'Abr',MAIO:'Mai',JUNHO:'Jun',JULHO:'Jul',AGOSTO:'Ago',SETEMBRO:'Set',OUTUBRO:'Out',NOVEMBRO:'Nov',DEZEMBRO:'Dez'};
+  const CONTAS_PADRAO = ['SANTA CLARA','HAVAN','LUZ CASA','CONDOMÍNIO','ALUGUEL','TACCHIMED','INTERNET','VIVO','ICATU','PILATES','NETFLIX','SICREDI CARTÃO','C6 BANK','ITAÚ CARTÃO VISA INFINIT','ITAÚ MASTER CARD'];
+  const [contas, setContas] = useState(null);
+  const [novaConta, setNovaConta] = useState('');
+  const [perguntaIA, setPerguntaIA] = useState('');
+  const [respostaIA, setRespostaIA] = useState('');
+  const [processandoIA, setProcessandoIA] = useState(false);
+  const [gravando, setGravando] = useState(false);
+  const reconhecimentoRef = useRef(null);
+  const suportaVoz = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get('contas_pessoais_v1', false);
+        if (r && r.value) setContas(JSON.parse(r.value));
+        else {
+          const base = CONTAS_PADRAO.map((nome, i) => ({ id: 'cp'+(i+1), nome, valores: Object.fromEntries(MESES_CP.map(m => [m, 0])) }));
+          setContas(base);
+          await window.storage.set('contas_pessoais_v1', JSON.stringify(base), false);
+        }
+      } catch(e) {
+        setContas(CONTAS_PADRAO.map((nome, i) => ({ id: 'cp'+(i+1), nome, valores: Object.fromEntries(MESES_CP.map(m => [m, 0])) })));
+      }
+    })();
+    return () => { try { reconhecimentoRef.current && reconhecimentoRef.current.stop(); } catch(e){} };
+  }, []);
+
+  async function salvar(next) {
+    setContas(next);
+    try { await window.storage.set('contas_pessoais_v1', JSON.stringify(next), false); } catch(e) {}
+  }
+  function parseValor(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : 0;
+    let t = String(v ?? '').trim();
+    if (!t) return 0;
+    t = t.replace(/R\$/gi,'').replace(/\s/g,'');
+    if (t.includes(',') && t.includes('.')) t = t.replace(/\./g,'').replace(',','.');
+    else if (t.includes(',')) t = t.replace(',','.');
+    const n = Number(t);
+    return isFinite(n) ? n : 0;
+  }
+  function alterarValor(id, mes, valor) {
+    const n = parseValor(valor);
+    salvar(contas.map(c => c.id === id ? { ...c, valores: { ...c.valores, [mes]: n } } : c));
+  }
+  function renomear(id) {
+    const atual = contas.find(c=>c.id===id); if (!atual) return;
+    const n = window.prompt('Novo nome da conta:', atual.nome);
+    if (n && n.trim()) salvar(contas.map(c=>c.id===id ? {...c,nome:n.trim().toUpperCase()} : c));
+  }
+  function remover(id) {
+    const atual = contas.find(c=>c.id===id); if (!atual) return;
+    if (window.confirm('Apagar a conta "'+atual.nome+'"?')) salvar(contas.filter(c=>c.id!==id));
+  }
+  function adicionarConta() {
+    if (!novaConta.trim()) return;
+    salvar([...contas,{id:'cp'+Date.now(),nome:novaConta.trim().toUpperCase(),valores:Object.fromEntries(MESES_CP.map(m=>[m,0]))}]);
+    setNovaConta('');
+  }
+  const totaisMes = useMemo(() => {
+    const o = Object.fromEntries(MESES_CP.map(m=>[m,0]));
+    (contas||[]).forEach(c => MESES_CP.forEach(m => o[m] += Number(c.valores?.[m]||0)));
+    return o;
+  }, [contas]);
+  const totalGeral = useMemo(() => Object.values(totaisMes).reduce((s,v)=>s+v,0), [totaisMes]);
+  const mediaMensal = totalGeral/12;
+  const paresMes = MESES_CP.map(m=>({m,v:totaisMes[m]}));
+  const comValor = paresMes.filter(x=>x.v>0);
+  const maior = comValor.length ? comValor.reduce((a,b)=>b.v>a.v?b:a) : null;
+  const menor = comValor.length ? comValor.reduce((a,b)=>b.v<a.v?b:a) : null;
+
+  function alternarVoz() {
+    if (!suportaVoz) { window.alert('Comando de voz não é suportado neste navegador. Use Chrome ou Edge.'); return; }
+    if (gravando) { try { reconhecimentoRef.current && reconhecimentoRef.current.stop(); } catch(e){}; setGravando(false); return; }
+    const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new R(); reconhecimentoRef.current = rec;
+    rec.lang = 'pt-BR'; rec.interimResults = false; rec.continuous = false;
+    rec.onstart = () => setGravando(true);
+    rec.onend = () => setGravando(false);
+    rec.onerror = () => setGravando(false);
+    rec.onresult = (ev) => {
+      const texto = Array.from(ev.results).map(r=>r[0].transcript).join(' ').trim();
+      if (texto) { setPerguntaIA(texto); interpretarComIA(texto); }
+    };
+    try { rec.start(); } catch(e) { setGravando(false); }
+  }
+
+  async function interpretarComIA(textoOverride) {
+    const texto = (textoOverride ?? perguntaIA).trim();
+    if (!texto || processandoIA) return;
+    setProcessandoIA(true); setRespostaIA('');
+    const lista = (contas||[]).map(c=>c.nome).join(' | ');
+    const prompt = `Você controla uma tabela de contas pessoais com meses. Interprete o comando do usuário e devolva SOMENTE JSON válido, sem markdown, no formato {"alteracoes":[{"conta":"NOME","mes":"JANEIRO","valor":123.45}],"mensagem":"resumo curto"}. Meses válidos: ${MESES_CP.join(', ')}. Contas atuais: ${lista}. Se o usuário disser vários meses/contas, gere várias alterações. Se disser para repetir um valor em todos os meses, gere 12 alterações. Comando: ${texto}`;
+    const r = await chamarIA(prompt);
+    if (r.erro) { setRespostaIA('⚠ '+r.erro); setProcessandoIA(false); return; }
+    try {
+      const limpo = String(r.texto||'').replace(/```json|```/gi,'').trim();
+      const ini = limpo.indexOf('{'), fim = limpo.lastIndexOf('}');
+      const obj = JSON.parse(limpo.slice(ini, fim+1));
+      let next = [...(contas||[])];
+      let aplicadas = 0;
+      for (const a of (obj.alteracoes||[])) {
+        const nomeN = normalizarTexto(a.conta);
+        const idx = next.findIndex(c => normalizarTexto(c.nome) === nomeN || normalizarTexto(c.nome).includes(nomeN) || nomeN.includes(normalizarTexto(c.nome)));
+        const mes = MESES_CP.find(m=>normalizarTexto(m)===normalizarTexto(a.mes));
+        if (idx>=0 && mes) {
+          next[idx] = { ...next[idx], valores: { ...next[idx].valores, [mes]: parseValor(a.valor) } };
+          aplicadas++;
+        }
+      }
+      if (aplicadas) await salvar(next);
+      setRespostaIA((obj.mensagem || (aplicadas ? `✓ ${aplicadas} valor(es) preenchido(s).` : 'Não identifiquei valores para preencher.')));
+    } catch(e) { setRespostaIA('⚠ A IA respondeu, mas não consegui aplicar automaticamente. Tente dizer, por exemplo: “Aluguel janeiro 1800 e internet janeiro 120”.'); }
+    setProcessandoIA(false);
+  }
+
+  if (!contas) return <div style={{padding:40,textAlign:'center',color:COLORS.inkSoft}}>Carregando contas pessoais...</div>;
+  const glass = { background:'rgba(255,255,255,0.62)', backdropFilter:'blur(18px) saturate(150%)', WebkitBackdropFilter:'blur(18px) saturate(150%)', border:'1px solid rgba(16,110,107,0.16)', boxShadow:'0 10px 30px rgba(31,59,54,0.08)' };
+  return <div style={{display:'grid',gap:18}}>
+    <div className="busca-liquid-glass" style={{...glass,borderRadius:18,padding:'18px 18px 14px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center',flexWrap:'wrap',marginBottom:14}}>
+        <div><div className="serif" style={{fontSize:20,fontWeight:700,color:COLORS.ink}}>👤 Contas Pessoais</div><div style={{fontSize:12.5,color:COLORS.inkSoft}}>Janeiro a dezembro. Esta aba não interfere nos cálculos da escola.</div></div>
+        <div style={{display:'flex',gap:8}}><input value={novaConta} onChange={e=>setNovaConta(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')adicionarConta();}} placeholder="Nova conta" style={{border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 11px',minWidth:180}}/><button onClick={adicionarConta} className="busca-liquid-glass" style={{border:'1px solid #1C9E8F55',background:COLORS.greenBg,color:COLORS.ink,borderRadius:12,padding:'9px 13px',fontWeight:700,cursor:'pointer'}}><Plus size={14}/> Adicionar</button></div>
+      </div>
+      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1350,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:12}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map(c=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);return <tr key={c.id} className="busca-liquid-glass" style={{background:'color-mix(in srgb, var(--c-greenBg) 45%, transparent)'}}><td style={{padding:'6px 10px',fontWeight:650,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input defaultValue={formatBRLNumber(c.valores?.[m]||0)} onBlur={e=>alterarValor(c.id,m,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:11.5}}/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={()=>renomear(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={()=>remover(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:12}}>
+      {[['Total geral',totalGeral,'Soma dos 12 meses'],['Média mensal',mediaMensal,'Total ÷ 12'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—']].map(([l,v,s],i)=><div key={l} className="busca-liquid-glass" style={{...glass,borderRadius:16,padding:'14px 16px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:20,fontWeight:800,color:i===0?'#106E6B':'#3E7ACC',marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
+    </div>
+    <div className="busca-liquid-glass" style={{...glass,borderRadius:18,padding:16}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}><span style={{fontSize:18}}>✨</span><div><div style={{fontWeight:800,color:'#14312E'}}>Assistente IA das Contas Pessoais</div><div style={{fontSize:11.5,color:COLORS.inkSoft}}>Digite ou dite. A IA entende e preenche os valores automaticamente.</div></div></div>
+      <div style={{display:'flex',gap:8,alignItems:'stretch',flexWrap:'wrap'}}><textarea value={perguntaIA} onChange={e=>setPerguntaIA(e.target.value)} placeholder='Ex.: “Aluguel janeiro 1800, internet 120 e Vivo 99,90.”' style={{flex:'1 1 420px',minHeight:78,border:`1px solid ${COLORS.line}`,borderRadius:14,padding:'11px 12px',resize:'vertical',background:'color-mix(in srgb, var(--c-paperCard) 75%, transparent)'}}/><button onClick={alternarVoz} className="busca-liquid-glass" title="Ditar comando" style={{minWidth:120,border:'1px solid #C15CA055',borderRadius:14,background:gravando?'#F8E4F1':'rgba(255,255,255,.72)',color:'#C15CA0',fontWeight:800,cursor:'pointer',padding:'10px 14px'}}><Mic size={16}/> {gravando?'Ouvindo...':'Ditar'}</button><button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass" style={{minWidth:150,border:'none',borderRadius:14,background:'linear-gradient(135deg,#1C9E8F,#106E6B)',color:'#fff',fontWeight:800,cursor:processandoIA?'default':'pointer',padding:'10px 16px'}}>{processandoIA?'Analisando...':'✨ Preencher com IA'}</button></div>
+      {respostaIA && <div style={{marginTop:10,padding:'9px 12px',borderRadius:12,background:COLORS.greenBg,color:'#14312E',fontSize:12.5}}>{respostaIA}</div>}
+      <div style={{fontSize:11.5,color:COLORS.inkSoft,marginTop:8}}>Exemplos de voz: “Coloque aluguel 1800 de janeiro a dezembro” · “Em setembro, Havan 350 e Internet 120” · “Sicredi cartão outubro 980”.</div>
+    </div>
+  </div>;
+}
+
 function Arquivos() {
   const [itens, setItens] = useState(null);
   const [toastMsg, setToastMsg] = useState(null);
@@ -6933,6 +7097,7 @@ ${textoCompras}`;
                 ['valores', 'Valores', Tag, '#1C9E8F', '#DEF5F1'],
                 ['anotacoes', 'Anotações', NotebookText, '#B87A1A', '#FCEFDD'],
                 ['arquivos', 'Arquivos', ImageIcon, '#5B8DEF', '#E7EEFC'],
+                ['contasPessoais', 'Contas Pessoais', Wallet, '#1C9E8F', '#DEF5F1'],
               ].map(([key, label, Icone, cor, corFundo]) => {
                 const ativo = tab === key;
                 return (
@@ -7044,8 +7209,10 @@ ${textoCompras}`;
           <Valores modoPrivado={modoPrivadoValores} setModoPrivado={setModoPrivadoValores} />
         ) : tab === 'anotacoes' ? (
           <Anotacoes chamarIA={chamarIA} />
-        ) : (
+        ) : tab === 'arquivos' ? (
           <Arquivos />
+        ) : (
+          <ContasPessoais chamarIA={chamarIA} />
         )}
       </main>
     </div>
