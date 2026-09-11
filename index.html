@@ -5167,11 +5167,8 @@ function ContasPessoais({ chamarIA }) {
   const ABREV_CP = {JANEIRO:'Jan',FEVEREIRO:'Fev','MARÇO':'Mar',ABRIL:'Abr',MAIO:'Mai',JUNHO:'Jun',JULHO:'Jul',AGOSTO:'Ago',SETEMBRO:'Set',OUTUBRO:'Out',NOVEMBRO:'Nov',DEZEMBRO:'Dez'};
   const CONTAS_PADRAO = ['SANTA CLARA','HAVAN','LUZ CASA','CONDOMÍNIO','ALUGUEL','TACCHIMED','INTERNET','VIVO','ICATU','PILATES','NETFLIX','SICREDI CARTÃO','C6 BANK','ITAÚ CARTÃO VISA INFINIT','ITAÚ MASTER CARD'];
   const PALETA_CP = [
-    { cor:'#1C9E8F', bg:'rgba(28,158,143,.11)' },
-    { cor:'#C15CA0', bg:'rgba(193,92,160,.10)' },
-    { cor:'#3E7ACC', bg:'rgba(62,122,204,.10)' },
-    { cor:'#B87A1A', bg:'rgba(184,122,26,.11)' },
-    { cor:'#6B4FC4', bg:'rgba(107,79,196,.10)' },
+    { cor:'#1C9E8F', bg:'rgba(28,158,143,.095)' },
+    { cor:'#3E7ACC', bg:'rgba(62,122,204,.075)' },
   ];
   const [contas, setContas] = useState(null);
   const [novaConta, setNovaConta] = useState('');
@@ -5293,25 +5290,44 @@ function ContasPessoais({ chamarIA }) {
   return <div style={{display:'grid',gap:18}}>
     <div className="busca-liquid-glass" style={{...glass,borderRadius:18,padding:'18px 18px 14px'}}>
       <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center',flexWrap:'wrap',marginBottom:14}}>
-        <div><div className="serif" style={{fontSize:20,fontWeight:700,color:COLORS.ink}}>👤 Contas Pessoais</div><div style={{fontSize:12.5,color:COLORS.inkSoft}}>Janeiro a dezembro. Esta aba não interfere nos cálculos da escola.</div></div>
-        <div style={{display:'flex',gap:8}}><input value={novaConta} onChange={e=>setNovaConta(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')adicionarConta();}} placeholder="Nova conta" style={{border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 11px',minWidth:180}}/><button onClick={adicionarConta} className="busca-liquid-glass" style={{border:'1px solid #1C9E8F55',background:COLORS.greenBg,color:COLORS.ink,borderRadius:12,padding:'9px 13px',fontWeight:700,cursor:'pointer'}}><Plus size={14}/> Adicionar</button></div>
+        <div>
+          <div className="serif" style={{fontSize:22,fontWeight:700,color:COLORS.ink}}>👤 Contas Pessoais</div>
+          <div style={{fontSize:13.5,color:COLORS.inkSoft}}>Janeiro a dezembro. Esta aba não interfere nos cálculos da escola.</div>
+        </div>
+        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end',flex:'1 1 700px'}}>
+          {chamarIA && (
+            <>
+              <button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass"
+                title="Interpretar o comando digitado com IA"
+                style={{height:42,border:'1px solid #C15CA055',borderRadius:12,background:'rgba(193,92,160,.10)',color:'#C15CA0',fontWeight:800,cursor:processandoIA?'default':'pointer',padding:'8px 12px',display:'flex',alignItems:'center',gap:6}}>
+                ✨ {processandoIA?'Analisando...':'IA'}
+              </button>
+              <button onClick={alternarVoz} className="busca-liquid-glass" title="Ditar comando para a IA"
+                style={{height:42,border:'1px solid #1C9E8F55',borderRadius:12,background:gravando?'rgba(28,158,143,.18)':'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',color:COLORS.green,fontWeight:800,cursor:'pointer',padding:'8px 12px',display:'flex',alignItems:'center',gap:6}}>
+                <Mic size={15}/> {gravando?'Ouvindo...':'Ditar'}
+              </button>
+              <input value={perguntaIA} onChange={e=>setPerguntaIA(e.target.value)}
+                onKeyDown={e=>{if(e.key==='Enter')interpretarComIA();}}
+                placeholder='Digite: “Aluguel setembro 1.800”'
+                style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 12px',minWidth:310,flex:'1 1 330px',fontSize:13.5,background:'color-mix(in srgb, var(--c-paperCard) 78%, transparent)',color:COLORS.ink}}/>
+            </>
+          )}
+          <input value={novaConta} onChange={e=>setNovaConta(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')adicionarConta();}}
+            placeholder="Nova conta" style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 11px',minWidth:150,fontSize:13.5}}/>
+          <button onClick={adicionarConta} className="busca-liquid-glass"
+            style={{height:42,border:'1px solid #1C9E8F55',background:COLORS.greenBg,color:COLORS.ink,borderRadius:12,padding:'9px 13px',fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+            <Plus size={15}/> Adicionar
+          </button>
+        </div>
       </div>
-      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1350,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:12}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map((c,i)=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);const p=PALETA_CP[i%PALETA_CP.length];return <tr key={c.id} className="busca-liquid-glass" style={{background:p.bg,borderLeft:`3px solid ${p.cor}`}}><td style={{padding:'6px 10px',fontWeight:650,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input defaultValue={formatBRLNumber(c.valores?.[m]||0)} onBlur={e=>alterarValor(c.id,m,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:11.5}}/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={()=>renomear(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={()=>remover(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
+      {respostaIA && <div style={{margin:'-4px 0 10px auto',maxWidth:720,padding:'8px 11px',borderRadius:11,background:'rgba(28,158,143,.11)',color:COLORS.ink,fontSize:12.5}}>{respostaIA}</div>}
+      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map((c,i)=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);const p=PALETA_CP[i%PALETA_CP.length];return <tr key={c.id} className="busca-liquid-glass" style={{background:p.bg,borderLeft:`3px solid ${p.cor}`}}><td style={{padding:'7px 10px',fontWeight:700,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input defaultValue={formatBRLNumber(c.valores?.[m]||0)} onBlur={e=>alterarValor(c.id,m,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:12.5}}/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={()=>renomear(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={()=>remover(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:12}}>
       {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,s,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
     </div>
-    <div className="busca-liquid-glass" style={{...glass,borderRadius:16,padding:'10px 12px',borderLeft:'4px solid #C15CA0'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:7,flexWrap:'wrap'}}>
-        <div style={{display:'flex',alignItems:'center',gap:7}}><span style={{fontSize:16}}>✨</span><div><div style={{fontWeight:800,fontSize:13,color:COLORS.ink}}>Assistente IA</div><div style={{fontSize:10.5,color:COLORS.inkSoft}}>Digite ou use a voz para preencher as contas.</div></div></div>
-        <button onClick={alternarVoz} className="busca-liquid-glass" title="Ditar comando" style={{height:34,border:'1px solid #C15CA055',borderRadius:12,background:gravando?'rgba(193,92,160,.18)':'color-mix(in srgb, var(--c-paperCard) 70%, transparent)',color:'#C15CA0',fontWeight:800,cursor:'pointer',padding:'6px 10px',display:'flex',alignItems:'center',gap:5}}><Mic size={14}/> {gravando?'Ouvindo...':'Voz'}</button>
-      </div>
-      <div style={{display:'flex',gap:7,alignItems:'center',flexWrap:'wrap'}}>
-        <textarea value={perguntaIA} onChange={e=>setPerguntaIA(e.target.value)} placeholder='Ex.: “Aluguel 1800 em todos os meses.”' style={{flex:'1 1 480px',minHeight:42,maxHeight:72,border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 10px',resize:'vertical',background:'color-mix(in srgb, var(--c-paperCard) 75%, transparent)',fontSize:12}}/>
-        <button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass" style={{height:42,minWidth:138,border:'none',borderRadius:12,background:'linear-gradient(135deg,#C15CA0,#6B4FC4)',color:'#fff',fontWeight:800,cursor:processandoIA?'default':'pointer',padding:'8px 14px'}}>{processandoIA?'Analisando...':'✨ Preencher com IA'}</button>
-      </div>
-      {respostaIA && <div style={{marginTop:7,padding:'7px 10px',borderRadius:10,background:'rgba(28,158,143,.12)',color:COLORS.ink,fontSize:11.5}}>{respostaIA}</div>}
-      <div style={{fontSize:10.5,color:COLORS.inkSoft,marginTop:6}}>Ex.: “Aluguel 1800 de janeiro a dezembro” · “Setembro Havan 350 e Internet 120”.</div>
+    <div className="busca-liquid-glass" style={{...glass,borderRadius:14,padding:'10px 13px',fontSize:12.5,color:COLORS.inkSoft}}>
+      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> digite um comando no campo de IA ou toque em <strong>Ditar</strong>. Ex.: “Aluguel 1800 de janeiro a dezembro”.
     </div>
   </div>;
 }
