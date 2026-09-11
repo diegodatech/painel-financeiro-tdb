@@ -70,44 +70,62 @@
       --c-line: #DCE7E5;
       --c-lineSoft: #EEF5F4;
     }
-    /* MODO ESCURO v4.6 — grafite suave, mantendo as cores do projeto.
-       A ideia é reduzir o brilho sem transformar o painel em preto. */
+    /* MODO ESCURO v4.7 — grafite/verde-petróleo mais claro e legível.
+       Mantém o Liquid Glass e as cores do projeto sem deixar a tela "preta". */
     .dark-mode {
       color-scheme: dark;
-      --c-paper: #273234;
-      --c-paperCard: #344143;
-      --c-ink: #C8F1EC;
-      --c-inkSoft: #B2C7C4;
-      --c-inkButton: #28A99F;
-      --c-gold: #F0A9D5;
-      --c-goldSoft: #493846;
-      --c-green: #70D4CA;
-      --c-greenBg: #304B48;
-      --c-red: #FF9B96;
-      --c-redBg: #513638;
-      --c-line: #526163;
-      --c-lineSoft: #3D4A4C;
+      --c-paper: #354447;
+      --c-paperCard: #415154;
+      --c-ink: #F3FBFA;
+      --c-inkSoft: #D0DEDC;
+      --c-inkButton: #2BB0A6;
+      --c-gold: #F1ADD8;
+      --c-goldSoft: #594657;
+      --c-green: #7ADBD1;
+      --c-greenBg: #3A5754;
+      --c-red: #FFA39E;
+      --c-redBg: #604245;
+      --c-line: #667679;
+      --c-lineSoft: #4A5B5E;
     }
-    .dark-mode body { background: var(--c-paper); }
+    .dark-mode body { background: var(--c-paper); color: var(--c-ink); }
     .dark-mode .busca-liquid-glass {
-      background: rgba(74, 91, 94, 0.56) !important;
-      border-color: rgba(255,255,255,0.16) !important;
+      background: rgba(74, 92, 95, 0.72) !important;
+      border-color: rgba(255,255,255,0.20) !important;
       box-shadow:
-        0 8px 28px rgba(7, 24, 25, 0.16),
-        inset 0 1px 0 rgba(255,255,255,0.14) !important;
+        0 8px 28px rgba(7, 24, 25, 0.14),
+        inset 0 1px 0 rgba(255,255,255,0.15) !important;
       backdrop-filter: blur(20px) saturate(1.35) !important;
       -webkit-backdrop-filter: blur(20px) saturate(1.35) !important;
     }
     .dark-mode input,
     .dark-mode textarea,
     .dark-mode select {
-      background-color: rgba(71, 85, 88, 0.78) !important;
-      color: #F1FAF9 !important;
-      border-color: rgba(255,255,255,0.16) !important;
+      background-color: rgba(82, 101, 104, 0.92) !important;
+      color: #FFFFFF !important;
+      border-color: rgba(255,255,255,0.22) !important;
     }
     .dark-mode input::placeholder,
-    .dark-mode textarea::placeholder { color: #AFC0BE !important; }
-    .dark-mode table tbody tr { border-color: rgba(255,255,255,0.08); }
+    .dark-mode textarea::placeholder { color: #D1DBDA !important; opacity: .86; }
+    .dark-mode table tbody tr { border-color: rgba(255,255,255,0.10); }
+    .dark-mode .aba-item {
+      background: rgba(71, 88, 91, 0.88) !important;
+      color: #F5FBFA !important;
+      border-color: rgba(255,255,255,0.16) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .dark-mode .aba-item span {
+      background: rgba(255,255,255,0.10) !important;
+    }
+    .dark-mode button,
+    .dark-mode th,
+    .dark-mode td,
+    .dark-mode label {
+      text-shadow: none;
+    }
+    @media (max-width: 700px) {
+      .abas-menu { grid-template-columns: repeat(5, minmax(60px, 1fr)) !important; }
+    }
     button { -webkit-tap-highlight-color: transparent; }
     /* teclado de PIN: tamanho padrão pensado pro celular (já está ótimo), e cresce em telas
        maiores (tablet/computador) pra ficar mais fácil de tocar com dedos maiores */
@@ -131,9 +149,9 @@
     body {
       margin: 0;
       padding: 0;
-      background: #FBF7FB;
+      background: var(--c-paper);
       font-family: 'Inter', -apple-system, sans-serif;
-      color: #106E6B;
+      color: var(--c-ink);
     }
   </style>
 </head>
@@ -1594,7 +1612,7 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
       }}>
         <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{ height: 80, maxWidth: '90%', objectFit: 'contain' }} />
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#106E6B', marginBottom: 4 }}>{titulo}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>{titulo}</div>
           {modo !== 'entrar' && <div style={{ fontSize: 12.5, color: '#8A5C81' }}>Vai precisar desse PIN toda vez que abrir o painel.</div>}
         </div>
 
@@ -1615,7 +1633,7 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
             <button key={d} className="pin-tecla" onClick={() => apertarDigito(d)} style={{
               borderRadius: '50%', border: '1px solid rgba(255,255,255,0.7)',
               background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-              fontWeight: 600, color: '#106E6B', cursor: 'pointer',
+              fontWeight: 600, color: COLORS.ink, cursor: 'pointer',
               WebkitTapHighlightColor: 'transparent', outline: 'none', overflow: 'hidden',
               boxShadow: '0 2px 6px rgba(16,110,107,0.08)',
             }}>{d}</button>
@@ -1624,7 +1642,7 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
           <button className="pin-tecla" onClick={() => apertarDigito('0')} style={{
             borderRadius: '50%', border: '1px solid rgba(255,255,255,0.7)',
             background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-            fontWeight: 600, color: '#106E6B', cursor: 'pointer',
+            fontWeight: 600, color: COLORS.ink, cursor: 'pointer',
             WebkitTapHighlightColor: 'transparent', outline: 'none', overflow: 'hidden',
             boxShadow: '0 2px 6px rgba(16,110,107,0.08)',
           }}>0</button>
@@ -1734,7 +1752,7 @@ function ModalConfigIA({ chaveAtual, onSalvar, onFechar }) {
   return ReactDOM.createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 16 }}>
       <div style={{ background: '#FFFDFB', borderRadius: 14, padding: '28px 24px', maxWidth: 380, width: 'min(380px, 92vw)' }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#106E6B', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}><IconeGemini size={20} /> Configurar Assistente de IA</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: COLORS.ink, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}><IconeGemini size={20} /> Configurar Assistente de IA</div>
         <div style={{ fontSize: 12.5, color: '#8A5C81', marginBottom: 14, lineHeight: 1.5 }}>
           Cole aqui sua chave da API do Google Gemini (console.cloud.google.com ou aistudio.google.com/apikey). Ela fica salva só neste navegador — nunca é enviada pra mim ou escrita no arquivo.
         </div>
@@ -1919,7 +1937,7 @@ function AssistenteIA({ temChave, onAbrirConfig, onFechar, chamarIA, montarConte
         onTouchStart={aoPressionarHeader}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: '1px solid rgba(255,255,255,0.4)', cursor: 'grab', touchAction: 'none' }}
       >
-        <div style={{ fontWeight: 700, color: '#106E6B', fontSize: 14, display: 'flex', alignItems: 'center', gap: 7 }}><IconeGemini size={19} /> Assistente de IA</div>
+        <div style={{ fontWeight: 700, color: COLORS.ink, fontSize: 14, display: 'flex', alignItems: 'center', gap: 7 }}><IconeGemini size={19} /> Assistente de IA</div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={onAbrirConfig} title="Configurar chave da API" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8A5C81', fontSize: 11.5 }}>⚙️</button>
           <button onClick={onFechar} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><X size={17} color="#8A5C81" /></button>
@@ -2068,7 +2086,7 @@ function ModalAlterarPin({ pinAtual, onFechar, onSalvar }) {
         textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
         fontFamily: 'Inter, -apple-system, sans-serif', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box',
       }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#106E6B' }}>🔒 {titulo}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.ink }}>🔒 {titulo}</div>
         {!sucesso && (
           <>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center' }}>
@@ -2081,13 +2099,13 @@ function ModalAlterarPin({ pinAtual, onFechar, onSalvar }) {
               {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
                 <button key={d} onClick={() => apertar(d)} style={{
                   aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
-                  fontWeight: 600, fontSize: 18, color: '#106E6B', cursor: 'pointer', boxSizing: 'border-box',
+                  fontWeight: 600, fontSize: 18, color: COLORS.ink, cursor: 'pointer', boxSizing: 'border-box',
                 }}>{d}</button>
               ))}
               <div />
               <button onClick={() => apertar('0')} style={{
                 aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
-                fontWeight: 600, fontSize: 18, color: '#106E6B', cursor: 'pointer', boxSizing: 'border-box',
+                fontWeight: 600, fontSize: 18, color: COLORS.ink, cursor: 'pointer', boxSizing: 'border-box',
               }}>0</button>
               <button onClick={apagar} style={{
                 aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: 'none', background: 'none',
@@ -2590,7 +2608,7 @@ function Recibos({ chamarIA }) {
             background: COLORS.paperCard, borderRadius: 14, padding: 22, width: 420, maxWidth: '100%',
             maxHeight: '80vh', overflowY: 'auto', display: 'grid', gap: 14,
           }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#14312E' }}>Exportar recibos</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: COLORS.ink }}>Exportar recibos</div>
             <div style={{ fontSize: 12.5, color: COLORS.inkSoft }}>
               Marque quais empresas você quer incluir — sai tudo num único PDF, cada empresa numa folha A4 própria.
             </div>
@@ -2611,7 +2629,7 @@ function Recibos({ chamarIA }) {
                   <input type="checkbox" checked={!!empresasSelecionadas[c.key]}
                     onChange={e => setEmpresasSelecionadas(s => ({ ...s, [c.key]: e.target.checked }))}
                     style={{ width: 17, height: 17, cursor: 'pointer', flexShrink: 0 }} />
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#14312E' }}>{c.label}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: COLORS.ink }}>{c.label}</div>
                   <div style={{ fontSize: 11, color: COLORS.inkSoft, marginLeft: 'auto' }}>{dados[c.key].rows.length} criança(s)</div>
                 </label>
               ))}
@@ -2712,7 +2730,7 @@ function Recibos({ chamarIA }) {
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
                       padding: '9px 10px', cursor: 'pointer', background: aberta ? COLORS.goldSoft : 'transparent',
                     }}>
-                      <div style={{ fontSize: 12.5, color: '#14312E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 12.5, color: COLORS.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {row.pai || '(sem nome)'} → {row.crianca || '(sem criança)'}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
@@ -3444,7 +3462,7 @@ function Compras({ chamarIA }) {
               border: `1px solid ${COLORS.line}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
               width: 'min(280px, 92vw)', maxHeight: 320, overflowY: 'auto', padding: 10,
             }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#14312E', marginBottom: 8 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 8 }}>
                 🗑️ Itens apagados <span style={{ fontWeight: 500, color: COLORS.inkSoft, fontSize: 11 }}>(30 dias)</span>
               </div>
               {lixeiraCompras.length === 0 ? (
@@ -3453,7 +3471,7 @@ function Compras({ chamarIA }) {
                 <div style={{ display: 'grid', gap: 6 }}>
                   {[...lixeiraCompras].reverse().map(l => (
                     <div key={l.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 9px' }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#14312E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.item.nome}</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.item.nome}</div>
                       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                         <button onClick={() => restaurarItemCompras(l.id)} title="Restaurar" style={{ background: COLORS.green, border: 'none', borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
                           <RotateCcw size={16} color="#FFFFFF" />
@@ -3494,7 +3512,7 @@ function Compras({ chamarIA }) {
         </div>
         <div style={{ display: 'grid', gap: 4, flex: '1 1 75px' }}>
           <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>UNIDADE</label>
-          <select value={novoItem.unidade} onChange={e => setNovoItem({ ...novoItem, unidade: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box', background: COLORS.paperCard, color: '#14312E' }}>
+          <select value={novoItem.unidade} onChange={e => setNovoItem({ ...novoItem, unidade: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box', background: COLORS.paperCard, color: COLORS.ink }}>
             <option value="">— nenhuma —</option>
             {unidadesDisponiveis.map(u => <option key={u} value={u}>{u}</option>)}
           </select>
@@ -3506,7 +3524,7 @@ function Compras({ chamarIA }) {
         {opcoesCategoria.length > 0 && (
           <div style={{ display: 'grid', gap: 4, flex: '1 1 130px' }}>
             <label style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CATEGORIA</label>
-            <select value={novoItem.categoria || opcoesCategoria[0]} onChange={e => setNovoItem({ ...novoItem, categoria: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box', background: COLORS.paperCard, color: '#14312E' }}>
+            <select value={novoItem.categoria || opcoesCategoria[0]} onChange={e => setNovoItem({ ...novoItem, categoria: e.target.value })} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, boxSizing: 'border-box', background: COLORS.paperCard, color: COLORS.ink }}>
               {opcoesCategoria.map(c => <option key={c} value={c}>{CATEGORIA_DISPLAY[c] || c}</option>)}
             </select>
           </div>
@@ -3518,7 +3536,7 @@ function Compras({ chamarIA }) {
 
       {gruposParaExibir.map(({ nome: nomeGrupo, itens: itensDoGrupo }) => (
         <div key={nomeGrupo} style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ padding: '11px 18px', background: COLORS.goldSoft, fontSize: 13, fontWeight: 700, color: '#14312E' }}>
+          <div style={{ padding: '11px 18px', background: COLORS.goldSoft, fontSize: 13, fontWeight: 700, color: COLORS.ink }}>
             {nomeGrupo} ({itensDoGrupo.length})
           </div>
           <div className="compras-linha" style={{ display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '9px 18px', background: COLORS.lineSoft, fontSize: 11, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
@@ -3553,7 +3571,7 @@ function Compras({ chamarIA }) {
                   )}
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input value={editItem.comprar} onChange={e => setEditItem({ ...editItem, comprar: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoItem(item.id); if (e.key === 'Escape') setEditandoId(null); }} placeholder="Qtd" className="mono" style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', width: 70 }} />
-                    <select value={editItem.unidade} onChange={e => setEditItem({ ...editItem, unidade: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoItem(item.id); if (e.key === 'Escape') setEditandoId(null); }} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', background: COLORS.paperCard, color: '#14312E', flex: 1 }}>
+                    <select value={editItem.unidade} onChange={e => setEditItem({ ...editItem, unidade: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoItem(item.id); if (e.key === 'Escape') setEditandoId(null); }} style={{ border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', background: COLORS.paperCard, color: COLORS.ink, flex: 1 }}>
                       <option value="">— nenhuma —</option>
                       {unidadesDisponiveis.map(u => <option key={u} value={u}>{u}</option>)}
                     </select>
@@ -3566,7 +3584,7 @@ function Compras({ chamarIA }) {
               ) : (
                 <>
                   <div>
-                    <span style={{ fontWeight: 600, color: '#14312E', fontSize: 13.5 }}>{item.nome}</span>
+                    <span style={{ fontWeight: 600, color: COLORS.ink, fontSize: 13.5 }}>{item.nome}</span>
                     {item.observacao && <div style={{ fontSize: 11, color: COLORS.inkSoft }}>{item.observacao}</div>}
                   </div>
                   {temColunaEstoque && (
@@ -4166,7 +4184,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
         <button onClick={() => setReajusteAberto(v => !v)} style={{
           width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '11px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
-          fontSize: 12.5, fontWeight: 700, color: '#14312E',
+          fontSize: 12.5, fontWeight: 700, color: COLORS.ink,
         }}>
           <span>📈 Aplicar reajuste em massa (%)</span>
           <ChevronDown size={16} style={{ transform: reajusteAberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
@@ -4178,7 +4196,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               {ordemGrupos.map(grupoKey => (
-                <label key={grupoKey} className="busca-liquid-glass" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#14312E', cursor: 'pointer', padding: '6px 12px', borderRadius: 20 }}>
+                <label key={grupoKey} className="busca-liquid-glass" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: COLORS.ink, cursor: 'pointer', padding: '6px 12px', borderRadius: 20 }}>
                   <input type="checkbox" checked={!!reajusteSelecionados[grupoKey]} onChange={() => alternarSelecaoReajuste(grupoKey)} />
                   {dados[grupoKey].nome}
                 </label>
@@ -4205,7 +4223,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
         return (
           <div key={grupoKey} style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '16px 20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#14312E' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink }}>
                 {grupoKey === 'particular' ? '💰' : '🤝'} {grupo.nome}
               </div>
               {grupoKey !== 'particular' && (
@@ -4282,7 +4300,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
       {/* CASOS ESPECIAIS — famílias com desconto de irmãos combinado de um jeito diferente
           do padrão (cada família negociou um valor próprio, não é uma regra geral) */}
       <div style={{ marginTop: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#14312E', marginBottom: 4 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
           👨‍👩‍👧‍👦 Descontos de irmãos e casos especiais
         </div>
         <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 12 }}>
@@ -4303,7 +4321,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
                     </button>
                   </>
                 ) : (
-                  <div onClick={() => iniciarEdicaoNomeCaso(casoIdx, caso.nome)} style={{ fontSize: 13.5, fontWeight: 700, color: '#14312E', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div onClick={() => iniciarEdicaoNomeCaso(casoIdx, caso.nome)} style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                     {caso.nome}
                     <Pencil size={11} style={{ opacity: 0.4 }} />
                   </div>
@@ -4351,7 +4369,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
           nenhum convênio (ex: mensalidade parcial, valor combinado avulso). É a mesma lista
           que aparece no menu "Escolher valor" ao lançar mensalidades. */}
       <div style={{ marginTop: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#14312E', marginBottom: 4 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
           🏷️ Valores avulsos / especiais
         </div>
         <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 12 }}>
@@ -4386,7 +4404,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
                   </>
                 ) : (
                   <>
-                    <span onClick={() => iniciarEdicaoAvulso(idx)} className="mono" style={{ fontSize: 13, fontWeight: 700, color: '#14312E', cursor: 'pointer' }}>
+                    <span onClick={() => iniciarEdicaoAvulso(idx)} className="mono" style={{ fontSize: 13, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' }}>
                       {rotuloPreset(p)}
                     </span>
                     <button onClick={() => iniciarEdicaoAvulso(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4, display: 'flex' }}>
@@ -4422,7 +4440,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
       {/* CAPACIDADE MÁXIMA — usado pra calcular a Taxa de Ocupação na Visão geral
           (alunos matriculados ÷ capacidade máxima) */}
       <div style={{ marginTop: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#14312E', marginBottom: 4 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
           🏫 Capacidade Máxima da Escola
         </div>
         <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 10 }}>
@@ -4443,7 +4461,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
       {/* CALENDÁRIO LETIVO — nº de dias letivos de cada mês, usado em Mensalidades pra
           calcular a mensalidade proporcional de quem entra ou sai no meio do mês */}
       <div style={{ marginTop: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#14312E', marginBottom: 4 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
           📅 Calendário letivo
         </div>
         <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 12 }}>
@@ -4478,7 +4496,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
           representa N alunos. Usado pra contar certo nos Indicadores da Visão geral (ponto
           de equilíbrio e custo por aluno), sem precisar lançar aluno por aluno. */}
       <div style={{ marginTop: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#14312E', marginBottom: 4 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
           🏫 Convênios com várias vagas
         </div>
         <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 12 }}>
@@ -4522,7 +4540,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
                 ) : (
                   <>
                     <div style={{ flex: '1 1 auto' }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: '#14312E' }}>{item.nome}</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.ink }}>{item.nome}</div>
                       <div className="mono" style={{ fontSize: 12, color: COLORS.inkSoft }}>
                         {item.vagasPreenchidas} de {item.vagasTotais} vagas preenchidas · {formatBRL(item.valorPorAluno)}/aluno · total atual: {formatBRL(item.vagasPreenchidas * item.valorPorAluno)}
                       </div>
@@ -4580,7 +4598,7 @@ function Valores({ modoPrivado, setModoPrivado }) {
           mesmas já lançadas em Lançamentos) contam pra calcular o custo por criança de
           alimentação e de água/energia, mostrado nos Indicadores da Visão geral */}
       <div style={{ marginTop: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#14312E', marginBottom: 4 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.ink, marginBottom: 4 }}>
           🍽️ Categorias de Alimentação e Água/Energia
         </div>
         <div style={{ fontSize: 12, color: COLORS.inkSoft, marginBottom: 12 }}>
@@ -4593,10 +4611,10 @@ function Valores({ modoPrivado, setModoPrivado }) {
         ) : (
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 260px', background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 8, padding: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#14312E', marginBottom: 6 }}>🥦 Alimentação</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.ink, marginBottom: 6 }}>🥦 Alimentação</div>
               <div style={{ display: 'grid', gap: 5, maxHeight: 220, overflowY: 'auto' }}>
                 {categoriasDespesaDisponiveis.map(cat => (
-                  <label key={cat.chave} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: '#14312E', cursor: 'pointer' }}>
+                  <label key={cat.chave} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: COLORS.ink, cursor: 'pointer' }}>
                     <input type="checkbox" checked={categoriasAlimentacao.includes(cat.chave)} onChange={() => alternarCategoriaAlimentacao(cat.chave)}
                       style={{ width: 14, height: 14, cursor: 'pointer' }} />
                     {cat.rotulo}
@@ -4605,10 +4623,10 @@ function Valores({ modoPrivado, setModoPrivado }) {
               </div>
             </div>
             <div style={{ flex: '1 1 260px', background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 8, padding: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#14312E', marginBottom: 6 }}>💧 Água / Energia</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.ink, marginBottom: 6 }}>💧 Água / Energia</div>
               <div style={{ display: 'grid', gap: 5, maxHeight: 220, overflowY: 'auto' }}>
                 {categoriasDespesaDisponiveis.map(cat => (
-                  <label key={cat.chave} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: '#14312E', cursor: 'pointer' }}>
+                  <label key={cat.chave} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: COLORS.ink, cursor: 'pointer' }}>
                     <input type="checkbox" checked={categoriasAgua.includes(cat.chave)} onChange={() => alternarCategoriaAgua(cat.chave)}
                       style={{ width: 14, height: 14, cursor: 'pointer' }} />
                     {cat.rotulo}
@@ -4874,14 +4892,14 @@ function Anotacoes({ chamarIA }) {
       <Toast mensagem={toastMsg} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: '#14312E' }}>📝 Anotações internas</div>
+          <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: COLORS.ink }}>📝 Anotações internas</div>
           <div style={{ fontSize: 12.5, color: COLORS.inkSoft }}>
             Espaço livre pra guardar o que quiser — contatos de e-mail, textos prontos, observações sobre um aluno, etc. Só a direção vê isso; não aparece em recibo nem em nota.
           </div>
         </div>
         <button onClick={() => setOcultarAnotacoes(v => !v)} title={ocultarAnotacoes ? 'Mostrar anotações' : 'Esconder anotações (privacidade)'} style={{
           background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 12px',
-          fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, color: '#14312E',
+          fontWeight: 600, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, color: COLORS.ink,
         }}>
           {ocultarAnotacoes ? <EyeOff size={15} /> : <Eye size={15} />} {ocultarAnotacoes ? 'Ocultas' : 'Visíveis'}
         </button>
@@ -4897,7 +4915,7 @@ function Anotacoes({ chamarIA }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <label style={{ fontSize: 12, color: COLORS.inkSoft, fontWeight: 600 }}>Filtrar por categoria:</label>
           <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)} style={{
-            border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '6px 9px', fontSize: 12.5, background: COLORS.paperCard, color: '#14312E',
+            border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '6px 9px', fontSize: 12.5, background: COLORS.paperCard, color: COLORS.ink,
           }}>
             <option value="TODAS">Todas</option>
             {CATEGORIAS_ANOTACAO.map(c => <option key={c} value={c}>{c}</option>)}
@@ -4933,11 +4951,11 @@ function Anotacoes({ chamarIA }) {
                   onChange={e => setTituloEdit(e.target.value)}
                   onBlur={() => salvarTitulo(b.id)}
                   onKeyDown={e => { if (e.key === 'Enter') salvarTitulo(b.id); }}
-                  style={{ flex: '1 1 auto', minWidth: 100, border: `1px solid ${COLORS.gold}`, borderRadius: 6, padding: '7px 9px', fontSize: 15, fontWeight: 700, color: '#14312E', boxSizing: 'border-box' }}
+                  style={{ flex: '1 1 auto', minWidth: 100, border: `1px solid ${COLORS.gold}`, borderRadius: 6, padding: '7px 9px', fontSize: 15, fontWeight: 700, color: COLORS.ink, boxSizing: 'border-box' }}
                 />
               ) : (
                 <div onClick={() => !ocultarAnotacoes && iniciarEdicaoTitulo(b)} title={ocultarAnotacoes ? '' : 'Clique pra renomear'} style={{
-                  fontSize: 15, fontWeight: 700, color: '#14312E', cursor: ocultarAnotacoes ? 'default' : 'pointer', flex: '1 1 auto', minWidth: 60,
+                  fontSize: 15, fontWeight: 700, color: COLORS.ink, cursor: ocultarAnotacoes ? 'default' : 'pointer', flex: '1 1 auto', minWidth: 60,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {ocultarAnotacoes ? '••••••••••' : b.titulo}
@@ -5052,7 +5070,7 @@ function Anotacoes({ chamarIA }) {
                       spellCheck="true" lang="pt-BR"
                       style={{
                         width: '100%', minHeight: alturaMin, border: `1px solid ${COLORS.line}`, borderRadius: 7,
-                        padding: 10, fontSize: 13, fontFamily: 'Inter, sans-serif', color: '#14312E',
+                        padding: 10, fontSize: 13, fontFamily: 'Inter, sans-serif', color: COLORS.ink,
                         resize: 'vertical', boxSizing: 'border-box', background: COLORS.paper,
                       }}
                     />
@@ -5094,7 +5112,7 @@ function Anotacoes({ chamarIA }) {
                         spellCheck="true" lang="pt-BR"
                         style={{
                           flex: '1 1 auto', minHeight: 0, width: '100%', border: `1px solid ${COLORS.line}`, borderRadius: 7,
-                          padding: 28, fontSize: 17, lineHeight: 1.75, fontFamily: 'Inter, sans-serif', color: '#14312E',
+                          padding: 28, fontSize: 17, lineHeight: 1.75, fontFamily: 'Inter, sans-serif', color: COLORS.ink,
                           resize: 'none', boxSizing: 'border-box', background: COLORS.paper,
                         }}
                       />
@@ -5148,6 +5166,13 @@ function ContasPessoais({ chamarIA }) {
   const MESES_CP = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const ABREV_CP = {JANEIRO:'Jan',FEVEREIRO:'Fev','MARÇO':'Mar',ABRIL:'Abr',MAIO:'Mai',JUNHO:'Jun',JULHO:'Jul',AGOSTO:'Ago',SETEMBRO:'Set',OUTUBRO:'Out',NOVEMBRO:'Nov',DEZEMBRO:'Dez'};
   const CONTAS_PADRAO = ['SANTA CLARA','HAVAN','LUZ CASA','CONDOMÍNIO','ALUGUEL','TACCHIMED','INTERNET','VIVO','ICATU','PILATES','NETFLIX','SICREDI CARTÃO','C6 BANK','ITAÚ CARTÃO VISA INFINIT','ITAÚ MASTER CARD'];
+  const PALETA_CP = [
+    { cor:'#1C9E8F', bg:'rgba(28,158,143,.11)' },
+    { cor:'#C15CA0', bg:'rgba(193,92,160,.10)' },
+    { cor:'#3E7ACC', bg:'rgba(62,122,204,.10)' },
+    { cor:'#B87A1A', bg:'rgba(184,122,26,.11)' },
+    { cor:'#6B4FC4', bg:'rgba(107,79,196,.10)' },
+  ];
   const [contas, setContas] = useState(null);
   const [novaConta, setNovaConta] = useState('');
   const [perguntaIA, setPerguntaIA] = useState('');
@@ -5264,23 +5289,29 @@ function ContasPessoais({ chamarIA }) {
   }
 
   if (!contas) return <div style={{padding:40,textAlign:'center',color:COLORS.inkSoft}}>Carregando contas pessoais...</div>;
-  const glass = { background:'rgba(255,255,255,0.62)', backdropFilter:'blur(18px) saturate(150%)', WebkitBackdropFilter:'blur(18px) saturate(150%)', border:'1px solid rgba(16,110,107,0.16)', boxShadow:'0 10px 30px rgba(31,59,54,0.08)' };
+  const glass = { background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)', backdropFilter:'blur(18px) saturate(150%)', WebkitBackdropFilter:'blur(18px) saturate(150%)', border:'1px solid color-mix(in srgb, var(--c-line) 72%, transparent)', boxShadow:'0 10px 30px rgba(31,59,54,0.08)' };
   return <div style={{display:'grid',gap:18}}>
     <div className="busca-liquid-glass" style={{...glass,borderRadius:18,padding:'18px 18px 14px'}}>
       <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center',flexWrap:'wrap',marginBottom:14}}>
         <div><div className="serif" style={{fontSize:20,fontWeight:700,color:COLORS.ink}}>👤 Contas Pessoais</div><div style={{fontSize:12.5,color:COLORS.inkSoft}}>Janeiro a dezembro. Esta aba não interfere nos cálculos da escola.</div></div>
         <div style={{display:'flex',gap:8}}><input value={novaConta} onChange={e=>setNovaConta(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')adicionarConta();}} placeholder="Nova conta" style={{border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 11px',minWidth:180}}/><button onClick={adicionarConta} className="busca-liquid-glass" style={{border:'1px solid #1C9E8F55',background:COLORS.greenBg,color:COLORS.ink,borderRadius:12,padding:'9px 13px',fontWeight:700,cursor:'pointer'}}><Plus size={14}/> Adicionar</button></div>
       </div>
-      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1350,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:12}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map(c=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);return <tr key={c.id} className="busca-liquid-glass" style={{background:'color-mix(in srgb, var(--c-greenBg) 45%, transparent)'}}><td style={{padding:'6px 10px',fontWeight:650,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input defaultValue={formatBRLNumber(c.valores?.[m]||0)} onBlur={e=>alterarValor(c.id,m,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:11.5}}/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={()=>renomear(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={()=>remover(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
+      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1350,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:12}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map((c,i)=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);const p=PALETA_CP[i%PALETA_CP.length];return <tr key={c.id} className="busca-liquid-glass" style={{background:p.bg,borderLeft:`3px solid ${p.cor}`}}><td style={{padding:'6px 10px',fontWeight:650,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input defaultValue={formatBRLNumber(c.valores?.[m]||0)} onBlur={e=>alterarValor(c.id,m,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:11.5}}/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={()=>renomear(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={()=>remover(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:12}}>
-      {[['Total geral',totalGeral,'Soma dos 12 meses'],['Média mensal',mediaMensal,'Total ÷ 12'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—']].map(([l,v,s],i)=><div key={l} className="busca-liquid-glass" style={{...glass,borderRadius:16,padding:'14px 16px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:20,fontWeight:800,color:i===0?'#106E6B':'#3E7ACC',marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
+      {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,s,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
     </div>
-    <div className="busca-liquid-glass" style={{...glass,borderRadius:18,padding:16}}>
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}><span style={{fontSize:18}}>✨</span><div><div style={{fontWeight:800,color:'#14312E'}}>Assistente IA das Contas Pessoais</div><div style={{fontSize:11.5,color:COLORS.inkSoft}}>Digite ou dite. A IA entende e preenche os valores automaticamente.</div></div></div>
-      <div style={{display:'flex',gap:8,alignItems:'stretch',flexWrap:'wrap'}}><textarea value={perguntaIA} onChange={e=>setPerguntaIA(e.target.value)} placeholder='Ex.: “Aluguel janeiro 1800, internet 120 e Vivo 99,90.”' style={{flex:'1 1 420px',minHeight:78,border:`1px solid ${COLORS.line}`,borderRadius:14,padding:'11px 12px',resize:'vertical',background:'color-mix(in srgb, var(--c-paperCard) 75%, transparent)'}}/><button onClick={alternarVoz} className="busca-liquid-glass" title="Ditar comando" style={{minWidth:120,border:'1px solid #C15CA055',borderRadius:14,background:gravando?'#F8E4F1':'rgba(255,255,255,.72)',color:'#C15CA0',fontWeight:800,cursor:'pointer',padding:'10px 14px'}}><Mic size={16}/> {gravando?'Ouvindo...':'Ditar'}</button><button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass" style={{minWidth:150,border:'none',borderRadius:14,background:'linear-gradient(135deg,#1C9E8F,#106E6B)',color:'#fff',fontWeight:800,cursor:processandoIA?'default':'pointer',padding:'10px 16px'}}>{processandoIA?'Analisando...':'✨ Preencher com IA'}</button></div>
-      {respostaIA && <div style={{marginTop:10,padding:'9px 12px',borderRadius:12,background:COLORS.greenBg,color:'#14312E',fontSize:12.5}}>{respostaIA}</div>}
-      <div style={{fontSize:11.5,color:COLORS.inkSoft,marginTop:8}}>Exemplos de voz: “Coloque aluguel 1800 de janeiro a dezembro” · “Em setembro, Havan 350 e Internet 120” · “Sicredi cartão outubro 980”.</div>
+    <div className="busca-liquid-glass" style={{...glass,borderRadius:16,padding:'10px 12px',borderLeft:'4px solid #C15CA0'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:7,flexWrap:'wrap'}}>
+        <div style={{display:'flex',alignItems:'center',gap:7}}><span style={{fontSize:16}}>✨</span><div><div style={{fontWeight:800,fontSize:13,color:COLORS.ink}}>Assistente IA</div><div style={{fontSize:10.5,color:COLORS.inkSoft}}>Digite ou use a voz para preencher as contas.</div></div></div>
+        <button onClick={alternarVoz} className="busca-liquid-glass" title="Ditar comando" style={{height:34,border:'1px solid #C15CA055',borderRadius:12,background:gravando?'rgba(193,92,160,.18)':'color-mix(in srgb, var(--c-paperCard) 70%, transparent)',color:'#C15CA0',fontWeight:800,cursor:'pointer',padding:'6px 10px',display:'flex',alignItems:'center',gap:5}}><Mic size={14}/> {gravando?'Ouvindo...':'Voz'}</button>
+      </div>
+      <div style={{display:'flex',gap:7,alignItems:'center',flexWrap:'wrap'}}>
+        <textarea value={perguntaIA} onChange={e=>setPerguntaIA(e.target.value)} placeholder='Ex.: “Aluguel 1800 em todos os meses.”' style={{flex:'1 1 480px',minHeight:42,maxHeight:72,border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 10px',resize:'vertical',background:'color-mix(in srgb, var(--c-paperCard) 75%, transparent)',fontSize:12}}/>
+        <button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass" style={{height:42,minWidth:138,border:'none',borderRadius:12,background:'linear-gradient(135deg,#C15CA0,#6B4FC4)',color:'#fff',fontWeight:800,cursor:processandoIA?'default':'pointer',padding:'8px 14px'}}>{processandoIA?'Analisando...':'✨ Preencher com IA'}</button>
+      </div>
+      {respostaIA && <div style={{marginTop:7,padding:'7px 10px',borderRadius:10,background:'rgba(28,158,143,.12)',color:COLORS.ink,fontSize:11.5}}>{respostaIA}</div>}
+      <div style={{fontSize:10.5,color:COLORS.inkSoft,marginTop:6}}>Ex.: “Aluguel 1800 de janeiro a dezembro” · “Setembro Havan 350 e Internet 120”.</div>
     </div>
   </div>;
 }
@@ -5463,7 +5494,7 @@ function Arquivos() {
       <Toast mensagem={toastMsg} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: '#14312E' }}>🖼️ Arquivos</div>
+          <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: COLORS.ink }}>🖼️ Arquivos</div>
           <div style={{ fontSize: 12.5, color: COLORS.inkSoft }}>
             Guarde PDFs e fotos de documentos aqui — comprovantes soltos, papéis escaneados, o que precisar. Separado das Anotações, só pra arquivo.
           </div>
@@ -5497,7 +5528,7 @@ function Arquivos() {
                   />
                 ) : (
                   <div onClick={() => iniciarEdicaoTitulo(item)} title="Clique pra renomear" style={{
-                    fontSize: 13.5, fontWeight: 700, color: '#14312E', cursor: 'text', flex: '1 1 auto', minWidth: 0,
+                    fontSize: 13.5, fontWeight: 700, color: COLORS.ink, cursor: 'text', flex: '1 1 auto', minWidth: 0,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     {item.titulo}
@@ -6663,7 +6694,7 @@ ${textoCompras}`;
 
   if (loading || pinConfigurado === null) {
     return (
-      <div style={{ background: COLORS.paper, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#14312E', gap: 18, padding: 20, textAlign: 'center' }}>
+      <div style={{ background: COLORS.paper, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: COLORS.ink, gap: 18, padding: 20, textAlign: 'center' }}>
         <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{ height: 90, maxWidth: '90%', objectFit: 'contain' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
@@ -6695,7 +6726,7 @@ ${textoCompras}`;
   return (
     <div className={`painel-raiz${temaEscuro ? ' dark-mode' : ''}`} style={{
       background: COLORS.paper, minHeight: '108.7vh', width: '108.7%',
-      fontFamily: 'Inter, -apple-system, sans-serif', color: '#14312E',
+      fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink,
       transform: 'scale(0.92)', transformOrigin: 'top left',
     }}>
       <style>{`
@@ -6774,7 +6805,7 @@ ${textoCompras}`;
           background: COLORS.goldSoft, borderBottom: `1px solid ${COLORS.gold}55`,
           padding: '9px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: 12.5, color: '#14312E' }}>
+          <span style={{ fontSize: 12.5, color: COLORS.ink }}>
             💾 Lembrete: já faz um tempinho desde o seu último backup? É bom manter uma cópia atualizada.
           </span>
           <button onClick={() => { exportarBackup(); setMostrarLembreteBackup(false); }} style={{
@@ -6799,7 +6830,7 @@ ${textoCompras}`;
               <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 3, boxSizing: 'border-box' }} />
             </div>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#14312E', lineHeight: 1.15 }}>Tempo de Brincar</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.ink, lineHeight: 1.15 }}>Tempo de Brincar</div>
               <div style={{ fontSize: 11, color: COLORS.inkSoft }}>Painel financeiro</div>
             </div>
             {statusPlanilha && (
@@ -6848,7 +6879,7 @@ ${textoCompras}`;
                 className="busca-liquid-glass"
                 style={{
                   width: '100%', boxSizing: 'border-box', border: 'none', borderRadius: 999,
-                  padding: '10px 14px 10px 38px', fontSize: 13, color: '#14312E', position: 'relative',
+                  padding: '10px 14px 10px 38px', fontSize: 13, color: COLORS.ink, position: 'relative',
                 }}
               />
               {buscaGlobalAberta && buscaGlobal.trim() && (
@@ -6859,7 +6890,7 @@ ${textoCompras}`;
                 }}>
                   {resultadosBuscaGlobal.map((res, i) => (
                     <div key={i} onClick={() => irParaResultadoBusca(res)} style={{
-                      padding: '9px 12px', cursor: 'pointer', fontSize: 13, color: '#14312E',
+                      padding: '9px 12px', cursor: 'pointer', fontSize: 13, color: COLORS.ink,
                       borderTop: i > 0 ? `1px solid ${COLORS.lineSoft}` : 'none',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
                     }}>
@@ -6989,7 +7020,7 @@ ${textoCompras}`;
                     border: `1px solid ${COLORS.line}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                     width: 'min(320px, 92vw)', maxHeight: 360, overflowY: 'auto', padding: 10,
                   }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#14312E', marginBottom: 8 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 8 }}>
                       🗑️ Lixeira temporária <span style={{ fontWeight: 500, color: COLORS.inkSoft, fontSize: 11 }}>(some sozinho depois de 30 dias)</span>
                     </div>
                     {lixeira.length === 0 ? (
@@ -7002,7 +7033,7 @@ ${textoCompras}`;
                             background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 9px',
                           }}>
                             <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#14312E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.rotulo}</div>
+                              <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.rotulo}</div>
                               <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
                                 apagado em {new Date(item.apagadoEm).toLocaleDateString('pt-BR')}
                                 {item.dados.valor != null && <> · {formatBRL(item.dados.valor)}</>}
@@ -7084,8 +7115,8 @@ ${textoCompras}`;
           <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 12 }}>
             {/* TABS EM CARTÕES */}
             <div className="abas-menu" style={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(84px, 1fr))', gap: 8,
-              width: '100%', maxWidth: 900, marginTop: 4,
+              display: 'grid', gridTemplateColumns: 'repeat(10, minmax(68px, 1fr))', gap: 8,
+              width: '100%', maxWidth: 1040, marginTop: 4,
             }}>
               {[
                 ['visao', 'Visão geral', IconePizza, '#106E6B', '#DEF5F1'],
@@ -7097,7 +7128,7 @@ ${textoCompras}`;
                 ['valores', 'Valores', Tag, '#1C9E8F', '#DEF5F1'],
                 ['anotacoes', 'Anotações', NotebookText, '#B87A1A', '#FCEFDD'],
                 ['arquivos', 'Arquivos', ImageIcon, '#5B8DEF', '#E7EEFC'],
-                ['contasPessoais', 'Contas Pessoais', Wallet, '#1C9E8F', '#DEF5F1'],
+                ['contasPessoais', 'Contas Pessoais', Wallet, '#C15CA0', '#F8E4F1'],
               ].map(([key, label, Icone, cor, corFundo]) => {
                 const ativo = tab === key;
                 return (
@@ -7122,7 +7153,7 @@ ${textoCompras}`;
                     }}>
                       <Icone size={16} color={cor} />
                     </span>
-                    <span style={{ fontSize: 10.5, fontWeight: 700, color: '#14312E', textAlign: 'center', lineHeight: 1.15, whiteSpace: 'nowrap' }}>{label}</span>
+                    <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.ink, textAlign: 'center', lineHeight: 1.15, whiteSpace: 'nowrap' }}>{label}</span>
                   </button>
                 );
               })}
@@ -7248,7 +7279,7 @@ function CardChart({ title, children, height = 200, rightHeader }) {
   return (
     <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '14px 16px', boxShadow: '0 1px 2px rgba(31,59,54,0.06)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8, flexWrap: 'wrap' }}>
-        <h3 className="serif" style={{ fontSize: 14.5, fontWeight: 600, color: '#14312E', margin: 0 }}>{title}</h3>
+        <h3 className="serif" style={{ fontSize: 14.5, fontWeight: 600, color: COLORS.ink, margin: 0 }}>{title}</h3>
         {rightHeader && <div>{rightHeader}</div>}
       </div>
       <div style={{ height, flexGrow: 1 }}>{children}</div>
@@ -7259,10 +7290,10 @@ function CardChart({ title, children, height = 200, rightHeader }) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div style={{ background: '#FFFFFF', color: '#14312E', padding: '8px 12px', borderRadius: 8, fontSize: 12, border: `1px solid ${COLORS.line}`, boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }} className="mono">
+    <div style={{ background: '#FFFFFF', color: COLORS.ink, padding: '8px 12px', borderRadius: 8, fontSize: 12, border: `1px solid ${COLORS.line}`, boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }} className="mono">
       <div style={{ marginBottom: 4, color: '#4A5A58', fontWeight: 700 }}>{label}</div>
       {payload.map((p, i) => (
-        <div key={i} style={{ color: '#14312E', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div key={i} style={{ color: COLORS.ink, display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color || '#14312E', flexShrink: 0, display: 'inline-block' }} />
           {p.name}: {formatBRL(p.value)}
         </div>
@@ -7276,10 +7307,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 const TooltipAlunos = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div style={{ background: '#FFFFFF', color: '#14312E', padding: '8px 12px', borderRadius: 8, fontSize: 12, border: `1px solid ${COLORS.line}`, boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }} className="mono">
+    <div style={{ background: '#FFFFFF', color: COLORS.ink, padding: '8px 12px', borderRadius: 8, fontSize: 12, border: `1px solid ${COLORS.line}`, boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }} className="mono">
       <div style={{ marginBottom: 4, color: '#4A5A58', fontWeight: 700 }}>{label}</div>
       {payload.map((p, i) => (
-        <div key={i} style={{ color: '#14312E', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div key={i} style={{ color: COLORS.ink, display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color || '#14312E', flexShrink: 0, display: 'inline-block' }} />
           {p.name}: {p.value == null ? '—' : p.value} aluno{p.value === 1 ? '' : 's'}
         </div>
@@ -7332,7 +7363,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
   }, [transacoes, mesAtualMeta]);
   const inputStyleMeta = {
     border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 11px', fontSize: 13.5,
-    fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: '#14312E',
+    fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink,
   };
 
   function iniciarEdicaoSaldo(mes) {
@@ -7623,7 +7654,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                <span className="mono" style={{ fontSize: 22, fontWeight: 700, color: '#14312E' }}>
+                <span className="mono" style={{ fontSize: 22, fontWeight: 700, color: COLORS.ink }}>
                   {metaLucro ? formatBRLPrivado(metaLucro, modoPrivado) : '— não definida'}
                 </span>
                 <button onClick={() => { setMetaLucroEdit(metaLucro ? formatBRLNumber(metaLucro) : ''); setEditandoMeta(true); }}
@@ -7687,7 +7718,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         }}>
           <AlertTriangle size={20} color={COLORS.gold} style={{ flexShrink: 0 }} />
           <div style={{ flex: '1 1 auto' }}>
-            <span style={{ fontWeight: 700, color: '#14312E', fontSize: 14 }}>
+            <span style={{ fontWeight: 700, color: COLORS.ink, fontSize: 14 }}>
               {alertaFixasFaltando.categorias.length === 1 ? 'Uma despesa fixa' : `${alertaFixasFaltando.categorias.length} despesas fixas`} ainda não {alertaFixasFaltando.categorias.length === 1 ? 'foi lançada' : 'foram lançadas'} em {alertaFixasFaltando.mes.charAt(0) + alertaFixasFaltando.mes.slice(1).toLowerCase()}
             </span>
             <span style={{ color: COLORS.inkSoft, fontSize: 12.5, marginLeft: 8 }}>
@@ -7704,7 +7735,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         }}>
           <AlertTriangle size={20} color={COLORS.gold} style={{ flexShrink: 0 }} />
           <div style={{ flex: '1 1 auto' }}>
-            <span style={{ fontWeight: 700, color: '#14312E', fontSize: 14 }}>
+            <span style={{ fontWeight: 700, color: COLORS.ink, fontSize: 14 }}>
               "Vagas preenchidas" desatualizada em {conveniosDesatualizados.length === 1 ? '1 convênio' : `${conveniosDesatualizados.length} convênios`}
             </span>
             <span style={{ color: COLORS.inkSoft, fontSize: 12.5, marginLeft: 8 }}>
@@ -7723,11 +7754,11 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '14px 18px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: '1 1 100%', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#14312E' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.ink }}>
               📊 Indicadores {indicadores && (indicadores.anual ? `— Ano (média de ${indicadores.qtdMeses} meses)` : `— ${indicadores.mes.charAt(0) + indicadores.mes.slice(1).toLowerCase()}`)}
             </div>
             <select value={mesIndicadores} onChange={e => setMesIndicadores(e.target.value)} style={{
-              border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '6px 9px', fontSize: 12, background: COLORS.paperCard, color: '#14312E',
+              border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '6px 9px', fontSize: 12, background: COLORS.paperCard, color: COLORS.ink,
             }}>
               <option value="AUTO">Mês mais recente</option>
               {MESES.map(m => (
@@ -7739,7 +7770,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           {indicadores && indicadores.pontoEquilibrio != null && (
             <div style={{ flex: '1 1 220px' }}>
               <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>PONTO DE EQUILÍBRIO</div>
-              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: '#14312E' }}>
+              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: COLORS.ink }}>
                 {indicadores.pontoEquilibrio} aluno{indicadores.pontoEquilibrio !== 1 ? 's' : ''} pagante{indicadores.pontoEquilibrio !== 1 ? 's' : ''}
               </div>
               <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
@@ -7750,7 +7781,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           {indicadores && indicadores.custoPorAluno != null && (
             <div style={{ flex: '1 1 220px' }}>
               <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>CUSTO POR ALUNO</div>
-              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: '#14312E' }}>
+              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: COLORS.ink }}>
                 {formatBRLPrivado(indicadores.custoPorAluno, modoPrivado)}
               </div>
               <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
@@ -7764,7 +7795,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           {indicadores && indicadores.custoAlimentacaoPorAluno != null && (
             <div style={{ flex: '1 1 220px' }}>
               <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>🥦 CUSTO DE ALIMENTAÇÃO/ALUNO</div>
-              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: '#14312E' }}>
+              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: COLORS.ink }}>
                 {formatBRLPrivado(indicadores.custoAlimentacaoPorAluno, modoPrivado)}
               </div>
               <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
@@ -7775,7 +7806,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           {indicadores && indicadores.custoAguaPorAluno != null && (
             <div style={{ flex: '1 1 220px' }}>
               <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>💧 CUSTO DE ÁGUA/ENERGIA/ALUNO</div>
-              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: '#14312E' }}>
+              <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: COLORS.ink }}>
                 {formatBRLPrivado(indicadores.custoAguaPorAluno, modoPrivado)}
               </div>
               <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
@@ -7804,7 +7835,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         <button onClick={() => setEditandoSaldos(v => !v)} style={{
           width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '11px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
-          fontSize: 12.5, fontWeight: 700, color: '#14312E',
+          fontSize: 12.5, fontWeight: 700, color: COLORS.ink,
         }}>
           <span>💰 Editar saldo em conta de cada mês (confira no extrato do banco)</span>
           <ChevronDown size={16} style={{ transform: editandoSaldos ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
@@ -7828,7 +7859,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
                     </div>
                   ) : (
                     <button onClick={() => iniciarEdicaoSaldo(mes)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: '#14312E' }}>{formatBRLPrivado(valorAtual, modoPrivado)}</span>
+                      <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.ink }}>{formatBRLPrivado(valorAtual, modoPrivado)}</span>
                       <Pencil size={11} color={COLORS.inkSoft} />
                     </button>
                   )}
@@ -7912,7 +7943,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
                 padding: '4px 8px',
                 fontSize: 11.5,
                 fontWeight: 700,
-                color: '#14312E',
+                color: COLORS.ink,
                 background: COLORS.paperCard,
                 cursor: 'pointer',
                 maxWidth: 180,
@@ -7926,11 +7957,11 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
             <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
               <div style={{ background: COLORS.goldSoft, borderRadius: 5, padding: '3px 7px', fontSize: 11 }}>
                 <span style={{ color: COLORS.inkSoft }}>Total no ano: </span>
-                <span className="mono" style={{ fontWeight: 700, color: '#14312E' }}>{formatBRLPrivado(statsCategoria.totalAno, modoPrivado)}</span>
+                <span className="mono" style={{ fontWeight: 700, color: COLORS.ink }}>{formatBRLPrivado(statsCategoria.totalAno, modoPrivado)}</span>
               </div>
               <div style={{ background: COLORS.lineSoft, borderRadius: 5, padding: '3px 7px', fontSize: 11 }}>
                 <span style={{ color: COLORS.inkSoft }}>Média/mês: </span>
-                <span className="mono" style={{ fontWeight: 700, color: '#14312E' }}>{formatBRLPrivado(statsCategoria.media, modoPrivado)}</span>
+                <span className="mono" style={{ fontWeight: 700, color: COLORS.ink }}>{formatBRLPrivado(statsCategoria.media, modoPrivado)}</span>
               </div>
               {statsCategoria.maxItem.total > 0 && (
                 <div style={{ background: COLORS.redBg, borderRadius: 5, padding: '3px 7px', fontSize: 11 }}>
@@ -8138,7 +8169,7 @@ function Lancamentos(props) {
 
   const inputStyle = {
     border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 11px', fontSize: 13.5,
-    fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: '#14312E',
+    fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink,
   };
 
   return (
@@ -8172,7 +8203,7 @@ function Lancamentos(props) {
       <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '20px 22px', boxShadow: '0 1px 2px rgba(31,59,54,0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           <Plus size={17} color={COLORS.gold} />
-          <h3 className="serif" style={{ fontSize: 16, fontWeight: 600, margin: 0, color: '#14312E' }}>Novo lançamento</h3>
+          <h3 className="serif" style={{ fontSize: 16, fontWeight: 600, margin: 0, color: COLORS.ink }}>Novo lançamento</h3>
           <span style={{ fontSize: 12, color: COLORS.inkSoft }}>— anote aqui cada saque, compra ou entrada (aceita somas como 900+150)</span>
           {chamarIA && (
             <button type="button" onClick={alternarDitadoLancamento} disabled={interpretandoLanc} style={{
@@ -8293,7 +8324,7 @@ function Lancamentos(props) {
                 width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 padding: '13px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
               }}>
-                <span className="serif" style={{ fontWeight: 600, fontSize: 15, color: '#14312E' }}>
+                <span className="serif" style={{ fontWeight: 600, fontSize: 15, color: COLORS.ink }}>
                   {mes.charAt(0) + mes.slice(1).toLowerCase()} <span style={{ fontSize: 12.5, color: COLORS.inkSoft, fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>({itens.length} lançamentos)</span>
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -8326,7 +8357,7 @@ function Lancamentos(props) {
                             spellCheck="true" lang="pt-BR"
                             style={{ ...inputStyle, padding: '5px 8px', fontSize: 13.5, width: '100%', maxWidth: 280, boxSizing: 'border-box', marginBottom: 4 }} />
                         ) : (
-                          <span style={{ color: '#14312E' }}>{t.categoria}</span>
+                          <span style={{ color: COLORS.ink }}>{t.categoria}</span>
                         )}
                         {emEdicao ? (
                           (historicoEdit || t.historico) && (
@@ -8454,7 +8485,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
   const [descontoAvista, setDescontoAvista] = useState('');
 
   const th = { padding: '11px 10px', fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'left', whiteSpace: 'nowrap', background: COLORS.paper };
-  const td = { padding: '10px 10px', fontSize: 12.5, color: '#14312E', borderTop: `1px solid ${COLORS.lineSoft}`, verticalAlign: 'middle' };
+  const td = { padding: '10px 10px', fontSize: 12.5, color: COLORS.ink, borderTop: `1px solid ${COLORS.lineSoft}`, verticalAlign: 'middle' };
   const inputCell = { ...inputStyle, padding: '5px 7px', fontSize: 12, width: '100%', minWidth: 70, boxSizing: 'border-box' };
   // marca uma linha em dourado ao clicar — mesma lógica usada em Compras, útil pra
   // não se perder o lugar numa lista longa; duplo clique desmarca
@@ -8462,7 +8493,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
 
   return (
     <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
-      <div style={{ padding: '13px 18px', background: COLORS.paperCard, borderBottom: `1px solid ${COLORS.line}`, fontSize: 13, fontWeight: 700, color: '#14312E', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '13px 18px', background: COLORS.paperCard, borderBottom: `1px solid ${COLORS.line}`, fontSize: 13, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span>{titulo} <span style={{ fontWeight: 500, color: COLORS.inkSoft }}>({modoPrivado ? '••' : itens.length})</span></span>
         <span style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 500 }}>Dica: Você pode digitar contas nos valores (ex: <b>900+150</b> ou <b>1483-200</b>) e salvar</span>
       </div>
@@ -8764,7 +8795,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                               borderRadius: 5,
                               cursor: 'pointer',
                               padding: '4px 7px',
-                              color: '#14312E',
+                              color: COLORS.ink,
                               display: 'flex',
                               alignItems: 'center',
                               gap: 3,
@@ -9029,7 +9060,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancam
 
   const inputStyle = {
     border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '9px 11px', fontSize: 13.5,
-    fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: '#14312E',
+    fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink,
   };
 
   const entradas = useMemo(() => transacoes.filter(t => t.tipo === 'Entrada'), [transacoes]);
@@ -9188,7 +9219,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancam
       <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '18px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
           <Plus size={16} color={COLORS.gold} />
-          <h3 className="serif" style={{ fontSize: 15, fontWeight: 600, margin: 0, color: '#14312E' }}>Novo registro de entrada</h3>
+          <h3 className="serif" style={{ fontSize: 15, fontWeight: 600, margin: 0, color: COLORS.ink }}>Novo registro de entrada</h3>
           <span style={{ fontSize: 11.5, color: COLORS.inkSoft }}>— aceita contas nos valores (ex: 900+150 ou 1483-200)</span>
           {chamarIA && (
             <button type="button" onClick={alternarDitadoMensalidade} disabled={interpretandoMens} style={{
@@ -9906,7 +9937,7 @@ function VisualizadorPdfEditavel({ contratoId, chamarIA, mostrarToast }) {
                   placeholder="Escreva aqui..."
                   style={{
                     border: 'none', background: 'transparent', outline: 'none', resize: 'both',
-                    fontSize: (a.tamanho || 11) * 1.3, fontFamily: 'Inter, sans-serif', color: '#14312E',
+                    fontSize: (a.tamanho || 11) * 1.3, fontFamily: 'Inter, sans-serif', color: COLORS.ink,
                     minWidth: 80, minHeight: 18, padding: '1px 3px', flex: a.substituicao ? '1 1 auto' : undefined,
                   }}
                 />
@@ -10226,7 +10257,7 @@ function Contratos({ chamarIA }) {
   const estiloLegendaCard = { fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' };
   const estiloCampo = {
     border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '7px 9px', fontSize: 12.5,
-    fontFamily: 'Inter, sans-serif', background: COLORS.paper, color: '#14312E', width: '100%', boxSizing: 'border-box',
+    fontFamily: 'Inter, sans-serif', background: COLORS.paper, color: COLORS.ink, width: '100%', boxSizing: 'border-box',
   };
   const estiloLabel = { fontSize: 10, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: 3, display: 'block' };
 
@@ -10236,7 +10267,7 @@ function Contratos({ chamarIA }) {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: '#14312E' }}>📄 Contratos</div>
+          <div className="serif" style={{ fontSize: 18, fontWeight: 700, color: COLORS.ink }}>📄 Contratos</div>
           <div style={{ fontSize: 12.5, color: COLORS.inkSoft }}>
             Aluguel, fornecedores, prestadores — tudo com valor, vencimento, data de reajuste e o contrato completo anexado ou colado abaixo.
           </div>
@@ -10277,11 +10308,11 @@ function Contratos({ chamarIA }) {
                     onChange={e => setTituloEdit(e.target.value)}
                     onBlur={() => salvarTitulo(c.id)}
                     onKeyDown={e => { if (e.key === 'Enter') salvarTitulo(c.id); }}
-                    style={{ flex: '1 1 auto', minWidth: 100, border: `1px solid ${COLORS.gold}`, borderRadius: 6, padding: '7px 9px', fontSize: 15, fontWeight: 700, color: '#14312E', boxSizing: 'border-box' }}
+                    style={{ flex: '1 1 auto', minWidth: 100, border: `1px solid ${COLORS.gold}`, borderRadius: 6, padding: '7px 9px', fontSize: 15, fontWeight: 700, color: COLORS.ink, boxSizing: 'border-box' }}
                   />
                 ) : (
                   <div onClick={() => iniciarEdicaoTitulo(c)} title="Clique pra renomear" style={{
-                    fontSize: 15, fontWeight: 700, color: '#14312E', cursor: 'pointer', flex: '1 1 auto', minWidth: 60,
+                    fontSize: 15, fontWeight: 700, color: COLORS.ink, cursor: 'pointer', flex: '1 1 auto', minWidth: 60,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     📄 {c.nome}
@@ -10415,7 +10446,7 @@ function Contratos({ chamarIA }) {
                     rows={14}
                     style={{
                       border: `1px solid ${COLORS.line}`, borderRadius: 8, padding: '12px 14px', fontSize: 13,
-                      lineHeight: 1.6, fontFamily: 'Inter, sans-serif', color: '#14312E', resize: 'vertical',
+                      lineHeight: 1.6, fontFamily: 'Inter, sans-serif', color: COLORS.ink, resize: 'vertical',
                       boxSizing: 'border-box', width: '100%',
                     }}
                   />
