@@ -7773,6 +7773,9 @@ ${textoContasPessoais}`;
           0%, 100% { box-shadow: 0 0 0 0 rgba(193,39,45,0.45); }
           50% { box-shadow: 0 0 0 8px rgba(193,39,45,0); }
         }
+        @media (max-width: 980px) {
+          .grid-saude-alertas { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {mostrarLembreteBackup && (
@@ -9094,7 +9097,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
       )}
 
       {/* SAÚDE DO SISTEMA + ALERTAS INTELIGENTES, mesma altura */}
-      <div className="grid-saude-alertas" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(390px, 1fr))', gap: 14, alignItems: 'stretch' }}>
+      <div className="grid-saude-alertas" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(340px, 0.85fr)', gap: 14, alignItems: 'stretch' }}>
       <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '14px 16px', height: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 11 }}>
           <div>
@@ -9114,6 +9117,54 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         </div>
         {diagnosticoDrive && diagnosticoDrive.ultimoBackup && <div style={{ fontSize: 10.5, color: COLORS.inkSoft, marginTop: 8 }}>Último backup encontrado no Drive: <b>{diagnosticoDrive.ultimoBackup}</b></div>}
         {backupSistema && <div style={{ marginTop: 8, padding: '7px 9px', borderRadius: 7, fontSize: 11.5, background: backupSistema.tipo === 'erro' ? COLORS.redBg : (backupSistema.tipo === 'ok' ? COLORS.greenBg : COLORS.goldSoft), color: backupSistema.tipo === 'erro' ? COLORS.red : (backupSistema.tipo === 'ok' ? COLORS.green : COLORS.ink) }}>{backupSistema.texto}</div>}
+
+        {/* SALDO EM CONTA — integrado ao card Saúde do sistema para deixar a Visão Geral mais compacta */}
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${COLORS.lineSoft}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 800, color: COLORS.ink }}>🏦 Saldo em conta (por mês)</div>
+              <div style={{ fontSize: 10.5, color: COLORS.inkSoft }}>Confira com o extrato do banco e edite apenas quando necessário.</div>
+            </div>
+            <button onClick={() => setEditandoSaldos(v => !v)} style={{
+              background: editandoSaldos ? COLORS.greenBg : COLORS.lineSoft, color: editandoSaldos ? COLORS.green : COLORS.ink,
+              border: `1px solid ${editandoSaldos ? COLORS.green + '55' : COLORS.line}`, borderRadius: 7,
+              padding: '6px 9px', fontSize: 10.8, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <Pencil size={11} /> {editandoSaldos ? 'Concluir edição' : 'Editar saldos'}
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(74px, 1fr))', gap: 5 }}>
+            {MESES.map(mes => {
+              const emEdicao = saldoEditMes === mes;
+              const valorAtual = (saldosMensais || {})[mes] || 0;
+              const temValor = Number(valorAtual) !== 0;
+              return (
+                <div key={mes} style={{
+                  background: temValor ? COLORS.greenBg : COLORS.lineSoft, border: `1px solid ${temValor ? COLORS.green + '33' : COLORS.lineSoft}`,
+                  borderRadius: 7, padding: '6px 7px', minWidth: 0,
+                }}>
+                  <div style={{ fontSize: 9.5, color: COLORS.inkSoft, fontWeight: 800, marginBottom: 2 }}>{MESES_ABREV[mes]}</div>
+                  {emEdicao ? (
+                    <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                      <input autoFocus value={saldoEditValor} onChange={e => setSaldoEditValor(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoSaldo(); if (e.key === 'Escape') setSaldoEditMes(null); }}
+                        className="mono" style={{ width: '100%', minWidth: 0, border: `1px solid ${COLORS.line}`, borderRadius: 5, padding: '3px 4px', fontSize: 10.5 }} />
+                      <button onClick={salvarEdicaoSaldo} style={{ background: COLORS.green, border: 'none', borderRadius: 4, padding: '3px 4px', cursor: 'pointer', flexShrink: 0 }}>
+                        <Check size={10} color="#FFFFFF" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => editandoSaldos && iniciarEdicaoSaldo(mes)} disabled={!editandoSaldos} style={{
+                      width: '100%', background: 'none', border: 'none', padding: 0, cursor: editandoSaldos ? 'pointer' : 'default', textAlign: 'left'
+                    }}>
+                      <span className="mono" style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.ink, whiteSpace: 'nowrap' }}>{formatBRLPrivado(valorAtual, modoPrivado)}</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, padding: '14px 16px', height: '100%', boxSizing: 'border-box' }}>
@@ -9177,47 +9228,6 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           </div>
         </div>
       )}
-
-      {/* EDIÇÃO MANUAL DO SALDO MENSAL — o saldo não dá pra calcular sozinho a partir dos
-          lançamentos (não bate com o extrato real), então fica editável aqui, mês a mês */}
-      <div style={{ background: COLORS.paperCard, border: `1px solid ${COLORS.line}`, borderRadius: 10, overflow: 'hidden' }}>
-        <button onClick={() => setEditandoSaldos(v => !v)} style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '11px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
-          fontSize: 12.5, fontWeight: 700, color: COLORS.ink,
-        }}>
-          <span>💰 Editar saldo em conta de cada mês (confira no extrato do banco)</span>
-          <ChevronDown size={16} style={{ transform: editandoSaldos ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
-        </button>
-        {editandoSaldos && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 1, background: COLORS.lineSoft }}>
-            {MESES.map(mes => {
-              const emEdicao = saldoEditMes === mes;
-              const valorAtual = (saldosMensais || {})[mes] || 0;
-              return (
-                <div key={mes} style={{ background: COLORS.paperCard, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 600 }}>{MESES_ABREV[mes]}</span>
-                  {emEdicao ? (
-                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <input autoFocus value={saldoEditValor} onChange={e => setSaldoEditValor(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') salvarEdicaoSaldo(); if (e.key === 'Escape') setSaldoEditMes(null); }}
-                        className="mono" style={{ width: 90, border: `1px solid ${COLORS.line}`, borderRadius: 6, padding: '4px 6px', fontSize: 12.5 }} />
-                      <button onClick={salvarEdicaoSaldo} style={{ background: COLORS.green, border: 'none', borderRadius: 5, padding: '4px 6px', cursor: 'pointer' }}>
-                        <Check size={12} color="#FFFFFF" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => iniciarEdicaoSaldo(mes)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.ink }}>{formatBRLPrivado(valorAtual, modoPrivado)}</span>
-                      <Pencil size={11} color={COLORS.inkSoft} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
 
       <div className="grid-charts-a" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
         <CardChart title="Entradas x Saídas" height={180}>
