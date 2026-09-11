@@ -74,21 +74,39 @@
        Mantém o Liquid Glass e as cores do projeto sem deixar a tela "preta". */
     .dark-mode {
       color-scheme: dark;
-      --c-paper: #354447;
-      --c-paperCard: #415154;
-      --c-ink: #F3FBFA;
-      --c-inkSoft: #D0DEDC;
-      --c-inkButton: #2BB0A6;
-      --c-gold: #F1ADD8;
-      --c-goldSoft: #594657;
-      --c-green: #7ADBD1;
-      --c-greenBg: #3A5754;
-      --c-red: #FFA39E;
-      --c-redBg: #604245;
-      --c-line: #667679;
-      --c-lineSoft: #4A5B5E;
+      --c-paper: #263336;
+      --c-paperCard: #324246;
+      --c-ink: #F7FBFA;
+      --c-inkSoft: #C8D5D3;
+      --c-inkButton: #32B3A8;
+      --c-gold: #F4B3DC;
+      --c-goldSoft: #604B5D;
+      --c-green: #82E2D7;
+      --c-greenBg: #31514D;
+      --c-red: #FFA7A2;
+      --c-redBg: #5A3A3D;
+      --c-line: #5C6E72;
+      --c-lineSoft: #3B4C50;
     }
-    .dark-mode body { background: var(--c-paper); color: var(--c-ink); }
+    html.dark-mode,
+body.dark-mode {
+  background: var(--c-paper) !important;
+  color: var(--c-ink) !important;
+  min-height: 100%;
+}
+body.dark-mode #root {
+  background: var(--c-paper) !important;
+  min-height: 100vh;
+}
+body.dark-mode {
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(50,179,168,.055), transparent 34%),
+    radial-gradient(circle at 85% 10%, rgba(193,92,160,.045), transparent 30%);
+  background-attachment: fixed;
+}
+html.dark-mode {
+  overscroll-behavior-y: none;
+}
     .dark-mode .busca-liquid-glass {
       background: rgba(74, 92, 95, 0.72) !important;
       border-color: rgba(255,255,255,0.20) !important;
@@ -123,6 +141,91 @@
     .dark-mode label {
       text-shadow: none;
     }
+    /* CONTRASTE GLOBAL v4.23 */
+    .dark-mode .painel-main,
+    .dark-mode .painel-main > div,
+    .dark-mode section {
+      color: var(--c-ink);
+    }
+
+    .dark-mode table {
+      color: var(--c-ink) !important;
+    }
+
+    .dark-mode table thead th {
+      color: #E7F2F0 !important;
+      background: #2B393D !important;
+      border-color: rgba(255,255,255,.10) !important;
+    }
+
+    .dark-mode table tbody td {
+      color: #F4FAF9 !important;
+      border-color: rgba(255,255,255,.08) !important;
+    }
+
+    .dark-mode table tbody tr:nth-child(odd) {
+      background: rgba(255,255,255,.018);
+    }
+
+    .dark-mode table tbody tr:nth-child(even) {
+      background: rgba(255,255,255,.045);
+    }
+
+    .dark-mode table tbody tr:hover {
+      background: rgba(126,214,203,.08) !important;
+    }
+
+    .dark-mode .mono {
+      color: inherit;
+    }
+
+    .dark-mode input,
+    .dark-mode textarea,
+    .dark-mode select {
+      background: #415357 !important;
+      color: #FFFFFF !important;
+      border-color: rgba(255,255,255,.20) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .dark-mode input:focus,
+    .dark-mode textarea:focus,
+    .dark-mode select:focus {
+      outline: 2px solid rgba(50,179,168,.35) !important;
+      border-color: #5FCFC4 !important;
+    }
+
+    .dark-mode .busca-liquid-glass {
+      background: rgba(59,76,80,.88) !important;
+      border-color: rgba(255,255,255,.15) !important;
+    }
+    .dark-mode .tabela-mensalidades {
+      background: #2F3E42 !important;
+    }
+
+    .dark-mode .tabela-mensalidades tbody tr,
+    .dark-mode .tabela-mensalidades tbody td {
+      background-color: transparent !important;
+    }
+
+    .dark-mode .tabela-mensalidades tbody tr:nth-child(odd) {
+      background: rgba(255,255,255,.025) !important;
+    }
+
+    .dark-mode .tabela-mensalidades tbody tr:nth-child(even) {
+      background: rgba(255,255,255,.055) !important;
+    }
+
+    .dark-mode .tabela-mensalidades tbody tr td:first-child {
+      color: #FFFFFF !important;
+      font-weight: 700;
+    }
+
+    .dark-mode .tabela-mensalidades .busca-liquid-glass {
+      background: rgba(65,83,87,.90) !important;
+    }
+
+
     @media (max-width: 700px) {
       .abas-menu { grid-template-columns: repeat(5, minmax(60px, 1fr)) !important; }
     }
@@ -265,9 +368,14 @@
       from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
+    html {
+      background: var(--c-paper);
+      min-height: 100%;
+    }
     body {
       margin: 0;
       padding: 0;
+      min-height: 100%;
       background: var(--c-paper);
       font-family: 'Inter', -apple-system, sans-serif;
       color: var(--c-ink);
@@ -6530,7 +6638,30 @@ ${textoContasPessoais}`;
   // fechava a outra junto
   const [modoPrivadoValores, setModoPrivadoValores] = useState(() => lerPreferencia('modoPrivadoValores'));
   const [temaEscuro, setTemaEscuro] = useState(() => lerPreferencia('temaEscuro'));
-  useEffect(() => { salvarPreferencia('temaEscuro', temaEscuro); }, [temaEscuro]);
+  useEffect(() => {
+    salvarPreferencia('temaEscuro', temaEscuro);
+
+    // O tema precisa existir também no <html> e <body>.
+    // Caso contrário, ao rolar para cima/baixo o navegador revela o fundo claro
+    // fora do painel-raiz (efeito de "clarão" visto no vídeo).
+    const html = document.documentElement;
+    const body = document.body;
+    if (temaEscuro) {
+      html.classList.add('dark-mode');
+      body.classList.add('dark-mode');
+      html.style.backgroundColor = '#354447';
+      body.style.backgroundColor = '#354447';
+    } else {
+      html.classList.remove('dark-mode');
+      body.classList.remove('dark-mode');
+      html.style.backgroundColor = '#F7FBFA';
+      body.style.backgroundColor = '#F7FBFA';
+    }
+
+    return () => {
+      // Não remove aqui para evitar um flash claro entre renders.
+    };
+  }, [temaEscuro]);
   useEffect(() => { salvarPreferencia('modoPrivado', modoPrivado); }, [modoPrivado]);
   useEffect(() => { salvarPreferencia('privadoTotais', privadoTotais); }, [privadoTotais]);
   useEffect(() => { salvarPreferencia('privadoDetalhes', privadoDetalhes); }, [privadoDetalhes]);
@@ -7189,6 +7320,7 @@ ${textoContasPessoais}`;
       background: COLORS.paper, minHeight: '108.7vh', width: '108.7%',
       fontFamily: 'Inter, -apple-system, sans-serif', color: COLORS.ink,
       transform: 'scale(0.92)', transformOrigin: 'top left',
+      isolation: 'isolate',
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -8973,7 +9105,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
         <div style={{ textAlign: 'center', color: COLORS.inkSoft, padding: '28px 0', fontSize: 13.5 }}>Nenhum registro encontrado.</div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', minWidth: mostrarDetalhes ? 1220 : 750, borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <table className="tabela-mensalidades" style={{ width: '100%', minWidth: mostrarDetalhes ? 1220 : 750, borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             <colgroup>
               <col style={{ width: '18%' }} />
               {mostrarDetalhes && <col style={{ width: '7%' }} />}
@@ -9010,7 +9142,9 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
                     onDoubleClick={() => !emEdicao && setLinhaSelecionada(null)}
                     style={{
                       cursor: emEdicao ? 'default' : 'pointer',
-                      background: linhaSelecionada === t.id ? 'rgba(184, 92, 163, 0.10)' : (emEdicao ? '#FDF5FC' : 'transparent'),
+                      background: linhaSelecionada === t.id
+                        ? 'rgba(184, 92, 163, 0.12)'
+                        : (emEdicao ? 'color-mix(in srgb, var(--c-goldSoft) 55%, var(--c-paperCard))' : 'transparent'),
                       transition: 'background 0.15s ease',
                     }}>
                     <td colSpan={emEdicao && mostrarDetalhes ? 2 : 1} style={{
