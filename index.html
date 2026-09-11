@@ -7146,6 +7146,8 @@ ${textoContasPessoais}`;
   const [exercicios, setExercicios] = useState([{ ano: 2026, status: 'ATIVO', criadoEm: new Date().toISOString() }]);
   const [prepararAnoAberto, setPrepararAnoAberto] = useState(false);
   const [preparandoAno, setPreparandoAno] = useState(false);
+  const [gerenciarAnoAberto, setGerenciarAnoAberto] = useState(false);
+  const [processandoCicloAno, setProcessandoCicloAno] = useState(false);
   const [mensagemExercicio, setMensagemExercicio] = useState(null);
 
   // Avisos de exercício são temporários: não ficam presos na tela.
@@ -7323,6 +7325,80 @@ ${textoContasPessoais}`;
       setMensagemExercicio({ tipo:'erro', texto:'Não consegui preparar o novo exercício: ' + (e && e.message ? e.message : e) });
     } finally {
       setPreparandoAno(false);
+    }
+  }
+
+  async function salvarListaExercicios_(lista) {
+    const normalizada = (lista || []).map(x => ({ ...x, ano:Number(x.ano) })).sort((a,b)=>a.ano-b.ano);
+    await window.storage.set('painel_exercicios_v1', JSON.stringify(normalizada), false);
+    setExercicios(normalizada);
+    return normalizada;
+  }
+
+  function saldoFinalDoExercicio_() {
+    const dez = Number((saldosMensais || {}).DEZEMBRO);
+    if (Number.isFinite(dez) && dez !== 0) return dez;
+    const vals = MESES.map(m => Number((saldosMensais || {})[m])).filter(v => Number.isFinite(v) && v !== 0);
+    return vals.length ? vals[vals.length - 1] : 0;
+  }
+
+  async function confirmarCicloAnual(acao) {
+    if (processandoCicloAno) return;
+    setProcessandoCicloAno(true);
+    try {
+      // Fechamento/ativação só acontece depois de uma confirmação real do Drive.
+      const sync = window.storage && window.storage.resync ? await window.storage.resync() : {ok:true};
+      const pend = Number(window.__pendenciasSync || 0);
+      if (!sync || !sync.ok || pend > 0 || window.__statusPlanilha === 'erro') {
+        throw new Error(`Ainda há ${pend || 'alteração(ões)'} sem confirmação no Google Drive. Clique em Salvar e tente novamente.`);
+      }
+      const agora = new Date().toISOString();
+      const lista = [...exercicios];
+      const idxAtual = lista.findIndex(x => Number(x.ano) === exercicioAtual);
+      if (idxAtual < 0) throw new Error('O exercício atual não foi encontrado no histórico anual.');
+
+      if (acao === 'ATIVAR') {
+        if (lista[idxAtual].status === 'ENCERRADO') throw new Error('Um exercício encerrado não pode ser reativado automaticamente.');
+        lista.forEach((x,i) => { if (i !== idxAtual && x.status === 'ATIVO') lista[i] = {...x,status:'ENCERRADO',encerradoEm:x.encerradoEm || agora}; });
+        lista[idxAtual] = {...lista[idxAtual],status:'ATIVO',ativadoEm:agora};
+        await salvarListaExercicios_(lista);
+        await window.storage.set(`registro_ativacao_exercicio__${exercicioAtual}`, JSON.stringify({ano:exercicioAtual,ativadoEm:agora}), false);
+        const finalSync = window.storage.resync ? await window.storage.resync() : {ok:true};
+        if (!finalSync.ok) throw new Error('A ativação foi registrada localmente, mas o Drive ainda não confirmou tudo. Use Salvar.');
+        setGerenciarAnoAberto(false);
+        setMensagemExercicio({tipo:'ok',texto:`✓ Exercício ${exercicioAtual} ativado e confirmado no Google Drive.`});
+        return;
+      }
+
+      if (acao === 'ENCERRAR') {
+        if (lista[idxAtual].status !== 'ATIVO') throw new Error('Somente o exercício ATIVO pode ser encerrado.');
+        const proxAno = exercicioAtual + 1;
+        const prox = lista.find(x => Number(x.ano) === proxAno);
+        if (!prox) throw new Error(`Prepare ${proxAno} antes de encerrar ${exercicioAtual}.`);
+        const saldoFinal = saldoFinalDoExercicio_();
+        const resumo = {
+          ano: exercicioAtual, encerradoEm: agora, saldoFinal,
+          totalLancamentos: (transacoes || []).length,
+          entradas: (transacoes || []).filter(t=>t.tipo==='Entrada' && t.status==='Pago').reduce((a,t)=>a+(Number(t.valor)||0),0),
+          saidas: (transacoes || []).filter(t=>(t.tipo==='Fixa'||t.tipo==='Variável') && t.status==='Pago').reduce((a,t)=>a+(Number(t.valor)||0),0),
+          proximoExercicio: proxAno
+        };
+        // Registro imutável de fechamento + saldo inicial do próximo ano.
+        await window.storage.set(`fechamento_exercicio__${exercicioAtual}`, JSON.stringify(resumo), false);
+        await window.storage.set(`saldo_inicial_exercicio__${proxAno}`, String(saldoFinal || 0), false);
+        lista[idxAtual] = {...lista[idxAtual],status:'ENCERRADO',encerradoEm:agora,saldoFinal};
+        const ip = lista.findIndex(x => Number(x.ano) === proxAno);
+        if (ip >= 0) lista[ip] = {...lista[ip],saldoInicial:saldoFinal};
+        await salvarListaExercicios_(lista);
+        const finalSync = window.storage.resync ? await window.storage.resync() : {ok:true};
+        if (!finalSync.ok || Number(window.__pendenciasSync||0)>0) throw new Error('O fechamento foi criado, mas ainda falta confirmação do Drive. Não troque de ano até o botão Salvar ficar 0/0.');
+        setGerenciarAnoAberto(false);
+        setMensagemExercicio({tipo:'ok',texto:`✓ ${exercicioAtual} encerrado. Saldo final registrado para ${proxAno}.`});
+      }
+    } catch(e) {
+      setMensagemExercicio({tipo:'erro',texto:(e && e.message) ? e.message : String(e)});
+    } finally {
+      setProcessandoCicloAno(false);
     }
   }
 
@@ -8160,6 +8236,9 @@ ${textoContasPessoais}`;
               <button onClick={() => setPrepararAnoAberto(true)} title={`Preparar ${exercicioAtual + 1}`} style={{
                 border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
               }}>+ {exercicioAtual + 1}</button>
+              <button onClick={() => setGerenciarAnoAberto(true)} title="Ativar ou encerrar o exercício com conferência" style={{
+                border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
+              }}>Ciclo anual</button>
             </div>
 
             <button
@@ -8350,6 +8429,19 @@ ${textoContasPessoais}`;
             <ModalAlterarPin pinAtual={pinConfigurado} onFechar={() => setModalPinAberto(false)} onSalvar={definirPin} />
           )}
 
+          {gerenciarAnoAberto && (
+            <ModalCicloAnual
+              exercicio={exercicios.find(x=>Number(x.ano)===exercicioAtual) || {ano:exercicioAtual,status:'ATIVO'}}
+              proximo={exercicios.find(x=>Number(x.ano)===exercicioAtual+1) || null}
+              transacoes={transacoes || []}
+              saldoFinal={saldoFinalDoExercicio_()}
+              pendencias={pendenciasSync}
+              processando={processandoCicloAno}
+              onFechar={() => !processandoCicloAno && setGerenciarAnoAberto(false)}
+              onConfirmar={confirmarCicloAnual}
+            />
+          )}
+
           {prepararAnoAberto && (
             <ModalPrepararExercicio
               anoOrigem={exercicioAtual}
@@ -8506,6 +8598,27 @@ ${textoContasPessoais}`;
         )}
       </main>
     </div>
+  );
+}
+
+function ModalCicloAnual({ exercicio, proximo, transacoes, saldoFinal, pendencias, processando, onFechar, onConfirmar }) {
+  const status = exercicio.status || 'ATIVO';
+  const alunos = new Set((transacoes||[]).filter(t=>String(t.categoria||'').startsWith('Mensalidade - ')).map(t=>t.categoria)).size;
+  const mensalPend = (transacoes||[]).filter(t=>String(t.categoria||'').startsWith('Mensalidade - ') && t.status==='Pendente').length;
+  useEffect(()=>{ const ant=document.body.style.overflow; document.body.style.overflow='hidden'; return()=>{document.body.style.overflow=ant}; },[]);
+  return ReactDOM.createPortal(
+    <div style={{position:'fixed',inset:0,zIndex:2147483000,background:'rgba(10,22,20,.72)',display:'flex',alignItems:'center',justifyContent:'center',padding:14}} onMouseDown={e=>{if(e.target===e.currentTarget&&!processando)onFechar()}}>
+      <div className="busca-liquid-glass" onMouseDown={e=>e.stopPropagation()} style={{width:'min(720px,96vw)',maxHeight:'90dvh',overflow:'auto',borderRadius:18,background:COLORS.paperCard,padding:20,boxShadow:'0 24px 80px rgba(0,0,0,.38)',border:`1px solid ${COLORS.line}`}}>
+        <div style={{display:'flex',justifyContent:'space-between',gap:12}}><div><div className="serif" style={{fontSize:23,fontWeight:800,color:COLORS.ink}}>Ciclo anual — {exercicio.ano}</div><div style={{fontSize:12.5,color:COLORS.inkSoft}}>Conferência antes de ativar ou encerrar. Nenhum histórico anterior será apagado.</div></div><button onClick={onFechar} disabled={processando} style={{border:'none',background:'transparent',fontSize:22,color:COLORS.inkSoft}}>×</button></div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:9,margin:'16px 0'}}>
+          {[['Status',status.replace('_',' ')],['Alunos',alunos],['Pendências Drive',pendencias],['Saldo final',formatBRL(saldoFinal||0)]].map(([a,b])=><div key={a} style={{padding:11,borderRadius:10,background:COLORS.lineSoft}}><div style={{fontSize:9.5,fontWeight:800,color:COLORS.inkSoft,textTransform:'uppercase'}}>{a}</div><div style={{fontSize:15,fontWeight:800,color:COLORS.ink,marginTop:3}}>{b}</div></div>)}
+        </div>
+        <div style={{padding:12,borderRadius:10,background:pendencias?COLORS.redBg:COLORS.greenBg,color:COLORS.ink,fontSize:12,lineHeight:1.5}}><b>Proteção do Drive:</b> {pendencias ? `há ${pendencias} alteração(ões) aguardando confirmação; ativar/encerrar será bloqueado até zerar.` : 'sem pendências locais. Ao confirmar, o sistema fará uma nova sincronização antes e depois da operação.'}</div>
+        {status==='ATIVO' && <div style={{marginTop:10,padding:12,border:`1px solid ${COLORS.line}`,borderRadius:10,fontSize:12,color:COLORS.inkSoft}}><b style={{color:COLORS.ink}}>Encerrar {exercicio.ano}:</b> cria registro de fechamento, grava o saldo final e atualiza o saldo inicial de {exercicio.ano+1}. {proximo ? `${proximo.ano} já está ${String(proximo.status).replace('_',' ')}.` : <b style={{color:COLORS.red}}>Prepare {exercicio.ano+1} antes.</b>} Mensalidades pendentes encontradas no ano: {mensalPend}.</div>}
+        {status==='EM_PREPARACAO' && <div style={{marginTop:10,padding:12,border:`1px solid ${COLORS.line}`,borderRadius:10,fontSize:12,color:COLORS.inkSoft}}><b style={{color:COLORS.ink}}>Ativar {exercicio.ano}:</b> torna este o exercício operacional. O histórico dos demais anos continua disponível no seletor.</div>}
+        <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:16,flexWrap:'wrap'}}><button onClick={onFechar} disabled={processando} style={{border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:9,padding:'10px 14px',fontWeight:700}}>Cancelar</button>{status==='EM_PREPARACAO' && <button onClick={()=>onConfirmar('ATIVAR')} disabled={processando||pendencias>0} style={{border:'none',background:COLORS.inkButton,color:'#fff',borderRadius:9,padding:'10px 15px',fontWeight:800,opacity:(processando||pendencias>0)?.6:1}}>{processando?'Sincronizando...':`Ativar ${exercicio.ano}`}</button>}{status==='ATIVO' && <button onClick={()=>onConfirmar('ENCERRAR')} disabled={processando||pendencias>0||!proximo} style={{border:'none',background:COLORS.red,color:'#fff',borderRadius:9,padding:'10px 15px',fontWeight:800,opacity:(processando||pendencias>0||!proximo)?.6:1}}>{processando?'Sincronizando...':`Encerrar ${exercicio.ano}`}</button>}</div>
+      </div>
+    </div>,document.body
   );
 }
 
