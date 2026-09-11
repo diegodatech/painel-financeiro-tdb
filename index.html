@@ -126,6 +126,46 @@
     @media (max-width: 700px) {
       .abas-menu { grid-template-columns: repeat(5, minmax(60px, 1fr)) !important; }
     }
+
+    /* CONTAS PESSOAIS — mesma experiência de arrastar horizontalmente usada nas tabelas de Mensalidades.
+       Em tablet/celular, o usuário pode deslizar o dedo para esquerda/direita sem travar a página. */
+    .contas-pessoais-scroll {
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x pan-y;
+      width: 100%;
+      max-width: 100%;
+      scrollbar-width: thin;
+      scroll-behavior: smooth;
+    }
+    .contas-pessoais-scroll table {
+      min-width: 1390px;
+    }
+    @media (max-width: 1180px) {
+      .contas-pessoais-scroll {
+        cursor: grab;
+      }
+      .contas-pessoais-scroll:active {
+        cursor: grabbing;
+      }
+    }
+    @media (max-width: 834px) {
+      .contas-pessoais-scroll {
+        margin-left: -2px;
+        margin-right: -2px;
+        padding-bottom: 10px !important;
+      }
+      .contas-pessoais-scroll table {
+        min-width: 1450px !important;
+      }
+    }
+    @media (max-width: 600px) {
+      .contas-pessoais-scroll table {
+        min-width: 1500px !important;
+      }
+    }
     button { -webkit-tap-highlight-color: transparent; }
     /* teclado de PIN: tamanho padrão pensado pro celular (já está ótimo), e cresce em telas
        maiores (tablet/computador) pra ficar mais fácil de tocar com dedos maiores */
@@ -5440,7 +5480,45 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
         </div>
       </div>
       {respostaIA && <div style={{margin:'-4px 0 10px auto',maxWidth:720,padding:'8px 11px',borderRadius:11,background:'rgba(28,158,143,.11)',color:COLORS.ink,fontSize:12.5}}>{respostaIA}</div>}
-      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{
+      <div
+        className="contas-pessoais-scroll"
+        style={{paddingBottom:4}}
+        onClickCapture={(e)=>{
+          // evita que um simples gesto de arrastar seja interpretado como seleção de linha
+          const el = e.currentTarget;
+          if (el && el.__arrastouCP) {
+            e.stopPropagation();
+            el.__arrastouCP = false;
+          }
+        }}
+        onTouchStart={(e)=>{
+          const el=e.currentTarget;
+          const t=e.touches && e.touches[0];
+          if (!t) return;
+          el.__cpTouchX=t.clientX;
+          el.__cpTouchY=t.clientY;
+          el.__cpScrollLeft=el.scrollLeft;
+          el.__arrastouCP=false;
+        }}
+        onTouchMove={(e)=>{
+          const el=e.currentTarget;
+          const t=e.touches && e.touches[0];
+          if (!t || el.__cpTouchX==null) return;
+          const dx=t.clientX-el.__cpTouchX;
+          const dy=t.clientY-el.__cpTouchY;
+          if (Math.abs(dx)>6 && Math.abs(dx)>Math.abs(dy)) {
+            el.__arrastouCP=true;
+            el.scrollLeft=el.__cpScrollLeft-dx;
+          }
+        }}
+        onTouchEnd={(e)=>{
+          const el=e.currentTarget;
+          el.__cpTouchX=null;
+          el.__cpTouchY=null;
+          el.__cpScrollLeft=null;
+          setTimeout(()=>{ if(el) el.__arrastouCP=false; },120);
+        }}
+      ><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{
   CATEGORIAS_CP.map((cat) => {
     const itensCat = contas.filter(c => categoriaDaContaCP(c) === cat.nome);
     if (!itensCat.length) return null;
@@ -5524,7 +5602,7 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
       {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,s,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
     </div>
     <div className="busca-liquid-glass" style={{...glass,borderRadius:14,padding:'10px 13px',fontSize:12.5,color:COLORS.inkSoft}}>
-      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> ao criar uma nova conta, escolha a categoria no seletor ao lado. A conta ficará salva naquela categoria. Nas células com 0,00, o zero some ao clicar para você digitar direto.
+      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> no tablet e celular, arraste a tabela com o dedo para a esquerda ou direita, igual em Mensalidades. Nas células com 0,00, o zero some ao clicar para você digitar direto.
     </div>
   </div>;
 }
