@@ -5162,7 +5162,7 @@ function Anotacoes({ chamarIA }) {
  */
 
 
-function ContasPessoais({ chamarIA }) {
+function ContasPessoais({ chamarIA, onAbrirIA }) {
   const MESES_CP = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const ABREV_CP = {JANEIRO:'Jan',FEVEREIRO:'Fev','MARÇO':'Mar',ABRIL:'Abr',MAIO:'Mai',JUNHO:'Jun',JULHO:'Jul',AGOSTO:'Ago',SETEMBRO:'Set',OUTUBRO:'Out',NOVEMBRO:'Nov',DEZEMBRO:'Dez'};
   const CONTAS_PADRAO = ['SANTA CLARA','HAVAN','LUZ CASA','CONDOMÍNIO','ALUGUEL','TACCHIMED','INTERNET','VIVO','ICATU','PILATES','NETFLIX','SICREDI CARTÃO','C6 BANK','ITAÚ CARTÃO VISA INFINIT','ITAÚ MASTER CARD'];
@@ -5297,10 +5297,10 @@ function ContasPessoais({ chamarIA }) {
         <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end',flex:'1 1 700px'}}>
           {chamarIA && (
             <>
-              <button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass"
-                title="Interpretar o comando digitado com IA"
-                style={{height:42,border:'1px solid #C15CA055',borderRadius:12,background:'rgba(193,92,160,.10)',color:'#C15CA0',fontWeight:800,cursor:processandoIA?'default':'pointer',padding:'8px 12px',display:'flex',alignItems:'center',gap:6}}>
-                ✨ {processandoIA?'Analisando...':'IA'}
+              <button onClick={()=>{ if(onAbrirIA) onAbrirIA(); }} className="busca-liquid-glass"
+                title="Abrir Assistente IA completo das Contas Pessoais"
+                style={{height:42,border:'1px solid #C15CA055',borderRadius:12,background:'rgba(193,92,160,.10)',color:'#C15CA0',fontWeight:800,cursor:'pointer',padding:'8px 12px',display:'flex',alignItems:'center',gap:6}}>
+                ✨ IA
               </button>
               <button onClick={alternarVoz} className="busca-liquid-glass" title="Ditar comando para a IA"
                 style={{height:42,border:'1px solid #1C9E8F55',borderRadius:12,background:gravando?'rgba(28,158,143,.18)':'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',color:COLORS.green,fontWeight:800,cursor:'pointer',padding:'8px 12px',display:'flex',alignItems:'center',gap:6}}>
@@ -5309,7 +5309,7 @@ function ContasPessoais({ chamarIA }) {
               <input value={perguntaIA} onChange={e=>setPerguntaIA(e.target.value)}
                 onKeyDown={e=>{if(e.key==='Enter')interpretarComIA();}}
                 placeholder='Digite: “Aluguel setembro 1.800”'
-                style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 12px',minWidth:310,flex:'1 1 330px',fontSize:13.5,background:'color-mix(in srgb, var(--c-paperCard) 78%, transparent)',color:COLORS.ink}}/>
+                style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 12px',minWidth:220,maxWidth:330,flex:'0 1 300px',fontSize:13.5,background:'color-mix(in srgb, var(--c-paperCard) 78%, transparent)',color:COLORS.ink}}/>
             </>
           )}
           <input value={novaConta} onChange={e=>setNovaConta(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')adicionarConta();}}
@@ -5327,7 +5327,7 @@ function ContasPessoais({ chamarIA }) {
       {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,s,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
     </div>
     <div className="busca-liquid-glass" style={{...glass,borderRadius:14,padding:'10px 13px',fontSize:12.5,color:COLORS.inkSoft}}>
-      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> digite um comando no campo de IA ou toque em <strong>Ditar</strong>. Ex.: “Aluguel 1800 de janeiro a dezembro”.
+      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> o campo rápido serve para preencher valores. Clique em <strong>✨ IA</strong> para abrir o assistente completo e perguntar, por texto ou voz, por exemplo: “Qual mês eu gastei mais nas contas pessoais?”
     </div>
   </div>;
 }
@@ -5856,6 +5856,55 @@ function PainelFinanceiro() {
       }
     } catch (e) {}
 
+
+    // CONTAS PESSOAIS — inclui a nova aba no mesmo Assistente IA global.
+    // Assim perguntas como "qual mês gastei mais?" usam os valores pessoais,
+    // sem misturá-los com os cálculos financeiros da escola.
+    let textoContasPessoais = '(nenhum valor pessoal preenchido)';
+    try {
+      const rp = await window.storage.get('contas_pessoais_v1', false);
+      if (rp && rp.value) {
+        const contasPessoais = JSON.parse(rp.value);
+        const mesesPessoais = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+        const nomesMesPessoal = {
+          JAN:'Janeiro', FEV:'Fevereiro', MAR:'Março', ABR:'Abril',
+          MAI:'Maio', JUN:'Junho', JUL:'Julho', AGO:'Agosto',
+          SET:'Setembro', OUT:'Outubro', NOV:'Novembro', DEZ:'Dezembro'
+        };
+        const totaisMesPessoal = {};
+        mesesPessoais.forEach(m => totaisMesPessoal[m] = 0);
+        const linhasContasPessoais = [];
+
+        (Array.isArray(contasPessoais) ? contasPessoais : []).forEach(conta => {
+          let totalConta = 0;
+          const partes = [];
+          mesesPessoais.forEach(m => {
+            const v = Number(conta && conta.valores ? conta.valores[m] : 0) || 0;
+            totaisMesPessoal[m] += v;
+            totalConta += v;
+            if (v > 0) partes.push(`${nomesMesPessoal[m]} ${formatBRL(v)}`);
+          });
+          if (partes.length > 0) {
+            linhasContasPessoais.push(`${conta.nome || 'Conta'}: ${partes.join(', ')} — total ${formatBRL(totalConta)}`);
+          }
+        });
+
+        const mesesComValorPessoal = mesesPessoais
+          .filter(m => totaisMesPessoal[m] > 0)
+          .map(m => `${nomesMesPessoal[m]}: ${formatBRL(totaisMesPessoal[m])}`);
+
+        const totalPessoalAno = mesesPessoais.reduce((soma, m) => soma + totaisMesPessoal[m], 0);
+        const maiorPessoal = mesesPessoais.reduce((melhor, m) =>
+          totaisMesPessoal[m] > (melhor ? totaisMesPessoal[melhor] : -1) ? m : melhor, null);
+
+        textoContasPessoais =
+          `Totais por mês: ${mesesComValorPessoal.length ? mesesComValorPessoal.join(' | ') : '(todos zerados)'}\n` +
+          `Total geral das contas pessoais: ${formatBRL(totalPessoalAno)}\n` +
+          `Mês com maior gasto pessoal: ${maiorPessoal && totaisMesPessoal[maiorPessoal] > 0 ? nomesMesPessoal[maiorPessoal] + ' (' + formatBRL(totaisMesPessoal[maiorPessoal]) + ')' : 'ainda não há valores preenchidos'}\n` +
+          `Detalhamento: ${linhasContasPessoais.length ? '\n' + linhasContasPessoais.join('\n') : '(nenhum valor preenchido)'}`;
+      }
+    } catch (e) {}
+
     return `Dados financeiros da Escola Infantil Tempo de Brincar (em Reais, R$):
 
 RESULTADO POR MÊS:
@@ -5888,7 +5937,10 @@ CONTRATOS CADASTRADOS (aba Contratos):
 ${textoContratos}
 
 HISTÓRICO DE COMPRAS MÊS A MÊS (Frutas/Rancho/Limpeza, aba Compras):
-${textoCompras}`;
+${textoCompras}
+
+CONTAS PESSOAIS (controle separado da escola — use esta seção quando a pergunta mencionar contas pessoais/gastos pessoais):
+${textoContasPessoais}`;
   }
 
   // resumo curto e automático (sem gastar chamada de IA) — mostrado assim que o chat abre,
@@ -7259,7 +7311,10 @@ ${textoCompras}`;
         ) : tab === 'arquivos' ? (
           <Arquivos />
         ) : (
-          <ContasPessoais chamarIA={chamarIA} />
+          <ContasPessoais
+            chamarIA={chamarIA}
+            onAbrirIA={() => { setPerguntaInicialIA(null); setIaAberta(true); }}
+          />
         )}
       </main>
     </div>
