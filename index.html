@@ -5381,6 +5381,15 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
   // Mesma regra visual de Lançamentos/Mensalidades:
   // 1 clique fixa a linha destacada; duplo clique remove o destaque.
   const [linhaSelecionada, setLinhaSelecionada] = useState(null);
+
+  // Privacidade independente na aba Contas Pessoais:
+  // - ocultarTabela: esconde os valores mensais da tabela.
+  // - ocultarTotais: esconde subtotais, totais por linha/mês e cards de resumo.
+  // Ao editar uma célula com a tabela oculta, somente a célula ativa é revelada.
+  const [ocultarTabela, setOcultarTabela] = useState(false);
+  const [ocultarTotais, setOcultarTotais] = useState(false);
+  const [celulaAtiva, setCelulaAtiva] = useState(null);
+
   const reconhecimentoRef = useRef(null);
   const suportaVoz = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
 
@@ -5542,6 +5551,36 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
           <div style={{fontSize:13.5,color:COLORS.inkSoft}}>Janeiro a dezembro. Esta aba não interfere nos cálculos da escola.</div>
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end',flex:'1 1 700px',minWidth:0,maxWidth:'100%'}}>
+          <button
+            onClick={()=>setOcultarTabela(v=>!v)}
+            className="busca-liquid-glass"
+            title={ocultarTabela ? 'Mostrar valores da tabela' : 'Ocultar valores da tabela'}
+            style={{
+              height:42,border:`1px solid ${COLORS.line}`,borderRadius:12,
+              background:ocultarTabela?'rgba(62,122,204,.14)':'color-mix(in srgb, var(--c-paperCard) 76%, transparent)',
+              color:'#3E7ACC',fontWeight:800,cursor:'pointer',padding:'8px 11px',
+              display:'flex',alignItems:'center',gap:6
+            }}
+          >
+            {ocultarTabela ? <EyeOff size={15}/> : <Eye size={15}/>}
+            Tabela
+          </button>
+
+          <button
+            onClick={()=>setOcultarTotais(v=>!v)}
+            className="busca-liquid-glass"
+            title={ocultarTotais ? 'Mostrar totais' : 'Ocultar todos os totais'}
+            style={{
+              height:42,border:`1px solid ${COLORS.line}`,borderRadius:12,
+              background:ocultarTotais?'rgba(193,92,160,.14)':'color-mix(in srgb, var(--c-paperCard) 76%, transparent)',
+              color:'#C15CA0',fontWeight:800,cursor:'pointer',padding:'8px 11px',
+              display:'flex',alignItems:'center',gap:6
+            }}
+          >
+            {ocultarTotais ? <EyeOff size={15}/> : <Eye size={15}/>}
+            Totais
+          </button>
+
           {chamarIA && (
             <>
               <button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass"
@@ -5598,7 +5637,7 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
         }}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
             <span>{cat.icone} {cat.nome}</span>
-            <span className="mono" style={{fontSize:12.5,color:cat.cor}}>{formatBRL(totalCategoria)}</span>
+            <span className="mono" style={{fontSize:12.5,color:cat.cor}}>{ocultarTotais ? '••••••' : formatBRL(totalCategoria)}</span>
           </div>
         </td>
       </tr>
@@ -5619,21 +5658,38 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
             cursor:'pointer'
           }}>
           <td style={{padding:'7px 10px',fontWeight:700,color:COLORS.ink}}>{c.nome}</td>
-          {MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input
-            key={`${c.id}-${m}-${Number(c.valores?.[m]||0)}`}
-            defaultValue={formatBRLNumber(c.valores?.[m]||0)}
-            onFocus={e=>{
-              if (parseValor(e.target.value) === 0) e.target.value = '';
-              try { e.target.select(); } catch(err) {}
-            }}
-            onBlur={e=>{
-              alterarValor(c.id,m,e.target.value);
-              if (!String(e.target.value||'').trim()) e.target.value = '0,00';
-            }}
-            onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}}
-            style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:12.5}}
-          /></td>)}
-          <td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td>
+          {MESES_CP.map(m=>{
+            const chaveCelula = `${c.id}|${m}`;
+            const revelada = !ocultarTabela || celulaAtiva === chaveCelula;
+            return <td key={m} style={{padding:'4px'}}><input
+              key={`${c.id}-${m}-${Number(c.valores?.[m]||0)}`}
+              type={revelada ? 'text' : 'password'}
+              inputMode="decimal"
+              autoComplete="off"
+              defaultValue={formatBRLNumber(c.valores?.[m]||0)}
+              onFocus={e=>{
+                setCelulaAtiva(chaveCelula);
+                if (parseValor(e.target.value) === 0) e.target.value = '';
+                try { e.target.select(); } catch(err) {}
+              }}
+              onBlur={e=>{
+                alterarValor(c.id,m,e.target.value);
+                if (!String(e.target.value||'').trim()) e.target.value = '0,00';
+                setCelulaAtiva(null);
+              }}
+              onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}}
+              style={{
+                width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,
+                padding:'7px 6px',
+                background:ocultarTabela && !revelada
+                  ? 'rgba(62,122,204,.08)'
+                  : 'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',
+                fontFamily:'monospace',fontSize:12.5,
+                letterSpacing:ocultarTabela && !revelada ? '2px' : 'normal'
+              }}
+            /></td>
+          })}
+          <td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{ocultarTotais ? 'R$ ••••••' : formatBRL(total)}</td>
           <td style={{whiteSpace:'nowrap'}}>
             <button onClick={(e)=>{e.stopPropagation();renomear(c.id);}} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button>
             <button onClick={(e)=>{e.stopPropagation();remover(c.id);}} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button>
@@ -5654,17 +5710,17 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
       whiteSpace:'nowrap',
       textAlign:'center',
       borderLeft: idx===0 ? '1px solid rgba(28,158,143,.13)' : '1px solid rgba(28,158,143,.12)'
-    }}>{formatBRL(totaisMes[m])}</td>)}
-    <td className="mono" style={{padding:'12px 10px',fontWeight:900,color:COLORS.ink,whiteSpace:'nowrap',borderLeft:'2px solid rgba(28,158,143,.22)'}}>{formatBRL(totalGeral)}</td>
+    }}>{ocultarTotais ? 'R$ ••••••' : formatBRL(totaisMes[m])}</td>)}
+    <td className="mono" style={{padding:'12px 10px',fontWeight:900,color:COLORS.ink,whiteSpace:'nowrap',borderLeft:'2px solid rgba(28,158,143,.22)'}}>{ocultarTotais ? 'R$ ••••••' : formatBRL(totalGeral)}</td>
     <td style={{borderRadius:'0 10px 10px 0'}}></td>
   </tr>
 </tfoot></table></div>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:12}}>
-      {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,s,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
+      {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,sub,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{ocultarTotais ? 'R$ ••••••' : formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{ocultarTotais ? '••••' : sub}</div></div>)}
     </div>
     <div className="busca-liquid-glass" style={{...glass,borderRadius:14,padding:'10px 13px',fontSize:12.5,color:COLORS.inkSoft}}>
-      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> no tablet e celular, deslize a tabela para a esquerda/direita ou use a barra horizontal abaixo para chegar até Dezembro e Total. Nas células com 0,00, o zero some ao tocar.
+      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> use 👁 Tabela para esconder os valores mensais e 👁 Totais para ocultar todos os totais. Com a tabela oculta, somente a célula que você tocar para editar fica visível.
     </div>
   </div>;
 }
