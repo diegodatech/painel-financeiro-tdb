@@ -913,6 +913,17 @@ html.dark-mode {
                 });
               }
 
+              // Também retoma automaticamente anexos/PDFs pendentes salvos no IndexedDB.
+              const pendentesAnexos = lerPendenciasAnexos();
+              pendentesAnexos.forEach(key => {
+                filaEscrita = filaEscrita.then(async () => {
+                  const local = await idbAnexoGet_(key);
+                  if (local === null) return { ok: false, ausente: true };
+                  const versao = Number(lerVersoes()[key]) || Date.now();
+                  return enviarAnexo_(key, local, versao);
+                }).catch(() => {});
+              });
+
               return cachePlanilha;
             } catch (e) {
               ultimoErro = e;
@@ -1004,7 +1015,7 @@ html.dark-mode {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: JSON.stringify({
-                acao: 'anexo',
+                acao: 'set',
                 key,
                 value: val,
                 updatedAt: Number(versao) || Date.now(),
@@ -1237,6 +1248,16 @@ html.dark-mode {
             const p = lerPendencias();
             return { ok: false, total: p.size, falhas: p.size || 1, erro: window.__ultimoErroSync || 'Não consegui ler o Google Drive.' };
           }
+
+          // Reconciliação segura: se uma chave que já foi gerenciada pelo painel existe
+          // localmente, mas sumiu do Drive, recoloca-a na fila. Não sobrescreve chaves
+          // diferentes que ainda existem no servidor.
+          const versoesConhecidas = lerVersoes();
+          Object.keys(versoesConhecidas).forEach(key => {
+            if (String(key).indexOf('anexo_') !== -1) return;
+            if (cachePlanilha && Object.prototype.hasOwnProperty.call(cachePlanilha, key)) return;
+            try { if (localStorage.getItem(key) !== null) marcarPendente(key); } catch (e) {}
+          });
 
           const pendentes = Array.from(lerPendencias());
           const pendentesAnexos = Array.from(lerPendenciasAnexos());
@@ -2009,6 +2030,22 @@ function LogoEscola() {
 // Tela de PIN — protege o painel de quem só tem o link mas não sabe o código.
 // Não é uma segurança "à prova de hacker" (é tudo no navegador, sem servidor de verdade),
 // mas já impede o acesso casual de alguém que só encontrou/recebeu o link.
+async function hashPinSeguro(pin, salt) {
+  const enc = new TextEncoder().encode(String(salt) + ':' + String(pin));
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function criarRegistroPin(pin) {
+  const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
+  const salt = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  return JSON.stringify({ v: 2, salt, hash: await hashPinSeguro(pin, salt) });
+}
+async function validarPinSeguro(pin, registro) {
+  if (!registro) return false;
+  if (/^\d{4}$/.test(String(registro))) return String(pin) === String(registro); // legado
+  try { const o = JSON.parse(registro); return !!(o && o.v === 2 && o.salt && o.hash && (await hashPinSeguro(pin, o.salt)) === o.hash); } catch (e) { return false; }
+}
+
 function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPin, valorInicial }) {
   const [modo, setModo] = useState(pinConfigurado ? 'entrar' : 'escolher'); // 'entrar' | 'escolher' | 'confirmar'
   const [digitado, setDigitado] = useState(valorInicial || '');
@@ -2061,9 +2098,9 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
     return () => window.removeEventListener('keydown', aoPressionarTecla);
   }, [modo, primeiroPin, pinConfigurado]);
 
-  function confirmarDigitos(valor) {
+  async function confirmarDigitos(valor) {
     if (modo === 'entrar') {
-      if (valor === pinConfigurado) {
+      if (await validarPinSeguro(valor, pinConfigurado)) {
         onDesbloquear();
       } else {
         setErro('PIN incorreto, tenta de novo.');
@@ -2541,9 +2578,9 @@ function ModalAlterarPin({ pinAtual, onFechar, onSalvar }) {
     return () => window.removeEventListener('keydown', aoPressionarTecla);
   }, [etapa, novoPinTemp]);
 
-  function confirmar(valor) {
+  async function confirmar(valor) {
     if (etapa === 'atual') {
-      if (valor === pinAtual) {
+      if (await validarPinSeguro(valor, pinAtual)) {
         setDigitado(''); setEtapa('novo');
       } else {
         setErro('PIN atual incorreto. Tenta de novo.');
@@ -4400,7 +4437,8 @@ function Valores({ modoPrivado, setModoPrivado }) {
     const vagasPreenchidas = Number(novoMultivaga.vagasPreenchidas) || 0;
     const valorPorAluno = parseBRLInput(novoMultivaga.valorPorAluno) || 0;
     if (!nome || !valorPorAluno) { mostrarToast('Preencha o nome do convênio e o valor por aluno.'); return; }
-    salvarConveniosMultivaga([...(conveniosMultivaga || []), { nome, vagasTotais, vagasPreenchidas, valorPorAluno, atualizadoEm: new Date().toISOString() }]);
+    const mesRegistro = MESES[new Date().getMonth()] || 'SETEMBRO';
+    salvarConveniosMultivaga([...(conveniosMultivaga || []), { nome, vagasTotais, vagasPreenchidas, valorPorAluno, historicoVagas: { [mesRegistro]: vagasPreenchidas }, atualizadoEm: new Date().toISOString() }]);
     setNovoMultivaga({ nome: '', vagasTotais: '', vagasPreenchidas: '', valorPorAluno: '' });
     mostrarToast('✓ Convênio adicionado!');
   }
@@ -4424,8 +4462,12 @@ function Valores({ modoPrivado, setModoPrivado }) {
     // só atualiza a "data da última mexida" se o nº de vagas preenchidas realmente mudou —
     // corrigir só o valor/aluno, por exemplo, não conta como "atualizei as vagas"
     const mudouVagas = anterior.vagasPreenchidas !== vagasPreenchidas;
+    const mesRegistro = MESES[new Date().getMonth()] || 'SETEMBRO';
+    const historicoVagas = { ...(anterior.historicoVagas || {}) };
+    if (!Object.keys(historicoVagas).length) historicoVagas[mesRegistro] = Number(anterior.vagasPreenchidas) || 0;
+    if (mudouVagas) historicoVagas[mesRegistro] = vagasPreenchidas;
     next[editandoMultivaga] = {
-      nome, vagasTotais, vagasPreenchidas, valorPorAluno,
+      nome, vagasTotais, vagasPreenchidas, valorPorAluno, historicoVagas,
       atualizadoEm: mudouVagas ? new Date().toISOString() : (anterior.atualizadoEm || new Date().toISOString()),
     };
     salvarConveniosMultivaga(next);
@@ -6495,34 +6537,45 @@ function PainelFinanceiro() {
     } catch (e) {}
 
     function alunosExtrasDoMes(mes) {
-      let qtd = 0, somaPagos = 0, qtdPagos = 0;
+      let qtd = 0, somaPrevista = 0, qtdComValor = 0;
       (conveniosMultivaga || []).forEach(item => {
-        // conta as vagas preenchidas SEMPRE — "vagas preenchidas" já é o número real de
-        // alunos matriculados por esse convênio (ex: Prefeitura), atualizado manualmente
-        // na aba Valores. Antes só contava se existisse um lançamento daquele mês com o
-        // nome batendo exatamente, então alunos da Prefeitura sumiam da Taxa de Ocupação
-        // sempre que não havia lançamento — mesmo estando matriculados de verdade.
-        qtd += item.vagasPreenchidas || 0;
-        const pago = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome) && t.status === 'Pago');
-        if (pago) { somaPagos += item.vagasPreenchidas * item.valorPorAluno; qtdPagos += item.vagasPreenchidas; }
+        // As vagas preenchidas representam alunos matriculados de verdade (ex.: Prefeitura).
+        // Para o ponto de equilíbrio usamos o valor contratual por aluno, e não somente o
+        // que já foi recebido. Assim o ticket médio e a quantidade de alunos usam a mesma
+        // população e não oscilam artificialmente por atraso/baixa de pagamento.
+        const hist = item.historicoVagas && typeof item.historicoVagas === 'object' ? item.historicoVagas : null;
+        let vagas = Number(item.vagasPreenchidas) || 0;
+        if (hist && Object.keys(hist).length) {
+          const alvo = MESES.indexOf(mes);
+          const registros = Object.entries(hist).map(([m, v]) => [MESES.indexOf(m), Number(v) || 0]).filter(([i]) => i >= 0).sort((a,b) => a[0]-b[0]);
+          const anteriores = registros.filter(([i]) => i <= alvo);
+          if (anteriores.length) vagas = anteriores[anteriores.length - 1][1];
+          else if (registros.length) vagas = registros[0][1];
+        }
+        const valorPorAluno = Number(item.valorPorAluno) || 0;
+        qtd += vagas;
+        if (vagas > 0 && valorPorAluno > 0) {
+          somaPrevista += vagas * valorPorAluno;
+          qtdComValor += vagas;
+        }
       });
-      return { qtd, somaPagos, qtdPagos };
+      return { qtd, somaPrevista, qtdComValor };
     }
     function calcularIndicadores(mesAlvo) {
       const doMes = transacoes.filter(t => t.mes === mesAlvo);
       const despesasFixas = doMes.filter(t => t.tipo === 'Fixa').reduce((s, t) => s + (t.valor || 0), 0);
       const despesasTotais = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
       const alunosDoMes = doMes.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - '));
-      const alunosPagos = alunosDoMes.filter(t => t.status === 'Pago' && t.valor);
+      const mensalidadesComValor = alunosDoMes.filter(t => Number(t.valor) > 0);
       const extra = alunosExtrasDoMes(mesAlvo);
       // QUANTIDADE REAL DE ALUNOS / TAXA DE OCUPAÇÃO:
-      // soma os alunos particulares (lançamentos individuais de Mensalidade -)
-      // + as vagas preenchidas dos convênios multivaga cadastradas manualmente na aba Valores.
-      // Ex.: 57 particulares + 13 vagas preenchidas da Prefeitura = 70 alunos.
-      // Outros lançamentos de empresas/convênios na aba Mensalidades NÃO entram diretamente.
+      // particulares + vagas preenchidas da Prefeitura/convênios multivaga.
+      // Convênios/empresas lançados como uma única entrada NÃO são contados como alunos.
       const totalAlunos = alunosDoMes.length + extra.qtd;
-      const somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0) + extra.somaPagos;
-      const qtdTicket = alunosPagos.length + extra.qtdPagos;
+      // Ticket médio previsto: usa a mensalidade cadastrada de todos os alunos, estejam
+      // pagos ou pendentes, mais o valor por aluno dos convênios multivaga.
+      const somaTicket = mensalidadesComValor.reduce((s, t) => s + (Number(t.valor) || 0), 0) + extra.somaPrevista;
+      const qtdTicket = mensalidadesComValor.length + extra.qtdComValor;
       const ticketMedio = qtdTicket ? somaTicket / qtdTicket : 0;
       const pontoEquilibrio = ticketMedio > 0 ? Math.ceil(despesasFixas / ticketMedio) : null;
       const custoPorAluno = totalAlunos > 0 ? despesasTotais / totalAlunos : null;
@@ -6532,15 +6585,15 @@ function PainelFinanceiro() {
 
     const indicadoresAtual = calcularIndicadores(mesAtual);
     const textoIndicadores = `Mês de referência: ${mesAtual}\n`
-      + `Ponto de equilíbrio: precisa de ${indicadoresAtual.pontoEquilibrio ?? '?'} alunos pagantes pra cobrir ${formatBRL(indicadoresAtual.despesasFixas)} de contas fixas (ticket médio ${formatBRL(indicadoresAtual.ticketMedio)})\n`
-      + `Tem hoje: ${indicadoresAtual.totalAlunos} alunos pagantes — ${indicadoresAtual.pontoEquilibrio != null && indicadoresAtual.totalAlunos >= indicadoresAtual.pontoEquilibrio ? 'está ACIMA/no ponto de equilíbrio (bom sinal)' : 'está ABAIXO do ponto de equilíbrio (alerta)'}\n`
+      + `Ponto de equilíbrio: precisa de ${indicadoresAtual.pontoEquilibrio ?? '?'} alunos para cobrir ${formatBRL(indicadoresAtual.despesasFixas)} de contas fixas (ticket médio previsto ${formatBRL(indicadoresAtual.ticketMedio)})\n`
+      + `Tem hoje: ${indicadoresAtual.totalAlunos} alunos matriculados (Particulares + Prefeitura/convênios multivaga) — ${indicadoresAtual.pontoEquilibrio != null && indicadoresAtual.totalAlunos >= indicadoresAtual.pontoEquilibrio ? 'está ACIMA/no ponto de equilíbrio estimado (bom sinal)' : 'está ABAIXO do ponto de equilíbrio estimado (alerta)'}\n`
       + `Custo por aluno: ${indicadoresAtual.custoPorAluno != null ? formatBRL(indicadoresAtual.custoPorAluno) : 'não calculado'}\n`
       + `Taxa de ocupação: ${indicadoresAtual.taxaOcupacao != null ? indicadoresAtual.taxaOcupacao + '%' : 'capacidade máxima não configurada'} (capacidade total: ${capacidadeMaxima || '?'} vagas)`;
 
-    // evolução mês a mês de alunos pagantes x ponto de equilíbrio — pra IA identificar altos/baixos ao longo do ano
+    // evolução mês a mês de alunos matriculados x ponto de equilíbrio estimado
     const evolucaoTexto = mesesComMov.map(m => {
       const ind = calcularIndicadores(m);
-      return `${m}: ${ind.totalAlunos} alunos pagantes (precisava de ${ind.pontoEquilibrio ?? '?'}) — custo/aluno ${ind.custoPorAluno != null ? formatBRL(ind.custoPorAluno) : '?'}`;
+      return `${m}: ${ind.totalAlunos} alunos matriculados (precisava de ${ind.pontoEquilibrio ?? '?'}) — custo/aluno ${ind.custoPorAluno != null ? formatBRL(ind.custoPorAluno) : '?'}`;
     }).join('\n');
 
     // fixas x variáveis — proporção do ano inteiro
@@ -6945,15 +6998,24 @@ ${textoContasPessoais}`;
     (async () => {
       try {
         const r = await window.storage.get('painel_pin', false);
-        setPinConfigurado(r && r.value ? r.value : '');
+        let valorPin = r && r.value ? r.value : '';
+        // Migra automaticamente o PIN legado em texto puro para hash + salt.
+        if (/^\d{4}$/.test(String(valorPin))) {
+          try {
+            valorPin = await criarRegistroPin(valorPin);
+            await window.storage.set('painel_pin', valorPin, false);
+          } catch (e) {}
+        }
+        setPinConfigurado(valorPin);
       } catch (e) {
         setPinConfigurado('');
       }
     })();
   }, []);
   async function definirPin(novoPin) {
-    try { await window.storage.set('painel_pin', novoPin, false); } catch (e) {}
-    setPinConfigurado(novoPin);
+    let registro = novoPin;
+    try { registro = await criarRegistroPin(novoPin); await window.storage.set('painel_pin', registro, false); } catch (e) {}
+    setPinConfigurado(registro);
     setDesbloqueado(true);
   }
   async function removerPin() {
@@ -8174,8 +8236,8 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-// tooltip pro gráfico de alunos pagantes x ponto de equilíbrio — mostra "nº de alunos"
-// em vez de formatar como dinheiro (é a mesma unidade nos dois casos: contagem de alunos)
+// tooltip pro gráfico de alunos matriculados x ponto de equilíbrio — mostra quantidade
+// de alunos (Particulares + vagas preenchidas da Prefeitura/convênios multivaga).
 const TooltipAlunos = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
@@ -8191,13 +8253,13 @@ const TooltipAlunos = ({ active, payload, label }) => {
   );
 };
 
-// ponto vermelho quando o mês teve menos alunos pagantes do que o ponto de equilíbrio
-// (ou seja, não cobriu as contas fixas naquele mês) — verde quando cobriu ou passou
-function DotAlunosPagantes(props) {
+// ponto vermelho quando a quantidade de alunos matriculados ficou abaixo do ponto
+// de equilíbrio estimado; verde quando atingiu ou superou a quantidade necessária.
+function DotAlunosMatriculados(props) {
   const { cx, cy, payload } = props;
-  if (cx == null || cy == null || payload.alunosPagantes == null || payload.pontoEquilibrio == null) return null;
-  const ruim = payload.alunosPagantes < payload.pontoEquilibrio;
-  return <circle cx={cx} cy={cy} r={4.5} fill={ruim ? COLORS.red : COLORS.green} stroke="#FFF" strokeWidth={1.5} />;
+  if (cx == null || cy == null || payload.alunosMatriculados == null || payload.pontoEquilibrio == null) return null;
+  const abaixo = payload.alunosMatriculados < payload.pontoEquilibrio;
+  return <circle cx={cx} cy={cy} r={4.5} fill={abaixo ? COLORS.red : COLORS.green} stroke="#FFF" strokeWidth={1.5} />;
 }
 
 function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, transacoes, saldosMensais, salvarSaldoMensal, modoPrivado, setModoPrivado }) {
@@ -8334,8 +8396,8 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     };
   }, [transacoes]);
 
-  // Indicadores financeiros: ponto de equilíbrio (quantos alunos pagantes cobrem as contas
-  // fixas do mês) e custo por aluno (despesas totais ÷ nº de alunos matriculados no mês).
+  // Indicadores financeiros: ponto de equilíbrio (quantos alunos são necessários para cobrir
+  // as contas fixas do mês usando o ticket médio previsto) e custo por aluno.
   // Pode ser calculado pra um mês específico ou pro ano todo (média mensal).
   const mesesComMovimento = useMemo(() => {
     if (!transacoes) return [];
@@ -8361,17 +8423,28 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     // manualmente na aba Valores — não devia depender de existir lançamento pra contar.
     function alunosExtrasDoMes(mes) {
       let qtd = 0;
-      let somaPagos = 0;
-      let qtdPagos = 0;
+      let somaPrevista = 0;
+      let qtdComValor = 0;
       (conveniosMultivaga || []).forEach(item => {
-        qtd += item.vagasPreenchidas || 0;
-        // t.categoria dos convênios vem com prefixo "Convênio - " escondido (a tela só
-        // mostra o nome sem o prefixo), então comparamos pelo nome já "traduzido" —
-        // isso aqui só afeta o quanto entra na conta do ticket médio (valor pago)
-        const pago = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome) && t.status === 'Pago');
-        if (pago) { somaPagos += item.vagasPreenchidas * item.valorPorAluno; qtdPagos += item.vagasPreenchidas; }
+        const hist = item.historicoVagas && typeof item.historicoVagas === 'object' ? item.historicoVagas : null;
+        let vagas = Number(item.vagasPreenchidas) || 0;
+        if (hist && Object.keys(hist).length) {
+          const alvo = MESES.indexOf(mes);
+          const registros = Object.entries(hist).map(([m, v]) => [MESES.indexOf(m), Number(v) || 0]).filter(([i]) => i >= 0).sort((a,b) => a[0]-b[0]);
+          const anteriores = registros.filter(([i]) => i <= alvo);
+          if (anteriores.length) vagas = anteriores[anteriores.length - 1][1];
+          else if (registros.length) vagas = registros[0][1];
+        }
+        const valorPorAluno = Number(item.valorPorAluno) || 0;
+        qtd += vagas;
+        // Para o ponto de equilíbrio, o ticket médio é contratual/previsto: independe
+        // de o convênio já ter sido baixado como Pago naquele mês.
+        if (vagas > 0 && valorPorAluno > 0) {
+          somaPrevista += vagas * valorPorAluno;
+          qtdComValor += vagas;
+        }
       });
-      return { qtd, somaPagos, qtdPagos };
+      return { qtd, somaPrevista, qtdComValor };
     }
 
     if (mesIndicadores === 'ANO') {
@@ -8379,9 +8452,9 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
       const doAno = transacoes.filter(t => meses.includes(t.mes));
       const despesasFixasTotal = doAno.filter(t => t.tipo === 'Fixa').reduce((s, t) => s + (t.valor || 0), 0);
       const despesasTotaisTotal = doAno.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
-      const alunosPagos = doAno.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - ') && t.status === 'Pago' && t.valor);
-      let somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0);
-      let qtdTicket = alunosPagos.length;
+      const mensalidadesComValor = doAno.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - ') && Number(t.valor) > 0);
+      let somaTicket = mensalidadesComValor.reduce((s, t) => s + (Number(t.valor) || 0), 0);
+      let qtdTicket = mensalidadesComValor.length;
       // Média anual da quantidade real de alunos: particulares + vagas preenchidas
       // dos convênios multivaga (ex.: Prefeitura), conforme informado manualmente na aba Valores.
       let totalAlunosSoma = meses.reduce((s, m) => s + transacoes.filter(t => t.mes === m && t.categoria && t.categoria.startsWith('Mensalidade - ')).length, 0);
@@ -8390,8 +8463,8 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         totalAlunosSoma += extra.qtd;
         // O lançamento da empresa/convênio continua fora da contagem direta;
         // somente as vagas preenchidas configuradas em Valores entram como alunos.
-        somaTicket += extra.somaPagos;
-        qtdTicket += extra.qtdPagos;
+        somaTicket += extra.somaPrevista;
+        qtdTicket += extra.qtdComValor;
       });
       const despesasFixas = despesasFixasTotal / meses.length; // média mensal
       const despesasTotais = despesasTotaisTotal / meses.length; // média mensal
@@ -8417,13 +8490,15 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     const despesasFixas = doMes.filter(t => t.tipo === 'Fixa').reduce((s, t) => s + (t.valor || 0), 0);
     const despesasTotais = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
     const alunosDoMes = doMes.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - '));
-    const alunosPagos = alunosDoMes.filter(t => t.status === 'Pago' && t.valor);
+    const mensalidadesComValor = alunosDoMes.filter(t => Number(t.valor) > 0);
     const extra = alunosExtrasDoMes(mesAlvo);
-    // Total de alunos da escola = particulares + vagas preenchidas da Prefeitura/convênios multivaga.
+    // Total de alunos da escola = Particulares + vagas preenchidas da Prefeitura/convênios multivaga.
     // Não conta lançamentos de empresas/convênios da aba Mensalidades como alunos adicionais.
     const totalAlunos = alunosDoMes.length + extra.qtd;
-    const somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0) + extra.somaPagos;
-    const qtdTicket = alunosPagos.length + extra.qtdPagos;
+    // Ticket médio previsto/contratual: considera a mensalidade cadastrada mesmo quando
+    // ainda está Pendente, mantendo o cálculo do ponto de equilíbrio estável e comparável.
+    const somaTicket = mensalidadesComValor.reduce((s, t) => s + (Number(t.valor) || 0), 0) + extra.somaPrevista;
+    const qtdTicket = mensalidadesComValor.length + extra.qtdComValor;
     const ticketMedio = qtdTicket ? somaTicket / qtdTicket : 0;
     const pontoEquilibrio = ticketMedio > 0 ? Math.ceil(despesasFixas / ticketMedio) : null;
     const custoPorAluno = totalAlunos > 0 ? despesasTotais / totalAlunos : null;
@@ -8440,38 +8515,47 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
   const evolucaoIndicadores = useMemo(() => {
     if (!transacoes || mesesComMovimento.length === 0) return [];
     function alunosExtrasDoMes(mes) {
-      let qtd = 0, somaPagos = 0, qtdPagos = 0;
+      let qtd = 0, somaPrevista = 0, qtdComValor = 0;
       (conveniosMultivaga || []).forEach(item => {
-        // As vagas preenchidas são o número real de alunos daquele convênio e são
-        // informadas manualmente na aba Valores. Portanto entram na ocupação mesmo
-        // quando ainda não existe um lançamento de pagamento no mês.
-        const vagas = Number(item.vagasPreenchidas) || 0;
+        // As vagas preenchidas são o número real de alunos do convênio e entram na
+        // quantidade matriculada mesmo antes da baixa do pagamento.
+        const hist = item.historicoVagas && typeof item.historicoVagas === 'object' ? item.historicoVagas : null;
+        let vagas = Number(item.vagasPreenchidas) || 0;
+        if (hist && Object.keys(hist).length) {
+          const alvo = MESES.indexOf(mes);
+          const registros = Object.entries(hist).map(([m, v]) => [MESES.indexOf(m), Number(v) || 0]).filter(([i]) => i >= 0).sort((a,b) => a[0]-b[0]);
+          const anteriores = registros.filter(([i]) => i <= alvo);
+          if (anteriores.length) vagas = anteriores[anteriores.length - 1][1];
+          else if (registros.length) vagas = registros[0][1];
+        }
+        const valorPorAluno = Number(item.valorPorAluno) || 0;
         qtd += vagas;
-        const pago = transacoes.some(t => t.mes === mes && t.tipo === 'Entrada' && normalizarTexto(nomeExibicao(t.categoria)) === normalizarTexto(item.nome) && t.status === 'Pago');
-        if (pago) { somaPagos += vagas * (Number(item.valorPorAluno) || 0); qtdPagos += vagas; }
+        if (vagas > 0 && valorPorAluno > 0) {
+          somaPrevista += vagas * valorPorAluno;
+          qtdComValor += vagas;
+        }
       });
-      return { qtd, somaPagos, qtdPagos };
+      return { qtd, somaPrevista, qtdComValor };
     }
     return mesesComMovimento.map(mes => {
       const doMes = transacoes.filter(t => t.mes === mes);
       const despesasFixas = doMes.filter(t => t.tipo === 'Fixa').reduce((s, t) => s + (t.valor || 0), 0);
       const despesasTotais = doMes.filter(t => t.tipo !== 'Entrada').reduce((s, t) => s + (t.valor || 0), 0);
       const alunosDoMes = doMes.filter(t => t.categoria && t.categoria.startsWith('Mensalidade - '));
-      const alunosPagos = alunosDoMes.filter(t => t.status === 'Pago' && t.valor);
+      const mensalidadesComValor = alunosDoMes.filter(t => Number(t.valor) > 0);
       const extra = alunosExtrasDoMes(mes);
-      // QUANTIDADE REAL DE ALUNOS / TAXA DE OCUPAÇÃO:
-      // soma os alunos particulares (lançamentos individuais de Mensalidade -)
-      // + as vagas preenchidas dos convênios multivaga cadastradas manualmente na aba Valores.
-      // Ex.: 57 particulares + 13 vagas preenchidas da Prefeitura = 70 alunos.
-      // Outros lançamentos de empresas/convênios na aba Mensalidades NÃO entram diretamente.
+      // QUANTIDADE REAL DE ALUNOS: Particulares + Prefeitura/convênios multivaga.
+      // Convênios/empresas lançados como uma única entrada não viram "1 aluno".
       const totalAlunos = alunosDoMes.length + extra.qtd;
-      const somaTicket = alunosPagos.reduce((s, t) => s + t.valor, 0) + extra.somaPagos;
-      const qtdTicket = alunosPagos.length + extra.qtdPagos;
+      // O ponto de equilíbrio usa o ticket médio previsto de todos os alunos com valor
+      // cadastrado, não somente os que já foram pagos naquele mês.
+      const somaTicket = mensalidadesComValor.reduce((s, t) => s + (Number(t.valor) || 0), 0) + extra.somaPrevista;
+      const qtdTicket = mensalidadesComValor.length + extra.qtdComValor;
       const ticketMedio = qtdTicket ? somaTicket / qtdTicket : 0;
       return {
         mesAbrev: MESES_ABREV[mes],
         pontoEquilibrio: ticketMedio > 0 ? Math.ceil(despesasFixas / ticketMedio) : null,
-        alunosPagantes: qtdTicket > 0 ? qtdTicket : null,
+        alunosMatriculados: totalAlunos > 0 ? totalAlunos : null,
       };
     });
   }, [transacoes, mesesComMovimento, conveniosMultivaga]);
@@ -8617,8 +8701,8 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         </div>
       )}
 
-      {/* INDICADORES: ponto de equilíbrio (nº de alunos pagantes pra cobrir as contas fixas)
-          e custo por aluno (despesas totais ÷ nº de alunos matriculados) — por mês ou no
+      {/* INDICADORES: ponto de equilíbrio (nº estimado de alunos necessários para cobrir
+          as contas fixas, com ticket médio previsto) e custo por aluno — por mês ou no
           ano todo (média mensal), à escolha */}
       {mesesComMovimento.length > 0 && (
         <div style={{
@@ -8643,10 +8727,10 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
             <div style={{ flex: '1 1 220px' }}>
               <div style={{ fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 }}>PONTO DE EQUILÍBRIO</div>
               <div className="mono" style={{ fontSize: 19, fontWeight: 700, color: COLORS.ink }}>
-                {indicadores.pontoEquilibrio} aluno{indicadores.pontoEquilibrio !== 1 ? 's' : ''} pagante{indicadores.pontoEquilibrio !== 1 ? 's' : ''}
+                {indicadores.pontoEquilibrio} aluno{indicadores.pontoEquilibrio !== 1 ? 's' : ''} necessário{indicadores.pontoEquilibrio !== 1 ? 's' : ''}
               </div>
               <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
-                pra cobrir {formatBRLPrivado(indicadores.despesasFixas, modoPrivado)} de contas fixas{indicadores.anual ? '/mês' : ''} (ticket médio {formatBRLPrivado(indicadores.ticketMedio, modoPrivado)}{indicadores.alunosDeConvenio > 0 ? ', já com os de convênio' : ''})
+                pra cobrir {formatBRLPrivado(indicadores.despesasFixas, modoPrivado)} de contas fixas{indicadores.anual ? '/mês' : ''} (ticket médio previsto {formatBRLPrivado(indicadores.ticketMedio, modoPrivado)}{indicadores.alunosDeConvenio > 0 ? ', incluindo Prefeitura/convênios multivaga' : ''})
               </div>
             </div>
           )}
@@ -8782,20 +8866,23 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
         </CardChart>
 
         {evolucaoIndicadores.length > 1 && (
-          <CardChart title="Alunos Pagantes x Ponto de Equilíbrio" height={180}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evolucaoIndicadores} margin={{ top: 4, right: 6, left: -10, bottom: 0 }}>
-                <CartesianGrid stroke={COLORS.lineSoft} strokeDasharray="3 5" vertical={false} />
-                <XAxis dataKey="mesAbrev" tick={{ fontSize: 10, fill: COLORS.inkSoft }} axisLine={{ stroke: COLORS.line }} tickLine={false} />
-                <YAxis tick={{ fontSize: 9.5, fill: COLORS.inkSoft }} allowDecimals={false} axisLine={false} tickLine={false} />
-                <Tooltip content={<TooltipAlunos />} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="pontoEquilibrio" name="Precisa (ponto de equilíbrio)" stroke={COLORS.inkSoft} strokeDasharray="4 3" strokeWidth={2} dot={{ r: 2.5, fill: COLORS.inkSoft }} connectNulls isAnimationActive={false} />
-                <Line type="monotone" dataKey="alunosPagantes" name="Tem (alunos pagantes)" stroke={COLORS.ink} strokeWidth={2} dot={<DotAlunosPagantes />} connectNulls isAnimationActive={false} />
-              </LineChart>
-            </ResponsiveContainer>
-            <div style={{ fontSize: 10.5, color: COLORS.inkSoft, marginTop: 2 }}>
-              🔴 mês em que os alunos pagantes ficaram abaixo do necessário para cobrir as contas fixas · 🟢 mês em que cobriu ou passou
+          <CardChart title="Alunos Matriculados x Ponto de Equilíbrio" height={250}>
+            <div style={{ height: 190, minHeight: 190 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={evolucaoIndicadores} margin={{ top: 4, right: 8, left: -10, bottom: 4 }}>
+                  <CartesianGrid stroke={COLORS.lineSoft} strokeDasharray="3 5" vertical={false} />
+                  <XAxis dataKey="mesAbrev" tick={{ fontSize: 10, fill: COLORS.inkSoft }} axisLine={{ stroke: COLORS.line }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9.5, fill: COLORS.inkSoft }} allowDecimals={false} axisLine={false} tickLine={false} />
+                  <Tooltip content={<TooltipAlunos />} />
+                  <Legend wrapperStyle={{ fontSize: 10.5, lineHeight: '16px', paddingTop: 4 }} />
+                  <Line type="monotone" dataKey="pontoEquilibrio" name="Precisa (ponto de equilíbrio)" stroke={COLORS.inkSoft} strokeDasharray="4 3" strokeWidth={2} dot={{ r: 2.5, fill: COLORS.inkSoft }} connectNulls isAnimationActive={false} />
+                  <Line type="monotone" dataKey="alunosMatriculados" name="Tem (Particulares + Prefeitura)" stroke={COLORS.ink} strokeWidth={2} dot={<DotAlunosMatriculados />} connectNulls isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', alignItems: 'center', fontSize: 10.5, lineHeight: 1.35, color: COLORS.inkSoft, marginTop: 6, paddingTop: 6, borderTop: `1px solid ${COLORS.lineSoft}` }}>
+              <span>🔴 abaixo do ponto de equilíbrio estimado</span>
+              <span>🟢 atingiu ou superou o ponto de equilíbrio</span>
             </div>
           </CardChart>
         )}
@@ -9783,7 +9870,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancam
   // lembra o mês que você escolheu no filtro, mesmo trocando de aba e voltando —
   // só usa AGOSTO como padrão na primeiríssima vez, antes de você escolher algo
   const [filtroMes, setFiltroMesState] = useState(() => {
-    try { return localStorage.getItem('painel_mensalidades_filtroMes') || 'AGOSTO'; } catch (e) { return 'AGOSTO'; }
+    try { return localStorage.getItem('painel_mensalidades_filtroMes') || (MESES[new Date().getMonth()] || 'SETEMBRO'); } catch (e) { return MESES[new Date().getMonth()] || 'SETEMBRO'; }
   });
   const setFiltroMes = (mes) => {
     setFiltroMesState(mes);
@@ -9873,7 +9960,7 @@ function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancam
   const [novoPai, setNovoPai] = useState('');
   const [novoConvenio, setNovoConvenio] = useState('PARTICULAR');
   const [novoTirarNota, setNovoTirarNota] = useState('');
-  const [novoMes, setNovoMes] = useState('AGOSTO');
+  const [novoMes, setNovoMes] = useState(() => MESES[new Date().getMonth()] || 'SETEMBRO');
   const [novoValor, setNovoValor] = useState('');
   const [novoValorCheio, setNovoValorCheio] = useState('');
   const [novoBanco, setNovoBanco] = useState('SICOOB');
