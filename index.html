@@ -5165,7 +5165,64 @@ function Anotacoes({ chamarIA }) {
 function ContasPessoais({ chamarIA, onAbrirIA }) {
   const MESES_CP = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const ABREV_CP = {JANEIRO:'Jan',FEVEREIRO:'Fev','MARÇO':'Mar',ABRIL:'Abr',MAIO:'Mai',JUNHO:'Jun',JULHO:'Jul',AGOSTO:'Ago',SETEMBRO:'Set',OUTUBRO:'Out',NOVEMBRO:'Nov',DEZEMBRO:'Dez'};
-  const CONTAS_PADRAO = ['SANTA CLARA','HAVAN','LUZ CASA','CONDOMÍNIO','ALUGUEL','TACCHIMED','INTERNET','VIVO','ICATU','PILATES','NETFLIX','SICREDI CARTÃO','C6 BANK','ITAÚ CARTÃO VISA INFINIT','ITAÚ MASTER CARD'];
+  const CONTAS_PADRAO = ['SANTA CLARA','HAVAN','LUZ CASA','CONDOMÍNIO','ALUGUEL','TACCHIMED','INTERNET','VIVO','ICATU','PILATES','NETFLIX','SICREDI CARTÃO','C6 BANK','ITAÚ CARTÃO VISA INFINIT','ITAÚ MASTER CARD','CLARO DEBITO','SEGURO CASA','SEGURO CRETA','ICLOUD','DENTISTA'];
+  // HISTÓRICO 2026 — transcrito da planilha antiga enviada pelo usuário.
+  // Só são preenchidos os meses que aparecem com valor nas imagens.
+  const HISTORICO_CP_2026 = {
+    'TACCHIMED': { JANEIRO:340.57, FEVEREIRO:340.57, 'MARÇO':340.57, ABRIL:340.57, MAIO:340.57, JUNHO:340.57, JULHO:340.57 },
+    'CLARO DEBITO': { JANEIRO:99.80, FEVEREIRO:99.80, 'MARÇO':99.80, ABRIL:129.90, MAIO:129.80, JULHO:129.80 },
+    'VIVO': { JANEIRO:38.00, FEVEREIRO:38.00, 'MARÇO':38.00, ABRIL:38.00, MAIO:43.00, JULHO:43.00 },
+    'ICATU': { JANEIRO:43.67, FEVEREIRO:43.67, 'MARÇO':43.67, ABRIL:43.67, MAIO:43.67, JUNHO:43.67, JULHO:43.67 },
+    'SEGURO CASA': { JANEIRO:144.95, FEVEREIRO:144.95, 'MARÇO':144.95, ABRIL:144.95, MAIO:144.95, JUNHO:144.95 },
+    'PILATES': { JANEIRO:310.00, FEVEREIRO:225.00, 'MARÇO':225.00, ABRIL:225.00, MAIO:225.00, JUNHO:225.00, JULHO:225.00 },
+    'HAVAN': { JANEIRO:228.61, FEVEREIRO:523.49, ABRIL:138.62, MAIO:175.00, JULHO:630.35 },
+    'SEGURO CRETA': { FEVEREIRO:254.33, 'MARÇO':254.33, ABRIL:254.33, MAIO:254.33, JULHO:254.33 },
+    'NETFLIX': { JANEIRO:72.80, FEVEREIRO:72.80, 'MARÇO':72.80, ABRIL:72.80, MAIO:72.80, JULHO:72.80 },
+    'LUZ CASA': { JANEIRO:249.37, FEVEREIRO:175.06, 'MARÇO':328.89, ABRIL:266.49, MAIO:278.17, JULHO:484.53 },
+    'CONDOMÍNIO': { JANEIRO:419.76, FEVEREIRO:428.23, 'MARÇO':438.72, ABRIL:424.06, MAIO:429.37, JULHO:288.44 },
+    'ALUGUEL': { JANEIRO:1523.42, FEVEREIRO:1523.42, 'MARÇO':1523.42, ABRIL:1523.42, MAIO:1523.42, JULHO:1603.42 },
+    'DENTISTA': { FEVEREIRO:323.33, 'MARÇO':323.33, ABRIL:323.33 },
+    'SANTA CLARA': { JULHO:514.01 },
+    'ICLOUD': {}
+  };
+
+  function normalizarContaCP(nome) {
+    return String(nome || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g,' ').trim().toUpperCase();
+  }
+
+  function aplicarHistoricoCP2026(listaAtual) {
+    const next = Array.isArray(listaAtual) ? listaAtual.map(c => ({...c, valores:{...(c.valores||{})}})) : [];
+    const aliases = {
+      'CONDOMINIO':'CONDOMÍNIO',
+      'ALUGUEL AP 505':'ALUGUEL',
+      'PILATS':'PILATES'
+    };
+    const encontrar = (nome) => {
+      const alvo = normalizarContaCP(nome);
+      return next.find(c => {
+        const atual = normalizarContaCP(c.nome);
+        return atual === alvo || aliases[atual] === nome || aliases[alvo] === c.nome;
+      });
+    };
+
+    Object.entries(HISTORICO_CP_2026).forEach(([nome, valores]) => {
+      let conta = encontrar(nome);
+      if (!conta) {
+        conta = {
+          id: 'cp_hist_' + normalizarContaCP(nome).replace(/[^A-Z0-9]+/g,'_'),
+          nome,
+          valores: Object.fromEntries(MESES_CP.map(m => [m, 0]))
+        };
+        next.push(conta);
+      }
+      Object.entries(valores).forEach(([mes, valor]) => {
+        conta.valores[mes] = Number(valor) || 0;
+      });
+    });
+    return next;
+  }
   const PALETA_CP = [
     { cor:'#1C9E8F', bg:'rgba(28,158,143,.095)' },
     { cor:'#3E7ACC', bg:'rgba(62,122,204,.075)' },
@@ -5176,6 +5233,9 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
   const [respostaIA, setRespostaIA] = useState('');
   const [processandoIA, setProcessandoIA] = useState(false);
   const [gravando, setGravando] = useState(false);
+  // Mesma regra visual de Lançamentos/Mensalidades:
+  // 1 clique fixa a linha destacada; duplo clique remove o destaque.
+  const [linhaSelecionada, setLinhaSelecionada] = useState(null);
   const reconhecimentoRef = useRef(null);
   const suportaVoz = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
 
@@ -5183,14 +5243,29 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
     (async () => {
       try {
         const r = await window.storage.get('contas_pessoais_v1', false);
-        if (r && r.value) setContas(JSON.parse(r.value));
-        else {
-          const base = CONTAS_PADRAO.map((nome, i) => ({ id: 'cp'+(i+1), nome, valores: Object.fromEntries(MESES_CP.map(m => [m, 0])) }));
-          setContas(base);
+        let base = r && r.value
+          ? JSON.parse(r.value)
+          : CONTAS_PADRAO.map((nome, i) => ({ id: 'cp'+(i+1), nome, valores: Object.fromEntries(MESES_CP.map(m => [m, 0])) }));
+
+        // Migração única: preenche Jan–Jul/2026 conforme a planilha antiga,
+        // preservando os demais meses que o usuário já possa ter digitado.
+        let migrado = false;
+        try {
+          const rm = await window.storage.get('contas_pessoais_hist_2026_v1', false);
+          migrado = !!(rm && rm.value === 'ok');
+        } catch(e) {}
+
+        if (!migrado) {
+          base = aplicarHistoricoCP2026(base);
           await window.storage.set('contas_pessoais_v1', JSON.stringify(base), false);
+          try { await window.storage.set('contas_pessoais_hist_2026_v1', 'ok', false); } catch(e) {}
         }
+
+        setContas(base);
       } catch(e) {
-        setContas(CONTAS_PADRAO.map((nome, i) => ({ id: 'cp'+(i+1), nome, valores: Object.fromEntries(MESES_CP.map(m => [m, 0])) })));
+        setContas(aplicarHistoricoCP2026(
+          CONTAS_PADRAO.map((nome, i) => ({ id: 'cp'+(i+1), nome, valores: Object.fromEntries(MESES_CP.map(m => [m, 0])) }))
+        ));
       }
     })();
     return () => { try { reconhecimentoRef.current && reconhecimentoRef.current.stop(); } catch(e){} };
@@ -5302,10 +5377,10 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
         <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end',flex:'1 1 700px'}}>
           {chamarIA && (
             <>
-              <button onClick={()=>{ if(onAbrirIA) onAbrirIA(); }} className="busca-liquid-glass"
-                title="Abrir Assistente IA completo das Contas Pessoais"
-                style={{height:42,border:'1px solid #C15CA055',borderRadius:12,background:'rgba(193,92,160,.10)',color:'#C15CA0',fontWeight:800,cursor:'pointer',padding:'8px 12px',display:'flex',alignItems:'center',gap:6}}>
-                ✨ IA
+              <button onClick={()=>interpretarComIA()} disabled={processandoIA} className="busca-liquid-glass"
+                title="Confirmar e aplicar o comando digitado com IA"
+                style={{height:42,border:'1px solid #C15CA055',borderRadius:12,background:'rgba(193,92,160,.10)',color:'#C15CA0',fontWeight:800,cursor:processandoIA?'default':'pointer',padding:'8px 12px',display:'flex',alignItems:'center',gap:6}}>
+                ✨ {processandoIA?'Analisando...':'IA'}
               </button>
               <button onClick={alternarVoz} className="busca-liquid-glass" title="Ditar comando para a IA"
                 style={{height:42,border:'1px solid #1C9E8F55',borderRadius:12,background:gravando?'rgba(28,158,143,.18)':'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',color:COLORS.green,fontWeight:800,cursor:'pointer',padding:'8px 12px',display:'flex',alignItems:'center',gap:6}}>
@@ -5326,19 +5401,30 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
         </div>
       </div>
       {respostaIA && <div style={{margin:'-4px 0 10px auto',maxWidth:720,padding:'8px 11px',borderRadius:11,background:'rgba(28,158,143,.11)',color:COLORS.ink,fontSize:12.5}}>{respostaIA}</div>}
-      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map((c,i)=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);const p=PALETA_CP[i%PALETA_CP.length];return <tr key={c.id} className="busca-liquid-glass" style={{background:p.bg,borderLeft:`3px solid ${p.cor}`}}><td style={{padding:'7px 10px',fontWeight:700,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input
+      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map((c,i)=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);const p=PALETA_CP[i%PALETA_CP.length];const selecionada=linhaSelecionada===c.id;return <tr
+  key={c.id}
+  className="busca-liquid-glass"
+  onClick={() => setLinhaSelecionada(c.id)}
+  onDoubleClick={() => setLinhaSelecionada(null)}
+  style={{
+    background: selecionada ? 'rgba(224, 174, 60, 0.16)' : p.bg,
+    borderLeft: selecionada ? '3px solid #E0AE3C' : `3px solid ${p.cor}`,
+    boxShadow: selecionada ? 'inset 0 1px 0 rgba(255,255,255,0.5)' : 'none',
+    transition:'background 0.15s ease, border-color 0.15s ease',
+    cursor:'pointer'
+  }}><td style={{padding:'7px 10px',fontWeight:700,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input
   key={`${c.id}-${m}-${Number(c.valores?.[m]||0)}`}
   defaultValue={formatBRLNumber(c.valores?.[m]||0)}
   onBlur={e=>alterarValor(c.id,m,e.target.value)}
   onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}}
   style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:12.5}}
-/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={()=>renomear(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={()=>remover(c.id)} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
+/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={(e)=>{e.stopPropagation();renomear(c.id);}} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={(e)=>{e.stopPropagation();remover(c.id);}} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:12}}>
       {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,s,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
     </div>
     <div className="busca-liquid-glass" style={{...glass,borderRadius:14,padding:'10px 13px',fontSize:12.5,color:COLORS.inkSoft}}>
-      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> o campo rápido serve para preencher valores. Clique em <strong>✨ IA</strong> para abrir o assistente completo e perguntar, por texto ou voz, por exemplo: “Qual mês eu gastei mais nas contas pessoais?”
+      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> clique uma vez numa linha para fixar o destaque dourado; dê dois cliques para remover. O restante da tabela continua com as duas cores suaves.
     </div>
   </div>;
 }
