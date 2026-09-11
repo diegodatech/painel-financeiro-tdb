@@ -1172,8 +1172,45 @@ html.dark-mode {
         return { ok: false, erro: window.__ultimoErroSync };
       }
 
+      // ================================================================
+      // EXERCÍCIOS ANUAIS (v5.0)
+      // ================================================================
+      // O painel nasceu em 2026 com várias chaves sem o ano no nome (ex.: saldos_mensais).
+      // A partir da v5.0, essas chaves continuam exatamente iguais para 2026 e passam a
+      // receber um sufixo nos exercícios seguintes. Assim preservamos 100% dos dados atuais
+      // e evitamos misturar Janeiro/2026 com Janeiro/2027.
+      if (!window.__exercicioAtual) {
+        try { window.__exercicioAtual = Number(localStorage.getItem('painel_exercicio_atual')) || 2026; }
+        catch (e) { window.__exercicioAtual = 2026; }
+      }
+      const CHAVES_ANUAIS_BASE_ = new Set([
+        'saldos_mensais',
+        'meta_lucro_mensal',
+        'valores_mensalidade',
+        'valores_avulsos',
+        'dias_letivos',
+        'capacidade_maxima',
+        'convenios_multivaga',
+        'categorias_indicadores',
+        'auto_lancamentos_v15'
+      ]);
+      function chaveAnualParaAno_(base, ano) {
+        const y = Number(ano) || 2026;
+        if (base === 'transacoes_financas2026') return `transacoes_financas${y}`;
+        if (CHAVES_ANUAIS_BASE_.has(base)) return y === 2026 ? base : `${base}__${y}`;
+        return base;
+      }
+      function resolverChaveAnual_(key) {
+        const k = String(key || '');
+        // Chaves já explicitamente versionadas nunca são remapeadas novamente.
+        if (/__\d{4}$/.test(k) || /^transacoes_financas(?!2026)\d{4}$/.test(k)) return k;
+        return chaveAnualParaAno_(k, window.__exercicioAtual || 2026);
+      }
+      window.__chaveAnualParaAno = chaveAnualParaAno_;
+
       window.storage = {
         get: async (key) => {
+          key = resolverChaveAnual_(key);
           // Anexos usam IndexedDB porque localStorage costuma ter limite de poucos MB.
           // Isso evita que um PDF grande corrompa/estoure o armazenamento local.
           if (key.indexOf('anexo_') !== -1) {
@@ -1236,6 +1273,7 @@ html.dark-mode {
         },
 
         set: async (key, val) => {
+          key = resolverChaveAnual_(key);
           const eAnexo = key.indexOf('anexo_') !== -1;
           // Anexo: IndexedDB primeiro; nunca jogamos um PDF de 10/20MB dentro do localStorage.
           if (eAnexo) {
@@ -1355,6 +1393,7 @@ html.dark-mode {
         },
 
         delete: async (key) => {
+          key = resolverChaveAnual_(key);
           const eAnexo = key.indexOf('anexo_') !== -1;
           if (eAnexo) {
             await idbAnexoDelete_(key);
@@ -4254,7 +4293,7 @@ function BalaoValor({ label, valor, ativo, editValor, setEditValor, onClick, onS
   );
 }
 
-function Valores({ modoPrivado, setModoPrivado }) {
+function Valores({ modoPrivado, setModoPrivado, exercicioAtual = 2026 }) {
   const [dados, setDados] = useState(null);
   const [casos, setCasos] = useState(null);
   const [editando, setEditando] = useState(null);
@@ -6564,7 +6603,7 @@ function PainelFinanceiro() {
     });
     const topCategorias = Object.entries(porCategoria).sort((a, b) => b[1] - a[1]).slice(0, 12)
       .map(([c, v]) => `${c}: ${formatBRL(v)}`).join('\n');
-    const pendentes = transacoes.filter(t => t.tipo !== 'Entrada' ? false : t.status !== 'Pago').length;
+    const pendentes = transacoes.filter(t => t.tipo === 'Entrada' && t.status === 'Pendente').length;
 
     // meses com pelo menos algum lançamento — usado em vários cálculos abaixo
     const mesesComMov = MESES.filter(m => transacoes.some(t => t.mes === m));
@@ -7100,6 +7139,165 @@ ${textoContasPessoais}`;
   }, [avisoErroSync]);
   const [tab, setTab] = useState('visao');
 
+  // EXERCÍCIO FINANCEIRO — 2026 permanece usando as chaves originais; os anos seguintes
+  // são separados automaticamente pelo window.storage. Trocar o exercício recarrega a
+  // página para que TODAS as abas releiam seus próprios dados do ano escolhido.
+  const [exercicioAtual, setExercicioAtual] = useState(() => Number(window.__exercicioAtual) || 2026);
+  const [exercicios, setExercicios] = useState([{ ano: 2026, status: 'ATIVO', criadoEm: new Date().toISOString() }]);
+  const [prepararAnoAberto, setPrepararAnoAberto] = useState(false);
+  const [preparandoAno, setPreparandoAno] = useState(false);
+  const [mensagemExercicio, setMensagemExercicio] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        let lista = null;
+        const r = await window.storage.get('painel_exercicios_v1', false);
+        if (r && r.value) lista = JSON.parse(r.value);
+        if (!Array.isArray(lista) || !lista.length) {
+          lista = [{ ano: 2026, status: 'ATIVO', criadoEm: new Date().toISOString() }];
+          await window.storage.set('painel_exercicios_v1', JSON.stringify(lista), false);
+        }
+        lista = lista.map(x => ({ ...x, ano: Number(x.ano) })).sort((a,b) => a.ano-b.ano);
+        setExercicios(lista);
+        const existe = lista.some(x => Number(x.ano) === exercicioAtual);
+        if (!existe) {
+          const fallback = lista.find(x => x.status === 'ATIVO') || lista[lista.length - 1];
+          if (fallback) await trocarExercicio(Number(fallback.ano));
+        }
+      } catch (e) {
+        setExercicios([{ ano: 2026, status: 'ATIVO', criadoEm: new Date().toISOString() }]);
+      }
+    })();
+  }, []);
+
+  async function trocarExercicio(ano) {
+    const y = Number(ano) || 2026;
+    try {
+      localStorage.setItem('painel_exercicio_atual', String(y));
+      await window.storage.set('painel_exercicio_atual', String(y), false);
+    } catch (e) {}
+    window.__exercicioAtual = y;
+    setExercicioAtual(y);
+    window.location.reload();
+  }
+
+  function chaveAno(base, ano) {
+    return window.__chaveAnualParaAno ? window.__chaveAnualParaAno(base, ano) : (Number(ano) === 2026 ? base : `${base}__${ano}`);
+  }
+
+  async function prepararNovoExercicio({ selecionados, novosAlunos }) {
+    if (preparandoAno) return;
+    const novoAno = exercicioAtual + 1;
+    if (exercicios.some(x => Number(x.ano) === novoAno)) {
+      setMensagemExercicio({ tipo:'aviso', texto:`O exercício ${novoAno} já existe.` });
+      setPrepararAnoAberto(false);
+      return;
+    }
+    setPreparandoAno(true);
+    try {
+      // Evita duplicidade mesmo se a internet cair e o usuário tentar novamente.
+      const chaveTxNovo = `transacoes_financas${novoAno}`;
+      const existente = await window.storage.get(chaveTxNovo, false);
+      if (existente && existente.value) throw new Error(`Já existem dados gravados para ${novoAno}. Nada foi duplicado.`);
+
+      const nomesSelecionados = new Set((selecionados || []).map(String));
+      const extras = (novosAlunos || []).map(n => String(n || '').trim()).filter(Boolean);
+      extras.forEach(n => nomesSelecionados.add(n));
+
+      const meses = MESES;
+      let id = 0;
+      const novas = [];
+      const porCategoriaMaisRecente = new Map();
+      (transacoes || []).forEach(t => {
+        const idx = MESES.indexOf(t.mes);
+        const ant = porCategoriaMaisRecente.get(t.categoria);
+        if (!ant || idx >= ant.idx) porCategoriaMaisRecente.set(t.categoria, { idx, t });
+      });
+
+      // Alunos selecionados: nome/foto/dados básicos continuam; valor/data/status começam vazios.
+      Array.from(nomesSelecionados).sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(nome => {
+        const cat = nome.startsWith('Mensalidade - ') ? nome : `Mensalidade - ${nome}`;
+        const ref = porCategoriaMaisRecente.get(cat)?.t || {};
+        meses.forEach(mes => novas.push({
+          id: ++id, mes, categoria: cat, tipo: 'Entrada', valor: null, valorCheio: null,
+          status: '', data: null, banco: null, nota: undefined,
+          pai: ref.pai ?? null, tirarNota: ref.tirarNota ?? null, convenio: ref.convenio ?? null,
+          foto: ref.foto || null, exercicio: novoAno,
+        }));
+      });
+
+      // Convênios/empresas e contas recorrentes permanecem como modelos, mas sem movimento financeiro.
+      const mesesPorCategoria = new Map();
+      (transacoes || []).forEach(t => {
+        if (!t.categoria || String(t.categoria).startsWith('Mensalidade - ')) return;
+        if (!mesesPorCategoria.has(t.categoria)) mesesPorCategoria.set(t.categoria, new Set());
+        mesesPorCategoria.get(t.categoria).add(t.mes);
+      });
+      const categoriasModelos = Array.from(mesesPorCategoria.keys()).filter(cat => {
+        const ref = porCategoriaMaisRecente.get(cat)?.t || {};
+        const repeticoes = mesesPorCategoria.get(cat)?.size || 0;
+        return ref.tipo === 'Fixa' || ref.tipo === 'Entrada' || repeticoes >= 2;
+      });
+      categoriasModelos.forEach(cat => {
+        const ref = porCategoriaMaisRecente.get(cat)?.t || {};
+        meses.forEach(mes => novas.push({
+          id: ++id, mes, categoria: cat, tipo: ref.tipo || (String(cat).startsWith('Convênio - ') ? 'Entrada' : 'Variável'),
+          valor: null, valorCheio: null, status: '', data: null, banco: null,
+          convenio: ref.convenio ?? null, exercicio: novoAno,
+        }));
+      });
+
+      await window.storage.set(chaveTxNovo, JSON.stringify(novas), false);
+
+      // Copia configurações que devem continuar como base do próximo exercício.
+      const copiarBases = ['valores_mensalidade','valores_avulsos','dias_letivos','capacidade_maxima','categorias_indicadores'];
+      for (const base of copiarBases) {
+        const atual = await window.storage.get(base, false);
+        if (atual && atual.value != null) await window.storage.set(chaveAno(base, novoAno), atual.value, false);
+      }
+      // Convênios: mantém cadastro/valores/vagas, mas inicia um histórico mensal novo.
+      const cv = await window.storage.get('convenios_multivaga', false);
+      if (cv && cv.value) {
+        let listaCv = [];
+        try { listaCv = JSON.parse(cv.value); } catch(e) {}
+        listaCv = (Array.isArray(listaCv) ? listaCv : []).map(item => ({
+          ...item,
+          historicoVagas: { JANEIRO: Number(item.vagasPreenchidas) || 0 }
+        }));
+        await window.storage.set(chaveAno('convenios_multivaga', novoAno), JSON.stringify(listaCv), false);
+      }
+
+      // Saldo final do ano atual vira SALDO INICIAL do próximo (não é receita de janeiro).
+      const saldoDez = Number((saldosMensais || {}).DEZEMBRO);
+      const saldoRef = Number.isFinite(saldoDez) && saldoDez !== 0
+        ? saldoDez
+        : (() => {
+            const vals = MESES.map(m => Number((saldosMensais || {})[m]) || 0).filter(v => v !== 0);
+            return vals.length ? vals[vals.length - 1] : 0;
+          })();
+      await window.storage.set(`saldo_inicial_exercicio__${novoAno}`, String(saldoRef || 0), false);
+      await window.storage.set(chaveAno('saldos_mensais', novoAno), JSON.stringify({}), false);
+      await window.storage.set(chaveAno('auto_lancamentos_v15', novoAno), 'true', false);
+
+      const novaLista = [...exercicios, {
+        ano: novoAno,
+        status: 'EM_PREPARACAO',
+        criadoEm: new Date().toISOString(),
+        origem: exercicioAtual,
+        saldoInicial: saldoRef || 0,
+      }].sort((a,b)=>a.ano-b.ano);
+      await window.storage.set('painel_exercicios_v1', JSON.stringify(novaLista), false);
+      setExercicios(novaLista);
+      setPrepararAnoAberto(false);
+      setMensagemExercicio({ tipo:'ok', texto:`✓ ${novoAno} foi preparado sem alterar ${exercicioAtual}.` });
+    } catch (e) {
+      setMensagemExercicio({ tipo:'erro', texto:'Não consegui preparar o novo exercício: ' + (e && e.message ? e.message : e) });
+    } finally {
+      setPreparandoAno(false);
+    }
+  }
+
   // filtros da aba lançamentos
   const [filtroMes, setFiltroMes] = useState('TODOS');
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -7138,8 +7336,12 @@ ${textoContasPessoais}`;
             window.storage.set('transacoes_financas2026', JSON.stringify(corrigida), false);
           }
         } else {
-          await window.storage.set('transacoes_financas2026', JSON.stringify(SEED_TRANSACOES), false);
-          setTransacoes(SEED_TRANSACOES);
+          if (exercicioAtual === 2026) {
+            await window.storage.set('transacoes_financas2026', JSON.stringify(SEED_TRANSACOES), false);
+            setTransacoes(SEED_TRANSACOES);
+          } else {
+            setTransacoes([]);
+          }
         }
       } catch (e) {
         setStorageOk(false);
@@ -7147,14 +7349,14 @@ ${textoContasPessoais}`;
       }
       setLoading(false);
     })();
-  }, []);
+  }, [exercicioAtual]);
 
   // saldos mensais editáveis — sempre parte dos valores reais da planilha original (extrato)
   // como base, e por cima aplica qualquer edição manual já salva (mês a mês)
   useEffect(() => {
     (async () => {
       const base = {};
-      SEED_SALDOS.forEach(s => { base[s.mes] = s.total; });
+      if (exercicioAtual === 2026) SEED_SALDOS.forEach(s => { base[s.mes] = s.total; });
       try {
         const r = await window.storage.get('saldos_mensais', false);
         if (r && r.value) {
@@ -7166,7 +7368,7 @@ ${textoContasPessoais}`;
         setSaldosMensais(base);
       }
     })();
-  }, []);
+  }, [exercicioAtual]);
 
   async function salvarSaldoMensal(mes, valor) {
     const next = { ...(saldosMensais || {}), [mes]: valor };
@@ -7176,6 +7378,9 @@ ${textoContasPessoais}`;
 
   useEffect(() => {
     if (!transacoes) return;
+    // A geração automática antiga de Set-Dez pertence somente ao banco original de 2026.
+    // Exercícios novos são criados pelo assistente de preparação anual.
+    if (exercicioAtual !== 2026) return;
     (async () => {
       let jaRodou = false;
       try {
@@ -7274,7 +7479,7 @@ ${textoContasPessoais}`;
         await window.storage.set('auto_lancamentos_v15', 'true', false);
       } catch (e) { setStorageOk(false); }
     })();
-  }, [transacoes === null]);
+  }, [transacoes === null, exercicioAtual]);
 
   // Conserto: por um bug antigo na geração automática de meses futuros, alguns alunos
   // ficaram com o campo de "nota" em branco (deveriam começar como 'Pendente') e alguns
@@ -7302,9 +7507,10 @@ ${textoContasPessoais}`;
   }, [transacoes]);
 
   async function persist(next) {
-    setTransacoes(next);
+    const comExercicio = (Array.isArray(next) ? next : []).map(t => (t && t.exercicio == null ? { ...t, exercicio: exercicioAtual } : t));
+    setTransacoes(comExercicio);
     try {
-      await window.storage.set('transacoes_financas2026', JSON.stringify(next), false);
+      await window.storage.set('transacoes_financas2026', JSON.stringify(comExercicio), false);
     } catch (e) {
       setStorageOk(false);
     }
@@ -7368,7 +7574,7 @@ ${textoContasPessoais}`;
     const downloadAnchor = document.createElement('a');
     const dataHoje = new Date().toISOString().slice(0, 10);
     downloadAnchor.setAttribute('href', url);
-    downloadAnchor.setAttribute('download', `lancamentos_tempo_de_brincar_${dataHoje}.csv`);
+    downloadAnchor.setAttribute('download', `lancamentos_${exercicioAtual}_tempo_de_brincar_${dataHoje}.csv`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -7484,7 +7690,7 @@ ${textoContasPessoais}`;
     const urlPdf = URL.createObjectURL(blobPdf);
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', urlPdf);
-    downloadAnchor.setAttribute('download', `relatorio_${mes.toLowerCase()}_tempo_de_brincar.pdf`);
+    downloadAnchor.setAttribute('download', `relatorio_${mes.toLowerCase()}_${exercicioAtual}_tempo_de_brincar.pdf`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -7903,6 +8109,29 @@ ${textoContasPessoais}`;
             display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12,
             position: 'relative', zIndex: lixeiraAberta ? 10000 : 30, overflow: 'visible'
           }}>
+            <div className="busca-liquid-glass" style={{
+              display:'flex', alignItems:'center', gap:8, borderRadius:12, padding:'5px 8px', minHeight:44
+            }}>
+              <div style={{display:'flex',flexDirection:'column',lineHeight:1.05}}>
+                <span style={{fontSize:8.5,fontWeight:800,color:COLORS.inkSoft,textTransform:'uppercase'}}>Exercício</span>
+                <select value={exercicioAtual} onChange={e => trocarExercicio(Number(e.target.value))} style={{
+                  border:'none', background:'transparent', color:COLORS.ink, fontWeight:800, fontSize:13, padding:'1px 18px 1px 0', cursor:'pointer'
+                }}>
+                  {exercicios.map(ex => <option key={ex.ano} value={ex.ano}>{ex.ano}</option>)}
+                </select>
+              </div>
+              <span style={{
+                fontSize:9.5,fontWeight:800,borderRadius:999,padding:'4px 7px',
+                background:(exercicios.find(x=>x.ano===exercicioAtual)?.status==='ENCERRADO'?COLORS.lineSoft:exercicios.find(x=>x.ano===exercicioAtual)?.status==='EM_PREPARACAO'?COLORS.goldSoft:COLORS.greenBg),
+                color:(exercicios.find(x=>x.ano===exercicioAtual)?.status==='ENCERRADO'?COLORS.inkSoft:exercicios.find(x=>x.ano===exercicioAtual)?.status==='EM_PREPARACAO'?COLORS.gold:COLORS.green)
+              }}>
+                {(exercicios.find(x=>x.ano===exercicioAtual)?.status || 'ATIVO').replace('_',' ')}
+              </span>
+              <button onClick={() => setPrepararAnoAberto(true)} title={`Preparar ${exercicioAtual + 1}`} style={{
+                border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
+              }}>+ {exercicioAtual + 1}</button>
+            </div>
+
             <button
               onClick={salvarTudoAgora}
               disabled={salvandoAgora}
@@ -8091,6 +8320,18 @@ ${textoContasPessoais}`;
             <ModalAlterarPin pinAtual={pinConfigurado} onFechar={() => setModalPinAberto(false)} onSalvar={definirPin} />
           )}
 
+          {prepararAnoAberto && (
+            <ModalPrepararExercicio
+              anoOrigem={exercicioAtual}
+              anoDestino={exercicioAtual + 1}
+              transacoes={transacoes || []}
+              carregando={preparandoAno}
+              onFechar={() => !preparandoAno && setPrepararAnoAberto(false)}
+              onConfirmar={prepararNovoExercicio}
+            />
+          )}
+
+          <Toast mensagem={mensagemExercicio ? mensagemExercicio.texto : null} tipo={mensagemExercicio ? mensagemExercicio.tipo : 'ok'} />
           <Toast mensagem={mensagemSalvarAgora ? mensagemSalvarAgora.texto : null} tipo={mensagemSalvarAgora ? mensagemSalvarAgora.tipo : 'ok'} />
 
           <div className="mono" style={{ color: COLORS.red, fontSize: 11, marginTop: 3 }}>
@@ -8177,6 +8418,7 @@ ${textoContasPessoais}`;
             saldosMensais={saldosMensais}
             salvarSaldoMensal={salvarSaldoMensal}
             modoPrivado={modoPrivado} setModoPrivado={setModoPrivado}
+            exercicioAtual={exercicioAtual}
           />
         ) : tab === 'lancamentos' ? (
           <Lancamentos
@@ -8212,6 +8454,7 @@ ${textoContasPessoais}`;
             privadoTotais={privadoTotais} setPrivadoTotais={setPrivadoTotais}
             privadoDetalhes={privadoDetalhes} setPrivadoDetalhes={setPrivadoDetalhes}
             chamarIA={chamarIA}
+            exercicioAtual={exercicioAtual}
           />
         ) : tab === 'contratos' ? (
           <Contratos chamarIA={chamarIA} />
@@ -8220,7 +8463,7 @@ ${textoContasPessoais}`;
         ) : tab === 'recibos' ? (
           <Recibos chamarIA={chamarIA} />
         ) : tab === 'valores' ? (
-          <Valores modoPrivado={modoPrivadoValores} setModoPrivado={setModoPrivadoValores} />
+          <Valores modoPrivado={modoPrivadoValores} setModoPrivado={setModoPrivadoValores} exercicioAtual={exercicioAtual} />
         ) : tab === 'anotacoes' ? (
           <Anotacoes chamarIA={chamarIA} />
         ) : tab === 'arquivos' ? (
@@ -8232,6 +8475,73 @@ ${textoContasPessoais}`;
           />
         )}
       </main>
+    </div>
+  );
+}
+
+function ModalPrepararExercicio({ anoOrigem, anoDestino, transacoes, carregando, onFechar, onConfirmar }) {
+  const alunos = useMemo(() => {
+    const mapa = new Map();
+    (transacoes || []).filter(t => t.categoria && t.categoria.startsWith('Mensalidade - ')).forEach(t => {
+      const nome = t.categoria.replace('Mensalidade - ', '').trim();
+      const idx = MESES.indexOf(t.mes);
+      const ant = mapa.get(nome);
+      if (!ant || idx >= ant.idx) mapa.set(nome, { idx, t });
+    });
+    return Array.from(mapa.entries()).map(([nome, x]) => ({ nome, foto:x.t.foto || null })).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  }, [transacoes]);
+  const [selecionados, setSelecionados] = useState(() => new Set(alunos.map(a=>a.nome)));
+  const [novosTexto, setNovosTexto] = useState('');
+  const novos = novosTexto.split(/\n|,/).map(x=>x.trim()).filter(Boolean);
+  function alternar(nome) {
+    setSelecionados(prev => {
+      const n = new Set(prev);
+      if (n.has(nome)) n.delete(nome); else n.add(nome);
+      return n;
+    });
+  }
+  return (
+    <div onMouseDown={e => { if (e.target === e.currentTarget && !carregando) onFechar(); }} style={{
+      position:'fixed',inset:0,zIndex:100000,background:'rgba(10,22,20,.62)',display:'flex',alignItems:'center',justifyContent:'center',padding:20
+    }}>
+      <div className="busca-liquid-glass" style={{width:'min(860px,96vw)',maxHeight:'90vh',overflow:'auto',borderRadius:18,padding:20,background:COLORS.paperCard}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12,marginBottom:14}}>
+          <div>
+            <div className="serif" style={{fontSize:23,fontWeight:800,color:COLORS.ink}}>Preparar exercício {anoDestino}</div>
+            <div style={{fontSize:12.5,color:COLORS.inkSoft,marginTop:3}}>Nada será apagado de {anoOrigem}. O novo ano ficará como <b>EM PREPARAÇÃO</b>.</div>
+          </div>
+          <button onClick={onFechar} disabled={carregando} style={{border:'none',background:'transparent',fontSize:22,cursor:'pointer',color:COLORS.inkSoft}}>×</button>
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:10,marginBottom:14}}>
+          <div style={{background:COLORS.greenBg,border:`1px solid ${COLORS.green}33`,borderRadius:10,padding:12}}><b>{alunos.length}</b><div style={{fontSize:11,color:COLORS.inkSoft}}>alunos encontrados em {anoOrigem}</div></div>
+          <div style={{background:COLORS.blueBg || '#E4EEFC',border:'1px solid #3E7ACC33',borderRadius:10,padding:12}}><b>{selecionados.size}</b><div style={{fontSize:11,color:COLORS.inkSoft}}>selecionados para continuar</div></div>
+          <div style={{background:COLORS.goldSoft,border:`1px solid ${COLORS.gold}33`,borderRadius:10,padding:12}}><b>{novos.length}</b><div style={{fontSize:11,color:COLORS.inkSoft}}>novos alunos a incluir</div></div>
+        </div>
+
+        <div style={{fontSize:12.5,fontWeight:800,color:COLORS.ink,marginBottom:7}}>1. Quem continua em {anoDestino}?</div>
+        <div style={{border:`1px solid ${COLORS.line}`,borderRadius:10,maxHeight:260,overflow:'auto',padding:8,display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:5,marginBottom:14}}>
+          {alunos.map(a => (
+            <label key={a.nome} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 8px',borderRadius:8,background:selecionados.has(a.nome)?COLORS.greenBg:COLORS.paper,cursor:'pointer'}}>
+              <input type="checkbox" checked={selecionados.has(a.nome)} onChange={()=>alternar(a.nome)} />
+              {a.foto ? <img src={a.foto} style={{width:25,height:25,borderRadius:'50%',objectFit:'cover'}} /> : <span style={{width:25,height:25,borderRadius:'50%',background:COLORS.lineSoft,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:10}}>👤</span>}
+              <span style={{fontSize:11.5,fontWeight:700,color:COLORS.ink}}>{a.nome}</span>
+            </label>
+          ))}
+        </div>
+
+        <div style={{fontSize:12.5,fontWeight:800,color:COLORS.ink,marginBottom:7}}>2. Novos alunos de {anoDestino} (opcional)</div>
+        <textarea value={novosTexto} onChange={e=>setNovosTexto(e.target.value)} placeholder="Um nome por linha. Ex.:\nANA SILVA\nPEDRO SOUZA" style={{width:'100%',minHeight:80,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:10,padding:10,fontSize:12,color:COLORS.ink,background:COLORS.paperCard,resize:'vertical'}} />
+
+        <div style={{marginTop:14,padding:12,borderRadius:10,background:COLORS.lineSoft,fontSize:11.5,color:COLORS.inkSoft,lineHeight:1.45}}>
+          <b style={{color:COLORS.ink}}>O que acontece:</b> nomes/fotos dos selecionados continuam; mensalidades começam sem valor, data e status; contas e lançamentos recorrentes viram modelos sem valores; Valores/convênios são copiados como base; o saldo final de {anoOrigem} fica registrado como saldo inicial de {anoDestino}. O histórico de {anoOrigem} não é alterado.
+        </div>
+
+        <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:16,flexWrap:'wrap'}}>
+          <button onClick={onFechar} disabled={carregando} style={{border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:9,padding:'9px 14px',fontWeight:700,cursor:'pointer'}}>Cancelar</button>
+          <button onClick={()=>onConfirmar({selecionados:Array.from(selecionados),novosAlunos:novos})} disabled={carregando} style={{border:'none',background:COLORS.inkButton,color:'#fff',borderRadius:9,padding:'9px 15px',fontWeight:800,cursor:carregando?'default':'pointer',opacity:carregando ? .7 : 1}}>{carregando?'Preparando...':`Preparar ${anoDestino}`}</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -8314,7 +8624,7 @@ function DotAlunosMatriculados(props) {
   return <circle cx={cx} cy={cy} r={4.5} fill={abaixo ? COLORS.red : COLORS.green} stroke="#FFF" strokeWidth={1.5} />;
 }
 
-function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, transacoes, saldosMensais, salvarSaldoMensal, modoPrivado, setModoPrivado }) {
+function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, transacoes, saldosMensais, salvarSaldoMensal, modoPrivado, setModoPrivado, exercicioAtual = 2026 }) {
   const [editandoSaldos, setEditandoSaldos] = useState(true);
   const [saldoEditMes, setSaldoEditMes] = useState(null);
   const [saldoEditValor, setSaldoEditValor] = useState('');
@@ -8704,7 +9014,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     const nomeMes = MESES_ABREV[mesReferenciaInteligencia] || mesReferenciaInteligencia;
 
     // 1) Mensalidades em aberto do mês de referência.
-    const mensPend = transacoes.filter(t => t.mes === mesReferenciaInteligencia && t.tipo === 'Entrada' && t.categoria && t.categoria.startsWith('Mensalidade - ') && t.status !== 'Pago');
+    const mensPend = transacoes.filter(t => t.mes === mesReferenciaInteligencia && t.tipo === 'Entrada' && t.categoria && t.categoria.startsWith('Mensalidade - ') && t.status === 'Pendente');
     if (mensPend.length) {
       const valor = mensPend.reduce((s, t) => s + (Number(t.valor) || 0), 0);
       alertas.push({ nivel: 'alto', titulo: `${mensPend.length} mensalidade${mensPend.length === 1 ? '' : 's'} em aberto em ${nomeMes}`, detalhe: `${formatBRL(valor)} ainda previsto para receber.` });
@@ -10269,7 +10579,7 @@ function TabelaMensalidades({ titulo, itens, mostrarDetalhes, editandoId, inicia
   );
 }
 
-function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancamento, removerLancamento, adicionarEntrada, privadoTotais, setPrivadoTotais, privadoDetalhes, setPrivadoDetalhes, chamarIA }) {
+function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancamento, removerLancamento, adicionarEntrada, privadoTotais, setPrivadoTotais, privadoDetalhes, setPrivadoDetalhes, chamarIA, exercicioAtual = 2026 }) {
   // lembra o mês que você escolheu no filtro, mesmo trocando de aba e voltando —
   // só usa AGOSTO como padrão na primeiríssima vez, antes de você escolher algo
   const [filtroMes, setFiltroMesState] = useState(() => {
