@@ -132,8 +132,20 @@ html.dark-mode {
       border-color: rgba(255,255,255,0.16) !important;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
     }
-    .dark-mode .aba-item span {
-      background: rgba(255,255,255,0.10) !important;
+    .dark-mode .aba-item .aba-icon {
+      background: rgba(255,255,255,0.09) !important;
+      opacity: 1 !important;
+      filter: none !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .dark-mode .aba-item .aba-icon svg {
+      opacity: 1 !important;
+      filter: none !important;
+      shape-rendering: geometricPrecision;
+    }
+    .dark-mode .aba-item .aba-label {
+      background: transparent !important;
+      color: #F7FBFA !important;
     }
     .dark-mode button,
     .dark-mode th,
@@ -367,6 +379,37 @@ html.dark-mode {
 
     .dark-mode .kpi-card:not(.kpi-card-destaque) .kpi-label {
       color: #D0DEDC !important;
+    }
+
+    /* SUBABAS — Recibos e Compras */
+    .dark-mode .subtab-btn {
+      background: #334347 !important;
+      color: #EAF4F2 !important;
+      border-color: rgba(255,255,255,.18) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .dark-mode .subtab-btn:hover {
+      background: #405358 !important;
+      border-color: rgba(255,255,255,.28) !important;
+    }
+    .dark-mode .subtab-btn.subtab-ativa {
+      background: #152326 !important;
+      color: #FFFFFF !important;
+      border-color: #82E2D7 !important;
+      box-shadow:
+        0 0 0 1px rgba(130,226,215,.12),
+        0 4px 12px rgba(0,0,0,.18) !important;
+    }
+
+    /* TOOLTIPS DOS GRÁFICOS */
+    .dark-mode .chart-tooltip {
+      background: #1E2B2E !important;
+      color: #FFFFFF !important;
+      border-color: rgba(255,255,255,.20) !important;
+      box-shadow: 0 10px 26px rgba(0,0,0,.36) !important;
+    }
+    .dark-mode .chart-tooltip div {
+      color: #F7FBFA !important;
     }
 
 
@@ -2953,9 +2996,9 @@ function Recibos({ chamarIA }) {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {CATEGORIAS_RECIBOS.map(c => (
-            <button key={c.key} onClick={() => setSubTab(c.key)} style={{
+            <button key={c.key} className={`subtab-btn ${subTab === c.key ? 'subtab-ativa' : ''}`} onClick={() => setSubTab(c.key)} style={{
               padding: '9px 16px', borderRadius: 8, border: `1px solid ${COLORS.line}`, cursor: 'pointer',
-              fontWeight: 600, fontSize: 13,
+              fontWeight: 700, fontSize: 13,
               background: subTab === c.key ? COLORS.ink : COLORS.paperCard,
               color: subTab === c.key ? '#FFFFFF' : COLORS.ink,
             }}>{c.label}</button>
@@ -3787,9 +3830,9 @@ function Compras({ chamarIA }) {
       <Toast mensagem={toastMsg} />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {CATEGORIAS_COMPRAS.map(c => (
-          <button key={c.key} onClick={() => setSubTab(c.key)} style={{
+          <button key={c.key} className={`subtab-btn ${subTab === c.key ? 'subtab-ativa' : ''}`} onClick={() => setSubTab(c.key)} style={{
             padding: '9px 16px', borderRadius: 8, border: `1px solid ${COLORS.line}`, cursor: 'pointer',
-            fontWeight: 600, fontSize: 13,
+            fontWeight: 700, fontSize: 13,
             background: subTab === c.key ? COLORS.ink : COLORS.paperCard,
             color: subTab === c.key ? '#FFFFFF' : COLORS.ink,
           }}>{c.label}</button>
@@ -7895,13 +7938,13 @@ ${textoContasPessoais}`;
                       WebkitAppearance: 'none', appearance: 'none',
                       transition: 'background 0.12s ease, box-shadow 0.12s ease',
                     }}>
-                    <span style={{
+                    <span className="aba-icon" style={{
                       width: 30, height: 30, borderRadius: 8, background: ativo ? COLORS.paperCard : corFundo,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
                       <Icone size={16} color={cor} />
                     </span>
-                    <span style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.ink, textAlign: 'center', lineHeight: 1.15, whiteSpace: 'nowrap' }}>{label}</span>
+                    <span className="aba-label" style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.ink, textAlign: 'center', lineHeight: 1.15, whiteSpace: 'nowrap' }}>{label}</span>
                   </button>
                 );
               })}
@@ -8041,8 +8084,8 @@ function CardChart({ title, children, height = 200, rightHeader }) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div style={{ background: '#FFFFFF', color: COLORS.ink, padding: '8px 12px', borderRadius: 8, fontSize: 12, border: `1px solid ${COLORS.line}`, boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }} className="mono">
-      <div style={{ marginBottom: 4, color: '#4A5A58', fontWeight: 700 }}>{label}</div>
+    <div style={{ background: COLORS.paperCard, color: COLORS.ink, padding: '8px 12px', borderRadius: 8, fontSize: 12, border: `1px solid ${COLORS.line}`, boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }} className="mono chart-tooltip">
+      <div style={{ marginBottom: 4, color: COLORS.inkSoft, fontWeight: 800 }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ color: COLORS.ink, display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color || '#14312E', flexShrink: 0, display: 'inline-block' }} />
@@ -8058,8 +8101,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 const TooltipAlunos = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div style={{ background: '#FFFFFF', color: COLORS.ink, padding: '8px 12px', borderRadius: 8, fontSize: 12, border: `1px solid ${COLORS.line}`, boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }} className="mono">
-      <div style={{ marginBottom: 4, color: '#4A5A58', fontWeight: 700 }}>{label}</div>
+    <div style={{ background: COLORS.paperCard, color: COLORS.ink, padding: '8px 12px', borderRadius: 8, fontSize: 12, border: `1px solid ${COLORS.line}`, boxShadow: '0 6px 18px rgba(0,0,0,0.18)' }} className="mono chart-tooltip">
+      <div style={{ marginBottom: 4, color: COLORS.inkSoft, fontWeight: 800 }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ color: COLORS.ink, display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color || '#14312E', flexShrink: 0, display: 'inline-block' }} />
