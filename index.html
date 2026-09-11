@@ -5227,8 +5227,34 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
     { cor:'#1C9E8F', bg:'rgba(28,158,143,.095)' },
     { cor:'#3E7ACC', bg:'rgba(62,122,204,.075)' },
   ];
+  const CATEGORIAS_CP = [
+    { nome:'Moradia', icone:'🏠', cor:'#C28A2C', bg:'rgba(240,190,74,.17)',
+      contas:['LUZ CASA','CONDOMÍNIO','ALUGUEL','SANTA CLARA'] },
+    { nome:'Saúde', icone:'❤️', cor:'#D65A72', bg:'rgba(235,111,132,.14)',
+      contas:['TACCHIMED','SEGURO CASA','DENTISTA'] },
+    { nome:'Tecnologia', icone:'💻', cor:'#4E77C9', bg:'rgba(89,143,221,.13)',
+      contas:['INTERNET','VIVO','ICATU','NETFLIX','ICLOUD'] },
+    { nome:'Cartões e Bancos', icone:'💳', cor:'#2B9D70', bg:'rgba(54,181,127,.13)',
+      contas:['SICREDI CARTÃO','C6 BANK','ITAÚ CARTÃO VISA INFINIT','ITAÚ MASTER CARD','CLARO DEBITO','HAVAN'] },
+    { nome:'Outros', icone:'📌', cor:'#7B6BAF', bg:'rgba(123,107,175,.10)', contas:[] },
+  ];
+
+  function categoriaDaContaCP(contaOuNome) {
+    const conta = (contaOuNome && typeof contaOuNome === 'object') ? contaOuNome : null;
+    if (conta && conta.categoria && CATEGORIAS_CP.some(cat => cat.nome === conta.categoria)) {
+      return conta.categoria;
+    }
+    const nome = conta ? conta.nome : contaOuNome;
+    const n = normalizarContaCP(nome);
+    for (const cat of CATEGORIAS_CP) {
+      if (cat.contas.some(x => normalizarContaCP(x) === n)) return cat.nome;
+    }
+    return 'Outros';
+  }
+
   const [contas, setContas] = useState(null);
   const [novaConta, setNovaConta] = useState('');
+  const [novaCategoria, setNovaCategoria] = useState('Outros');
   const [perguntaIA, setPerguntaIA] = useState('');
   const [respostaIA, setRespostaIA] = useState('');
   const [processandoIA, setProcessandoIA] = useState(false);
@@ -5300,7 +5326,12 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
   }
   function adicionarConta() {
     if (!novaConta.trim()) return;
-    salvar([...contas,{id:'cp'+Date.now(),nome:novaConta.trim().toUpperCase(),valores:Object.fromEntries(MESES_CP.map(m=>[m,0]))}]);
+    salvar([...contas,{
+      id:'cp'+Date.now(),
+      nome:novaConta.trim().toUpperCase(),
+      categoria:novaCategoria || 'Outros',
+      valores:Object.fromEntries(MESES_CP.map(m=>[m,0]))
+    }]);
     setNovaConta('');
   }
   const totaisMes = useMemo(() => {
@@ -5392,6 +5423,14 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
                 style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 12px',minWidth:190,maxWidth:270,flex:'0 1 250px',fontSize:13.5,background:'color-mix(in srgb, var(--c-paperCard) 78%, transparent)',color:COLORS.ink}}/>
             </>
           )}
+          <select
+            value={novaCategoria}
+            onChange={e=>setNovaCategoria(e.target.value)}
+            title="Escolha em qual categoria a nova conta deve ficar"
+            style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'8px 10px',minWidth:150,fontSize:13.2,background:'color-mix(in srgb, var(--c-paperCard) 78%, transparent)',color:COLORS.ink}}
+          >
+            {CATEGORIAS_CP.map(cat=><option key={cat.nome} value={cat.nome}>{cat.icone} {cat.nome}</option>)}
+          </select>
           <input value={novaConta} onChange={e=>setNovaConta(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')adicionarConta();}}
             placeholder="Nova conta" style={{height:42,boxSizing:'border-box',border:`1px solid ${COLORS.line}`,borderRadius:12,padding:'9px 11px',minWidth:150,fontSize:13.5}}/>
           <button onClick={adicionarConta} className="busca-liquid-glass"
@@ -5401,30 +5440,91 @@ function ContasPessoais({ chamarIA, onAbrirIA }) {
         </div>
       </div>
       {respostaIA && <div style={{margin:'-4px 0 10px auto',maxWidth:720,padding:'8px 11px',borderRadius:11,background:'rgba(28,158,143,.11)',color:COLORS.ink,fontSize:12.5}}>{respostaIA}</div>}
-      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{contas.map((c,i)=>{const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);const p=PALETA_CP[i%PALETA_CP.length];const selecionada=linhaSelecionada===c.id;return <tr
-  key={c.id}
-  className="busca-liquid-glass"
-  onClick={() => setLinhaSelecionada(c.id)}
-  onDoubleClick={() => setLinhaSelecionada(null)}
-  style={{
-    background: selecionada ? 'rgba(224, 174, 60, 0.16)' : p.bg,
-    borderLeft: selecionada ? '3px solid #E0AE3C' : `3px solid ${p.cor}`,
-    boxShadow: selecionada ? 'inset 0 1px 0 rgba(255,255,255,0.5)' : 'none',
-    transition:'background 0.15s ease, border-color 0.15s ease',
-    cursor:'pointer'
-  }}><td style={{padding:'7px 10px',fontWeight:700,color:COLORS.ink}}>{c.nome}</td>{MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input
-  key={`${c.id}-${m}-${Number(c.valores?.[m]||0)}`}
-  defaultValue={formatBRLNumber(c.valores?.[m]||0)}
-  onBlur={e=>alterarValor(c.id,m,e.target.value)}
-  onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}}
-  style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:12.5}}
-/></td>)}<td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td><td style={{whiteSpace:'nowrap'}}><button onClick={(e)=>{e.stopPropagation();renomear(c.id);}} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button><button onClick={(e)=>{e.stopPropagation();remover(c.id);}} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button></td></tr>})}</tbody><tfoot><tr style={{background:COLORS.greenBg}}><td style={{padding:'10px',fontWeight:800,color:COLORS.ink}}>Total por mês</td>{MESES_CP.map(m=><td key={m} className="mono" style={{padding:'8px 4px',fontWeight:700,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(totaisMes[m])}</td>)}<td className="mono" style={{fontWeight:800,color:COLORS.ink}}>{formatBRL(totalGeral)}</td><td></td></tr></tfoot></table></div>
+      <div style={{overflowX:'auto',paddingBottom:4}}><table style={{width:'100%',minWidth:1390,borderCollapse:'separate',borderSpacing:'0 6px',fontSize:13}}><thead><tr><th style={{textAlign:'left',padding:'8px 10px',minWidth:190}}>Conta / Descrição</th>{MESES_CP.map(m=><th key={m} style={{padding:'8px 5px',color:COLORS.ink}}>{ABREV_CP[m]}</th>)}<th style={{padding:'8px 8px'}}>Total</th><th></th></tr></thead><tbody>{
+  CATEGORIAS_CP.map((cat) => {
+    const itensCat = contas.filter(c => categoriaDaContaCP(c) === cat.nome);
+    if (!itensCat.length) return null;
+    const totalCategoria = itensCat.reduce((soma,c) =>
+      soma + MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0), 0);
+    return <React.Fragment key={cat.nome}>
+      <tr>
+        <td colSpan={15} style={{
+          padding:'7px 10px',
+          background:cat.bg,
+          borderLeft:`4px solid ${cat.cor}`,
+          borderRadius:10,
+          fontWeight:850,
+          color:COLORS.ink
+        }}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
+            <span>{cat.icone} {cat.nome}</span>
+            <span className="mono" style={{fontSize:12.5,color:cat.cor}}>{formatBRL(totalCategoria)}</span>
+          </div>
+        </td>
+      </tr>
+      {itensCat.map((c,i)=>{
+        const total=MESES_CP.reduce((s,m)=>s+Number(c.valores?.[m]||0),0);
+        const p=PALETA_CP[i%PALETA_CP.length];
+        const selecionada=linhaSelecionada===c.id;
+        return <tr
+          key={c.id}
+          className="busca-liquid-glass"
+          onClick={() => setLinhaSelecionada(c.id)}
+          onDoubleClick={() => setLinhaSelecionada(null)}
+          style={{
+            background: selecionada ? 'rgba(224, 174, 60, 0.16)' : p.bg,
+            borderLeft: selecionada ? '3px solid #E0AE3C' : `3px solid ${p.cor}`,
+            boxShadow: selecionada ? 'inset 0 1px 0 rgba(255,255,255,0.5)' : 'none',
+            transition:'background 0.15s ease, border-color 0.15s ease',
+            cursor:'pointer'
+          }}>
+          <td style={{padding:'7px 10px',fontWeight:700,color:COLORS.ink}}>{c.nome}</td>
+          {MESES_CP.map(m=><td key={m} style={{padding:'4px'}}><input
+            key={`${c.id}-${m}-${Number(c.valores?.[m]||0)}`}
+            defaultValue={formatBRLNumber(c.valores?.[m]||0)}
+            onFocus={e=>{
+              if (parseValor(e.target.value) === 0) e.target.value = '';
+              try { e.target.select(); } catch(err) {}
+            }}
+            onBlur={e=>{
+              alterarValor(c.id,m,e.target.value);
+              if (!String(e.target.value||'').trim()) e.target.value = '0,00';
+            }}
+            onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}}
+            style={{width:76,border:'1px solid rgba(28,158,143,.18)',borderRadius:9,padding:'7px 6px',background:'color-mix(in srgb, var(--c-paperCard) 72%, transparent)',fontFamily:'monospace',fontSize:12.5}}
+          /></td>)}
+          <td className="mono" style={{padding:'6px 8px',fontWeight:750,color:COLORS.ink,whiteSpace:'nowrap'}}>{formatBRL(total)}</td>
+          <td style={{whiteSpace:'nowrap'}}>
+            <button onClick={(e)=>{e.stopPropagation();renomear(c.id);}} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Pencil size={14} color="#3E7ACC"/></button>
+            <button onClick={(e)=>{e.stopPropagation();remover(c.id);}} style={{border:'none',background:'none',cursor:'pointer',padding:5}}><Trash2 size={14} color={COLORS.red}/></button>
+          </td>
+        </tr>
+      })}
+    </React.Fragment>;
+  })
+}</tbody>
+<tfoot>
+  <tr aria-hidden="true"><td colSpan={15} style={{height:12,padding:0,background:'transparent'}}></td></tr>
+  <tr style={{background:COLORS.greenBg}}>
+    <td style={{padding:'13px 10px',fontWeight:850,color:COLORS.ink,borderRadius:'10px 0 0 10px'}}>📊 Total por mês</td>
+    {MESES_CP.map((m,idx)=><td key={m} className="mono" style={{
+      padding:'12px 9px',
+      fontWeight:800,
+      color:COLORS.ink,
+      whiteSpace:'nowrap',
+      textAlign:'center',
+      borderLeft: idx===0 ? '1px solid rgba(28,158,143,.13)' : '1px solid rgba(28,158,143,.12)'
+    }}>{formatBRL(totaisMes[m])}</td>)}
+    <td className="mono" style={{padding:'12px 10px',fontWeight:900,color:COLORS.ink,whiteSpace:'nowrap',borderLeft:'2px solid rgba(28,158,143,.22)'}}>{formatBRL(totalGeral)}</td>
+    <td style={{borderRadius:'0 10px 10px 0'}}></td>
+  </tr>
+</tfoot></table></div>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:12}}>
       {[['Total geral',totalGeral,'Soma dos 12 meses','#1C9E8F','rgba(28,158,143,.12)'],['Média mensal',mediaMensal,'Total ÷ 12','#C15CA0','rgba(193,92,160,.11)'],['Maior mês',maior?maior.v:0,maior?ABREV_CP[maior.m]:'—','#3E7ACC','rgba(62,122,204,.12)'],['Menor mês',menor?menor.v:0,menor?ABREV_CP[menor.m]:'—','#B87A1A','rgba(184,122,26,.12)']].map(([l,v,s,cor,bg])=><div key={l} className="busca-liquid-glass" style={{...glass,background:bg,border:`1px solid ${cor}33`,borderLeft:`4px solid ${cor}`,borderRadius:16,padding:'12px 14px'}}><div style={{fontSize:11.5,fontWeight:700,color:COLORS.inkSoft}}>{l}</div><div className="mono" style={{fontSize:19,fontWeight:800,color:cor,marginTop:3}}>{formatBRL(v)}</div><div style={{fontSize:11,color:COLORS.inkSoft,marginTop:3}}>{s}</div></div>)}
     </div>
     <div className="busca-liquid-glass" style={{...glass,borderRadius:14,padding:'10px 13px',fontSize:12.5,color:COLORS.inkSoft}}>
-      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> clique uma vez numa linha para fixar o destaque dourado; dê dois cliques para remover. O restante da tabela continua com as duas cores suaves.
+      💡 <strong style={{color:COLORS.ink}}>Dica:</strong> ao criar uma nova conta, escolha a categoria no seletor ao lado. A conta ficará salva naquela categoria. Nas células com 0,00, o zero some ao clicar para você digitar direto.
     </div>
   </div>;
 }
