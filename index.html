@@ -796,6 +796,7 @@ html.dark-mode {
       window.__pendenciasAnexosSync = lerPendenciasAnexos().size;
       window.__pendenciasSync = lerPendencias().size + window.__pendenciasAnexosSync;
       window.__statusPlanilha = null;
+      window.__driveDisponivel = null;
       window.__ultimoErroSync = null;
 
       const DB_ANEXOS = 'painel_financeiro_anexos_v1';
@@ -886,11 +887,29 @@ html.dark-mode {
       // Diagnóstico do backend sob demanda. É chamado pela Visão Geral e pelo botão
       // "Testar conexão"; não altera os dados.
       window.__testarConexaoDrive = async function() {
-        if (!APPS_SCRIPT_URL) return { ok: false, erro: 'Apps Script não configurado.' };
+        if (!APPS_SCRIPT_URL) {
+          window.__driveDisponivel = false;
+          return { ok: false, erro: 'Apps Script não configurado.' };
+        }
         const url = APPS_SCRIPT_URL + '?acao=diagnostico&_=' + Date.now();
-        const corpo = await lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 45000));
-        registrarSync_('leitura');
-        return corpo;
+        try {
+          const corpo = await lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 18000));
+          if (!corpo || corpo.ok === false) throw new Error((corpo && corpo.erro) || 'Diagnóstico inválido.');
+          window.__driveDisponivel = true;
+          window.__statusPlanilha = 'ok';
+          window.__ultimoErroSync = null;
+          registrarSync_('leitura');
+          return corpo;
+        } catch (e) {
+          window.__driveDisponivel = false;
+          // Se não há nada pendente, a falha é somente de disponibilidade do Drive.
+          // Não transforma os dados locais em "não sincronizados".
+          if (Number(window.__pendenciasSync || 0) > 0 || Number(window.__pendenciasAnexosSync || 0) > 0) {
+            window.__statusPlanilha = 'erro';
+            window.__ultimoErroSync = String(e && e.message || e);
+          }
+          throw e;
+        }
       };
 
       // Backup manual disparado pelo card de Saúde do sistema.
@@ -934,6 +953,7 @@ html.dark-mode {
               cacheCarregadoComSucesso = true;
               usandoPlanilha = true;
               window.__statusPlanilha = 'ok';
+              window.__driveDisponivel = true;
               window.__ultimoErroSync = null;
               registrarSync_('leitura');
 
@@ -994,10 +1014,14 @@ html.dark-mode {
           // Nunca transformar isso em {}.
           cachePlanilha = null;
           usandoPlanilha = !!APPS_SCRIPT_URL;
-          window.__statusPlanilha = 'erro';
-          window.__ultimoErroSync = ultimoErro && ultimoErro.name === 'AbortError'
-            ? 'O Google Drive demorou mais que o limite de resposta.'
-            : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Falha ao carregar o Google Drive.');
+          window.__driveDisponivel = false;
+          const haPendencias = Number(window.__pendenciasSync || 0) > 0 || Number(window.__pendenciasAnexosSync || 0) > 0;
+          if (haPendencias) {
+            window.__statusPlanilha = 'erro';
+            window.__ultimoErroSync = ultimoErro && ultimoErro.name === 'AbortError'
+              ? 'O Google Drive demorou mais que o limite de resposta.'
+              : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Falha ao carregar o Google Drive.');
+          }
           return null;
         })();
 
@@ -7191,7 +7215,7 @@ ${textoContasPessoais}`;
 
   // EXERCÍCIO FINANCEIRO — 2026 permanece usando as chaves originais; os anos seguintes
   // são separados automaticamente pelo window.storage. Trocar o exercício recarrega a
-  // página para que TODAS as abas releiam seus próprios dados do ano escolhido.
+  // contexto sem recarregar a página; todas as abas releem apenas os dados do ano escolhido.
   const [exercicioAtual, setExercicioAtual] = useState(() => Number(window.__exercicioAtual) || 2026);
   const [exercicios, setExercicios] = useState([{ ano: 2026, status: 'ATIVO', criadoEm: new Date().toISOString() }]);
   const [prepararAnoAberto, setPrepararAnoAberto] = useState(false);
@@ -7288,6 +7312,11 @@ ${textoContasPessoais}`;
   async function prepararNovoExercicio({ selecionados, novosAlunos }) {
     if (preparandoAno) return;
     const novoAno = exercicioAtual + 1;
+    if (novoAno > 2030) {
+      setMensagemExercicio({ tipo:'aviso', texto:'O ciclo anual está programado até 2030.' });
+      setPrepararAnoAberto(false);
+      return;
+    }
     if (exercicios.some(x => Number(x.ano) === novoAno)) {
       setMensagemExercicio({ tipo:'aviso', texto:`O exercício ${novoAno} já existe.` });
       setPrepararAnoAberto(false);
@@ -8206,11 +8235,11 @@ ${textoContasPessoais}`;
                   flexWrap: 'wrap', maxWidth: 420,
                 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusPlanilha === 'ok' ? COLORS.green : COLORS.red, display: 'block', flexShrink: 0 }} />
-                {statusPlanilha === 'ok'
-                  ? '✓ Sincronizado (Google Drive)'
-                  : (pendenciasSync > 0
-                      ? ('⚠ Falha ao sincronizar — há alterações aguardando o Drive. Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato'))
-                      : ('⚠ Conexão com o Drive precisa ser verificada. Nenhuma alteração está pendente. Motivo: ' + (motivoErroSync || 'não sei dizer o motivo exato')))}
+                {pendenciasSync > 0
+                  ? ('⚠ Há alterações aguardando o Drive. Motivo: ' + (motivoErroSync || 'tentando novamente'))
+                  : (window.__driveDisponivel === false
+                      ? '◉ Modo local — nenhuma alteração pendente'
+                      : '✓ Sincronizado (Google Drive)')}
               </span>
             )}
             {pendenciasSync > 0 && (
@@ -8308,9 +8337,15 @@ ${textoContasPessoais}`;
               }}>
                 {(exercicios.find(x=>x.ano===exercicioAtual)?.status || 'ATIVO').replace('_',' ')}
               </span>
-              <button onClick={() => setPrepararAnoAberto(true)} title={`Preparar ${exercicioAtual + 1}`} style={{
-                border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
-              }}>+ {exercicioAtual + 1}</button>
+              {exercicioAtual < 2030 ? (
+                <button onClick={() => setPrepararAnoAberto(true)} title={`Preparar ${exercicioAtual + 1}`} style={{
+                  border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
+                }}>+ {exercicioAtual + 1}</button>
+              ) : (
+                <span title="Ciclo anual programado até 2030" style={{
+                  border:`1px solid ${COLORS.line}`,background:COLORS.lineSoft,color:COLORS.inkSoft,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800
+                }}>até 2030</span>
+              )}
               <button onClick={() => setGerenciarAnoAberto(true)} title="Ativar ou encerrar o exercício com conferência" style={{
                 border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
               }}>Ciclo anual</button>
@@ -9405,7 +9440,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     return { historico, dados, saldoBase, mesSaldoBase: idxSaldo >= 0 ? MESES[idxSaldo] : null, semSaldoBase: idxSaldo < 0 };
   }, [transacoes, saldosMensais, mesReferenciaInteligencia, mesesFuturosCaixa]);
 
-  const [saudeSistema, setSaudeSistema] = useState({ status: window.__statusPlanilha || null, pendencias: window.__pendenciasSync || 0, pdfs: window.__pendenciasAnexosSync || 0, ultimaSync: window.__ultimaSincronizacaoDrive || null, ultimoSalvamento: window.__ultimoSalvamentoDrive || null });
+  const [saudeSistema, setSaudeSistema] = useState({ status: window.__statusPlanilha || null, driveDisponivel: window.__driveDisponivel, pendencias: window.__pendenciasSync || 0, pdfs: window.__pendenciasAnexosSync || 0, ultimaSync: window.__ultimaSincronizacaoDrive || null, ultimoSalvamento: window.__ultimoSalvamentoDrive || null });
   const [diagnosticoDrive, setDiagnosticoDrive] = useState(null);
   const [testandoDrive, setTestandoDrive] = useState(false);
   const [backupSistema, setBackupSistema] = useState(null);
@@ -9413,6 +9448,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
   useEffect(() => {
     const atualizar = () => setSaudeSistema({
       status: window.__statusPlanilha || null,
+      driveDisponivel: window.__driveDisponivel,
       pendencias: window.__pendenciasSync || 0,
       pdfs: window.__pendenciasAnexosSync || 0,
       ultimaSync: window.__ultimaSincronizacaoDrive || null,
@@ -9439,10 +9475,12 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     try {
       const d = await window.__testarConexaoDrive();
       setDiagnosticoDrive(d);
+      setSaudeSistema(s => ({ ...s, status:'ok', driveDisponivel:true, ultimaSync: window.__ultimaSincronizacaoDrive || Date.now() }));
       if (!silencioso) setBackupSistema({ tipo: 'ok', texto: 'Conexão com o Google Drive confirmada.' });
     } catch (e) {
       setDiagnosticoDrive({ ok: false, erro: String(e && e.message || e) });
-      if (!silencioso) setBackupSistema({ tipo: 'erro', texto: 'Falha no teste: ' + String(e && e.message || e) });
+      setSaudeSistema(s => ({ ...s, driveDisponivel:false }));
+      if (!silencioso) setBackupSistema({ tipo: 'aviso', texto: 'Drive indisponível agora. O painel continua funcionando com os dados locais e tentará novamente em segundo plano.' });
     } finally {
       if (!silencioso) setTestandoDrive(false);
     }
@@ -9459,8 +9497,14 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
     }
   }
   useEffect(() => {
-    const t = setTimeout(() => testarConexaoSistema_(true), 700);
-    return () => clearTimeout(t);
+    let ativo = true;
+    const testar = async () => {
+      if (!ativo) return;
+      try { await testarConexaoSistema_(true); } catch (e) {}
+    };
+    const t = setTimeout(testar, 1800);
+    const id = setInterval(testar, 60000);
+    return () => { ativo = false; clearTimeout(t); clearInterval(id); };
   }, []);
 
   return (
@@ -9659,7 +9703,31 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 }}>
-          <div style={{ padding: '10px 11px', borderRadius: 8, background: saudeSistema.status === 'ok' ? COLORS.greenBg : COLORS.redBg }}><div style={{ fontSize: 10.5, color: COLORS.inkSoft }}>SINCRONIZAÇÃO</div><div style={{ fontSize: 12.5, fontWeight: 800, color: saudeSistema.status === 'ok' ? COLORS.green : COLORS.red }}>{saudeSistema.status === 'ok' ? '✓ Google Drive conectado' : '⚠ Verifique a conexão'}</div><div style={{ fontSize: 10.5, color: COLORS.inkSoft, marginTop: 2 }}>última: {formatDataHoraSistema_(saudeSistema.ultimaSync)}</div></div>
+          <div style={{
+            padding: '10px 11px', borderRadius: 8,
+            background: saudeSistema.pendencias > 0
+              ? COLORS.redBg
+              : (saudeSistema.driveDisponivel === false ? (COLORS.goldSoft || '#FFF4D6') : COLORS.greenBg)
+          }}>
+            <div style={{ fontSize: 10.5, color: COLORS.inkSoft }}>SINCRONIZAÇÃO</div>
+            <div style={{
+              fontSize: 12.5, fontWeight: 800,
+              color: saudeSistema.pendencias > 0
+                ? COLORS.red
+                : (saudeSistema.driveDisponivel === false ? COLORS.gold : COLORS.green)
+            }}>
+              {saudeSistema.pendencias > 0
+                ? '⚠ Alterações aguardando o Drive'
+                : (saudeSistema.driveDisponivel === false
+                    ? '◉ Modo local — Drive indisponível'
+                    : '✓ Google Drive conectado')}
+            </div>
+            <div style={{ fontSize: 10.5, color: COLORS.inkSoft, marginTop: 2 }}>
+              {saudeSistema.driveDisponivel === false && saudeSistema.pendencias === 0
+                ? 'dados locais disponíveis · nenhuma alteração pendente'
+                : ('última: ' + formatDataHoraSistema_(saudeSistema.ultimaSync))}
+            </div>
+          </div>
           <div style={{ padding: '10px 11px', borderRadius: 8, background: COLORS.lineSoft }}><div style={{ fontSize: 10.5, color: COLORS.inkSoft }}>ÚLTIMO SALVAMENTO</div><div style={{ fontSize: 12.5, fontWeight: 800, color: COLORS.ink }}>{formatDataHoraSistema_(saudeSistema.ultimoSalvamento)}</div><div style={{ fontSize: 10.5, color: COLORS.inkSoft, marginTop: 2 }}>{saudeSistema.pendencias} alteração(ões) aguardando confirmação</div></div>
           <div style={{ padding: '10px 11px', borderRadius: 8, background: saudeSistema.pdfs > 0 ? COLORS.goldSoft : COLORS.greenBg }}><div style={{ fontSize: 10.5, color: COLORS.inkSoft }}>PDFs / ANEXOS PENDENTES</div><div style={{ fontSize: 18, fontWeight: 800, color: saudeSistema.pdfs > 0 ? COLORS.gold : COLORS.green }}>{saudeSistema.pdfs}</div><div style={{ fontSize: 10.5, color: COLORS.inkSoft }}>pendentes de confirmação no Drive</div></div>
           <div style={{ padding: '10px 11px', borderRadius: 8, background: COLORS.lineSoft }}><div style={{ fontSize: 10.5, color: COLORS.inkSoft }}>TAMANHO NO DRIVE</div><div style={{ fontSize: 12.5, fontWeight: 800, color: COLORS.ink }}>{diagnosticoDrive && diagnosticoDrive.ok !== false ? formatBytesSistema_(diagnosticoDrive.totalBytes) : '—'}</div><div style={{ fontSize: 10.5, color: COLORS.inkSoft, marginTop: 2 }}>{diagnosticoDrive && diagnosticoDrive.ok !== false ? `${diagnosticoDrive.anexos || 0} anexo(s) · banco ${formatBytesSistema_(diagnosticoDrive.dadosBytes)}` : 'teste a conexão para atualizar'}</div></div>
