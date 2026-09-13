@@ -7515,22 +7515,18 @@ ${textoContasPessoais}`;
         }));
       });
 
-      // Convênios/empresas e contas recorrentes permanecem como modelos, mas sem movimento financeiro.
-      const mesesPorCategoria = new Map();
-      (transacoes || []).forEach(t => {
-        if (!t.categoria || String(t.categoria).startsWith('Mensalidade - ')) return;
-        if (!mesesPorCategoria.has(t.categoria)) mesesPorCategoria.set(t.categoria, new Set());
-        mesesPorCategoria.get(t.categoria).add(t.mes);
-      });
-      const categoriasModelos = Array.from(mesesPorCategoria.keys()).filter(cat => {
-        const ref = porCategoriaMaisRecente.get(cat)?.t || {};
-        const repeticoes = mesesPorCategoria.get(cat)?.size || 0;
-        return ref.tipo === 'Fixa' || ref.tipo === 'Entrada' || repeticoes >= 2;
+      // v5.20 — no novo exercício, copia SOMENTE empresas/convênios reais.
+      // Não transforma entradas avulsas, agregadores ou outras receitas recorrentes em empresas.
+      // "Convênio - Empresas (agregado)" é um lançamento-resumo histórico e não é um cadastro real.
+      const categoriasModelos = Array.from(porCategoriaMaisRecente.keys()).filter(cat => {
+        const nome = String(cat || '').trim();
+        return nome.startsWith('Convênio - ')
+          && nome.toUpperCase() !== 'CONVÊNIO - EMPRESAS (AGREGADO)';
       });
       categoriasModelos.forEach(cat => {
         const ref = porCategoriaMaisRecente.get(cat)?.t || {};
         meses.forEach(mes => novas.push({
-          id: ++id, mes, categoria: cat, tipo: ref.tipo || (String(cat).startsWith('Convênio - ') ? 'Entrada' : 'Variável'),
+          id: ++id, mes, categoria: cat, tipo: 'Entrada',
           valor: null, valorCheio: null, status: '', data: null, banco: null,
           convenio: ref.convenio ?? null, exercicio: novoAno,
         }));
@@ -11416,7 +11412,15 @@ function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancam
   const filtradas = semFiltroNenhum ? filtradasCompleto.slice(0, 100) : filtradasCompleto;
 
   const alunosLista = useMemo(() => filtradas.filter(t => t.categoria.startsWith('Mensalidade - ')), [filtradas]);
-  const empresasLista = useMemo(() => filtradas.filter(t => !t.categoria.startsWith('Mensalidade - ')), [filtradas]);
+
+  // v5.20 — a tabela Empresas / Convênios mostra apenas cadastros reais de convênio.
+  // Isso impede que "Mercado Pago (avulso)", "TDB" e "Empresas (agregado)"
+  // apareçam como empresas nos exercícios 2027/2028 já preparados.
+  const empresasLista = useMemo(() => filtradas.filter(t => {
+    const cat = String(t.categoria || '').trim();
+    return cat.startsWith('Convênio - ')
+      && cat.toUpperCase() !== 'CONVÊNIO - EMPRESAS (AGREGADO)';
+  }), [filtradas]);
 
   const resumo = useMemo(() => {
     const doMes = filtroMes === 'TODOS' ? filtradas : entradas.filter(t => t.mes === filtroMes);
