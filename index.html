@@ -7515,13 +7515,15 @@ ${textoContasPessoais}`;
         }));
       });
 
-      // v5.20 — no novo exercício, copia SOMENTE empresas/convênios reais.
+      // v5.21 — no novo exercício, copia SOMENTE empresas/convênios reais.
       // Não transforma entradas avulsas, agregadores ou outras receitas recorrentes em empresas.
       // "Convênio - Empresas (agregado)" é um lançamento-resumo histórico e não é um cadastro real.
       const categoriasModelos = Array.from(porCategoriaMaisRecente.keys()).filter(cat => {
         const nome = String(cat || '').trim();
+        const nomeUpper = nome.toUpperCase();
         return nome.startsWith('Convênio - ')
-          && nome.toUpperCase() !== 'CONVÊNIO - EMPRESAS (AGREGADO)';
+          && nomeUpper !== 'CONVÊNIO - EMPRESAS (AGREGADO)'
+          && nomeUpper !== 'CONVÊNIO - TDB';
       });
       categoriasModelos.forEach(cat => {
         const ref = porCategoriaMaisRecente.get(cat)?.t || {};
@@ -11413,13 +11415,15 @@ function Mensalidades({ transacoes, darBaixa, darNota, definirFoto, editarLancam
 
   const alunosLista = useMemo(() => filtradas.filter(t => t.categoria.startsWith('Mensalidade - ')), [filtradas]);
 
-  // v5.20 — a tabela Empresas / Convênios mostra apenas cadastros reais de convênio.
+  // v5.21 — a tabela Empresas / Convênios mostra apenas cadastros reais de convênio.
   // Isso impede que "Mercado Pago (avulso)", "TDB" e "Empresas (agregado)"
   // apareçam como empresas nos exercícios 2027/2028 já preparados.
   const empresasLista = useMemo(() => filtradas.filter(t => {
     const cat = String(t.categoria || '').trim();
+    const catUpper = cat.toUpperCase();
     return cat.startsWith('Convênio - ')
-      && cat.toUpperCase() !== 'CONVÊNIO - EMPRESAS (AGREGADO)';
+      && catUpper !== 'CONVÊNIO - EMPRESAS (AGREGADO)'
+      && catUpper !== 'CONVÊNIO - TDB';
   }), [filtradas]);
 
   const resumo = useMemo(() => {
