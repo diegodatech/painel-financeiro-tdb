@@ -7568,6 +7568,21 @@ ${textoContasPessoais}`;
         }));
       });
 
+      // v5.23 — leva para o novo exercício os modelos de contas/lançamentos recorrentes.
+      // Copia somente a estrutura (categoria + tipo), sem valores, datas, banco ou status
+      // financeiro do ano anterior. Assim o novo ano começa zerado, mas não perde a base
+      // de lançamentos que a escola usa todos os meses.
+      const categoriasLancamentos = Array.from(porCategoriaMaisRecente.entries())
+        .filter(([, info]) => info && info.t && (info.t.tipo === 'Fixa' || info.t.tipo === 'Variável'))
+        .map(([cat]) => cat);
+      categoriasLancamentos.forEach(cat => {
+        const ref = porCategoriaMaisRecente.get(cat)?.t || {};
+        meses.forEach(mes => novas.push({
+          id: ++id, mes, categoria: cat, tipo: ref.tipo || 'Variável',
+          valor: null, status: '', data: null, banco: null, exercicio: novoAno,
+        }));
+      });
+
       await window.storage.set('@@raw:' + chaveTxNovo, JSON.stringify(novas), false);
 
       // Copia configurações que devem continuar como base do próximo exercício.
