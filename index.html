@@ -7568,7 +7568,7 @@ ${textoContasPessoais}`;
         }));
       });
 
-      // v5.23 — leva para o novo exercício os modelos de contas/lançamentos recorrentes.
+      // v5.24 — leva para o novo exercício os modelos de contas/lançamentos recorrentes.
       // Copia somente a estrutura (categoria + tipo), sem valores, datas, banco ou status
       // financeiro do ano anterior. Assim o novo ano começa zerado, mas não perde a base
       // de lançamentos que a escola usa todos os meses.
@@ -7784,6 +7784,119 @@ ${textoContasPessoais}`;
       setLoading(false);
     })();
   }, [exercicioAtual]);
+
+
+  // v5.24 — REPARO DE EXERCÍCIOS JÁ CRIADOS pelas versões anteriores.
+  // A v5.24 passou a copiar corretamente os modelos de Lançamentos ao preparar anos NOVOS,
+  // mas 2029 já tinha sido criado antes dessa correção. Este reparo roda UMA ÚNICA VEZ
+  // no exercício atual quando ele está ATIVO ou EM PREPARAÇÃO, lê o exercício anterior
+  // e adiciona apenas os modelos Fixa/Variável que estiverem faltando.
+  //
+  // IMPORTANTE: nunca sobrescreve lançamentos que já existem no ano atual e nunca copia
+  // valores, datas, banco ou status financeiro do ano anterior.
+  useEffect(() => {
+    if (!Array.isArray(transacoes)) return;
+    if (exercicioAtual <= 2026) return;
+
+    const infoAno = (exercicios || []).find(x => Number(x.ano) === Number(exercicioAtual));
+    if (!infoAno || infoAno.status === 'ENCERRADO') return;
+
+    let cancelado = false;
+
+    (async () => {
+      const marcador = `reparo_lancamentos_modelos_v524__${exercicioAtual}`;
+
+      try {
+        const ja = await window.storage.get('@@raw:' + marcador, false);
+        if (ja && ja.value === 'true') return;
+
+        const anterior = exercicioAtual - 1;
+        const rAnterior = await lerAnoExato_('transacoes_financas2026', anterior);
+        let listaAnterior = [];
+        try {
+          listaAnterior = rAnterior && rAnterior.value ? JSON.parse(rAnterior.value) : [];
+        } catch (e) {
+          listaAnterior = [];
+        }
+
+        if (!Array.isArray(listaAnterior) || !listaAnterior.length) {
+          // Não marca como concluído se não encontrou a base anterior;
+          // assim pode tentar de novo quando o Drive terminar de carregar.
+          return;
+        }
+
+        // Uma categoria basta para virar modelo; preserva o tipo mais recente encontrado.
+        const modelos = new Map();
+        listaAnterior.forEach(t => {
+          if (!t || (t.tipo !== 'Fixa' && t.tipo !== 'Variável')) return;
+          const categoria = String(t.categoria || '').trim();
+          if (!categoria) return;
+
+          const idx = MESES.indexOf(t.mes);
+          const atual = modelos.get(categoria);
+          if (!atual || idx >= atual.idx) {
+            modelos.set(categoria, { tipo: t.tipo, idx });
+          }
+        });
+
+        if (!modelos.size) {
+          await window.storage.set('@@raw:' + marcador, 'true', false);
+          return;
+        }
+
+        const existentes = new Set(
+          transacoes
+            .filter(Boolean)
+            .map(t => `${String(t.mes || '')}|${String(t.categoria || '').trim()}`)
+        );
+
+        let maxId = transacoes.reduce((m, t) => Math.max(m, Number(t && t.id) || 0), 0);
+        const novos = [];
+
+        modelos.forEach((modelo, categoria) => {
+          MESES.forEach(mes => {
+            const chave = `${mes}|${categoria}`;
+            if (existentes.has(chave)) return;
+
+            novos.push({
+              id: ++maxId,
+              mes,
+              categoria,
+              tipo: modelo.tipo || 'Variável',
+              valor: null,
+              status: '',
+              data: null,
+              banco: null,
+              exercicio: exercicioAtual,
+            });
+            existentes.add(chave);
+          });
+        });
+
+        if (cancelado) return;
+
+        if (novos.length) {
+          const next = [...transacoes, ...novos];
+          setTransacoes(next);
+
+          // Grava diretamente na chave anual correta do exercício atual.
+          await salvarAnoExato_(
+            'transacoes_financas2026',
+            exercicioAtual,
+            JSON.stringify(next)
+          );
+        }
+
+        // Só marca depois de concluir a mesclagem/gravação.
+        await window.storage.set('@@raw:' + marcador, 'true', false);
+      } catch (e) {
+        // Não interrompe o painel. Se falhar por internet/Drive, tentará novamente
+        // em outra carga porque o marcador não terá sido gravado.
+      }
+    })();
+
+    return () => { cancelado = true; };
+  }, [transacoes, exercicioAtual, exercicios]);
 
   // saldos mensais editáveis — sempre parte dos valores reais da planilha original (extrato)
   // como base, e por cima aplica qualquer edição manual já salva (mês a mês).
