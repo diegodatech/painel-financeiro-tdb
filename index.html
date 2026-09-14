@@ -704,10 +704,30 @@ html.dark-mode {
       const CHAVE_BASE_VERSOES = '__base_versoes_sync_v1';
       const CHAVE_CLIENTE = '__cliente_sync_v2';
       const CHAVE_PENDENCIAS_ANEXOS = '__pendencias_anexos_v1';
-      // v4.43 — abertura DRIVE-FIRST.
-      // Se houver conexão configurada, o painel aguarda a leitura central antes
-      // de montar os dados financeiros. O cache local continua existindo como
-      // fallback seguro quando o Drive realmente estiver indisponível.
+      const CHAVE_REVISAO_CONFIRMADA = '__drive_revisao_confirmada_v1';
+      window.__aberturaConcluida = false;
+
+      // v4.44 — entrada rápida com validação por revisão global.
+      // Em vez de reler todos os arquivos do Drive a cada abertura, primeiro fazemos
+      // um handshake barato no servidor. Se ninguém gravou desde o último bootstrap
+      // confirmado, o cache local é comprovadamente atual e pode abrir imediatamente.
+
+      function lerRevisaoConfirmadaLocal_() {
+        try {
+          const bruto = localStorage.getItem(CHAVE_REVISAO_CONFIRMADA);
+          return { existe: bruto !== null, valor: Number(bruto) || 0 };
+        } catch (e) { return { existe: false, valor: 0 }; }
+      }
+
+      function salvarRevisaoConfirmadaLocal_(revisao) {
+        try { localStorage.setItem(CHAVE_REVISAO_CONFIRMADA, String(Number(revisao) || 0)); } catch (e) {}
+      }
+
+      async function checarStatusAbertura_() {
+        if (!APPS_SCRIPT_URL) return { ok: false, localOnly: true };
+        const url = APPS_SCRIPT_URL + '?acao=statusAbertura&_=' + Date.now();
+        return lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 5000));
+      }
 
       function lerPendenciasAnexos() {
         try {
@@ -1036,7 +1056,7 @@ html.dark-mode {
         return { ok: true, nome: corpo.nome, criadoEm: corpo.criadoEm, chaves: chaves.length };
       };
 
-      async function carregarDaPlanilha() {
+      async function carregarDaPlanilha(opcoes) {
         if (!APPS_SCRIPT_URL) {
           cachePlanilha = {};
           cacheCarregadoComSucesso = false;
@@ -1046,10 +1066,13 @@ html.dark-mode {
 
         carregamentoEmAndamento = (async () => {
           let ultimoErro = null;
-          // No modo local-first a interface não fica presa esperando o Drive.
-          // Quando realmente precisamos do servidor (primeiro uso neste aparelho),
-          // fazemos no máximo 2 tentativas moderadas.
-          for (let tentativa = 1; tentativa <= 2; tentativa++) {
+          const aberturaRapida = !!(opcoes && opcoes.aberturaRapida);
+          const maxTentativas = aberturaRapida ? 1 : 2;
+          const limiteLeitura = aberturaRapida ? 12000 : 45000;
+          // Na entrada não prendemos a tela em duas tentativas longas. Uma leitura
+          // de até 12 s é suficiente; se falhar, abrimos o fallback local protegido.
+          // Atualizações manuais continuam com o limite mais tolerante de 45 s.
+          for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
             try {
               const anoBootstrap = Number(window.__exercicioAtual || 2026);
               const urlBootstrap = APPS_SCRIPT_URL
@@ -1059,7 +1082,7 @@ html.dark-mode {
               const corpo = await lerRespostaJSON(await timeoutFetch(
                 urlBootstrap,
                 { method: 'GET', cache: 'no-store' },
-                45000
+                limiteLeitura
               ));
               window.__ultimaDuracaoBootstrapMs = Number(corpo.duracaoMs) || null;
 
@@ -1069,7 +1092,7 @@ html.dark-mode {
 
               cachePlanilha = corpo.dados;
 
-              // v4.43 — o servidor devolve a versão oficial de cada chave.
+              // v4.44 — o servidor devolve a versão oficial de cada chave.
               // Para chaves sem edição local pendente, esta passa a ser a base
               // para detectar se outro aparelho gravou algo antes da próxima edição.
               if (corpo.versoes && typeof corpo.versoes === 'object') {
@@ -1091,6 +1114,10 @@ html.dark-mode {
               window.__driveDisponivel = true;
               if (Number(window.__syncEmAndamento || 0) === 0) window.__ultimoErroSync = null;
               registrarSync_('leitura');
+              window.__revisaoGlobalServidor = Number(corpo.revisaoGlobal) || 0;
+              if (corpo.bootstrapConsistente !== false && Object.prototype.hasOwnProperty.call(corpo, 'revisaoGlobal')) {
+                salvarRevisaoConfirmadaLocal_(corpo.revisaoGlobal);
+              }
 
               // Reaplica localmente o que ainda não foi confirmado no Drive.
               // Não usamos "cache = {}" em caso de erro: isso é justamente o que
@@ -1138,33 +1165,13 @@ html.dark-mode {
                 } catch (e) {}
               }
 
-              // Reenvio em segundo plano, serializado pela mesma fila das gravações normais.
-              if (pendentes.size) {
-                pendentes.forEach(key => {
-                  let local = null;
-                  try { local = localStorage.getItem(key); } catch (e) {}
-                  if (local !== null) {
-                    const versao = Number(lerVersoes()[key]) || Date.now();
-                    filaEscrita = filaEscrita.then(() => enviarSet_(key, local, versao, false)).catch(() => {});
-                  }
-                });
-              }
-
-              // Também retoma automaticamente anexos/PDFs pendentes salvos no IndexedDB.
-              const pendentesAnexos = lerPendenciasAnexos();
-              pendentesAnexos.forEach(key => {
-                filaEscrita = filaEscrita.then(async () => {
-                  const local = await idbAnexoGet_(key);
-                  if (local === null) return { ok: false, ausente: true };
-                  const versao = Number(lerVersoes()[key]) || Date.now();
-                  return enviarAnexo_(key, local, versao);
-                }).catch(() => {});
-              });
-
+              // v4.44 — NÃO reenviamos pendências dentro do bootstrap.
+              // A abertura termina primeiro; reenvioAutomaticoPendencias_ cuida delas
+              // logo depois, em segundo plano. Assim um PDF pendente nunca segura a entrada.
               return cachePlanilha;
             } catch (e) {
               ultimoErro = e;
-              if (tentativa < 2) await new Promise(r => setTimeout(r, 900 * tentativa));
+              if (tentativa < maxTentativas) await new Promise(r => setTimeout(r, 900 * tentativa));
             }
           }
 
@@ -1393,7 +1400,7 @@ html.dark-mode {
       let reenvioPendenciasEmAndamento_ = false;
 
       async function reenvioAutomaticoPendencias_() {
-        if (!APPS_SCRIPT_URL || reenvioPendenciasEmAndamento_) return;
+        if (!APPS_SCRIPT_URL || !window.__aberturaConcluida || reenvioPendenciasEmAndamento_) return;
         const comuns = Array.from(lerPendencias());
         const anexos = Array.from(lerPendenciasAnexos());
         if (!comuns.length && !anexos.length) return;
@@ -1476,49 +1483,71 @@ html.dark-mode {
             if (valor == null) return false;
             try { return Array.isArray(JSON.parse(valor)); } catch (e) { return false; }
           };
+          const concluir = origem => {
+            window.__transacoesProntas = true;
+            window.__aberturaConcluida = true;
+            setTimeout(() => { reenvioAutomaticoPendencias_().catch(() => {}); }, 250);
+            return { ok: true, origem };
+          };
 
-          // v4.43 — DRIVE-FIRST de verdade: se o Drive está configurado,
-          // aguardamos a leitura central antes de montar o painel. Assim outro
-          // computador/tablet sempre abre a alteração mais recente confirmada.
-          // O cache local só é usado como fallback quando a leitura do Drive falha.
+          let local = null;
+          try { local = localStorage.getItem(chave); } catch (e) {}
+          const localValido = validar(local);
+          const semPendencias = lerPendencias().size === 0 && lerPendenciasAnexos().size === 0;
+
+          // CAMINHO MAIS RÁPIDO: pergunta apenas a revisão global ao Apps Script.
+          // Essa chamada usa ScriptProperties e não abre a pasta do Drive.
+          const revisaoLocal = lerRevisaoConfirmadaLocal_();
+          if (!forcarDrive && APPS_SCRIPT_URL && localValido && semPendencias && revisaoLocal.existe) {
+            try {
+              const status = await checarStatusAbertura_();
+              const revisaoServidor = Number(status && status.revisaoGlobal) || 0;
+              if (status && status.ok && revisaoLocal.existe && revisaoLocal.valor === revisaoServidor) {
+                window.__versaoBackend = status.versaoBackend || window.__versaoBackend || 'não informada';
+                window.__revisaoGlobalServidor = revisaoServidor;
+                window.__driveDisponivel = true;
+                window.__statusPlanilha = 'ok';
+                window.__ultimoErroSync = null;
+                registrarSync_('leitura-validada');
+                return concluir('local-validado');
+              }
+            } catch (e) {
+              // Se o handshake falhar, tentamos o bootstrap normal abaixo.
+            }
+          }
+
           if (APPS_SCRIPT_URL) {
-            const leitura = await window.storage.refreshDrive();
-            // Se havia alteração local pendente de uma sessão anterior, a leitura pode
-            // ter iniciado uma reconciliação. Esperamos essa fila terminar antes de
-            // montar a tela, para não exibir uma cópia antiga por alguns segundos.
-            try { await filaEscrita; } catch (e) {}
+            // Só fazemos a leitura pesada quando houve mudança no servidor, não existe
+            // revisão local confirmada, há pendências ou o usuário forçou atualização.
+            const leitura = await window.storage.refreshDrive({ aberturaRapida: !forcarDrive });
             if (leitura.ok && cachePlanilha && validar(cachePlanilha[chave])) {
-              window.__transacoesProntas = true;
-              return { ok: true, origem: 'drive' };
+              return concluir('drive');
             }
 
-            let localFallback = null;
-            try { localFallback = localStorage.getItem(chave); } catch (e) {}
-            if (!forcarDrive && validar(localFallback)) {
-              window.__transacoesProntas = true;
+            // Internet/Drive lento: não deixa o usuário preso por minutos. A cópia local
+            // protegida abre, e o botão de sincronização/manual pode tentar novamente.
+            if (!forcarDrive && localValido) {
               window.__statusPlanilha = 'erro';
               window.__driveDisponivel = false;
               window.__ultimoErroSync = (leitura && leitura.erro)
                 ? leitura.erro + ' — abrindo a cópia protegida deste aparelho.'
                 : 'Google Drive indisponível — abrindo a cópia protegida deste aparelho.';
-              return { ok: true, origem: 'local-fallback', aviso: window.__ultimoErroSync };
+              // Continua tentando uma leitura completa sem prender a tela. Se o Drive
+              // responder depois, o evento painel:drive-atualizado remonta os dados.
+              setTimeout(() => { window.storage.refreshDrive().catch(() => {}); }, 1500);
+              return concluir('local-fallback');
             }
 
             if (!leitura.ok) throw new Error(leitura.erro || 'Não foi possível ler o Google Drive. Tente novamente.');
             throw new Error('O Drive respondeu, mas não trouxe lançamentos válidos para ' + (window.__exercicioAtual || 2026) + '. No computador, confirme o envio pelo botão Salvar. Confira também se os aparelhos usam a mesma URL /exec. Nenhum dado-modelo foi criado.');
           }
 
-          let local = null;
-          try { local = localStorage.getItem(chave); } catch (e) {}
-          if (validar(local)) {
-            window.__transacoesProntas = true;
-            return { ok: true, origem: 'local' };
-          }
+          if (localValido) return concluir('local');
           throw new Error('Não há dados locais válidos para abrir o painel.');
         },
-        refreshDrive: async () => {
+        refreshDrive: async (opcoes) => {
           if (!APPS_SCRIPT_URL) return { ok:false, localOnly:true };
-          const r = await carregarDaPlanilha();
+          const r = await carregarDaPlanilha(opcoes);
           return {
             ok: !!(cacheCarregadoComSucesso && r),
             dados: r,
@@ -2525,7 +2554,7 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
   const [erro, setErro] = useState('');
   const [tentativasErradas, setTentativasErradas] = useState(0);
 
-  // v4.43 — o teclado físico só é "ouvido" (keydown em window) depois que ALGUM
+  // v4.44 — o teclado físico só é "ouvido" (keydown em window) depois que ALGUM
   // elemento da página tem o foco. Ao abrir o link, o navegador às vezes deixa o
   // foco fora da página (ex.: na barra de endereço), e a pessoa precisava clicar
   // em qualquer lugar da tela antes de conseguir digitar o PIN pelo teclado.
