@@ -679,6 +679,8 @@ html.dark-mode {
       let filaEscrita = Promise.resolve();
       let contadorVersao = 0;
       let cacheCarregadoComSucesso = false;
+      let ultimaFalhaLeituraEm = 0;
+      window.__transacoesProntas = false;
       let usandoPlanilha = !!APPS_SCRIPT_URL;
 
       const CHAVE_PENDENCIAS = '__pendencias_sync_v2';
@@ -873,7 +875,7 @@ html.dark-mode {
         let corpo = null;
         try { corpo = await resp.json(); } catch (e) {}
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        if (!corpo || corpo.ok === false) throw new Error((corpo && corpo.erro) || 'Resposta inválida do Apps Script.');
+        if (!corpo || corpo.ok === false) throw new Error((corpo && corpo.erro) || 'O Apps Script não retornou JSON válido. Confira a implantação /exec e a permissão de acesso para o tablet.');
         return corpo;
       }
 
@@ -977,7 +979,7 @@ html.dark-mode {
               const corpo = await lerRespostaJSON(await timeoutFetch(
                 urlBootstrap,
                 { method: 'GET', cache: 'no-store' },
-                20000
+                45000
               ));
               window.__ultimaDuracaoBootstrapMs = Number(corpo.duracaoMs) || null;
 
@@ -987,6 +989,8 @@ html.dark-mode {
 
               cachePlanilha = corpo.dados;
               cacheCarregadoComSucesso = true;
+              ultimaFalhaLeituraEm = 0;
+              window.__versaoBackend = corpo.versaoBackend || 'não informada';
               usandoPlanilha = true;
               window.__statusPlanilha = Number(window.__syncEmAndamento || 0) > 0 ? 'sincronizando' : 'ok';
               window.__driveDisponivel = true;
@@ -1073,6 +1077,7 @@ html.dark-mode {
           // MUITO IMPORTANTE: null significa "não consegui ler o Drive".
           // Nunca transformar isso em {}.
           cachePlanilha = null;
+          ultimaFalhaLeituraEm = Date.now();
           usandoPlanilha = !!APPS_SCRIPT_URL;
           window.__driveDisponivel = false;
           const haPendencias = Number(window.__pendenciasSync || 0) > 0 || Number(window.__pendenciasAnexosSync || 0) > 0;
@@ -1356,6 +1361,28 @@ html.dark-mode {
       window.__chaveAnualParaAno = chaveAnualParaAno_;
 
       window.storage = {
+        // v4.38: nenhum efeito financeiro monta antes de uma leitura válida.
+        prepararAbertura: async (forcarDrive) => {
+          window.__transacoesProntas = false;
+          const chave = resolverChaveAnual_('transacoes_financas2026');
+          const validar = valor => {
+            if (valor == null) return false;
+            try { return Array.isArray(JSON.parse(valor)); } catch (e) { return false; }
+          };
+          let local = null;
+          try { local = localStorage.getItem(chave); } catch (e) {}
+          if (!forcarDrive && validar(local)) {
+            window.__transacoesProntas = true;
+            return { ok: true, origem: 'local' };
+          }
+          const leitura = await window.storage.refreshDrive();
+          if (!leitura.ok) throw new Error(leitura.erro || 'Não foi possível ler o Google Drive. Tente novamente.');
+          if (!leitura.dados || !validar(leitura.dados[chave])) {
+            throw new Error('O Drive respondeu, mas não trouxe lançamentos válidos para ' + (window.__exercicioAtual || 2026) + '. No computador, confirme o envio pelo botão Salvar. Confira também se os aparelhos usam a mesma URL /exec. Nenhum dado-modelo foi criado.');
+          }
+          window.__transacoesProntas = true;
+          return { ok: true, origem: 'drive' };
+        },
         refreshDrive: async () => {
           if (!APPS_SCRIPT_URL) return { ok:false, localOnly:true };
           const r = await carregarDaPlanilha();
@@ -1397,6 +1424,11 @@ html.dark-mode {
 
           // LOCAL-FIRST: abre imediatamente com a cópia deste aparelho.
           // A conferência com o Drive acontece em segundo plano.
+          // Depois de uma leitura confirmada, usa o retorno em memória mesmo se o
+          // navegador não conseguiu persistir o cache (ex.: armazenamento restrito).
+          if (cacheCarregadoComSucesso && cachePlanilha && Object.prototype.hasOwnProperty.call(cachePlanilha, key)) {
+            return { value: cachePlanilha[key] };
+          }
           let localRapido = null;
           try { localRapido = localStorage.getItem(key); } catch (e) {}
           if (localRapido !== null) {
@@ -1407,7 +1439,7 @@ html.dark-mode {
           }
 
           // Só bloqueia esperando o Drive se este aparelho realmente não possui a chave.
-          if (APPS_SCRIPT_URL && !cacheCarregadoComSucesso) {
+          if (APPS_SCRIPT_URL && !cacheCarregadoComSucesso && Date.now() - ultimaFalhaLeituraEm > 15000) {
             await carregarDaPlanilha();
           }
 
@@ -1451,6 +1483,9 @@ html.dark-mode {
 
         set: async (key, val, exigirConfirmacao) => {
           key = resolverChaveAnual_(key);
+          if (/^transacoes_financas\d{4}$/.test(key) && !window.__transacoesProntas) {
+            throw new Error('Gravação bloqueada: carregue lançamentos válidos antes de editar.');
+          }
           const eAnexo = key.indexOf('anexo_') !== -1;
           // Anexo: IndexedDB primeiro; nunca jogamos um PDF de 10/20MB dentro do localStorage.
           if (eAnexo) {
@@ -1483,7 +1518,11 @@ html.dark-mode {
 
           // Dados normais: guarda primeiro no aparelho. Se o aplicativo fechar agora,
           // a alteração continua disponível e marcada como pendente.
-          try { localStorage.setItem(key, val); } catch (e) {}
+          try { localStorage.setItem(key, val); } catch (e) {
+            window.__statusPlanilha = 'erro';
+            window.__ultimoErroSync = 'Não foi possível guardar a alteração neste aparelho. Verifique o espaço e as permissões do navegador.';
+            throw new Error(window.__ultimoErroSync);
+          }
           if (!cachePlanilha) cachePlanilha = {};
           cachePlanilha[key] = val;
           const versao = novaVersao(key);
@@ -1516,7 +1555,7 @@ html.dark-mode {
           // Se o GET falhar e os POSTs estiverem funcionando, as pendências locais
           // ainda são enviadas e só saem da fila após aceite explícito do servidor.
           let carregado = cacheCarregadoComSucesso ? cachePlanilha : null;
-          if (!cacheCarregadoComSucesso) carregado = await carregarDaPlanilha();
+          // Pendências conhecidas são enviadas antes da leitura completa.
           let leituraConfirmada = !!(cacheCarregadoComSucesso && carregado);
 
           // carregarDaPlanilha pode ter recolocado pendências na fila automática.
@@ -7387,7 +7426,12 @@ ${textoContasPessoais}`;
     let timer = null;
     const atualizarTelaComDrive = () => {
       if (timer) return;
-      timer = setTimeout(() => window.location.reload(), 350);
+      timer = setTimeout(() => {
+        timer = null;
+        const ativo = document.activeElement;
+        const editando = ativo && (ativo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName));
+        if (!editando && Number(window.__pendenciasSync || 0) === 0) window.location.reload();
+      }, 350);
     };
     window.addEventListener('painel:drive-atualizado', atualizarTelaComDrive);
     return () => {
@@ -7934,6 +7978,8 @@ ${textoContasPessoais}`;
         const result = await window.storage.get('transacoes_financas2026', false);
         if (result && result.value) {
           const lista = JSON.parse(result.value);
+          if (!Array.isArray(lista)) throw new Error('Lançamentos inválidos no armazenamento.');
+          window.__transacoesProntas = true;
           // corrige datas que ficaram erradas por causa do Google Sheets ter
           // convertido sozinho o texto da data pro tipo Data dele (ex:
           // "2026-08-06T03:00:00.000Z" em vez de "2026-08-06") — pega só os
@@ -7952,8 +7998,7 @@ ${textoContasPessoais}`;
           }
         } else {
           if (exercicioAtual === 2026) {
-            await window.storage.set('transacoes_financas2026', JSON.stringify(SEED_TRANSACOES), false);
-            setTransacoes(SEED_TRANSACOES);
+            throw new Error('Lançamentos de 2026 não encontrados. Carregue o Drive antes de editar.');
           } else {
             setTransacoes([]);
           }
@@ -7962,6 +8007,7 @@ ${textoContasPessoais}`;
         setStorageOk(false);
         // Falha de leitura não é banco vazio. Não grava nem exibe o modelo como se
         // fosse o dado real; o botão Salvar poderá tentar carregar o Drive novamente.
+        window.__transacoesProntas = false;
         setTransacoes([]);
       }
       setLoading(false);
@@ -8129,6 +8175,7 @@ ${textoContasPessoais}`;
   useEffect(() => {
     if (!transacoes) return;
     // A geração automática antiga de Set-Dez pertence somente ao banco original de 2026.
+    if (!window.__transacoesProntas) return;
     // Exercícios novos são criados pelo assistente de preparação anual.
     if (exercicioAtual !== 2026) return;
     (async () => {
@@ -13276,8 +13323,40 @@ function Contratos({ chamarIA }) {
 }
 
 // Renderização na raiz
+function AberturaSegura() {
+  const [pronto, setPronto] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
+  const [erro, setErro] = useState('');
+  const emCurso = useRef(false);
+  async function abrir(forcar) {
+    if (emCurso.current) return;
+    emCurso.current = true;
+    setOcupado(true);
+    setErro('');
+    try {
+      if (!window.storage || !window.storage.prepararAbertura) throw new Error('Armazenamento não inicializado. Reabra este index.html.');
+      await window.storage.prepararAbertura(forcar);
+      setPronto(true);
+    } catch (e) {
+      setErro(String(e && e.message || e));
+    } finally {
+      emCurso.current = false;
+      setOcupado(false);
+    }
+  }
+  useEffect(() => { abrir(false); }, []);
+  if (pronto) return <PainelFinanceiro />;
+  return <main style={{maxWidth:580,margin:'10vh auto',padding:24,fontFamily:'Arial, sans-serif',background:'#fff',color:'#243c38',borderRadius:16}}>
+    <h2>Tempo de Brincar</h2>
+    <p>{ocupado ? 'Buscando seus dados no Google Drive… No primeiro acesso, aguarde a leitura.' : 'Não foi possível abrir os dados do painel.'}</p>
+    {erro && <p role="alert" style={{color:'#9f2525',whiteSpace:'pre-wrap'}}>{erro}</p>}
+    <p>Se o computador possui alterações pendentes, conclua o salvamento nele primeiro. O tablet não acessa a cópia local de outro aparelho.</p>
+    <button disabled={ocupado} onClick={() => abrir(true)} style={{padding:'12px 18px',cursor:'pointer'}}>{ocupado ? 'Aguarde…' : 'Tentar carregar do Drive novamente'}</button>
+    <p style={{fontSize:12}}>v4.38 · Nenhum backup antigo é restaurado automaticamente.</p>
+  </main>;
+}
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<PainelFinanceiro />);
+root.render(<AberturaSegura />);
   </script>
 </body>
 </html>
