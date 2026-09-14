@@ -13443,15 +13443,24 @@ function AberturaSegura() {
   }, []);
 
   if (pronto) return <PainelFinanceiro key={chaveReidratacao} />;
+
+  // v4.44 — enquanto não há erro (seja no instante inicial antes de abrir()
+  // rodar, seja durante a busca no Drive), mostra só a logo, sem texto nenhum.
+  // O texto "Não foi possível abrir..." só aparece se realmente falhar.
+  if (!erro) {
+    return <main style={{background:COLORS.paper,minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontFamily:'Inter, sans-serif',padding:20,boxSizing:'border-box'}}>
+      <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{height:90,maxWidth:'90%',objectFit:'contain'}} />
+    </main>;
+  }
+
   return <main style={{background:COLORS.paper,minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontFamily:'Inter, sans-serif',color:COLORS.ink,gap:18,padding:20,textAlign:'center',boxSizing:'border-box'}}>
     <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{height:90,maxWidth:'90%',objectFit:'contain'}} />
     <div role="status" style={{display:'flex',alignItems:'center',gap:10}}>
-      {ocupado && <div style={{width:18,height:18,borderRadius:'50%',border:`3px solid ${COLORS.lineSoft}`,borderTopColor:COLORS.gold,animation:'spin 0.8s linear infinite',flexShrink:0}} />}
-      <span style={{fontSize:14,fontWeight:600}}>{ocupado ? 'Buscando seus dados no Google Drive…' : 'Não foi possível abrir os dados do painel.'}</span>
+      <span style={{fontSize:14,fontWeight:600}}>Não foi possível abrir os dados do painel.</span>
     </div>
     {erro && <p role="alert" style={{color:'#9f2525',whiteSpace:'pre-wrap'}}>{erro}</p>}
-    <span style={{fontSize:12,color:COLORS.inkSoft,maxWidth:400}}>{ocupado ? 'Aguarde a leitura. São até duas tentativas de 45 segundos; se não chegar a resposta, você poderá tentar novamente.' : 'Se houver alterações pendentes no computador, conclua o salvamento nele para que apareçam aqui.'}</span>
-    {!ocupado && <button onClick={() => abrir(true)} style={{padding:'12px 18px',cursor:'pointer',border:0,borderRadius:8,background:COLORS.green,color:'#fff'}}>Tentar novamente</button>}
+    <span style={{fontSize:12,color:COLORS.inkSoft,maxWidth:400}}>Se houver alterações pendentes no computador, conclua o salvamento nele para que apareçam aqui.</span>
+    <button onClick={() => abrir(true)} style={{padding:'12px 18px',cursor:'pointer',border:0,borderRadius:8,background:COLORS.green,color:'#fff'}}>Tentar novamente</button>
     {erro && !(window.google && window.google.script) && <a href={window.__APPS_SCRIPT_URL_PAINEL + '?acao=painel'} target="_blank" rel="noopener noreferrer">Abrir pelo Google Apps Script</a>}
     <span style={{fontSize:11,color:COLORS.inkSoft}}>v4.39</span>
   </main>;
