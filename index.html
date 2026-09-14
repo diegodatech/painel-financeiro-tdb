@@ -2715,11 +2715,20 @@ function DropdownFlutuante({ aberto, anchorRef, onFechar, align = 'left', width 
     const atualizarPosicao = () => {
       if (!anchorRef.current) return;
       const r = anchorRef.current.getBoundingClientRect();
-      setPos(
-        align === 'right'
-          ? { top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) }
-          : { top: r.bottom + 8, left: r.left }
+      // v4.50 — sempre calcula pela borda esquerda e prende o menu dentro da
+      // tela (com uma margem de 8px), em vez de confiar cegamente em
+      // align="left"/"right". Isso corrige o menu do ⚙ cortando na borda
+      // esquerda do tablet: ele nasceu com align="right" de quando o botão
+      // ficava lá na ponta direita da barra; depois que o botão se mudou pra
+      // perto do "Dados" (borda esquerda), "abrir pra esquerda" jogava boa
+      // parte do menu pra fora da tela. Com o clamp, funciona em qualquer
+      // tela, não importa de que lado o botão está.
+      const esquerdaPreferida = align === 'right' ? (r.right - width) : r.left;
+      const esquerdaFinal = Math.min(
+        Math.max(8, esquerdaPreferida),
+        window.innerWidth - width - 8
       );
+      setPos({ top: r.bottom + 8, left: esquerdaFinal });
     };
     atualizarPosicao();
     window.addEventListener('resize', atualizarPosicao);
@@ -2728,7 +2737,7 @@ function DropdownFlutuante({ aberto, anchorRef, onFechar, align = 'left', width 
       window.removeEventListener('resize', atualizarPosicao);
       window.removeEventListener('scroll', atualizarPosicao, true);
     };
-  }, [aberto, anchorRef, align]);
+  }, [aberto, anchorRef, align, width]);
 
   useEffect(() => {
     if (!aberto) return;
@@ -2750,7 +2759,7 @@ function DropdownFlutuante({ aberto, anchorRef, onFechar, align = 'left', width 
       ref={menuRef}
       className="busca-liquid-glass"
       style={{
-        position: 'fixed', top: pos.top, left: pos.left, right: pos.right, zIndex: 999999,
+        position: 'fixed', top: pos.top, left: pos.left, zIndex: 999999,
         borderRadius: 12, boxShadow: '0 12px 34px rgba(0,0,0,0.22)',
         width, padding: 6, display: 'flex', flexDirection: 'column', gap: 2,
         maxHeight: '70vh', overflowY: 'auto', boxSizing: 'border-box',
