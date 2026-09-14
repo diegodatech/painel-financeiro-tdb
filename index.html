@@ -921,6 +921,33 @@ html.dark-mode {
         return corpo;
       };
 
+      // Restaura de dentro do painel o backup completo mais recente que já está salvo
+      // no Drive (arquivo backup_dados_*.json criado por "Criar backup agora"). Antes,
+      // esse backup não tinha como voltar: era preciso abrir o Drive manualmente e o
+      // botão "Importar backup" só aceitava o formato parcial baixado pelo navegador.
+      // Regrava cada chave individualmente pela mesma fila de sincronização normal.
+      window.__restaurarUltimoBackupDrive = async function() {
+        if (!APPS_SCRIPT_URL) return { ok: false, erro: 'Apps Script não configurado.' };
+        const corpo = await lerRespostaJSON(await timeoutFetch(
+          APPS_SCRIPT_URL + '?acao=ultimoBackupDados&_=' + Date.now(),
+          { method: 'GET', cache: 'no-store' },
+          45000
+        ));
+        const dados = corpo && corpo.dados && typeof corpo.dados === 'object' && !Array.isArray(corpo.dados) ? corpo.dados : null;
+        if (!dados || !Object.keys(dados).length) throw new Error('O backup encontrado no Drive não tem dados válidos.');
+
+        const chaves = Object.keys(dados);
+        for (const chave of chaves) {
+          const valor = dados[chave];
+          if (valor === undefined || valor === null) continue;
+          // '@@raw:' evita que a chave passe pelo resolvedor de ano de novo — o nome
+          // salvo no backup já é o nome final (com ou sem sufixo de exercício).
+          await window.storage.set('@@raw:' + chave, String(valor), false);
+        }
+        registrarSync_('gravacao');
+        return { ok: true, nome: corpo.nome, criadoEm: corpo.criadoEm, chaves: chaves.length };
+      };
+
       async function carregarDaPlanilha() {
         if (!APPS_SCRIPT_URL) {
           cachePlanilha = {};
@@ -974,30 +1001,23 @@ html.dark-mode {
               // Espelha no armazenamento local tudo que veio confirmado do Drive,
               // exceto chaves com alteração local pendente. Assim a próxima abertura
               // é instantânea mesmo se a internet estiver lenta ou indisponível.
-              let driveAtualizouLocal = false;
+              //
+              // v4.34 — removido o "window.location.reload()" que rodava aqui sempre que
+              // o Drive trazia algo diferente do cache local. Isso disparava quase toda
+              // vez que o painel era aberto num aparelho/navegador sem cache (localStorage
+              // vazio == "diferente" de qualquer dado real), fazendo a página recarregar
+              // sozinha segundos depois de abrir — sentido pelo usuário como "desconectou
+              // e reiniciou". cachePlanilha e localStorage já ficam atualizados aqui embaixo
+              // sem precisar de reload; quem lê os dados depois (troca de aba, de exercício,
+              // nova leitura) já pega a versão nova.
               Object.keys(corpo.dados).forEach(key => {
                 if (pendentes.has(key) || String(key).indexOf('anexo_') !== -1) return;
                 try {
                   const valor = corpo.dados[key];
                   if (valor === undefined || valor === null) return;
-                  const novo = String(valor);
-                  const anteriorLocal = localStorage.getItem(key);
-                  if (anteriorLocal !== novo) driveAtualizouLocal = true;
-                  localStorage.setItem(key, novo);
+                  localStorage.setItem(key, String(valor));
                 } catch (e) {}
               });
-
-              // Se abriu pelo cache local e o Drive trouxe algo diferente,
-              // atualiza a tela uma única vez já com o cache novo.
-              if (driveAtualizouLocal && pendentes.size === 0) {
-                try {
-                  const marca = 'painel_v535_drive_refresco_' + String(window.__exercicioAtual || 2026);
-                  if (sessionStorage.getItem(marca) !== '1') {
-                    sessionStorage.setItem(marca, '1');
-                    setTimeout(() => window.location.reload(), 120);
-                  }
-                } catch (e) {}
-              }
 
               // Reenvio em segundo plano, serializado pela mesma fila das gravações normais.
               if (pendentes.size) {
@@ -8339,19 +8359,37 @@ ${textoContasPessoais}`;
     const fileReader = new FileReader();
     if (!e.target.files || e.target.files.length === 0) return;
     fileReader.readAsText(e.target.files[0], "UTF-8");
-    fileReader.onload = (event) => {
+    fileReader.onload = async (event) => {
       try {
         const parsed = JSON.parse(event.target.result);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          // Formato parcial: só os lançamentos do ano, gerado por "Baixar backup agora".
           persist(parsed);
           alert('Backup restaurado com sucesso! Todos os dados foram atualizados neste computador.');
+        } else if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Object.keys(parsed).length > 0) {
+          // v4.34 — formato completo: o backup_dados_*.json que "Criar backup agora"
+          // grava no Drive (objeto com todas as chaves/anos). Antes esse arquivo não
+          // podia ser importado por aqui de jeito nenhum.
+          const chaves = Object.keys(parsed);
+          if (!window.confirm(`Este arquivo é um backup completo do Drive com ${chaves.length} chave(s). Isso vai substituir os dados salvos neste computador. Deseja continuar?`)) {
+            if (e && e.target) e.target.value = '';
+            return;
+          }
+          for (const chave of chaves) {
+            const valor = parsed[chave];
+            if (valor === undefined || valor === null) continue;
+            await window.storage.set('@@raw:' + chave, String(valor), false);
+          }
+          alert('Backup completo restaurado com sucesso! A tela vai recarregar para mostrar os dados atualizados.');
+          window.location.reload();
         } else {
           alert('Arquivo de backup inválido.');
         }
       } catch (err) {
-        alert('Erro ao processar o arquivo de backup.');
+        alert('Erro ao processar o arquivo de backup: ' + String(err && err.message || err));
       }
     };
+    if (e && e.target) e.target.value = '';
   }
 
   function adicionarLancamento(e) {
@@ -10153,6 +10191,22 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
       setBackupSistema({ tipo: 'erro', texto: 'Não consegui criar o backup: ' + String(e && e.message || e) });
     }
   }
+
+  // v4.34 — traz de volta o backup completo mais recente já salvo no Drive, sem precisar
+  // abrir o Google Drive manualmente e sem passar pelo botão "Importar backup" (que só
+  // aceitava o formato parcial de lançamentos).
+  async function restaurarUltimoBackupSistema_() {
+    if (!window.__restaurarUltimoBackupDrive) return;
+    if (!window.confirm('Isso vai buscar o backup mais recente salvo no Google Drive e substituir os dados salvos neste computador (o histórico de backups no Drive não é apagado). Deseja continuar?')) return;
+    setBackupSistema({ tipo: 'andamento', texto: 'Buscando o último backup no Google Drive...' });
+    try {
+      const r = await window.__restaurarUltimoBackupDrive();
+      setBackupSistema({ tipo: 'ok', texto: `✓ Backup "${r.nome}" restaurado (${r.chaves} chave(s)). Recarregando a tela...` });
+      setTimeout(() => window.location.reload(), 900);
+    } catch (e) {
+      setBackupSistema({ tipo: 'erro', texto: 'Não consegui restaurar o backup: ' + String(e && e.message || e) });
+    }
+  }
   useEffect(() => {
     let ativo = true;
     const testar = async () => {
@@ -10357,6 +10411,7 @@ function VisaoGeral({ resumoMensal, top10, fixasVsVariaveis, saldoEvolucao, tran
           <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
             <button onClick={() => testarConexaoSistema_(false)} disabled={testandoDrive} style={{ background: COLORS.lineSoft, color: COLORS.ink, border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: '7px 10px', fontSize: 11.5, fontWeight: 700, cursor: testandoDrive ? 'default' : 'pointer' }}>{testandoDrive ? 'Testando...' : 'Testar conexão'}</button>
             <button onClick={criarBackupSistema_} disabled={backupSistema && backupSistema.tipo === 'andamento'} style={{ background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '7px 10px', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>Criar backup agora</button>
+            <button onClick={restaurarUltimoBackupSistema_} disabled={backupSistema && backupSistema.tipo === 'andamento'} title="Busca o backup mais recente já salvo no Drive e restaura tudo neste computador" style={{ background: COLORS.paperCard, color: COLORS.red, border: `1px solid ${COLORS.red}55`, borderRadius: 7, padding: '7px 10px', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>Restaurar último backup</button>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 }}>
