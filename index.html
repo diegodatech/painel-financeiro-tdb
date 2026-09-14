@@ -687,6 +687,20 @@ html.dark-mode {
       const CHAVE_VERSOES = '__versoes_sync_v2';
       const CHAVE_CLIENTE = '__cliente_sync_v2';
       const CHAVE_PENDENCIAS_ANEXOS = '__pendencias_anexos_v1';
+      // v4.41 — quanto tempo a ABERTURA do painel espera por uma checagem rápida
+      // no Drive antes de decidir mostrar o cache local. Se a rede responder
+      // dentro desse prazo, o painel já abre com os dados atuais (sem precisar
+      // corrigir sozinho alguns segundos depois). Se demorar mais que isso, o
+      // painel segue o comportamento de sempre: abre com o cache local na hora
+      // e continua tentando o Drive em segundo plano.
+      // v4.42 — 4s era curto demais: o Apps Script frequentemente demora
+      // alguns segundos pra "acordar" (cold start) na primeira requisição
+      // depois de um tempo parado, e a checagem estourava o prazo bem perto
+      // de terminar — daí o painel abria, e SÓ DEPOIS (poucos segundos
+      // depois, já com a tela montada) a checagem em segundo plano concluía
+      // e reidratava. Aumentado pra dar mais chance de a checagem terminar
+      // ANTES do painel abrir, evitando essa reidratação tardia.
+      const CHECAGEM_RAPIDA_ABERTURA_MS = 7000;
 
       function lerPendenciasAnexos() {
         try {
@@ -1400,6 +1414,21 @@ html.dark-mode {
             if (valor == null) return false;
             try { return Array.isArray(JSON.parse(valor)); } catch (e) { return false; }
           };
+
+          // v4.41 — checagem rápida (com prazo) no Drive ANTES de decidir com
+          // qual cópia abrir. Se a rede responder dentro de CHECAGEM_RAPIDA_ABERTURA_MS,
+          // o cache local abaixo já vem atualizado e o painel abre certo de primeira.
+          // Se a rede demorar mais que isso (ou estiver offline), simplesmente
+          // seguimos com o cache local de sempre — carregarDaPlanilha() continua
+          // rodando em segundo plano e, se achar diferença depois, a reidratação
+          // (evento 'painel:drive-atualizado') ainda corrige a tela sem reload.
+          if (!forcarDrive && APPS_SCRIPT_URL) {
+            await Promise.race([
+              carregarDaPlanilha().catch(() => {}),
+              new Promise(resolve => setTimeout(resolve, CHECAGEM_RAPIDA_ABERTURA_MS))
+            ]);
+          }
+
           let local = null;
           try { local = localStorage.getItem(chave); } catch (e) {}
           if (!forcarDrive && validar(local)) {
@@ -7396,7 +7425,17 @@ ${textoContasPessoais}`;
   // PIN de proteção — guardado na Planilha Google (assim é o mesmo PIN pra quem acessar
   // de qualquer aparelho). "null" = ainda carregando; "" = nunca configurou um PIN.
   const [pinConfigurado, setPinConfigurado] = useState(null);
-  const [desbloqueado, setDesbloqueado] = useState(false);
+  // v4.41 — a reidratação (ver AberturaSegura) remonta este componente quando o
+  // Drive confirma dado mais novo. Sem isto, o desbloqueio do PIN voltava a
+  // pedir senha de novo a cada remount. window.__painelDesbloqueadoNestaSessao
+  // vive fora do componente (não é apagado por um remount) e só é zerado se a
+  // página inteira for recarregada de verdade — continua pedindo PIN
+  // normalmente na primeira abertura de cada sessão do navegador.
+  const [desbloqueado, setDesbloqueadoEstado] = useState(() => !!window.__painelDesbloqueadoNestaSessao);
+  const setDesbloqueado = (valor) => {
+    window.__painelDesbloqueadoNestaSessao = !!valor;
+    setDesbloqueadoEstado(!!valor);
+  };
   useEffect(() => {
     (async () => {
       try {
