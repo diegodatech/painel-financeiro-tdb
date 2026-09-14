@@ -7335,7 +7335,7 @@ ${textoContasPessoais}`;
           setMensagemSalvarAgora({
             tipo: 'ok',
             texto: leitura.dadosAtualizados
-              ? 'Dados atualizados pelo Google Drive. Recarregando a tela...'
+              ? 'Dados atualizados pelo Google Drive. Atualizando a tela...'
               : 'Não há alterações pendentes e os dados do Google Drive foram conferidos.'
           });
         } else {
@@ -7450,26 +7450,10 @@ ${textoContasPessoais}`;
     return () => clearInterval(t);
   }, []);
 
-  // Reidrata toda a aplicação quando uma conferência do Drive comprova que a
-  // cópia local estava desatualizada. O evento só é emitido quando há diferença
-  // real e nenhuma edição local pendente, evitando o antigo ciclo de recargas.
-  useEffect(() => {
-    let timer = null;
-    const atualizarTelaComDrive = () => {
-      if (timer) return;
-      timer = setTimeout(() => {
-        timer = null;
-        const ativo = document.activeElement;
-        const editando = ativo && (ativo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName));
-        if (!editando && Number(window.__pendenciasSync || 0) === 0) window.location.reload();
-      }, 350);
-    };
-    window.addEventListener('painel:drive-atualizado', atualizarTelaComDrive);
-    return () => {
-      window.removeEventListener('painel:drive-atualizado', atualizarTelaComDrive);
-      if (timer) clearTimeout(timer);
-    };
-  }, []);
+  // v4.40 — o disparo de "painel:drive-atualizado" (dados confirmados pelo Drive
+  // diferentes do que já estava na tela) é tratado pelo componente-pai
+  // (AberturaSegura), que remonta este componente sem recarregar a página.
+  // Isso evita o antigo window.location.reload() aqui dentro.
   useEffect(() => {
     if (!avisoErroSync) return;
     const t2 = setTimeout(() => setAvisoErroSync(false), 7000);
@@ -13376,7 +13360,39 @@ function AberturaSegura() {
     }
   }
   useEffect(() => { abrir(false); }, []);
-  if (pronto) return <PainelFinanceiro />;
+
+  // v4.40 — reidratação sem recarregar a página inteira.
+  // Quando o carregarDaPlanilha() confirma que o Drive trouxe dados diferentes
+  // dos que já estavam na tela (evento 'painel:drive-atualizado'), remontamos
+  // apenas o <PainelFinanceiro/> (via troca da "key"), em vez de dar
+  // window.location.reload(). O cache/localStorage já está com o valor novo
+  // nesse momento (quem grava é o próprio carregarDaPlanilha antes de disparar
+  // o evento), então o remount lê tudo de novo instantaneamente, sem nenhuma
+  // requisição de rede nova e sem o "flash" de recarregar o navegador.
+  // Continua só reidratando quando não há campo em edição nem gravação
+  // pendente para este aparelho — igual ao comportamento anterior.
+  const [chaveReidratacao, setChaveReidratacao] = useState(0);
+  useEffect(() => {
+    let timer = null;
+    const atualizarTelaComDrive = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        const ativo = document.activeElement;
+        const editando = ativo && (ativo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName));
+        if (!editando && Number(window.__pendenciasSync || 0) === 0) {
+          setChaveReidratacao(k => k + 1);
+        }
+      }, 350);
+    };
+    window.addEventListener('painel:drive-atualizado', atualizarTelaComDrive);
+    return () => {
+      window.removeEventListener('painel:drive-atualizado', atualizarTelaComDrive);
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
+  if (pronto) return <PainelFinanceiro key={chaveReidratacao} />;
   return <main style={{background:COLORS.paper,minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontFamily:'Inter, sans-serif',color:COLORS.ink,gap:18,padding:20,textAlign:'center',boxSizing:'border-box'}}>
     <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{height:90,maxWidth:'90%',objectFit:'contain'}} />
     <div role="status" style={{display:'flex',alignItems:'center',gap:10}}>
