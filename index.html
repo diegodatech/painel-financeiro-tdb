@@ -7437,6 +7437,89 @@ ${textoContasPessoais}`;
           await window.storage.set('painel_exercicios_v1', JSON.stringify(lista), false);
         }
         lista = lista.map(x => ({ ...x, ano: Number(x.ano) })).sort((a,b) => a.ano-b.ano);
+
+        // v5.27 — RESTAURAÇÃO ÚNICA APÓS OS TESTES DO CICLO ANUAL.
+        // Durante a validação foram criados 2027/2028/2029 e 2026 foi encerrado.
+        // Reconhecemos SOMENTE essa assinatura exata de teste para não afetar um
+        // fechamento real no futuro. Ao reconhecer, 2026 volta a ATIVO e os anos
+        // de teste são limpos para que a futura virada real 2026 -> 2027 funcione
+        // normalmente. Os dados reais de 2026 não são alterados.
+        const marcadorRestauracao = 'restauracao_pos_testes_ciclo_v527';
+        let restauracaoJaFeita = false;
+        try {
+          const mr = await window.storage.get('@@raw:' + marcadorRestauracao, false);
+          restauracaoJaFeita = !!(mr && mr.value === 'true');
+        } catch (e) {}
+
+        const st = (ano) => {
+          const x = lista.find(i => Number(i.ano) === Number(ano));
+          return x ? String(x.status || '') : '';
+        };
+        const assinaturaExataDosTestes =
+          st(2026) === 'ENCERRADO' &&
+          st(2027) === 'ENCERRADO' &&
+          st(2028) === 'ENCERRADO' &&
+          st(2029) === 'ATIVO';
+
+        if (!restauracaoJaFeita && assinaturaExataDosTestes) {
+          // Libera temporariamente apenas esta manutenção interna.
+          window.__exercicioSomenteLeitura = false;
+          window.__anoSomenteLeitura = null;
+
+          const anosTeste = lista.filter(x => Number(x.ano) > 2026).map(x => Number(x.ano));
+          const basesAnuais = [
+            'saldos_mensais',
+            'meta_lucro_mensal',
+            'valores_mensalidade',
+            'valores_avulsos',
+            'dias_letivos',
+            'capacidade_maxima',
+            'convenios_multivaga',
+            'categorias_indicadores',
+            'auto_lancamentos_v15'
+          ];
+
+          for (const anoTeste of anosTeste) {
+            // Lançamentos/mensalidades anuais.
+            try { await window.storage.delete('@@raw:transacoes_financas' + anoTeste, false); } catch (e) {}
+
+            // Configurações anuais criadas durante os testes.
+            for (const base of basesAnuais) {
+              try { await window.storage.delete('@@raw:' + base + '__' + anoTeste, false); } catch (e) {}
+            }
+
+            // Metadados administrativos do ciclo de teste.
+            try { await window.storage.delete('@@raw:fechamento_exercicio__' + anoTeste, false); } catch (e) {}
+            try { await window.storage.delete('@@raw:saldo_inicial_exercicio__' + anoTeste, false); } catch (e) {}
+            try { await window.storage.delete('@@raw:registro_ativacao_exercicio__' + anoTeste, false); } catch (e) {}
+          }
+
+          // Remove o fechamento artificial de 2026 e o saldo inicial artificial de 2027.
+          try { await window.storage.delete('@@raw:fechamento_exercicio__2026', false); } catch (e) {}
+          try { await window.storage.delete('@@raw:saldo_inicial_exercicio__2027', false); } catch (e) {}
+
+          const base2026 = lista.find(x => Number(x.ano) === 2026) || { ano:2026 };
+          lista = [{
+            ...base2026,
+            ano: 2026,
+            status: 'ATIVO',
+            encerradoEm: undefined,
+            saldoFinal: undefined,
+            ativadoEm: new Date().toISOString()
+          }];
+
+          await window.storage.set('painel_exercicios_v1', JSON.stringify(lista), false);
+          await window.storage.set('@@raw:' + marcadorRestauracao, 'true', false);
+
+          window.__exercicioAtual = 2026;
+          try { localStorage.setItem('painel_exercicio_atual', '2026'); } catch (e) {}
+          setExercicioAtual(2026);
+          setMensagemExercicio({
+            tipo:'ok',
+            texto:'✓ Testes do ciclo anual concluídos. 2026 foi restaurado como exercício ATIVO.'
+          });
+        }
+
         setExercicios(lista);
         const existe = lista.some(x => Number(x.ano) === exercicioAtual);
         if (!existe) {
@@ -7563,7 +7646,7 @@ ${textoContasPessoais}`;
         }));
       });
 
-      // v5.26 — leva para o novo exercício os modelos de contas/lançamentos recorrentes.
+      // v5.27 — leva para o novo exercício os modelos de contas/lançamentos recorrentes.
       // Copia somente a estrutura (categoria + tipo), sem valores, datas, banco ou status
       // financeiro do ano anterior. Assim o novo ano começa zerado, mas não perde a base
       // de lançamentos que a escola usa todos os meses.
@@ -7781,7 +7864,7 @@ ${textoContasPessoais}`;
   }, [exercicioAtual]);
 
 
-  // v5.26 — REPARO DE EXERCÍCIOS JÁ CRIADOS pelas versões anteriores.
+  // v5.27 — REPARO DE EXERCÍCIOS JÁ CRIADOS pelas versões anteriores.
   // A v5.25 passou a copiar corretamente os modelos de Lançamentos ao preparar anos NOVOS,
   // mas 2029 já tinha sido criado antes dessa correção. Este reparo roda UMA ÚNICA VEZ
   // no exercício atual quando ele está ATIVO ou EM PREPARAÇÃO, lê o exercício anterior
