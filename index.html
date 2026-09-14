@@ -848,7 +848,18 @@ html.dark-mode {
 
       function timeoutFetch(url, opcoes, ms) {
         const controlador = new AbortController();
-        const timer = setTimeout(() => controlador.abort(), ms);
+        const limiteMs = Math.max(1000, Number(ms) || 60000);
+        const timer = setTimeout(() => {
+          try {
+            controlador.abort(new DOMException(
+              'Tempo limite de ' + Math.round(limiteMs / 1000) + 's excedido.',
+              'AbortError'
+            ));
+          } catch (e) {
+            controlador.abort();
+          }
+        }, limiteMs);
+
         return fetch(url, { ...(opcoes || {}), signal: controlador.signal })
           .finally(() => clearTimeout(timer));
       }
@@ -1000,7 +1011,9 @@ html.dark-mode {
         if (marcarFila !== false) marcarPendente(key);
 
         const tamanhoKB = (val ? String(val).length : 0) / 1024;
-        const limite = Math.min(180000, Math.max(15000, 15000 + tamanhoKB * 30));
+        // Apps Script pode ter cold start e variação de latência. 15 s era curto e
+        // gerava "signal is aborted without reason" mesmo quando o Drive terminava a gravação.
+        const limite = Math.min(180000, Math.max(60000, 60000 + tamanhoKB * 25));
         let ultimoErro = null;
 
         for (let tentativa = 1; tentativa <= 3; tentativa++) {
@@ -1029,6 +1042,7 @@ html.dark-mode {
 
             window.__statusPlanilha = 'ok';
             window.__ultimoErroSync = null;
+            window.__ultimaDuracaoServidorMs = Number(corpo.duracaoMs) || null;
             registrarSync_('gravacao');
             if (cachePlanilha) cachePlanilha[key] = val;
             marcarSincronizado(key, versao);
@@ -1040,8 +1054,12 @@ html.dark-mode {
         }
 
         window.__statusPlanilha = 'erro';
-        window.__ultimoErroSync = ultimoErro && ultimoErro.name === 'AbortError'
-          ? 'O Google Drive demorou para responder. A alteração ficou protegida neste aparelho e será reenviada.'
+        const foiTimeout = !!(ultimoErro && (
+          ultimoErro.name === 'AbortError' ||
+          /aborted|abort|tempo limite/i.test(String(ultimoErro.message || ultimoErro))
+        ));
+        window.__ultimoErroSync = foiTimeout
+          ? 'O Google Drive demorou para responder. A alteração ficou protegida neste aparelho e será reenviada automaticamente.'
           : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Não foi possível sincronizar.');
         marcarPendente(key);
         return { ok: false, erro: window.__ultimoErroSync };
@@ -1171,6 +1189,51 @@ html.dark-mode {
         else marcarPendente(key);
         return { ok: false, erro: window.__ultimoErroSync };
       }
+
+      let reenvioPendenciasEmAndamento_ = false;
+
+      async function reenvioAutomaticoPendencias_() {
+        if (!APPS_SCRIPT_URL || reenvioPendenciasEmAndamento_) return;
+        const comuns = Array.from(lerPendencias());
+        const anexos = Array.from(lerPendenciasAnexos());
+        if (!comuns.length && !anexos.length) return;
+
+        reenvioPendenciasEmAndamento_ = true;
+        try {
+          // Usa a mesma fila global para nunca competir com uma gravação disparada pela interface.
+          filaEscrita = filaEscrita.then(async () => {
+            for (const key of comuns) {
+              let valor = null;
+              try { valor = localStorage.getItem(key); } catch (e) {}
+              const versao = Number(lerVersoes()[key]) || Date.now();
+
+              // Se a chave não existe mais localmente, a operação pendente é uma exclusão.
+              if (valor === null) await enviarDelete_(key, versao);
+              else await enviarSet_(key, valor, versao, false);
+            }
+
+            for (const key of anexos) {
+              let valor = null;
+              try { valor = await idbAnexoGet_(key); } catch (e) {}
+              if (valor === null) continue;
+              const versao = Number(lerVersoes()[key]) || Date.now();
+              await enviarAnexo_(key, valor, versao);
+            }
+          }).catch(e => {
+            window.__statusPlanilha = 'erro';
+            window.__ultimoErroSync = String((e && e.message) || e || 'Falha no reenvio automático.');
+          });
+
+          await filaEscrita;
+        } finally {
+          reenvioPendenciasEmAndamento_ = false;
+        }
+      }
+
+      // Primeira recuperação pouco depois da abertura e novas tentativas periódicas.
+      // Assim uma oscilação de rede não deixa a alteração pendente até o usuário apertar Salvar.
+      setTimeout(() => { reenvioAutomaticoPendencias_().catch(() => {}); }, 2500);
+      setInterval(() => { reenvioAutomaticoPendencias_().catch(() => {}); }, 12000);
 
       window.storage = {
         get: async (key) => {
@@ -1316,11 +1379,18 @@ html.dark-mode {
           const tarefas = pendentes.map(key => {
             let valor = null;
             try { valor = localStorage.getItem(key); } catch (e) {}
-            return { key, valor, versao: Number(lerVersoes()[key]) || Date.now() };
-          }).filter(x => x.valor !== null);
+            return {
+              key,
+              valor,
+              deletar: valor === null,
+              versao: Number(lerVersoes()[key]) || Date.now()
+            };
+          });
 
           for (const tarefa of tarefas) {
-            const resultado = await enviarSet_(tarefa.key, tarefa.valor, tarefa.versao, false);
+            const resultado = tarefa.deletar
+              ? await enviarDelete_(tarefa.key, tarefa.versao)
+              : await enviarSet_(tarefa.key, tarefa.valor, tarefa.versao, false);
             feitos++;
             if (!resultado.ok) falhas++;
             if (onProgress) onProgress(feitos, totalTarefas);
