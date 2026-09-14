@@ -7700,7 +7700,16 @@ ${textoContasPessoais}`;
 
       if (acao === 'ATIVAR') {
         if (lista[idxAtual].status === 'ENCERRADO') throw new Error('Um exercício encerrado não pode ser reativado automaticamente.');
-        lista.forEach((x,i) => { if (i !== idxAtual && x.status === 'ATIVO') lista[i] = {...x,status:'ENCERRADO',encerradoEm:x.encerradoEm || agora}; });
+
+        // v5.36 — nunca ativa um exercício "por cima" de outro que ainda está ATIVO.
+        // Antes, ativar aqui encerrava silenciosamente qualquer outro exercício ATIVO,
+        // sem gerar o resumo de fechamento nem recalcular o saldo (isso só acontece
+        // no fluxo "Encerrar"). Agora é obrigatório encerrar o exercício anterior primeiro.
+        const outroAtivo = lista.find((x, i) => i !== idxAtual && x.status === 'ATIVO');
+        if (outroAtivo) {
+          throw new Error(`Encerre o exercício ${outroAtivo.ano} antes de ativar ${exercicioAtual}. Use "Encerrar ${outroAtivo.ano}" no Ciclo anual daquele exercício.`);
+        }
+
         lista[idxAtual] = {...lista[idxAtual],status:'ATIVO',ativadoEm:agora};
         await salvarListaExercicios_(lista);
         await window.storage.set(`registro_ativacao_exercicio__${exercicioAtual}`, JSON.stringify({ano:exercicioAtual,ativadoEm:agora}), false);
@@ -7708,6 +7717,33 @@ ${textoContasPessoais}`;
         if (!finalSync.ok) throw new Error('A ativação foi registrada localmente, mas o Drive ainda não confirmou tudo. Use Salvar.');
         setGerenciarAnoAberto(false);
         setMensagemExercicio({tipo:'ok',texto:`✓ Exercício ${exercicioAtual} ativado e confirmado no Google Drive.`});
+        return;
+      }
+
+      if (acao === 'REVERTER') {
+        // v5.36 — desfaz uma ativação feita por engano: reabre o exercício anterior
+        // (ENCERRADO -> ATIVO de novo) e devolve o atual para EM_PREPARAÇÃO.
+        // Não apaga o resumo de fechamento antigo (fechamento_exercicio__ANO) nem o
+        // saldo inicial já gravado; se o ano anterior for encerrado de novo depois,
+        // esses registros são recalculados e sobrescritos normalmente.
+        if (lista[idxAtual].status !== 'ATIVO') throw new Error('Só é possível reverter o exercício que está ATIVO no momento.');
+        const anoAnterior = exercicioAtual - 1;
+        const idxAnterior = lista.findIndex(x => Number(x.ano) === anoAnterior);
+        if (idxAnterior < 0 || lista[idxAnterior].status !== 'ENCERRADO') {
+          throw new Error(`Não encontrei ${anoAnterior} como um exercício ENCERRADO para reabrir.`);
+        }
+
+        lista[idxAtual] = {...lista[idxAtual], status:'EM_PREPARACAO', ativadoEm: undefined};
+        lista[idxAnterior] = {...lista[idxAnterior], status:'ATIVO', encerradoEm: undefined};
+        await salvarListaExercicios_(lista);
+        await window.storage.set(`registro_reversao_exercicio__${exercicioAtual}`, JSON.stringify({ano:exercicioAtual, revertidoEm:agora, reabriu:anoAnterior}), false);
+
+        const finalSync = window.storage.resync ? await window.storage.resync() : {ok:true};
+        if (!finalSync.ok) throw new Error('A reversão foi registrada localmente, mas o Drive ainda não confirmou tudo. Use Salvar.');
+
+        setGerenciarAnoAberto(false);
+        trocarExercicio(anoAnterior);
+        setMensagemExercicio({tipo:'ok',texto:`✓ ${exercicioAtual} voltou para EM PREPARAÇÃO e ${anoAnterior} foi reaberto como ATIVO.`});
         return;
       }
 
@@ -8948,6 +8984,7 @@ ${textoContasPessoais}`;
           {gerenciarAnoAberto && (
             <ModalCicloAnual
               exercicio={exercicios.find(x=>Number(x.ano)===exercicioAtual) || {ano:exercicioAtual,status:'ATIVO'}}
+              anterior={exercicios.find(x=>Number(x.ano)===exercicioAtual-1) || null}
               proximo={exercicios.find(x=>Number(x.ano)===exercicioAtual+1) || null}
               transacoes={transacoes || []}
               saldoFinal={saldoFinalDoExercicio_()}
@@ -9230,8 +9267,11 @@ function ModalExercicioEncerrado({ ano, onFechar }) {
   );
 }
 
-function ModalCicloAnual({ exercicio, proximo, transacoes, saldoFinal, pendencias, processando, onFechar, onConfirmar }) {
+function ModalCicloAnual({ exercicio, anterior, proximo, transacoes, saldoFinal, pendencias, processando, onFechar, onConfirmar }) {
   const status = exercicio.status || 'ATIVO';
+  const anteriorPendente = !!(anterior && anterior.status !== 'ENCERRADO');
+  const podeReverter = status === 'ATIVO' && !!(anterior && anterior.status === 'ENCERRADO');
+  const [confirmarReversao, setConfirmarReversao] = useState(false);
   const alunos = new Set((transacoes||[]).filter(t=>String(t.categoria||'').startsWith('Mensalidade - ')).map(t=>t.categoria)).size;
 
   // Pendências do ciclo anual:
@@ -9317,8 +9357,33 @@ function ModalCicloAnual({ exercicio, proximo, transacoes, saldoFinal, pendencia
             ℹ️ O fechamento separa os meses futuros apenas para conferência; eles não entram na contagem de pendências até o mês atual.
           </div>}
         </div>}
-        {status==='EM_PREPARACAO' && <div style={{marginTop:10,padding:12,border:`1px solid ${COLORS.line}`,borderRadius:10,fontSize:12,color:COLORS.inkSoft}}><b style={{color:COLORS.ink}}>Ativar {exercicio.ano}:</b> torna este o exercício operacional. O histórico dos demais anos continua disponível no seletor.</div>}
-        <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:16,flexWrap:'wrap'}}><button onClick={onFechar} disabled={processando} style={{border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:9,padding:'10px 14px',fontWeight:700}}>Cancelar</button>{status==='EM_PREPARACAO' && <button onClick={()=>onConfirmar('ATIVAR')} disabled={processando||pendencias>0} style={{border:'none',background:COLORS.inkButton,color:'#fff',borderRadius:9,padding:'10px 15px',fontWeight:800,opacity:(processando||pendencias>0)?.6:1}}>{processando?'Sincronizando...':`Ativar ${exercicio.ano}`}</button>}{status==='ATIVO' && <button onClick={()=>onConfirmar('ENCERRAR')} disabled={processando||pendencias>0||!proximo} style={{border:'none',background:COLORS.red,color:'#fff',borderRadius:9,padding:'10px 15px',fontWeight:800,opacity:(processando||pendencias>0||!proximo)?.6:1}}>{processando?'Sincronizando...':`Encerrar ${exercicio.ano}`}</button>}</div>
+        {status==='EM_PREPARACAO' && <div style={{marginTop:10,padding:12,border:`1px solid ${COLORS.line}`,borderRadius:10,fontSize:12,color:COLORS.inkSoft}}>
+          <b style={{color:COLORS.ink}}>Ativar {exercicio.ano}:</b> torna este o exercício operacional. O histórico dos demais anos continua disponível no seletor.
+          {anteriorPendente && <div style={{marginTop:8,padding:'9px 10px',borderRadius:8,background:COLORS.redBg,color:COLORS.red,fontWeight:700}}>
+            ⚠ {anterior.ano} ainda está {String(anterior.status).replace('_',' ')}. Encerre {anterior.ano} primeiro — o botão "Ativar {exercicio.ano}" só libera depois disso.
+          </div>}
+        </div>}
+        {podeReverter && <div style={{marginTop:10,padding:12,border:`1px solid ${COLORS.line}`,borderRadius:10,fontSize:12,color:COLORS.inkSoft}}>
+          <b style={{color:COLORS.ink}}>Ativou {exercicio.ano} por engano?</b> É possível reverter: {anterior.ano} volta a ficar ATIVO (reaberto para edição) e {exercicio.ano} volta para EM PREPARAÇÃO. Nenhum lançamento é apagado.
+          {!confirmarReversao ? (
+            <div style={{marginTop:8}}>
+              <button onClick={()=>setConfirmarReversao(true)} disabled={processando||pendencias>0} style={{border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'8px 12px',fontWeight:700,opacity:(processando||pendencias>0)?.6:1}}>
+                Reverter para {anterior.ano}
+              </button>
+            </div>
+          ) : (
+            <div style={{marginTop:8,padding:'9px 10px',borderRadius:8,background:COLORS.goldSoft || '#FFF4D6'}}>
+              <div style={{fontWeight:700,color:COLORS.ink,marginBottom:6}}>Confirma reverter {exercicio.ano} e reabrir {anterior.ano}?</div>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                <button onClick={()=>setConfirmarReversao(false)} disabled={processando} style={{border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'8px 12px',fontWeight:700}}>Cancelar</button>
+                <button onClick={()=>onConfirmar('REVERTER')} disabled={processando||pendencias>0} style={{border:'none',background:COLORS.red,color:'#fff',borderRadius:8,padding:'8px 12px',fontWeight:800,opacity:(processando||pendencias>0)?.6:1}}>
+                  {processando?'Sincronizando...':`Sim, reverter e reabrir ${anterior.ano}`}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>}
+        <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:16,flexWrap:'wrap'}}><button onClick={onFechar} disabled={processando} style={{border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:9,padding:'10px 14px',fontWeight:700}}>Cancelar</button>{status==='EM_PREPARACAO' && <button onClick={()=>onConfirmar('ATIVAR')} disabled={processando||pendencias>0||anteriorPendente} title={anteriorPendente ? `Encerre ${anterior.ano} antes de ativar ${exercicio.ano}.` : undefined} style={{border:'none',background:COLORS.inkButton,color:'#fff',borderRadius:9,padding:'10px 15px',fontWeight:800,opacity:(processando||pendencias>0||anteriorPendente)?.6:1}}>{processando?'Sincronizando...':`Ativar ${exercicio.ano}`}</button>}{status==='ATIVO' && <button onClick={()=>onConfirmar('ENCERRAR')} disabled={processando||pendencias>0||!proximo} style={{border:'none',background:COLORS.red,color:'#fff',borderRadius:9,padding:'10px 15px',fontWeight:800,opacity:(processando||pendencias>0||!proximo)?.6:1}}>{processando?'Sincronizando...':`Encerrar ${exercicio.ano}`}</button>}</div>
       </div>
     </div>,document.body
   );
