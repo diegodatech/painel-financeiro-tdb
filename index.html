@@ -2448,6 +2448,17 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
   const [erro, setErro] = useState('');
   const [tentativasErradas, setTentativasErradas] = useState(0);
 
+  // v4.43 — o teclado físico só é "ouvido" (keydown em window) depois que ALGUM
+  // elemento da página tem o foco. Ao abrir o link, o navegador às vezes deixa o
+  // foco fora da página (ex.: na barra de endereço), e a pessoa precisava clicar
+  // em qualquer lugar da tela antes de conseguir digitar o PIN pelo teclado.
+  // Um <div tabIndex={-1}> focado programaticamente resolve isso sem abrir teclado
+  // virtual em celular/tablet (o que aconteceria com um <input> de verdade).
+  const containerRef = useRef(null);
+  useEffect(() => {
+    if (containerRef.current) containerRef.current.focus();
+  }, []);
+
   // se já vieram os 4 dígitos digitados ANTES da tela terminar de carregar, confirma
   // sozinho assim que montar — sem isso, a pessoa via as 4 bolinhas já preenchidas mas
   // precisava apertar mais alguma coisa pra realmente destravar
@@ -2523,10 +2534,10 @@ function TelaBloqueio({ pinConfigurado, onDesbloquear, onDefinirPin, onRemoverPi
     : 'Digite o mesmo PIN de novo, pra confirmar';
 
   return (
-    <div className="pin-screen" style={{
+    <div className="pin-screen" ref={containerRef} tabIndex={-1} style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: '#EAF3F1', fontFamily: 'Inter, -apple-system, sans-serif', padding: 20,
-      position: 'relative', overflow: 'hidden',
+      position: 'relative', overflow: 'hidden', outline: 'none',
     }}>
       <div style={{ position: 'absolute', top: '-10%', left: '-12%', width: 260, height: 260, borderRadius: '50%', background: '#106E6B', opacity: 0.35, filter: 'blur(50px)' }} />
       <div style={{ position: 'absolute', bottom: '-14%', right: '-10%', width: 300, height: 300, borderRadius: '50%', background: '#C15CA0', opacity: 0.30, filter: 'blur(55px)' }} />
