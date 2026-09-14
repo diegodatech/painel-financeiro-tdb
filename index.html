@@ -682,9 +682,36 @@ html.dark-mode {
       let usandoPlanilha = !!APPS_SCRIPT_URL;
 
       const CHAVE_PENDENCIAS = '__pendencias_sync_v2';
+      const CHAVE_PENDENCIAS_DELETE = '__pendencias_delete_v1';
       const CHAVE_VERSOES = '__versoes_sync_v2';
       const CHAVE_CLIENTE = '__cliente_sync_v2';
       const CHAVE_PENDENCIAS_ANEXOS = '__pendencias_anexos_v1';
+
+      function lerPendenciasDelete() {
+        try {
+          const bruto = localStorage.getItem(CHAVE_PENDENCIAS_DELETE);
+          const lista = bruto ? JSON.parse(bruto) : [];
+          return new Set(Array.isArray(lista) ? lista : []);
+        } catch (e) { return new Set(); }
+      }
+
+      function salvarPendenciasDelete(conjunto) {
+        try { localStorage.setItem(CHAVE_PENDENCIAS_DELETE, JSON.stringify(Array.from(conjunto))); } catch (e) {}
+        window.__pendenciasSync = lerPendencias().size + conjunto.size + lerPendenciasAnexos().size;
+      }
+
+      function marcarPendenteDelete(key) {
+        const p = lerPendenciasDelete();
+        p.add(key);
+        salvarPendenciasDelete(p);
+      }
+
+      function marcarSincronizadoDelete(key, versaoConfirmada) {
+        const atual = lerVersoes()[key];
+        if (versaoConfirmada && atual && Number(atual) !== Number(versaoConfirmada)) return;
+        const p = lerPendenciasDelete();
+        if (p.has(key)) { p.delete(key); salvarPendenciasDelete(p); }
+      }
 
       function lerPendenciasAnexos() {
         try {
@@ -697,7 +724,7 @@ html.dark-mode {
       function salvarPendenciasAnexos(conjunto) {
         try { localStorage.setItem(CHAVE_PENDENCIAS_ANEXOS, JSON.stringify(Array.from(conjunto))); } catch (e) {}
         window.__pendenciasAnexosSync = conjunto.size;
-        window.__pendenciasSync = lerPendencias().size + conjunto.size;
+        window.__pendenciasSync = lerPendencias().size + lerPendenciasDelete().size + conjunto.size;
       }
 
       function marcarPendenteAnexo(key) {
@@ -721,7 +748,7 @@ html.dark-mode {
 
       function salvarPendencias(conjunto) {
         try { localStorage.setItem(CHAVE_PENDENCIAS, JSON.stringify(Array.from(conjunto))); } catch (e) {}
-        window.__pendenciasSync = conjunto.size + lerPendenciasAnexos().size;
+        window.__pendenciasSync = conjunto.size + lerPendenciasDelete().size + lerPendenciasAnexos().size;
       }
 
       function marcarPendente(key) {
@@ -793,8 +820,50 @@ html.dark-mode {
         } catch (e) {}
       })();
 
+
+      // v5.28 — migra exclusões pendentes deixadas pela restauração v5.27.
+      // Na v5.27, exclusões usavam a fila genérica. Como a chave local já havia sido
+      // removida, o reenvio automático não sabia que precisava repetir um DELETE.
+      (function migrarDeletesPendentesV527_() {
+        try {
+          const marcador = localStorage.getItem('restauracao_pos_testes_ciclo_v527');
+          if (marcador !== 'true') return;
+
+          const comuns = lerPendencias();
+          const deletes = lerPendenciasDelete();
+          let mudou = false;
+
+          const bases = [
+            'saldos_mensais','meta_lucro_mensal','valores_mensalidade',
+            'valores_avulsos','dias_letivos','capacidade_maxima',
+            'convenios_multivaga','categorias_indicadores','auto_lancamentos_v15'
+          ];
+
+          const ehChaveDeLimpezaDosTestes = (key) => {
+            if (/^transacoes_financas202[789]$/.test(key)) return true;
+            if (/^(fechamento_exercicio|saldo_inicial_exercicio|registro_ativacao_exercicio)__202[6789]$/.test(key)) return true;
+            return bases.some(base => new RegExp('^' + base + '__202[789]$').test(key));
+          };
+
+          Array.from(comuns).forEach(key => {
+            if (!ehChaveDeLimpezaDosTestes(String(key))) return;
+            let local = null;
+            try { local = localStorage.getItem(key); } catch (e) {}
+            if (local !== null) return;
+            comuns.delete(key);
+            deletes.add(key);
+            mudou = true;
+          });
+
+          if (mudou) {
+            salvarPendencias(comuns);
+            salvarPendenciasDelete(deletes);
+          }
+        } catch (e) {}
+      })();
+
       window.__pendenciasAnexosSync = lerPendenciasAnexos().size;
-      window.__pendenciasSync = lerPendencias().size + window.__pendenciasAnexosSync;
+      window.__pendenciasSync = lerPendencias().size + lerPendenciasDelete().size + window.__pendenciasAnexosSync;
       window.__statusPlanilha = null;
       window.__driveDisponivel = null;
       window.__ultimoErroSync = null;
@@ -1234,7 +1303,8 @@ html.dark-mode {
               finalizarSync_();
               return { ok: false, stale: true, resolvido };
             }
-            marcarSincronizado(key, versao);
+            marcarSincronizado(key, versao); // compatibilidade com pendências antigas
+            marcarSincronizadoDelete(key, versao);
             window.__driveDisponivel = true;
             window.__ultimoErroSync = null;
             registrarSync_('gravacao');
@@ -1332,8 +1402,9 @@ html.dark-mode {
       async function reenvioAutomaticoPendencias_() {
         if (!APPS_SCRIPT_URL || reenvioAutomaticoEmAndamento_) return;
         const comuns = Array.from(lerPendencias());
+        const deletes = Array.from(lerPendenciasDelete());
         const anexos = Array.from(lerPendenciasAnexos());
-        if (!comuns.length && !anexos.length) return;
+        if (!comuns.length && !deletes.length && !anexos.length) return;
         reenvioAutomaticoEmAndamento_ = true;
         try {
           for (const key of comuns) {
@@ -1342,6 +1413,10 @@ html.dark-mode {
             if (valor === null) continue;
             const versao = Number(lerVersoes()[key]) || Date.now();
             await enviarSet_(key, valor, versao, false);
+          }
+          for (const key of deletes) {
+            const versao = Number(lerVersoes()[key]) || Date.now();
+            await enviarDelete_(key, versao);
           }
           for (const key of anexos) {
             let valor = null;
@@ -1354,6 +1429,7 @@ html.dark-mode {
           reenvioAutomaticoEmAndamento_ = false;
         }
       }
+      setTimeout(() => { reenvioAutomaticoPendencias_().catch(() => {}); }, 1800);
       setInterval(() => { reenvioAutomaticoPendencias_().catch(() => {}); }, 30000);
 
       window.storage = {
@@ -1521,10 +1597,11 @@ html.dark-mode {
           });
 
           const pendentes = Array.from(lerPendencias());
+          const pendentesDelete = Array.from(lerPendenciasDelete());
           const pendentesAnexos = Array.from(lerPendenciasAnexos());
           let falhas = 0;
           let feitos = 0;
-          const totalTarefas = pendentes.length + pendentesAnexos.length;
+          const totalTarefas = pendentes.length + pendentesDelete.length + pendentesAnexos.length;
 
           const tarefas = pendentes.map(key => {
             let valor = null;
@@ -1534,6 +1611,14 @@ html.dark-mode {
 
           for (const tarefa of tarefas) {
             const resultado = await enviarSet_(tarefa.key, tarefa.valor, tarefa.versao, false);
+            feitos++;
+            if (!resultado.ok) falhas++;
+            if (onProgress) onProgress(feitos, totalTarefas);
+          }
+
+          for (const key of pendentesDelete) {
+            const versao = Number(lerVersoes()[key]) || Date.now();
+            const resultado = await enviarDelete_(key, versao);
             feitos++;
             if (!resultado.ok) falhas++;
             if (onProgress) onProgress(feitos, totalTarefas);
@@ -1599,7 +1684,7 @@ html.dark-mode {
           try { localStorage.removeItem(key); } catch (e) {}
           if (cachePlanilha) delete cachePlanilha[key];
           const versao = novaVersao(key);
-          marcarPendente(key);
+          marcarPendenteDelete(key);
           if (!APPS_SCRIPT_URL) return true;
           filaEscrita = filaEscrita.then(async () => {
             const atual = Number(lerVersoes()[key]) || versao;
@@ -7438,7 +7523,7 @@ ${textoContasPessoais}`;
         }
         lista = lista.map(x => ({ ...x, ano: Number(x.ano) })).sort((a,b) => a.ano-b.ano);
 
-        // v5.27 — RESTAURAÇÃO ÚNICA APÓS OS TESTES DO CICLO ANUAL.
+        // v5.28 — RESTAURAÇÃO ÚNICA APÓS OS TESTES DO CICLO ANUAL.
         // Durante a validação foram criados 2027/2028/2029 e 2026 foi encerrado.
         // Reconhecemos SOMENTE essa assinatura exata de teste para não afetar um
         // fechamento real no futuro. Ao reconhecer, 2026 volta a ATIVO e os anos
