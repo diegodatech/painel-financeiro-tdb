@@ -942,7 +942,13 @@ html.dark-mode {
           if (valor === undefined || valor === null) continue;
           // '@@raw:' evita que a chave passe pelo resolvedor de ano de novo — o nome
           // salvo no backup já é o nome final (com ou sem sufixo de exercício).
-          await window.storage.set('@@raw:' + chave, String(valor), false);
+          // Na restauração precisamos da confirmação real do Apps Script. O terceiro
+          // argumento impede que uma falha de envio seja tratada como sucesso.
+          await window.storage.set('@@raw:' + chave, String(valor), true);
+        }
+        const confirmacao = window.storage.resync ? await window.storage.resync() : { ok: true };
+        if (!confirmacao.ok || Number(window.__pendenciasSync || 0) > 0) {
+          throw new Error('O backup foi carregado neste aparelho, mas ainda existem itens sem confirmação no Google Drive. Clique em Salvar novamente quando a conexão estabilizar.');
         }
         registrarSync_('gravacao');
         return { ok: true, nome: corpo.nome, criadoEm: corpo.criadoEm, chaves: chaves.length };
@@ -1002,22 +1008,36 @@ html.dark-mode {
               // exceto chaves com alteração local pendente. Assim a próxima abertura
               // é instantânea mesmo se a internet estiver lenta ou indisponível.
               //
-              // v4.34 — removido o "window.location.reload()" que rodava aqui sempre que
-              // o Drive trazia algo diferente do cache local. Isso disparava quase toda
-              // vez que o painel era aberto num aparelho/navegador sem cache (localStorage
-              // vazio == "diferente" de qualquer dado real), fazendo a página recarregar
-              // sozinha segundos depois de abrir — sentido pelo usuário como "desconectou
-              // e reiniciou". cachePlanilha e localStorage já ficam atualizados aqui embaixo
-              // sem precisar de reload; quem lê os dados depois (troca de aba, de exercício,
-              // nova leitura) já pega a versão nova.
+              // O antigo reload incondicional fazia a página reiniciar até no primeiro uso.
+              // Agora registramos se havia um valor local REALMENTE diferente e, somente
+              // nesse caso, emitimos um evento controlado para reidratar a tela uma vez.
+              let dadosConfirmadosAlterados = 0;
               Object.keys(corpo.dados).forEach(key => {
                 if (pendentes.has(key) || String(key).indexOf('anexo_') !== -1) return;
                 try {
                   const valor = corpo.dados[key];
                   if (valor === undefined || valor === null) return;
-                  localStorage.setItem(key, String(valor));
+                  const novoValor = String(valor);
+                  const valorAnterior = localStorage.getItem(key);
+                  // Só contamos como alteração visível quando já havia uma cópia local
+                  // diferente. No primeiro uso, os efeitos que aguardam o bootstrap
+                  // recebem o valor diretamente e não precisam recarregar a página.
+                  if (valorAnterior !== null && valorAnterior !== novoValor) dadosConfirmadosAlterados++;
+                  localStorage.setItem(key, novoValor);
                 } catch (e) {}
               });
+              window.__ultimaLeituraMudouDados = dadosConfirmadosAlterados > 0;
+
+              // A versão anterior atualizava apenas cachePlanilha/localStorage. O React
+              // já montado continuava exibindo o valor antigo. O evento abaixo permite
+              // reidratar a tela somente quando o Drive realmente trouxe algo diferente.
+              if (dadosConfirmadosAlterados > 0 && lerPendencias().size === 0 && lerPendenciasAnexos().size === 0) {
+                try {
+                  window.dispatchEvent(new CustomEvent('painel:drive-atualizado', {
+                    detail: { chavesAlteradas: dadosConfirmadosAlterados }
+                  }));
+                } catch (e) {}
+              }
 
               // Reenvio em segundo plano, serializado pela mesma fila das gravações normais.
               if (pendentes.size) {
@@ -1056,12 +1076,14 @@ html.dark-mode {
           usandoPlanilha = !!APPS_SCRIPT_URL;
           window.__driveDisponivel = false;
           const haPendencias = Number(window.__pendenciasSync || 0) > 0 || Number(window.__pendenciasAnexosSync || 0) > 0;
-          if (haPendencias && Number(window.__syncEmAndamento || 0) === 0) {
-            window.__statusPlanilha = 'pendente';
-            window.__ultimoErroSync = ultimoErro && (ultimoErro.name === 'AbortError' || ultimoErro.name === 'TimeoutError')
-              ? 'O Google Drive demorou para responder. A alteração continua protegida neste aparelho.'
-              : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Falha ao carregar o Google Drive.');
-          }
+          // Mesmo sem alterações pendentes, uma falha de LEITURA precisa ficar visível.
+          // Antes o status permanecia nulo e parecia que o Drive não tinha dados.
+          window.__statusPlanilha = haPendencias ? 'pendente' : 'erro';
+          window.__ultimoErroSync = ultimoErro && (ultimoErro.name === 'AbortError' || ultimoErro.name === 'TimeoutError')
+            ? (haPendencias
+                ? 'O Google Drive demorou para responder. A alteração continua protegida neste aparelho.'
+                : 'O Google Drive demorou para responder e os dados centrais ainda não foram carregados.')
+            : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Falha ao carregar o Google Drive.');
           return null;
         })();
 
@@ -1337,7 +1359,12 @@ html.dark-mode {
         refreshDrive: async () => {
           if (!APPS_SCRIPT_URL) return { ok:false, localOnly:true };
           const r = await carregarDaPlanilha();
-          return { ok: !!(cacheCarregadoComSucesso && r), dados: r };
+          return {
+            ok: !!(cacheCarregadoComSucesso && r),
+            dados: r,
+            dadosAtualizados: !!window.__ultimaLeituraMudouDados,
+            erro: window.__ultimoErroSync || null
+          };
         },
 
         get: async (key) => {
@@ -1409,13 +1436,20 @@ html.dark-mode {
             }
           }
 
+          // Se não existe cópia local e a leitura central falhou, isso NÃO significa
+          // banco vazio. Propagamos a falha para impedir a criação automática dos dados
+          // modelo por cima de um banco real temporariamente indisponível.
+          if (APPS_SCRIPT_URL && !cacheCarregadoComSucesso && window.__driveDisponivel === false) {
+            throw new Error(window.__ultimoErroSync || 'Não foi possível carregar os dados do Google Drive.');
+          }
+
           try {
             const local = localStorage.getItem(key);
             return local !== null ? { value: local } : null;
           } catch (e) { return null; }
         },
 
-        set: async (key, val) => {
+        set: async (key, val, exigirConfirmacao) => {
           key = resolverChaveAnual_(key);
           const eAnexo = key.indexOf('anexo_') !== -1;
           // Anexo: IndexedDB primeiro; nunca jogamos um PDF de 10/20MB dentro do localStorage.
@@ -1440,7 +1474,11 @@ html.dark-mode {
               window.__ultimoErroSync = String(e && e.message || e);
               return { ok: false, erro: window.__ultimoErroSync };
             });
-            return filaEscrita.then(() => true);
+            const resultado = await filaEscrita;
+            if (exigirConfirmacao && (!resultado || resultado.ok !== true)) {
+              throw new Error((resultado && resultado.erro) || 'O anexo não foi confirmado pelo Google Drive.');
+            }
+            return !resultado || resultado.ok !== false;
           }
 
           // Dados normais: guarda primeiro no aparelho. Se o aplicativo fechar agora,
@@ -1464,7 +1502,11 @@ html.dark-mode {
             window.__ultimoErroSync = String(e && e.message || e);
             return { ok: false, erro: window.__ultimoErroSync };
           });
-          return filaEscrita.then(() => true);
+          const resultado = await filaEscrita;
+          if (exigirConfirmacao && (!resultado || resultado.ok !== true)) {
+            throw new Error((resultado && resultado.erro) || 'A alteração não foi confirmada pelo Google Drive.');
+          }
+          return !resultado || resultado.ok !== false;
         },
 
         resync: async (onProgress) => {
@@ -1477,6 +1519,11 @@ html.dark-mode {
             const p = lerPendencias();
             return { ok: false, total: p.size, falhas: p.size || 1, erro: window.__ultimoErroSync || 'Não consegui ler o Google Drive.' };
           }
+
+          // carregarDaPlanilha pode ter recolocado pendências na fila automática.
+          // Aguarda essa fila antes da reconciliação manual para não enviar a mesma
+          // chave duas vezes em paralelo.
+          try { await filaEscrita; } catch (e) {}
 
           // Reconciliação segura: se uma chave que já foi gerenciada pelo painel existe
           // localmente, mas sumiu do Drive, recoloca-a na fila. Não sobrescreve chaves
@@ -7176,28 +7223,36 @@ ${textoContasPessoais}`;
     setMensagemSalvarAgora(null);
     setProgressoSalvar({ feitos: 0, total: 0 });
     try {
-      const qtdPendentesAntes = Number(window.__pendenciasSync || 0) + Number(window.__pendenciasAnexosSync || 0);
+      // __pendenciasSync já inclui PDFs/anexos; antes eles eram somados duas vezes.
+      const qtdPendentesAntes = Number(window.__pendenciasSync || 0);
+
+      // O clique manual agora faz uma leitura real do Drive. Antes, quando não havia
+      // pendências, ele executava apenas o diagnóstico e nunca puxava os dados centrais.
+      const leitura = window.storage.refreshDrive
+        ? await window.storage.refreshDrive()
+        : { ok: false, erro: 'Atualização pelo Drive não disponível.' };
+      if (!leitura.ok) {
+        throw new Error(leitura.erro || window.__ultimoErroSync || 'Não consegui carregar os dados do Google Drive.');
+      }
+
       const resultado = qtdPendentesAntes > 0
         ? await (window.storage.resync
             ? window.storage.resync((feitos, total) => setProgressoSalvar({ feitos, total }))
-            : Promise.resolve({ ok: true, total: 0 }))
-        : await (async () => {
-            try {
-              if (window.__testarConexaoDrive) await window.__testarConexaoDrive();
-              window.__statusPlanilha = 'ok';
-              window.__ultimoErroSync = null;
-              return { ok: true, total: 0, falhas: 0 };
-            } catch(e) {
-              window.__statusPlanilha = 'erro';
-              window.__ultimoErroSync = String(e && e.message || e);
-              return { ok: false, total: 0, falhas: 1 };
-            }
-          })();
+            : Promise.resolve({ ok: false, total: 0, falhas: 1 }))
+        : { ok: true, total: 0, falhas: 0 };
+
+      // Se a leitura manual trouxe valores diferentes, atualiza a interface depois
+      // de concluir o reenvio. O recarregamento é condicionado a mudança real.
+      if (resultado.ok && leitura.dadosAtualizados) {
+        try { window.dispatchEvent(new CustomEvent('painel:drive-atualizado', { detail: { manual: true } })); } catch (e) {}
+      }
       setMensagemSalvarAgora(resultado.ok
-        ? { tipo: 'ok', texto: 'Tudo salvo com sucesso! Pode fechar o programa sem preocupação.' }
+        ? { tipo: 'ok', texto: leitura.dadosAtualizados ? 'Dados atualizados pelo Google Drive. Recarregando a tela...' : 'Tudo conferido e salvo no Google Drive com sucesso!' }
         : { tipo: 'aviso', texto: `${resultado.falhas} item(ns) não sincronizaram agora, mas continuam salvos neste navegador. Tenta de novo daqui a pouco.` });
     } catch (e) {
-      setMensagemSalvarAgora({ tipo: 'aviso', texto: 'Não consegui salvar agora — verifique a conexão e tente de novo.' });
+      window.__statusPlanilha = 'erro';
+      window.__ultimoErroSync = String(e && e.message || e);
+      setMensagemSalvarAgora({ tipo: 'aviso', texto: 'Não consegui carregar/salvar no Drive: ' + window.__ultimoErroSync });
     }
     setSalvandoAgora(false);
     setProgressoSalvar(null);
@@ -7297,6 +7352,22 @@ ${textoContasPessoais}`;
       ultimoStatus = s;
     }, 1500);
     return () => clearInterval(t);
+  }, []);
+
+  // Reidrata toda a aplicação quando uma conferência do Drive comprova que a
+  // cópia local estava desatualizada. O evento só é emitido quando há diferença
+  // real e nenhuma edição local pendente, evitando o antigo ciclo de recargas.
+  useEffect(() => {
+    let timer = null;
+    const atualizarTelaComDrive = () => {
+      if (timer) return;
+      timer = setTimeout(() => window.location.reload(), 350);
+    };
+    window.addEventListener('painel:drive-atualizado', atualizarTelaComDrive);
+    return () => {
+      window.removeEventListener('painel:drive-atualizado', atualizarTelaComDrive);
+      if (timer) clearTimeout(timer);
+    };
   }, []);
   useEffect(() => {
     if (!avisoErroSync) return;
@@ -7863,7 +7934,9 @@ ${textoContasPessoais}`;
         }
       } catch (e) {
         setStorageOk(false);
-        setTransacoes(SEED_TRANSACOES);
+        // Falha de leitura não é banco vazio. Não grava nem exibe o modelo como se
+        // fosse o dado real; o botão Salvar poderá tentar carregar o Drive novamente.
+        setTransacoes([]);
       }
       setLoading(false);
     })();
