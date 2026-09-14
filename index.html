@@ -1512,28 +1512,22 @@ html.dark-mode {
         resync: async (onProgress) => {
           if (!APPS_SCRIPT_URL) return { ok: true, total: 0, falhas: 0 };
 
-          // v4.37 — ANTES: se essa leitura falhasse (ex.: Drive lento/ocupado, como durante
-          // a criação de um backup), a função desistia aqui mesmo e NUNCA chegava a tentar
-          // reenviar as alterações pendentes — mesmo sendo essa a chamada usada pelo botão
-          // "Salvar agora" (o "clicar se falhar"). Ou seja: no momento em que o usuário mais
-          // precisa que o clique force o envio, era exatamente quando o botão desistia mais
-          // cedo. Agora, se a leitura falhar, seguimos em frente e tentamos mandar as
-          // pendências mesmo assim; só pulamos a reconciliação abaixo (que depende de saber
-          // o que já existe no Drive) e reportamos o erro de leitura original se, no fim,
-          // não havia nada para reenviar.
-          const leituraOk = cacheCarregadoComSucesso ? true : !!(await carregarDaPlanilha());
-          const erroLeitura = !leituraOk ? (window.__ultimoErroSync || 'Não consegui ler o Google Drive.') : null;
+          // v4.37 — a leitura ajuda na reconciliação, mas NÃO bloqueia o reenvio.
+          // Se o GET falhar e os POSTs estiverem funcionando, as pendências locais
+          // ainda são enviadas e só saem da fila após aceite explícito do servidor.
+          let carregado = cacheCarregadoComSucesso ? cachePlanilha : null;
+          if (!cacheCarregadoComSucesso) carregado = await carregarDaPlanilha();
+          let leituraConfirmada = !!(cacheCarregadoComSucesso && carregado);
 
           // carregarDaPlanilha pode ter recolocado pendências na fila automática.
-          // Aguarda essa fila antes da reconciliação/reenvio manual para não enviar a
-          // mesma chave duas vezes em paralelo.
+          // Aguarda essa fila antes da reconciliação manual para não enviar a mesma
+          // chave duas vezes em paralelo.
           try { await filaEscrita; } catch (e) {}
 
           // Reconciliação segura: se uma chave que já foi gerenciada pelo painel existe
           // localmente, mas sumiu do Drive, recoloca-a na fila. Não sobrescreve chaves
-          // diferentes que ainda existem no servidor. Só faz sentido quando temos o
-          // estado atual do Drive (leitura OK).
-          if (leituraOk) {
+          // diferentes que ainda existem no servidor.
+          if (leituraConfirmada) {
             const versoesConhecidas = lerVersoes();
             Object.keys(versoesConhecidas).forEach(key => {
               if (String(key).indexOf('anexo_') !== -1) return;
@@ -1579,34 +1573,31 @@ html.dark-mode {
             if (onProgress) onProgress(feitos, totalTarefas);
           }
 
-          // Se não havia nada pendente para reenviar e a própria leitura já tinha falhado,
-          // não há o que confirmar — reporta o erro de leitura original (comportamento
-          // equivalente ao antigo "desiste cedo", mas só quando realmente não há pendências).
-          if (totalTarefas === 0 && !leituraOk) {
-            window.__statusPlanilha = 'erro';
-            window.__ultimoErroSync = erroLeitura;
-            return { ok: false, total: 0, falhas: 0, erro: erroLeitura };
-          }
-
-          // Confirma novamente o estado central. Se a leitura falhar, não dizemos "tudo salvo".
+          // Depois dos POSTs, tenta conferir o estado central. A confirmação do GET é
+          // informada separadamente: uma falha de leitura não desfaz o aceite explícito
+          // recebido para cada gravação nem recoloca itens já confirmados na fila.
           if (falhas === 0) {
             const verificado = await carregarDaPlanilha();
-            if (!cacheCarregadoComSucesso || !verificado) {
-              falhas++;
-            } else {
+            leituraConfirmada = !!(cacheCarregadoComSucesso && verificado);
+            if (leituraConfirmada) {
               const restantes = lerPendencias().size + lerPendenciasAnexos().size;
               if (restantes > 0) falhas = restantes;
             }
           }
 
           const ok = falhas === 0 && lerPendencias().size === 0 && lerPendenciasAnexos().size === 0;
-          window.__statusPlanilha = ok ? 'ok' : 'erro';
-          if (ok) {
-            window.__ultimoErroSync = null;
-          } else if (!window.__ultimoErroSync) {
-            window.__ultimoErroSync = erroLeitura || 'Algumas alterações não foram confirmadas no Google Drive.';
-          }
-          return { ok, total: tarefas.length, falhas, erro: ok ? null : window.__ultimoErroSync };
+          window.__statusPlanilha = ok && leituraConfirmada ? 'ok' : (ok ? 'pendente' : 'erro');
+          if (ok && leituraConfirmada) window.__ultimoErroSync = null;
+          return {
+            ok,
+            total: totalTarefas,
+            falhas,
+            leituraConfirmada,
+            gravacoesConfirmadas: ok,
+            aviso: ok && !leituraConfirmada
+              ? 'As alterações foram aceitas pelo Drive, mas a leitura de conferência ainda não respondeu.'
+              : null
+          };
         },
 
         delete: async (key) => {
@@ -7246,47 +7237,48 @@ ${textoContasPessoais}`;
       // __pendenciasSync já inclui PDFs/anexos; antes eles eram somados duas vezes.
       const qtdPendentesAntes = Number(window.__pendenciasSync || 0);
 
-      // v4.37 — ANTES, este botão sempre exigia uma leitura completa do Drive
-      // (refreshDrive) bem-sucedida ANTES de sequer olhar para as pendências, e
-      // desistia na hora se essa leitura falhasse — mesmo havendo alterações
-      // esperando pra serem enviadas. Isso é exatamente o oposto do que "Salvar
-      // agora" deveria fazer quando o Drive está lento/ocupado (ex.: durante um
-      // backup): é justamente aí que o usuário mais precisa que o clique force o
-      // envio. Agora, havendo pendências, tentamos enviá-las via resync() direto —
-      // que por sua vez também não desiste mais cedo demais (ver correção em
-      // window.storage.resync). Só usamos refreshDrive() sozinho quando não há
-      // nada pendente, apenas para conferir se o Drive está acessível e trouxe
-      // algo diferente.
-      let resultado;
       if (qtdPendentesAntes > 0) {
-        resultado = window.storage.resync
+        // Primeiro reenvia. A leitura completa não é pré-requisito: cada POST possui
+        // confirmação própria do Apps Script e pode funcionar mesmo se o GET falhar.
+        const resultado = window.storage.resync
           ? await window.storage.resync((feitos, total) => setProgressoSalvar({ feitos, total }))
-          : { ok: false, total: 0, falhas: qtdPendentesAntes, erro: 'Reenvio automático não disponível.' };
+          : { ok: false, total: 0, falhas: 1 };
+
+        if (resultado.ok) {
+          setMensagemSalvarAgora(resultado.leituraConfirmada
+            ? { tipo: 'ok', texto: 'Todas as alterações foram confirmadas e conferidas no Google Drive!' }
+            : { tipo: 'ok', texto: 'Alterações confirmadas pelo Google Drive. A leitura de conferência será tentada novamente em segundo plano.' });
+        } else {
+          setMensagemSalvarAgora({ tipo: 'aviso', texto: `${resultado.falhas} item(ns) não sincronizaram agora, mas continuam protegidos neste navegador.` });
+        }
       } else {
+        // Sem pendências, o botão tenta atualizar os dados, mas uma falha de leitura
+        // não pode ser anunciada como falha de salvamento — não havia nada para enviar.
         const leitura = window.storage.refreshDrive
           ? await window.storage.refreshDrive()
           : { ok: false, erro: 'Atualização pelo Drive não disponível.' };
-        resultado = leitura.ok
-          ? { ok: true, total: 0, falhas: 0 }
-          : { ok: false, total: 0, falhas: 0, erro: leitura.erro || window.__ultimoErroSync || 'Não consegui carregar os dados do Google Drive.' };
-      }
 
-      // Se a leitura (dentro do resync ou do refreshDrive acima) trouxe valores
-      // diferentes, atualiza a interface depois de concluir. Recarregamento
-      // condicionado a mudança real (ver window.__ultimaLeituraMudouDados).
-      const dadosAtualizados = resultado.ok && !!window.__ultimaLeituraMudouDados;
-      if (dadosAtualizados) {
-        try { window.dispatchEvent(new CustomEvent('painel:drive-atualizado', { detail: { manual: true } })); } catch (e) {}
+        if (leitura.ok) {
+          if (leitura.dadosAtualizados) {
+            try { window.dispatchEvent(new CustomEvent('painel:drive-atualizado', { detail: { manual: true } })); } catch (e) {}
+          }
+          setMensagemSalvarAgora({
+            tipo: 'ok',
+            texto: leitura.dadosAtualizados
+              ? 'Dados atualizados pelo Google Drive. Recarregando a tela...'
+              : 'Não há alterações pendentes e os dados do Google Drive foram conferidos.'
+          });
+        } else {
+          setMensagemSalvarAgora({
+            tipo: 'aviso',
+            texto: 'Não há alterações pendentes para salvar. A leitura do Drive não respondeu agora; o painel continua com a cópia protegida neste aparelho.'
+          });
+        }
       }
-      setMensagemSalvarAgora(resultado.ok
-        ? { tipo: 'ok', texto: dadosAtualizados ? 'Dados atualizados pelo Google Drive. Recarregando a tela...' : 'Tudo conferido e salvo no Google Drive com sucesso!' }
-        : { tipo: 'aviso', texto: qtdPendentesAntes > 0
-              ? `${resultado.falhas || qtdPendentesAntes} item(ns) não sincronizaram agora, mas continuam salvos neste navegador. Tenta de novo daqui a pouco.`
-              : (resultado.erro || 'Drive indisponível agora. Tenta de novo daqui a pouco.') });
     } catch (e) {
       window.__statusPlanilha = 'erro';
       window.__ultimoErroSync = String(e && e.message || e);
-      setMensagemSalvarAgora({ tipo: 'aviso', texto: 'Não consegui carregar/salvar no Drive: ' + window.__ultimoErroSync });
+      setMensagemSalvarAgora({ tipo: 'aviso', texto: 'Não consegui concluir a sincronização: ' + window.__ultimoErroSync });
     }
     setSalvandoAgora(false);
     setProgressoSalvar(null);
