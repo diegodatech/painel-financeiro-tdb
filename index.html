@@ -631,6 +631,17 @@ html.dark-mode {
       .pin-tecla { width: 92px; height: 92px; font-size: 30px; }
       .pin-bolinha { width: 36px; height: 36px; }
     }
+    /* v4.46 — logo das telas de abertura/carregamento. Maior no celular e no
+       tablet (onde antes ficava presa num tamanho mínimo pequeno), e mantém o
+       tamanho já aprovado no computador (clamp calculado pra caber bem numa
+       tela de notebook de ~15", sem ficar enorme em monitor grande). */
+    .logo-abertura { height: 180px; max-width: 92%; object-fit: contain; }
+    @media (min-width: 768px) {
+      .logo-abertura { height: 240px; max-width: 80%; }
+    }
+    @media (min-width: 1000px) {
+      .logo-abertura { height: clamp(110px, 11vw, 240px); max-width: 80%; }
+    }
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -8768,7 +8779,7 @@ ${textoContasPessoais}`;
   if (loading || pinConfigurado === null) {
     return (
       <div style={{ background: COLORS.paper, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: COLORS.ink, gap: 18, padding: 20, textAlign: 'center' }}>
-        <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{ height: 'clamp(110px, 11vw, 240px)', maxWidth: '80%', objectFit: 'contain' }} />
+        <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" className="logo-abertura" />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             width: 14, height: 14, borderRadius: '50%', border: `2.5px solid ${COLORS.lineSoft}`,
@@ -13448,7 +13459,7 @@ function AberturaSegura() {
   // continua só aparecendo se realmente der erro (abaixo).
   if (!erro) {
     return <main style={{background:COLORS.paper,minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontFamily:'Inter, sans-serif',padding:20,boxSizing:'border-box',gap:16}}>
-      <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{height:'clamp(110px, 11vw, 240px)',maxWidth:'80%',objectFit:'contain'}} />
+      <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" className="logo-abertura" />
       <div style={{display:'flex',alignItems:'center',gap:8}}>
         <div style={{width:14,height:14,borderRadius:'50%',border:`2.5px solid ${COLORS.lineSoft}`,borderTopColor:COLORS.gold,animation:'spin 0.8s linear infinite',flexShrink:0}} />
         <span style={{fontSize:13,color:COLORS.inkSoft}}>Buscando backup no Drive…</span>
@@ -13457,7 +13468,7 @@ function AberturaSegura() {
   }
 
   return <main style={{background:COLORS.paper,minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontFamily:'Inter, sans-serif',color:COLORS.ink,gap:18,padding:20,textAlign:'center',boxSizing:'border-box'}}>
-    <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" style={{height:'clamp(110px, 11vw, 240px)',maxWidth:'80%',objectFit:'contain'}} />
+    <img src={LOGO_B64} alt="Escola Infantil Tempo de Brincar" className="logo-abertura" />
     <div role="status" style={{display:'flex',alignItems:'center',gap:10}}>
       <span style={{fontSize:14,fontWeight:600}}>Não foi possível abrir os dados do painel.</span>
     </div>
