@@ -713,6 +713,69 @@ html.dark-mode {
         if (p.has(key)) { p.delete(key); salvarPendenciasDelete(p); }
       }
 
+      // v5.29 — LIMPEZA DAS PENDÊNCIAS ARTIFICIAIS DOS TESTES.
+      // A restauração v5.27 removeu localmente chaves dos anos 2027/2028/2029.
+      // A v5.28 passou a tratá-las como DELETEs pendentes, fazendo o topo mostrar
+      // 7 pendências mesmo sem nenhuma alteração real do usuário.
+      //
+      // Essas chaves de teste NÃO precisam bloquear o uso normal de 2026:
+      // quando a virada real acontecer, a rotina de preparação grava novamente
+      // as chaves anuais do novo exercício com os dados corretos.
+      //
+      // Portanto removemos SOMENTE pendências que pertencem à limpeza dos testes,
+      // preservando integralmente qualquer pendência normal de dados do usuário.
+      (function limparPendenciasArtificiaisDosTestes_() {
+        try {
+          const marcador =
+            localStorage.getItem('restauracao_pos_testes_ciclo_v527') === 'true';
+          if (!marcador) return;
+
+          const bases = [
+            'saldos_mensais',
+            'meta_lucro_mensal',
+            'valores_mensalidade',
+            'valores_avulsos',
+            'dias_letivos',
+            'capacidade_maxima',
+            'convenios_multivaga',
+            'categorias_indicadores',
+            'auto_lancamentos_v15'
+          ];
+
+          const ehArtificial = (key) => {
+            key = String(key || '');
+            if (/^transacoes_financas202[789]$/.test(key)) return true;
+            if (/^(fechamento_exercicio|saldo_inicial_exercicio|registro_ativacao_exercicio)__202[6789]$/.test(key)) return true;
+            return bases.some(base => new RegExp('^' + base + '__202[789]$').test(key));
+          };
+
+          const comuns = lerPendencias();
+          const deletes = lerPendenciasDelete();
+          let mudouComum = false;
+          let mudouDelete = false;
+
+          Array.from(comuns).forEach(key => {
+            if (ehArtificial(key)) {
+              comuns.delete(key);
+              mudouComum = true;
+            }
+          });
+
+          Array.from(deletes).forEach(key => {
+            if (ehArtificial(key)) {
+              deletes.delete(key);
+              mudouDelete = true;
+            }
+          });
+
+          if (mudouComum) salvarPendencias(comuns);
+          if (mudouDelete) salvarPendenciasDelete(deletes);
+
+          // Marca esta limpeza para que não seja recriada pela migração v5.28.
+          localStorage.setItem('pendencias_testes_limpa_v529', 'true');
+        } catch (e) {}
+      })();
+
       function lerPendenciasAnexos() {
         try {
           const bruto = localStorage.getItem(CHAVE_PENDENCIAS_ANEXOS);
@@ -821,13 +884,14 @@ html.dark-mode {
       })();
 
 
-      // v5.28 — migra exclusões pendentes deixadas pela restauração v5.27.
+      // v5.29 — migra exclusões pendentes deixadas pela restauração v5.27.
       // Na v5.27, exclusões usavam a fila genérica. Como a chave local já havia sido
       // removida, o reenvio automático não sabia que precisava repetir um DELETE.
       (function migrarDeletesPendentesV527_() {
         try {
           const marcador = localStorage.getItem('restauracao_pos_testes_ciclo_v527');
           if (marcador !== 'true') return;
+          if (localStorage.getItem('pendencias_testes_limpa_v529') === 'true') return;
 
           const comuns = lerPendencias();
           const deletes = lerPendenciasDelete();
