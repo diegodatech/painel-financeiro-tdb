@@ -2698,6 +2698,70 @@ function BolhaFlutuanteIA({ onAbrir }) {
   );
 }
 
+// Menu suspenso (Exercício / Dados / ⚙ na barra de ações) — desenha num portal
+// pro <body>, exatamente pelo mesmo motivo do Toast logo acima: o painel-raiz
+// tem um transform:scale() pra caber mais conteúdo na tela, e isso cria um
+// "contexto de empilhamento" novo que prendia o menu por baixo de outros
+// elementos (como a linha das abas), mesmo com z-index bem alto. Desenhando
+// direto no <body>, por fora desse contexto, o menu sempre fica por cima de
+// tudo, na posição certa (calculada a partir do botão que abriu ele).
+// Também fecha sozinho ao clicar em qualquer lugar fora do menu.
+function DropdownFlutuante({ aberto, anchorRef, onFechar, align = 'left', width = 220, children }) {
+  const menuRef = useRef(null);
+  const [pos, setPos] = useState(null);
+
+  useEffect(() => {
+    if (!aberto || !anchorRef.current) { setPos(null); return; }
+    const atualizarPosicao = () => {
+      if (!anchorRef.current) return;
+      const r = anchorRef.current.getBoundingClientRect();
+      setPos(
+        align === 'right'
+          ? { top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) }
+          : { top: r.bottom + 8, left: r.left }
+      );
+    };
+    atualizarPosicao();
+    window.addEventListener('resize', atualizarPosicao);
+    window.addEventListener('scroll', atualizarPosicao, true);
+    return () => {
+      window.removeEventListener('resize', atualizarPosicao);
+      window.removeEventListener('scroll', atualizarPosicao, true);
+    };
+  }, [aberto, anchorRef, align]);
+
+  useEffect(() => {
+    if (!aberto) return;
+    const aoClicarFora = (e) => {
+      if (menuRef.current && menuRef.current.contains(e.target)) return;
+      if (anchorRef.current && anchorRef.current.contains(e.target)) return;
+      onFechar();
+    };
+    // "mousedown" (não "click") pra fechar assim que a pessoa começa a clicar
+    // fora, igual o padrão já usado pra fechar a busca global do cabeçalho
+    document.addEventListener('mousedown', aoClicarFora);
+    return () => document.removeEventListener('mousedown', aoClicarFora);
+  }, [aberto, onFechar, anchorRef]);
+
+  if (!aberto || !pos) return null;
+
+  return ReactDOM.createPortal(
+    <div
+      ref={menuRef}
+      className="busca-liquid-glass"
+      style={{
+        position: 'fixed', top: pos.top, left: pos.left, right: pos.right, zIndex: 999999,
+        borderRadius: 12, boxShadow: '0 12px 34px rgba(0,0,0,0.22)',
+        width, padding: 6, display: 'flex', flexDirection: 'column', gap: 2,
+        maxHeight: '70vh', overflowY: 'auto', boxSizing: 'border-box',
+      }}
+    >
+      {children}
+    </div>,
+    document.body
+  );
+}
+
 function ModalConfigIA({ chaveAtual, onSalvar, onFechar }) {
   const [chave, setChave] = useState(chaveAtual || '');
   return ReactDOM.createPortal(
@@ -7278,6 +7342,20 @@ ${textoContasPessoais}`;
   // uma cópia aqui por 30 dias antes de sumir de vez, com opção de "Restaurar"
   const [lixeira, setLixeira] = useState([]);
   const [lixeiraAberta, setLixeiraAberta] = useState(false);
+  // v4.47 — reorganização da barra de ações: Backup/Carregar/CSV/PDF viram um
+  // menu "Dados", e Lixeira/Escuro/PIN viram um menu "⚙". Reduz a barra de 11
+  // elementos soltos pra 4 (Exercício, Salvar, Dados, ⚙), sem tirar nenhuma
+  // função — só move onde cada botão mora.
+  const [dadosMenuAberto, setDadosMenuAberto] = useState(false);
+  const [configMenuAberto, setConfigMenuAberto] = useState(false);
+  const [exercicioMenuAberto, setExercicioMenuAberto] = useState(false);
+  // v4.48 — os 3 menus da barra de ações (Exercício/Dados/⚙) agora abrem num
+  // <DropdownFlutuante>, que desenha o conteúdo num portal pro <body> (igual
+  // o Toast e o balão da IA já fazem) em vez de nascido dentro da barra.
+  // Precisa de uma "ref" pro botão de cada um, pra saber onde posicionar o menu.
+  const refBotaoExercicio = useRef(null);
+  const refBotaoDados = useRef(null);
+  const refBotaoConfig = useRef(null);
   useEffect(() => {
     (async () => {
       try {
@@ -9010,37 +9088,52 @@ ${textoContasPessoais}`;
             </div>
           </div>
 
-          {/* BOTÕES DE BACKUP / SINCRONIZAÇÃO — chips de vidro líquido, ícone + nome */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12,
-            position: 'relative', zIndex: lixeiraAberta ? 10000 : 30, overflow: 'visible'
-          }}>
-            <div className="busca-liquid-glass" style={{
-              display:'flex', alignItems:'center', gap:8, borderRadius:12, padding:'5px 8px', minHeight:44
-            }}>
-              <div style={{display:'flex',flexDirection:'column',lineHeight:1.05}}>
-                <span style={{fontSize:8.5,fontWeight:800,color:COLORS.inkSoft,textTransform:'uppercase'}}>Exercício</span>
-                <select value={exercicioAtual} onChange={e => trocarExercicio(Number(e.target.value))} style={{
-                  border:'none', background:'transparent', color:COLORS.ink, fontWeight:800, fontSize:13, padding:'1px 18px 1px 0', cursor:'pointer'
+          {/* v4.48 — BARRA DE AÇÕES: linha de cima só com Exercício + Salvar;
+              Dados e ⚙ moraram pra linha das abas (ver mais abaixo, perto do
+              "TABS EM CARTÕES"), do jeito que foi combinado no desenho. Os 3
+              menus (Exercício/Dados/⚙) agora abrem via <DropdownFlutuante>,
+              que desenha num portal — corrige de vez o balão nascendo por
+              baixo da linha das abas, já usa o mesmo vidro líquido do resto
+              do painel, e fecha sozinho ao clicar fora. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+            {/* EXERCÍCIO — botão resumo + menu com ano/status/preparar/ciclo anual */}
+            <button
+              ref={refBotaoExercicio}
+              onClick={() => { setExercicioMenuAberto(v => !v); setDadosMenuAberto(false); setConfigMenuAberto(false); }}
+              className="busca-liquid-glass"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12, padding: '0 12px',
+                height: 44, cursor: 'pointer', fontSize: 13, fontWeight: 800, color: COLORS.ink,
+              }}
+            >
+              Exercício {exercicioAtual}
+              <span style={{
+                fontSize: 9.5, fontWeight: 800, borderRadius: 999, padding: '3px 7px',
+                background: (exercicios.find(x => x.ano === exercicioAtual)?.status === 'ENCERRADO' ? COLORS.lineSoft : exercicios.find(x => x.ano === exercicioAtual)?.status === 'EM_PREPARACAO' ? COLORS.goldSoft : COLORS.greenBg),
+                color: (exercicios.find(x => x.ano === exercicioAtual)?.status === 'ENCERRADO' ? COLORS.inkSoft : exercicios.find(x => x.ano === exercicioAtual)?.status === 'EM_PREPARACAO' ? COLORS.gold : COLORS.green)
+              }}>
+                {(exercicios.find(x => x.ano === exercicioAtual)?.status || 'ATIVO').replace('_', ' ')}
+              </span>
+              <ChevronDown size={14} color={COLORS.inkSoft} style={{ transform: exercicioMenuAberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+            </button>
+            <DropdownFlutuante aberto={exercicioMenuAberto} anchorRef={refBotaoExercicio} onFechar={() => setExercicioMenuAberto(false)} align="left" width={220}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '2px 4px 8px' }}>
+                <span style={{ fontSize: 8.5, fontWeight: 800, color: COLORS.inkSoft, textTransform: 'uppercase' }}>Trocar exercício</span>
+                <select value={exercicioAtual} onChange={e => { trocarExercicio(Number(e.target.value)); setExercicioMenuAberto(false); }} style={{
+                  border: `1px solid ${COLORS.line}`, borderRadius: 8, background: 'transparent', color: COLORS.ink, fontWeight: 800, fontSize: 14, padding: '6px 8px', cursor: 'pointer',
                 }}>
                   {exercicios.map(ex => <option key={ex.ano} value={ex.ano}>{ex.ano}</option>)}
                 </select>
               </div>
-              <span style={{
-                fontSize:9.5,fontWeight:800,borderRadius:999,padding:'4px 7px',
-                background:(exercicios.find(x=>x.ano===exercicioAtual)?.status==='ENCERRADO'?COLORS.lineSoft:exercicios.find(x=>x.ano===exercicioAtual)?.status==='EM_PREPARACAO'?COLORS.goldSoft:COLORS.greenBg),
-                color:(exercicios.find(x=>x.ano===exercicioAtual)?.status==='ENCERRADO'?COLORS.inkSoft:exercicios.find(x=>x.ano===exercicioAtual)?.status==='EM_PREPARACAO'?COLORS.gold:COLORS.green)
-              }}>
-                {(exercicios.find(x=>x.ano===exercicioAtual)?.status || 'ATIVO').replace('_',' ')}
-              </span>
-              <button onClick={() => setPrepararAnoAberto(true)} title={`Preparar ${exercicioAtual + 1}`} style={{
-                border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
-              }}>+ {exercicioAtual + 1}</button>
-              <button onClick={() => setGerenciarAnoAberto(true)} title="Ativar ou encerrar o exercício com conferência" style={{
-                border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
-              }}>Ciclo anual</button>
-            </div>
+              <button onClick={() => { setPrepararAnoAberto(true); setExercicioMenuAberto(false); }} title={`Preparar ${exercicioAtual + 1}`} style={{
+                textAlign: 'left', border: 'none', background: 'transparent', color: COLORS.ink, borderRadius: 8, padding: '9px 8px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              }}>+ Novo exercício ({exercicioAtual + 1})</button>
+              <button onClick={() => { setGerenciarAnoAberto(true); setExercicioMenuAberto(false); }} title="Ativar ou encerrar o exercício com conferência" style={{
+                textAlign: 'left', border: 'none', background: 'transparent', color: COLORS.ink, borderRadius: 8, padding: '9px 8px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              }}>Ciclo anual…</button>
+            </DropdownFlutuante>
 
+            {/* SALVAR — continua sozinho e em destaque, é a ação mais usada */}
             <button
               onClick={() => exercicioEncerrado ? bloquearEdicaoSeEncerrado_() : salvarTudoAgora()}
               disabled={salvandoAgora}
@@ -9069,140 +9162,139 @@ ${textoContasPessoais}`;
                     : '...')
                 : 'Salvar'}
             </button>
+          </div>
 
-            <div className="busca-liquid-glass" style={{ display: 'flex', alignItems: 'center', gap: 2, borderRadius: 14, padding: '5px 6px' }}>
-              <button
-                onClick={exportarBackup}
-                title="Baixa um arquivo com todos os seus lançamentos para você abrir em outro computador"
-                style={{
-                  background: 'transparent', border: 'none', borderRadius: 8, padding: '4px 9px',
-                  cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                }}
-              >
-                <Download size={15} color={COLORS.ink} />
-                <span style={{ fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' }}>Backup</span>
-              </button>
-              <label
-                title="Carrega os dados de um arquivo de backup salvo de outro computador"
-                style={{
-                  background: 'transparent', border: 'none', borderRadius: 8, padding: '4px 9px',
-                  cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                }}
-              >
-                <Upload size={15} color={COLORS.ink} />
-                <span style={{ fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' }}>Carregar</span>
-                <input type="file" accept=".json" onChange={importarBackup} style={{ display: 'none' }} />
-              </label>
-              <button
-                onClick={exportarCSV}
-                title="Baixa todos os lançamentos num arquivo .csv, pra abrir no Excel ou Google Sheets"
-                style={{
-                  background: 'transparent', border: 'none', borderRadius: 8, padding: '4px 9px',
-                  cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                }}
-              >
-                <FileSpreadsheet size={15} color={COLORS.ink} />
-                <span style={{ fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' }}>CSV</span>
-              </button>
-              <button
-                onClick={() => exportarPDF()}
-                title="Gera um relatório em PDF do mês mais recente, pronto pra imprimir ou mandar pro contador"
-                style={{
-                  background: 'transparent', border: 'none', borderRadius: 8, padding: '4px 9px',
-                  cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                }}
-              >
-                <FileText size={15} color={COLORS.ink} />
-                <span style={{ fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' }}>PDF</span>
-              </button>
-            </div>
+          {/* conteúdo dos menus Dados/⚙ — os botões que abrem eles agora ficam
+              lá embaixo, do lado das abas; os menus em si (via portal) podem
+              ficar declarados aqui, a posição na tela não depende de onde o
+              JSX está escrito */}
+          <DropdownFlutuante aberto={dadosMenuAberto} anchorRef={refBotaoDados} onFechar={() => setDadosMenuAberto(false)} align="left" width={220}>
+            <button
+              onClick={() => { exportarBackup(); setDadosMenuAberto(false); }}
+              title="Baixa um arquivo com todos os seus lançamentos para você abrir em outro computador"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
+                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.ink,
+              }}
+            >
+              <Download size={15} color={COLORS.ink} /> Backup
+            </button>
+            <label
+              title="Carrega os dados de um arquivo de backup salvo de outro computador"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
+                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.ink,
+              }}
+            >
+              <Upload size={15} color={COLORS.ink} /> Carregar
+              <input type="file" accept=".json" onChange={e => { importarBackup(e); setDadosMenuAberto(false); }} style={{ display: 'none' }} />
+            </label>
+            <button
+              onClick={() => { exportarCSV(); setDadosMenuAberto(false); }}
+              title="Baixa todos os lançamentos num arquivo .csv, pra abrir no Excel ou Google Sheets"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
+                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.ink,
+              }}
+            >
+              <FileSpreadsheet size={15} color={COLORS.ink} /> Exportar CSV
+            </button>
+            <button
+              onClick={() => { exportarPDF(); setDadosMenuAberto(false); }}
+              title="Gera um relatório em PDF do mês mais recente, pronto pra imprimir ou mandar pro contador"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
+                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.ink,
+              }}
+            >
+              <FileText size={15} color={COLORS.ink} /> Exportar PDF
+            </button>
+          </DropdownFlutuante>
 
-            <div className="busca-liquid-glass" style={{
-              display: 'flex', alignItems: 'center', gap: 2, borderRadius: 14, padding: '5px 6px',
-              position: 'relative', zIndex: lixeiraAberta ? 10001 : 31, overflow: 'visible'
-            }}>
-              <div style={{ position: 'relative', zIndex: lixeiraAberta ? 10002 : 32, overflow: 'visible' }}>
-                <button
-                  onClick={() => setLixeiraAberta(v => !v)}
-                  title="Lixeira temporária — restaura alunos, convênios ou contas apagados nos últimos 30 dias"
-                  style={{
-                    background: 'transparent', border: 'none', borderRadius: 8, padding: '4px 9px',
-                    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, position: 'relative',
-                  }}
-                >
-                  <Trash2 size={15} color={COLORS.ink} />
-                  <span style={{ fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' }}>Lixeira</span>
-                  {lixeira.length > 0 && (
-                    <span style={{ position: 'absolute', top: -2, right: 2, background: COLORS.red, color: '#FFF', borderRadius: 999, fontSize: 9, fontWeight: 700, padding: '1px 5px', minWidth: 15, textAlign: 'center' }}>
-                      {lixeira.length}
-                    </span>
-                  )}
-                </button>
-                {lixeiraAberta && (
-                  <div style={{
-                    position: 'absolute', top: '116%', right: 0, zIndex: 10003, background: COLORS.paperCard,
-                    border: `1px solid ${COLORS.line}`, borderRadius: 10, boxShadow: '0 12px 34px rgba(0,0,0,0.22)',
-                    width: 'min(320px, 92vw)', maxHeight: 360, overflowY: 'auto', overflowX: 'hidden', padding: 10,
-                    isolation: 'isolate', transform: 'translateZ(0)',
-                  }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 8 }}>
-                      🗑️ Lixeira temporária <span style={{ fontWeight: 500, color: COLORS.inkSoft, fontSize: 11 }}>(some sozinho depois de 30 dias)</span>
-                    </div>
-                    {lixeira.length === 0 ? (
-                      <div style={{ fontSize: 12, color: COLORS.inkSoft }}>Nada apagado recentemente.</div>
-                    ) : (
-                      <div style={{ display: 'grid', gap: 6 }}>
-                        {[...lixeira].reverse().map(item => (
-                          <div key={item.id} style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                            background: COLORS.paper, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 9px',
-                          }}>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.rotulo}</div>
-                              <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
-                                apagado em {new Date(item.apagadoEm).toLocaleDateString('pt-BR')}
-                                {item.dados.valor != null && <> · {formatBRL(item.dados.valor)}</>}
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                              <button onClick={() => restaurarDaLixeira(item.id)} title="Restaurar" style={{ background: COLORS.green, border: 'none', borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
-                                <RotateCcw size={16} color="#FFFFFF" />
-                              </button>
-                              <button onClick={() => apagarDefinitivoDaLixeira(item.id)} title="Apagar de vez" style={{ background: 'none', border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
-                                <X size={15} color={COLORS.red} />
-                              </button>
-                            </div>
+          <DropdownFlutuante aberto={configMenuAberto} anchorRef={refBotaoConfig} onFechar={() => setConfigMenuAberto(false)} align="right" width={220}>
+            <button
+              onClick={() => { setLixeiraAberta(v => !v); }}
+              title="Lixeira temporária — restaura alunos, convênios ou contas apagados nos últimos 30 dias"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
+                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.ink, position: 'relative',
+              }}
+            >
+              <Trash2 size={15} color={COLORS.ink} /> Lixeira
+              {lixeira.length > 0 && (
+                <span style={{ marginLeft: 'auto', background: COLORS.red, color: '#FFF', borderRadius: 999, fontSize: 10, fontWeight: 700, padding: '1px 6px' }}>
+                  {lixeira.length}
+                </span>
+              )}
+            </button>
+            {lixeiraAberta && (
+              <div style={{
+                background: COLORS.paper, border: `1px solid ${COLORS.line}`, borderRadius: 10,
+                boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.02)', width: '100%', maxHeight: 300,
+                overflowY: 'auto', overflowX: 'hidden', padding: 10, boxSizing: 'border-box',
+              }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, marginBottom: 8 }}>
+                  🗑️ Lixeira temporária <span style={{ fontWeight: 500, color: COLORS.inkSoft, fontSize: 11 }}>(some sozinho depois de 30 dias)</span>
+                </div>
+                {lixeira.length === 0 ? (
+                  <div style={{ fontSize: 12, color: COLORS.inkSoft }}>Nada apagado recentemente.</div>
+                ) : (
+                  <div style={{ display: 'grid', gap: 6 }}>
+                    {[...lixeira].reverse().map(item => (
+                      <div key={item.id} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                        background: COLORS.paperCard, border: `1px solid ${COLORS.lineSoft}`, borderRadius: 7, padding: '7px 9px',
+                      }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.rotulo}</div>
+                          <div style={{ fontSize: 11, color: COLORS.inkSoft }}>
+                            apagado em {new Date(item.apagadoEm).toLocaleDateString('pt-BR')}
+                            {item.dados.valor != null && <> · {formatBRL(item.dados.valor)}</>}
                           </div>
-                        ))}
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          <button onClick={() => restaurarDaLixeira(item.id)} title="Restaurar" style={{ background: COLORS.green, border: 'none', borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
+                            <RotateCcw size={16} color="#FFFFFF" />
+                          </button>
+                          <button onClick={() => apagarDefinitivoDaLixeira(item.id)} title="Apagar de vez" style={{ background: 'none', border: `1px solid ${COLORS.line}`, borderRadius: 7, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, boxSizing: 'border-box' }}>
+                            <X size={15} color={COLORS.red} />
+                          </button>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => setTemaEscuro(v => !v)}
-                title="Alternar entre tema claro e escuro"
-                style={{
-                  background: 'transparent', border: 'none', borderRadius: 8, padding: '4px 9px',
-                  cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                }}
-              >
-                {temaEscuro ? <Sun size={15} color={COLORS.ink} /> : <Moon size={15} color={COLORS.ink} />}
-                <span style={{ fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' }}>{temaEscuro ? 'Claro' : 'Escuro'}</span>
-              </button>
-              <button
-                onClick={() => setModalPinAberto(true)}
-                title="Alterar o PIN de acesso do painel"
-                style={{
-                  background: 'transparent', border: 'none', borderRadius: 8, padding: '4px 9px',
-                  cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                }}
-              >
-                <Lock size={15} color={COLORS.ink} />
-                <span style={{ fontSize: 8.5, fontWeight: 700, color: COLORS.inkSoft, whiteSpace: 'nowrap' }}>PIN</span>
-              </button>
-            </div>
-          </div>
+            )}
+            <button
+              onClick={() => { setTemaEscuro(v => !v); setConfigMenuAberto(false); }}
+              title="Alternar entre tema claro e escuro"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
+                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.ink,
+              }}
+            >
+              {temaEscuro ? <Sun size={15} color={COLORS.ink} /> : <Moon size={15} color={COLORS.ink} />}
+              {temaEscuro ? 'Tema claro' : 'Tema escuro'}
+            </button>
+            <button
+              onClick={() => { setModalPinAberto(true); setConfigMenuAberto(false); }}
+              title="Alterar o PIN de acesso do painel"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
+                background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
+                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.ink,
+              }}
+            >
+              <Lock size={15} color={COLORS.ink} /> Alterar PIN
+            </button>
+          </DropdownFlutuante>
 
           <BolhaFlutuanteIA onAbrir={() => setIaAberta(true)} />
 
@@ -9268,6 +9360,46 @@ ${textoContasPessoais}`;
 
           <div className="mono" style={{ color: COLORS.red, fontSize: 11, marginTop: 3 }}>
             {!storageOk && <span>⚠ sem conexão com o armazenamento — alterações não vão salvar</span>}
+          </div>
+
+          {/* v4.49 — Dados e ⚙ desceram pra cá, do lado das abas, deixando a
+              linha de cima só com Exercício + Salvar (conforme o desenho).
+              Corrigido: antes essa linha vinha dentro de um wrapper que
+              CENTRALIZAVA ela (largura 1040 dentro do cabeçalho, que é mais
+              largo) — isso empurrava os botões pra direita, longe da borda
+              esquerda onde "Exercício" e as abas ficam. Removido o wrapper de
+              centralização pra alinhar certinho embaixo do "Exercício". */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+            <button
+              ref={refBotaoDados}
+              onClick={() => { setDadosMenuAberto(v => !v); setExercicioMenuAberto(false); setConfigMenuAberto(false); }}
+              className="busca-liquid-glass"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7, borderRadius: 12, padding: '0 12px',
+                height: 40, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: COLORS.ink,
+              }}
+            >
+              📁 Dados
+              <ChevronDown size={13} color={COLORS.inkSoft} style={{ transform: dadosMenuAberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+            </button>
+            <button
+              ref={refBotaoConfig}
+              onClick={() => { setConfigMenuAberto(v => !v); setExercicioMenuAberto(false); setDadosMenuAberto(false); }}
+              className="busca-liquid-glass"
+              title="Mais opções"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4, borderRadius: 12, padding: '0 12px',
+                height: 40, cursor: 'pointer', fontSize: 14, color: COLORS.ink, position: 'relative',
+              }}
+            >
+              ⚙️
+              {lixeira.length > 0 && (
+                <span style={{ position: 'absolute', top: 2, right: 2, background: COLORS.red, color: '#FFF', borderRadius: 999, fontSize: 9, fontWeight: 700, padding: '1px 5px', minWidth: 15, textAlign: 'center' }}>
+                  {lixeira.length}
+                </span>
+              )}
+              <ChevronDown size={13} color={COLORS.inkSoft} style={{ transform: configMenuAberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+            </button>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 12 }}>
