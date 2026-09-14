@@ -1036,7 +1036,7 @@ html.dark-mode {
               return cachePlanilha;
             } catch (e) {
               ultimoErro = e;
-              if (tentativa < 3) await new Promise(r => setTimeout(r, 900 * tentativa));
+              if (tentativa < 2) await new Promise(r => setTimeout(r, 900 * tentativa));
             }
           }
 
@@ -7372,7 +7372,7 @@ ${textoContasPessoais}`;
     ];
     const permitidos = [
       'backup','csv','pdf','testar conexão','ciclo anual','cancelar','fechar',
-      'ocultar','mostrar','buscar','2026','2027','2028','2029','2030'
+      'ocultar','mostrar','buscar'
     ];
     const capturar = (ev) => {
       const el = ev.target && ev.target.closest ? ev.target.closest('button,[role="button"],a') : null;
@@ -7506,11 +7506,6 @@ ${textoContasPessoais}`;
   async function prepararNovoExercicio({ selecionados, novosAlunos }) {
     if (preparandoAno) return;
     const novoAno = exercicioAtual + 1;
-    if (novoAno > 2030) {
-      setMensagemExercicio({ tipo:'aviso', texto:'O ciclo anual está programado até 2030.' });
-      setPrepararAnoAberto(false);
-      return;
-    }
     if (exercicios.some(x => Number(x.ano) === novoAno)) {
       setMensagemExercicio({ tipo:'aviso', texto:`O exercício ${novoAno} já existe.` });
       setPrepararAnoAberto(false);
@@ -7568,7 +7563,7 @@ ${textoContasPessoais}`;
         }));
       });
 
-      // v5.24 — leva para o novo exercício os modelos de contas/lançamentos recorrentes.
+      // v5.26 — leva para o novo exercício os modelos de contas/lançamentos recorrentes.
       // Copia somente a estrutura (categoria + tipo), sem valores, datas, banco ou status
       // financeiro do ano anterior. Assim o novo ano começa zerado, mas não perde a base
       // de lançamentos que a escola usa todos os meses.
@@ -7786,8 +7781,8 @@ ${textoContasPessoais}`;
   }, [exercicioAtual]);
 
 
-  // v5.24 — REPARO DE EXERCÍCIOS JÁ CRIADOS pelas versões anteriores.
-  // A v5.24 passou a copiar corretamente os modelos de Lançamentos ao preparar anos NOVOS,
+  // v5.26 — REPARO DE EXERCÍCIOS JÁ CRIADOS pelas versões anteriores.
+  // A v5.25 passou a copiar corretamente os modelos de Lançamentos ao preparar anos NOVOS,
   // mas 2029 já tinha sido criado antes dessa correção. Este reparo roda UMA ÚNICA VEZ
   // no exercício atual quando ele está ATIVO ou EM PREPARAÇÃO, lê o exercício anterior
   // e adiciona apenas os modelos Fixa/Variável que estiverem faltando.
@@ -8712,15 +8707,9 @@ ${textoContasPessoais}`;
               }}>
                 {(exercicios.find(x=>x.ano===exercicioAtual)?.status || 'ATIVO').replace('_',' ')}
               </span>
-              {exercicioAtual < 2030 ? (
-                <button onClick={() => setPrepararAnoAberto(true)} title={`Preparar ${exercicioAtual + 1}`} style={{
-                  border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
-                }}>+ {exercicioAtual + 1}</button>
-              ) : (
-                <span title="Ciclo anual programado até 2030" style={{
-                  border:`1px solid ${COLORS.line}`,background:COLORS.lineSoft,color:COLORS.inkSoft,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800
-                }}>até 2030</span>
-              )}
+              <button onClick={() => setPrepararAnoAberto(true)} title={`Preparar ${exercicioAtual + 1}`} style={{
+                border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
+              }}>+ {exercicioAtual + 1}</button>
               <button onClick={() => setGerenciarAnoAberto(true)} title="Ativar ou encerrar o exercício com conferência" style={{
                 border:`1px solid ${COLORS.line}`,background:COLORS.paperCard,color:COLORS.ink,borderRadius:8,padding:'6px 8px',fontSize:10.5,fontWeight:800,cursor:'pointer'
               }}>Ciclo anual</button>
