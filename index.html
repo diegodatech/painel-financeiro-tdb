@@ -724,41 +724,6 @@ html.dark-mode {
         window.__pendenciasSync = conjunto.size + lerPendenciasAnexos().size;
       }
 
-      // v5.30 — limpeza única das pendências artificiais geradas pelos testes do ciclo anual.
-      // Mantém qualquer pendência real do usuário.
-      (function limparSomentePendenciasDosTestes_() {
-        try {
-          if (localStorage.getItem('restauracao_pos_testes_ciclo_v527') !== 'true') return;
-
-          const bases = [
-            'saldos_mensais','meta_lucro_mensal','valores_mensalidade',
-            'valores_avulsos','dias_letivos','capacidade_maxima',
-            'convenios_multivaga','categorias_indicadores','auto_lancamentos_v15'
-          ];
-
-          const ehTeste = (key) => {
-            key = String(key || '');
-            if (/^transacoes_financas202[789]$/.test(key)) return true;
-            if (/^(fechamento_exercicio|saldo_inicial_exercicio|registro_ativacao_exercicio)__202[6789]$/.test(key)) return true;
-            return bases.some(base => new RegExp('^' + base + '__202[789]$').test(key));
-          };
-
-          const p = lerPendencias();
-          let mudou = false;
-          Array.from(p).forEach(key => {
-            if (ehTeste(key)) {
-              p.delete(key);
-              mudou = true;
-            }
-          });
-          if (mudou) salvarPendencias(p);
-
-          // Remove apenas a fila experimental criada nas versões 5.28/5.29.
-          // Ela não existia na lógica estável da v5.19.
-          try { localStorage.removeItem('__pendencias_delete_v1'); } catch (e) {}
-        } catch (e) {}
-      })();
-
       function marcarPendente(key) {
         const p = lerPendencias();
         p.add(key);
@@ -831,26 +796,7 @@ html.dark-mode {
       window.__pendenciasAnexosSync = lerPendenciasAnexos().size;
       window.__pendenciasSync = lerPendencias().size + window.__pendenciasAnexosSync;
       window.__statusPlanilha = null;
-      window.__driveDisponivel = null;
       window.__ultimoErroSync = null;
-      window.__syncEmAndamento = 0;
-
-      function iniciarSync_() {
-        window.__syncEmAndamento = Number(window.__syncEmAndamento || 0) + 1;
-        window.__statusPlanilha = 'sincronizando';
-      }
-      function finalizarSync_() {
-        window.__syncEmAndamento = Math.max(0, Number(window.__syncEmAndamento || 0) - 1);
-        if (window.__syncEmAndamento === 0) {
-          const restantes = Number(window.__pendenciasSync || 0);
-          if (restantes === 0 && window.__driveDisponivel !== false) {
-            window.__statusPlanilha = 'ok';
-            window.__ultimoErroSync = null;
-          } else if (restantes > 0 && window.__statusPlanilha === 'sincronizando') {
-            window.__statusPlanilha = 'pendente';
-          }
-        }
-      }
 
       const DB_ANEXOS = 'painel_financeiro_anexos_v1';
       const STORE_ANEXOS = 'arquivos';
@@ -902,20 +848,8 @@ html.dark-mode {
 
       function timeoutFetch(url, opcoes, ms) {
         const controlador = new AbortController();
-        let expirou = false;
-        const timer = setTimeout(() => {
-          expirou = true;
-          try { controlador.abort('timeout-painel'); } catch (e) { try { controlador.abort(); } catch (_) {} }
-        }, ms);
+        const timer = setTimeout(() => controlador.abort(), ms);
         return fetch(url, { ...(opcoes || {}), signal: controlador.signal })
-          .catch((e) => {
-            if (expirou) {
-              const erro = new Error('O Google Drive demorou mais que o limite de resposta.');
-              erro.name = 'TimeoutError';
-              throw erro;
-            }
-            throw e;
-          })
           .finally(() => clearTimeout(timer));
       }
 
@@ -952,30 +886,11 @@ html.dark-mode {
       // Diagnóstico do backend sob demanda. É chamado pela Visão Geral e pelo botão
       // "Testar conexão"; não altera os dados.
       window.__testarConexaoDrive = async function() {
-        if (!APPS_SCRIPT_URL) {
-          window.__driveDisponivel = false;
-          return { ok: false, erro: 'Apps Script não configurado.' };
-        }
+        if (!APPS_SCRIPT_URL) return { ok: false, erro: 'Apps Script não configurado.' };
         const url = APPS_SCRIPT_URL + '?acao=diagnostico&_=' + Date.now();
-        try {
-          const corpo = await lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 18000));
-          if (!corpo || corpo.ok === false) throw new Error((corpo && corpo.erro) || 'Diagnóstico inválido.');
-          window.__driveDisponivel = true;
-          window.__statusPlanilha = 'ok';
-          window.__ultimoErroSync = null;
-          registrarSync_('leitura');
-          return corpo;
-        } catch (e) {
-          window.__driveDisponivel = false;
-          window.__ultimoErroConexaoDrive = String(e && e.message || e);
-          // Um teste de conexão não pode transformar uma gravação válida em erro.
-          // Se já existe envio em andamento, deixamos o status como "sincronizando".
-          if (Number(window.__syncEmAndamento || 0) === 0 &&
-              (Number(window.__pendenciasSync || 0) > 0 || Number(window.__pendenciasAnexosSync || 0) > 0)) {
-            window.__statusPlanilha = 'pendente';
-          }
-          throw e;
-        }
+        const corpo = await lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 45000));
+        registrarSync_('leitura');
+        return corpo;
       };
 
       // Backup manual disparado pelo card de Saúde do sistema.
@@ -1000,15 +915,13 @@ html.dark-mode {
 
         carregamentoEmAndamento = (async () => {
           let ultimoErro = null;
-          // No modo local-first a interface não fica presa esperando o Drive.
-          // Quando realmente precisamos do servidor (primeiro uso neste aparelho),
-          // fazemos no máximo 2 tentativas moderadas.
-          for (let tentativa = 1; tentativa <= 2; tentativa++) {
+          for (let tentativa = 1; tentativa <= 3; tentativa++) {
             try {
+              // 25 s cobre cold start + leitura do Drive sem tornar a abertura infinita.
               const corpo = await lerRespostaJSON(await timeoutFetch(
                 APPS_SCRIPT_URL,
                 { method: 'GET', cache: 'no-store' },
-                15000
+                25000
               ));
 
               if (!corpo.dados || typeof corpo.dados !== 'object' || Array.isArray(corpo.dados)) {
@@ -1018,9 +931,8 @@ html.dark-mode {
               cachePlanilha = corpo.dados;
               cacheCarregadoComSucesso = true;
               usandoPlanilha = true;
-              window.__statusPlanilha = Number(window.__syncEmAndamento || 0) > 0 ? 'sincronizando' : 'ok';
-              window.__driveDisponivel = true;
-              if (Number(window.__syncEmAndamento || 0) === 0) window.__ultimoErroSync = null;
+              window.__statusPlanilha = 'ok';
+              window.__ultimoErroSync = null;
               registrarSync_('leitura');
 
               // Reaplica localmente o que ainda não foi confirmado no Drive.
@@ -1031,17 +943,6 @@ html.dark-mode {
                 try {
                   const local = localStorage.getItem(key);
                   if (local !== null) cachePlanilha[key] = local;
-                } catch (e) {}
-              });
-
-              // Espelha no armazenamento local tudo que veio confirmado do Drive,
-              // exceto chaves com alteração local pendente. Assim a próxima abertura
-              // é instantânea mesmo se a internet estiver lenta ou indisponível.
-              Object.keys(corpo.dados).forEach(key => {
-                if (pendentes.has(key) || String(key).indexOf('anexo_') !== -1) return;
-                try {
-                  const valor = corpo.dados[key];
-                  if (valor !== undefined && valor !== null) localStorage.setItem(key, valor);
                 } catch (e) {}
               });
 
@@ -1080,14 +981,10 @@ html.dark-mode {
           // Nunca transformar isso em {}.
           cachePlanilha = null;
           usandoPlanilha = !!APPS_SCRIPT_URL;
-          window.__driveDisponivel = false;
-          const haPendencias = Number(window.__pendenciasSync || 0) > 0 || Number(window.__pendenciasAnexosSync || 0) > 0;
-          if (haPendencias && Number(window.__syncEmAndamento || 0) === 0) {
-            window.__statusPlanilha = 'pendente';
-            window.__ultimoErroSync = ultimoErro && (ultimoErro.name === 'AbortError' || ultimoErro.name === 'TimeoutError')
-              ? 'O Google Drive demorou para responder. A alteração continua protegida neste aparelho.'
-              : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Falha ao carregar o Google Drive.');
-          }
+          window.__statusPlanilha = 'erro';
+          window.__ultimoErroSync = ultimoErro && ultimoErro.name === 'AbortError'
+            ? 'O Google Drive demorou mais que o limite de resposta.'
+            : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Falha ao carregar o Google Drive.');
           return null;
         })();
 
@@ -1103,10 +1000,8 @@ html.dark-mode {
         if (marcarFila !== false) marcarPendente(key);
 
         const tamanhoKB = (val ? String(val).length : 0) / 1024;
-        // Escritas do Apps Script podem sofrer cold start. Não usamos o timeout curto da leitura.
-        const limite = Math.min(180000, Math.max(60000, 60000 + tamanhoKB * 35));
+        const limite = Math.min(180000, Math.max(15000, 15000 + tamanhoKB * 30));
         let ultimoErro = null;
-        iniciarSync_();
 
         for (let tentativa = 1; tentativa <= 3; tentativa++) {
           try {
@@ -1129,16 +1024,14 @@ html.dark-mode {
               window.__statusPlanilha = 'erro';
               window.__ultimoErroSync = 'Outra alteração mais recente já foi gravada no Drive. Recarregando para conferir.';
               const resolvido = await resolverConflitoStale_(key, corpo.serverUpdatedAt);
-              finalizarSync_();
               return { ok: false, stale: true, resolvido };
             }
 
-            window.__driveDisponivel = true;
+            window.__statusPlanilha = 'ok';
             window.__ultimoErroSync = null;
             registrarSync_('gravacao');
             if (cachePlanilha) cachePlanilha[key] = val;
             marcarSincronizado(key, versao);
-            finalizarSync_();
             return { ok: true, accepted: true };
           } catch (e) {
             ultimoErro = e;
@@ -1146,12 +1039,11 @@ html.dark-mode {
           }
         }
 
-        window.__ultimoErroSync = ultimoErro && (ultimoErro.name === 'AbortError' || ultimoErro.name === 'TimeoutError')
+        window.__statusPlanilha = 'erro';
+        window.__ultimoErroSync = ultimoErro && ultimoErro.name === 'AbortError'
           ? 'O Google Drive demorou para responder. A alteração ficou protegida neste aparelho e será reenviada.'
           : String((ultimoErro && ultimoErro.message) || ultimoErro || 'Não foi possível sincronizar.');
         marcarPendente(key);
-        finalizarSync_();
-        if (Number(window.__syncEmAndamento || 0) === 0) window.__statusPlanilha = 'pendente';
         return { ok: false, erro: window.__ultimoErroSync };
       }
 
@@ -1163,7 +1055,6 @@ html.dark-mode {
         // continua independente, para um PDF não travar as demais gravações.
         const limite = Math.min(240000, Math.max(30000, 30000 + tamanhoKB * 40));
         let ultimoErro = null;
-        iniciarSync_();
         for (let tentativa = 1; tentativa <= 3; tentativa++) {
           try {
             const resp = await timeoutFetch(APPS_SCRIPT_URL, {
@@ -1181,14 +1072,12 @@ html.dark-mode {
             if (corpo.accepted === false && corpo.stale) {
               const resolvido = await resolverConflitoStale_(key, corpo.serverUpdatedAt);
               if (resolvido) marcarSincronizadoAnexo(key);
-              finalizarSync_();
               return { ok: false, stale: true, resolvido };
             }
             marcarSincronizadoAnexo(key);
             window.__ultimoErroSync = null;
-            window.__driveDisponivel = true;
+            window.__statusPlanilha = 'ok';
             registrarSync_('gravacao');
-            finalizarSync_();
             return { ok: true, accepted: true };
           } catch (e) {
             ultimoErro = e;
@@ -1196,11 +1085,10 @@ html.dark-mode {
           }
         }
         marcarPendenteAnexo(key);
-        window.__ultimoErroSync = ultimoErro && (ultimoErro.name === 'AbortError' || ultimoErro.name === 'TimeoutError')
+        window.__statusPlanilha = 'erro';
+        window.__ultimoErroSync = ultimoErro && ultimoErro.name === 'AbortError'
           ? 'O PDF está salvo neste aparelho, mas o Google Drive demorou para recebê-lo. Ele será reenviado automaticamente.'
           : 'Não consegui enviar o PDF ao Google Drive agora. Ele continua salvo neste aparelho e será reenviado.';
-        finalizarSync_();
-        if (Number(window.__syncEmAndamento || 0) === 0) window.__statusPlanilha = 'pendente';
         return { ok: false, erro: window.__ultimoErroSync };
       }
 
@@ -1250,7 +1138,6 @@ html.dark-mode {
         if (key.indexOf('anexo_') !== -1) marcarPendenteAnexo(key);
         else marcarPendente(key);
         let ultimoErro = null;
-        iniciarSync_();
         for (let tentativa = 1; tentativa <= 3; tentativa++) {
           try {
             const resp = await timeoutFetch(APPS_SCRIPT_URL, {
@@ -1260,142 +1147,33 @@ html.dark-mode {
                 acao: 'delete', key, deletar: true,
                 updatedAt: Number(versao) || Date.now(), clientId: clienteId(),
               }),
-            }, 60000);
+            }, 30000);
             const corpo = await lerRespostaJSON(resp);
             if (corpo.accepted === false && corpo.stale) {
               window.__statusPlanilha = 'erro';
               window.__ultimoErroSync = 'A exclusão ficou atrás de uma alteração mais nova no Drive. Nada foi apagado à força.';
               const resolvido = await resolverConflitoStale_(key, corpo.serverUpdatedAt);
-              finalizarSync_();
               return { ok: false, stale: true, resolvido };
             }
             marcarSincronizado(key, versao);
-            window.__driveDisponivel = true;
+            window.__statusPlanilha = 'ok';
             window.__ultimoErroSync = null;
             registrarSync_('gravacao');
-            finalizarSync_();
             return { ok: true };
           } catch (e) {
             ultimoErro = e;
             if (tentativa < 3) await new Promise(r => setTimeout(r, 1000 * tentativa));
           }
         }
+        window.__statusPlanilha = 'erro';
         window.__ultimoErroSync = String((ultimoErro && ultimoErro.message) || ultimoErro || 'Não foi possível apagar no Drive.');
         if (key.indexOf('anexo_') !== -1) marcarPendenteAnexo(key);
         else marcarPendente(key);
-        finalizarSync_();
-        if (Number(window.__syncEmAndamento || 0) === 0) window.__statusPlanilha = 'pendente';
         return { ok: false, erro: window.__ultimoErroSync };
       }
 
-      // ================================================================
-      // EXERCÍCIOS ANUAIS (v5.0)
-      // ================================================================
-      // O painel nasceu em 2026 com várias chaves sem o ano no nome (ex.: saldos_mensais).
-      // A partir da v5.0, essas chaves continuam exatamente iguais para 2026 e passam a
-      // receber um sufixo nos exercícios seguintes. Assim preservamos 100% dos dados atuais
-      // e evitamos misturar Janeiro/2026 com Janeiro/2027.
-      if (!window.__exercicioAtual) {
-        try { window.__exercicioAtual = Number(localStorage.getItem('painel_exercicio_atual')) || 2026; }
-        catch (e) { window.__exercicioAtual = 2026; }
-      }
-      const CHAVES_ANUAIS_BASE_ = new Set([
-        'saldos_mensais',
-        'meta_lucro_mensal',
-        'valores_mensalidade',
-        'valores_avulsos',
-        'dias_letivos',
-        'capacidade_maxima',
-        'convenios_multivaga',
-        'categorias_indicadores',
-        'auto_lancamentos_v15'
-      ]);
-      function chaveAnualParaAno_(base, ano) {
-        const y = Number(ano) || 2026;
-        if (base === 'transacoes_financas2026') return `transacoes_financas${y}`;
-        if (CHAVES_ANUAIS_BASE_.has(base)) return y === 2026 ? base : `${base}__${y}`;
-        return base;
-      }
-      function resolverChaveAnual_(key) {
-        const k = String(key || '');
-        if (k.startsWith('@@raw:')) return k.slice(6);
-        // Chaves já explicitamente versionadas nunca são remapeadas novamente.
-        if (/__\d{4}$/.test(k) || /^transacoes_financas(?!2026)\d{4}$/.test(k)) return k;
-        return chaveAnualParaAno_(k, window.__exercicioAtual || 2026);
-      }
-      window.__chaveAnualParaAno = chaveAnualParaAno_;
-
-      // ================================================================
-      // PROTEÇÃO DE EXERCÍCIO ENCERRADO (v5.19)
-      // ================================================================
-      window.__exercicioSomenteLeitura = false;
-      window.__anoSomenteLeitura = null;
-
-      function chaveAdministrativaPermitida_(key) {
-        const k = String(key || '').replace(/^@@raw:/, '');
-        return (
-          k === 'painel_pin' ||
-          k === 'painel_exercicios_v1' ||
-          k.startsWith('fechamento_exercicio__') ||
-          k.startsWith('saldo_inicial_exercicio__') ||
-          k.startsWith('registro_ativacao_exercicio__')
-        );
-      }
-
-      function bloquearGravacaoExercicioEncerrado_(key) {
-        if (!window.__exercicioSomenteLeitura) return false;
-        if (chaveAdministrativaPermitida_(key)) return false;
-        const ano = Number(window.__anoSomenteLeitura || window.__exercicioAtual || 0);
-        const msg = `O exercício ${ano} está ENCERRADO e protegido contra alterações.\n\nConsulta, pesquisa, relatórios e exportações continuam liberados.`;
-        window.__ultimoBloqueioExercicio = msg;
-        try {
-          const agora = Date.now();
-          if (!window.__ultimoAlertaBloqueioEm || (agora - window.__ultimoAlertaBloqueioEm) > 1200) {
-            window.__ultimoAlertaBloqueioEm = agora;
-            alert(msg);
-          }
-        } catch (e) {}
-        return true;
-      }
-      window.__bloquearSeExercicioEncerrado = bloquearGravacaoExercicioEncerrado_;
-
-      let reenvioAutomaticoEmAndamento_ = false;
-      async function reenvioAutomaticoPendencias_() {
-        if (!APPS_SCRIPT_URL || reenvioAutomaticoEmAndamento_) return;
-        const comuns = Array.from(lerPendencias());
-        const anexos = Array.from(lerPendenciasAnexos());
-        if (!comuns.length && !anexos.length) return;
-        reenvioAutomaticoEmAndamento_ = true;
-        try {
-          for (const key of comuns) {
-            let valor = null;
-            try { valor = localStorage.getItem(key); } catch (e) {}
-            if (valor === null) continue;
-            const versao = Number(lerVersoes()[key]) || Date.now();
-            await enviarSet_(key, valor, versao, false);
-          }
-          for (const key of anexos) {
-            let valor = null;
-            try { valor = await idbAnexoGet_(key); } catch (e) {}
-            if (valor === null) continue;
-            const versao = Number(lerVersoes()[key]) || Date.now();
-            await enviarAnexo_(key, valor, versao);
-          }
-        } finally {
-          reenvioAutomaticoEmAndamento_ = false;
-        }
-      }
-      setInterval(() => { reenvioAutomaticoPendencias_().catch(() => {}); }, 30000);
-
       window.storage = {
-        refreshDrive: async () => {
-          if (!APPS_SCRIPT_URL) return { ok:false, localOnly:true };
-          const r = await carregarDaPlanilha();
-          return { ok: !!(cacheCarregadoComSucesso && r), dados: r };
-        },
-
         get: async (key) => {
-          key = resolverChaveAnual_(key);
           // Anexos usam IndexedDB porque localStorage costuma ter limite de poucos MB.
           // Isso evita que um PDF grande corrompa/estoure o armazenamento local.
           if (key.indexOf('anexo_') !== -1) {
@@ -1422,18 +1200,6 @@ html.dark-mode {
             } catch (e) {}
           }
 
-          // LOCAL-FIRST: se já existe cópia local, abre imediatamente.
-          // A conferência com o Drive acontece em segundo plano e não bloqueia a escola.
-          let localRapido = null;
-          try { localRapido = localStorage.getItem(key); } catch (e) {}
-          if (localRapido !== null) {
-            if (APPS_SCRIPT_URL && !cacheCarregadoComSucesso && !carregamentoEmAndamento) {
-              carregarDaPlanilha().catch(() => {});
-            }
-            return { value: localRapido };
-          }
-
-          // Primeiro uso neste aparelho: sem cópia local, aí sim precisamos esperar o Drive.
           if (APPS_SCRIPT_URL && !cacheCarregadoComSucesso) {
             await carregarDaPlanilha();
           }
@@ -1470,12 +1236,6 @@ html.dark-mode {
         },
 
         set: async (key, val) => {
-          if (bloquearGravacaoExercicioEncerrado_(key)) {
-            const erro = new Error('EXERCICIO_ENCERRADO');
-            erro.code = 'EXERCICIO_ENCERRADO';
-            throw erro;
-          }
-          key = resolverChaveAnual_(key);
           const eAnexo = key.indexOf('anexo_') !== -1;
           // Anexo: IndexedDB primeiro; nunca jogamos um PDF de 10/20MB dentro do localStorage.
           if (eAnexo) {
@@ -1523,15 +1283,11 @@ html.dark-mode {
             window.__ultimoErroSync = String(e && e.message || e);
             return { ok: false, erro: window.__ultimoErroSync };
           });
-          // A gravação local já terminou. O Drive confirma em segundo plano.
-          return true;
+          return filaEscrita.then(() => true);
         },
 
         resync: async (onProgress) => {
           if (!APPS_SCRIPT_URL) return { ok: true, total: 0, falhas: 0 };
-
-          // Espera somente a fila que já estava em andamento antes de fazer a conferência final.
-          try { await filaEscrita; } catch (e) {}
 
           // Primeiro precisa existir uma leitura CONFIRMADA do Drive. Se não conseguiu,
           // o botão não pode inventar que salvou.
@@ -1599,12 +1355,6 @@ html.dark-mode {
         },
 
         delete: async (key) => {
-          if (bloquearGravacaoExercicioEncerrado_(key)) {
-            const erro = new Error('EXERCICIO_ENCERRADO');
-            erro.code = 'EXERCICIO_ENCERRADO';
-            throw erro;
-          }
-          key = resolverChaveAnual_(key);
           const eAnexo = key.indexOf('anexo_') !== -1;
           if (eAnexo) {
             await idbAnexoDelete_(key);
