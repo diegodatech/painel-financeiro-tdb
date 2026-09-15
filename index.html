@@ -3,35 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#106E6B">
+  <meta name="theme-color" content="#FFFDF8">
+  <meta name="background-color" content="#FFFDF8">
   <title>Painel Financeiro - Tempo de Brincar</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./icon-192.png">
   <style>
-    html,body{width:100%;height:100%;margin:0;background:#fffdf8;font-family:Arial,sans-serif;overflow:hidden}
-    #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;background:#fffdf8;color:#106e6b;font-weight:700}
-    #loading span{display:inline-flex;align-items:center;gap:10px}
-    #loading span:before{content:'';width:18px;height:18px;border:3px solid rgba(16,110,107,.2);border-top-color:#106e6b;border-radius:50%;animation:girar .8s linear infinite}
+    :root{--paper:#fffdf8;--soft:#6c817f;--gold:#d79b2e;--line:#dfecea}
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;background:var(--paper);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;overflow:hidden}
+    iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:var(--paper);z-index:1;opacity:0;transition:opacity .18s ease}
+    iframe.visivel{opacity:1}
+    #splash{position:fixed;inset:0;z-index:20;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;transition:opacity .22s ease,visibility .22s ease}
+    #splash.oculto{opacity:0;visibility:hidden;pointer-events:none}
+    .conteudo{display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .logo{width:min(82vw,430px);height:auto;max-height:34vh;object-fit:contain;margin-bottom:22px;filter:drop-shadow(0 10px 26px rgba(50,83,80,.07))}
+    .status{display:flex;align-items:center;gap:9px;color:var(--soft);font-size:13px;font-weight:600}
+    .spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--gold);animation:girar .8s linear infinite;flex:none}
     @keyframes girar{to{transform:rotate(360deg)}}
-    iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#fffdf8}
+    @media (max-width:600px){.logo{width:min(86vw,360px);max-height:31vh;margin-bottom:18px}.status{font-size:13px}}
   </style>
 </head>
 <body>
-  <div id="loading"><span>Abrindo Painel Financeiro…</span></div>
+  <div id="splash" aria-live="polite">
+    <div class="conteudo">
+      <img class="logo" src="./logo.png" alt="Escola Infantil Tempo de Brincar">
+      <div class="status"><span class="spinner" aria-hidden="true"></span><span>Sincronizando Google Drive…</span></div>
+    </div>
+  </div>
+
   <iframe
     id="painel"
     title="Painel Financeiro"
     allow="clipboard-read; clipboard-write"
     src="https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec?acao=painel">
   </iframe>
+
   <script>
-    const frame = document.getElementById('painel');
-    const loading = document.getElementById('loading');
-    frame.addEventListener('load', () => { loading.style.display = 'none'; });
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
-    }
+    (() => {
+      const frame = document.getElementById('painel');
+      const splash = document.getElementById('splash');
+      let liberado = false;
+
+      const revelar = () => {
+        if (liberado) return;
+        liberado = true;
+        frame.classList.add('visivel');
+        splash.classList.add('oculto');
+      };
+
+      // O painel do Apps Script avisa quando terminou a sincronização inicial
+      // e a tela de senha (ou o painel já desbloqueado) está realmente pronta.
+      window.addEventListener('message', (event) => {
+        if (event && event.data && event.data.type === 'TDB_PAINEL_READY') revelar();
+      });
+
+      // Segurança: se o aviso não chegar por algum bloqueio do navegador,
+      // libera o iframe para que o próprio Apps Script mostre qualquer erro.
+      setTimeout(revelar, 15000);
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            const reg = await navigator.serviceWorker.register('./sw.js');
+            reg.update().catch(() => {});
+          } catch (e) {
+            console.warn('Service Worker não registrado:', e);
+          }
+        });
+      }
+    })();
   </script>
 </body>
 </html>
