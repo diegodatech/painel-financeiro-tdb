@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#FFFDF8">
   <meta name="background-color" content="#FFFDF8">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>Painel Financeiro - Tempo de Brincar</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=5">
-  <link rel="icon" href="./icon-192.png?v=5">
-  <link rel="apple-touch-icon" href="./icon-192.png?v=5">
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+  <link rel="manifest" href="./manifest.webmanifest?v=6">
+  <link rel="icon" href="./icon-192.png?v=6">
+  <link rel="apple-touch-icon" href="./icon-192.png?v=6">
   <style>
     :root{--paper:#fffdf8;--soft:#6c817f;--gold:#d79b2e;--line:#dfecea}
     *{box-sizing:border-box}
@@ -31,7 +30,7 @@
 <body>
   <div id="splash" aria-live="polite">
     <div class="conteudo">
-      <img class="logo" src="./logo.png?v=5" alt="Escola Infantil Tempo de Brincar">
+      <img class="logo" src="./logo.png?v=6" alt="Escola Infantil Tempo de Brincar">
       <div class="status"><span class="spinner" aria-hidden="true"></span><span>Sincronizando Google Drive…</span></div>
     </div>
   </div>
@@ -40,7 +39,7 @@
     id="painel"
     title="Painel Financeiro"
     allow="clipboard-read; clipboard-write"
-    src="https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec?acao=painel&pwa=1&launcher=5">
+    src="https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec?acao=painel&pwa=1&launcher=6">
   </iframe>
 
   <script>
@@ -57,19 +56,17 @@
       };
 
       /*
-       * v5 — NÃO espera mais mensagem postMessage do Apps Script.
+       * v6 — mantém a lógica estável da v5 e elimina espera artificial postMessage do Apps Script.
        * O HtmlService do Google pode criar uma camada/iframe intermediária e a
        * mensagem de READY não chega de forma confiável ao launcher do GitHub.
        * Isso foi o que podia deixar a tela presa em “Sincronizando…” para sempre.
        *
        * Agora o launcher só cobre o carregamento inicial do iframe. Assim que a
-       * página do Apps Script carregou, mostramos o próprio painel. O index do
+       * página do Apps Script carrega, mostramos o próprio painel sem atraso extra. O index do
        * Apps Script já usa exatamente a mesma tela (logo + sincronizando), então
        * visualmente continua parecendo UMA única etapa até a tela do PIN.
        */
-      frame.addEventListener('load', () => {
-        setTimeout(revelar, 120);
-      }, { once: true });
+      frame.addEventListener('load', revelar, { once: true });
 
       // Segurança absoluta: nunca mais ficar bloqueado no splash do launcher.
       // Mesmo se o evento load for perdido por algum comportamento do WebView,
@@ -79,7 +76,7 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            const reg = await navigator.serviceWorker.register('./sw.js?v=5');
+            const reg = await navigator.serviceWorker.register('./sw.js?v=6');
             await reg.update().catch(() => {});
           } catch (e) {
             console.warn('Service Worker não registrado:', e);

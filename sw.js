@@ -1,21 +1,60 @@
-const CACHE = 'tdb-launcher-v5';
+const CACHE = 'tdb-launcher-v6';
+const SHELL = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './logo.png',
+  './icon-192.png',
+  './icon-512.png'
+].map(path => new URL(path, self.registration.scope).href);
 
-self.addEventListener('install', () => {
-  self.skipWaiting();
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => Promise.all(
+        SHELL.map(url =>
+          fetch(url, { cache: 'reload' })
+            .then(resp => {
+              if (resp && resp.ok) return cache.put(url, resp.clone());
+            })
+            .catch(() => null)
+        )
+      ))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+    caches.keys()
+      .then(keys => Promise.all(
+        keys
+          .filter(k => k.startsWith('tdb-launcher-') && k !== CACHE)
+          .map(k => caches.delete(k))
+      ))
       .then(() => self.clients.claim())
   );
 });
 
-// Sempre busca os arquivos atuais no GitHub Pages. Não guarda index antigo.
+// O launcher do GitHub abre do cache imediatamente e atualiza em segundo plano.
+// O Apps Script é de outra origem e NÃO é interceptado nem cacheado aqui.
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
+  const req = event.request;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin || req.method !== 'GET') return;
+
+  const atualizar = fetch(req, { cache: 'no-store' })
+    .then(async resp => {
+      if (resp && resp.ok) {
+        const cache = await caches.open(CACHE);
+        await cache.put(req, resp.clone());
+      }
+      return resp;
+    });
+
   event.respondWith(
-    fetch(event.request, { cache: 'no-store' }).catch(() => caches.match(event.request))
+    caches.match(req).then(cached => cached || atualizar)
   );
+
+  event.waitUntil(atualizar.catch(() => null));
 });
