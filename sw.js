@@ -1,4 +1,4 @@
-const CACHE = 'tdb-launcher-v8-auto-mobile';
+const CACHE = 'tdb-launcher-v9-mobile-2-4';
 const SHELL = [
   './',
   './index.html',
@@ -11,11 +11,11 @@ const SHELL = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
-      .then(cache => Promise.all(
-        SHELL.map(url => fetch(url, { cache: 'reload' })
+      .then(cache => Promise.all(SHELL.map(url =>
+        fetch(url, { cache: 'reload' })
           .then(resp => resp && resp.ok ? cache.put(url, resp.clone()) : null)
-          .catch(() => null))
-      ))
+          .catch(() => null)
+      )))
       .then(() => self.skipWaiting())
   );
 });
@@ -35,9 +35,8 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin || req.method !== 'GET') return;
 
-  // Navegação/index: rede primeiro. Evita que uma versão antiga do launcher
-  // continue abrindo a rota desktop depois de uma atualização no GitHub.
-  if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname === new URL('./', self.registration.scope).pathname) {
+  // O launcher e a navegação são sempre rede-primeiro para não prender versão antiga.
+  if (req.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
     event.respondWith(
       fetch(req, { cache: 'no-store' })
         .then(async resp => {

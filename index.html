@@ -2,15 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes,viewport-fit=cover">
   <meta name="theme-color" content="#FFFDF8">
   <meta name="background-color" content="#FFFDF8">
   <title>Painel Financeiro - Tempo de Brincar</title>
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
-  <link rel="manifest" href="./manifest.webmanifest?v=8">
-  <link rel="icon" href="./icon-192.png?v=8">
-  <link rel="apple-touch-icon" href="./icon-192.png?v=8">
+  <link rel="manifest" href="./manifest.webmanifest?v=9">
+  <link rel="icon" href="./icon-192.png?v=9">
+  <link rel="apple-touch-icon" href="./icon-192.png?v=9">
   <style>
     :root{--paper:#fffdf8;--soft:#6c817f;--gold:#d79b2e;--line:#dfecea}
     *{box-sizing:border-box}
@@ -30,29 +30,48 @@
 <body>
   <div id="splash" aria-live="polite">
     <div class="conteudo">
-      <img class="logo" src="./logo.png?v=8" alt="Escola Infantil Tempo de Brincar">
-      <div class="status"><span class="spinner" aria-hidden="true"></span><span>Abrindo painel…</span></div>
+      <img class="logo" src="./logo.png?v=9" alt="Escola Infantil Tempo de Brincar">
+      <div class="status"><span class="spinner" aria-hidden="true"></span><span id="statusTxt">Abrindo painel…</span></div>
     </div>
   </div>
-
   <iframe id="painel" title="Painel Financeiro" allow="clipboard-read; clipboard-write"></iframe>
 
   <script>
     (() => {
+      const LAUNCHER_VERSION = '9';
+      const MOBILE_BUILD = '2.4';
       const APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec';
       const frame = document.getElementById('painel');
       const splash = document.getElementById('splash');
+      const statusTxt = document.getElementById('statusTxt');
       let liberado = false;
 
-      // Telefone: iPhone/iPod, Android Mobile e equivalentes. A largura cobre
-      // navegadores que ocultam ou alteram o user-agent. Tablet fica no painel desktop.
-      const ua = navigator.userAgent || '';
-      const telefonePorUA = /iPhone|iPod|Android.+Mobile|Windows Phone|IEMobile|Opera Mini|webOS|BlackBerry/i.test(ua);
-      const telefonePorTela = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
-      const usarMobile = telefonePorUA || telefonePorTela;
+      function detectarCelular() {
+        const ua = navigator.userAgent || '';
+        const porUA = /iPhone|iPod|Android.+Mobile|Windows Phone|IEMobile|Opera Mini|webOS|BlackBerry/i.test(ua);
+        const largura = Math.min(
+          window.innerWidth || 9999,
+          (window.visualViewport && window.visualViewport.width) || 9999,
+          screen.width || 9999
+        );
+        const porLargura = largura <= 767;
+        return porUA || porLargura;
+      }
 
+      const usarMobile = detectarCelular();
       const rota = usarMobile ? 'painelMobile' : 'painel';
-      frame.src = APPS_SCRIPT + '?acao=' + rota + '&pwa=1&launcher=8&_=' + Date.now();
+      if (statusTxt) statusTxt.textContent = usarMobile ? 'Abrindo versão celular…' : 'Abrindo painel…';
+
+      // Query exclusiva desta versão força uma navegação nova e evita reaproveitar
+      // respostas antigas do iframe/navegador. No celular, a rota é SEMPRE painelMobile.
+      const qs = new URLSearchParams({
+        acao: rota,
+        pwa: '1',
+        launcher: LAUNCHER_VERSION,
+        build: usarMobile ? MOBILE_BUILD : 'desktop',
+        _: String(Date.now())
+      });
+      frame.src = APPS_SCRIPT + '?' + qs.toString();
 
       const revelar = () => {
         if (liberado) return;
@@ -60,14 +79,23 @@
         frame.classList.add('visivel');
         splash.classList.add('oculto');
       };
-
       frame.addEventListener('load', revelar, { once: true });
-      setTimeout(revelar, 5000);
+      setTimeout(revelar, 7000);
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            const reg = await navigator.serviceWorker.register('./sw.js?v=8');
+            // Migração para V9: apaga caches dos launchers anteriores uma única vez.
+            if (localStorage.getItem('tdbLauncherVersion') !== LAUNCHER_VERSION) {
+              const regs = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(regs.map(r => r.unregister().catch(() => false)));
+              if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.filter(k => k.startsWith('tdb-launcher-')).map(k => caches.delete(k)));
+              }
+              localStorage.setItem('tdbLauncherVersion', LAUNCHER_VERSION);
+            }
+            const reg = await navigator.serviceWorker.register('./sw.js?v=9');
             await reg.update().catch(() => {});
           } catch (e) {
             console.warn('Service Worker não registrado:', e);
