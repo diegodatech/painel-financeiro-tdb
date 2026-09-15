@@ -1,8 +1,5 @@
-// TDB V10 — desativador de Service Worker antigo.
-// A V10 não usa cache do launcher para evitar retenção de versões antigas no Safari/iOS.
-self.addEventListener('install', event => {
-  self.skipWaiting();
-});
+// TDB V12 — não mantém cache do launcher.
+self.addEventListener('install', event => { self.skipWaiting(); });
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     try {
