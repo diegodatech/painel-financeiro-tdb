@@ -5,18 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#FFFDF8">
   <meta name="background-color" content="#FFFDF8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Painel Financeiro - Tempo de Brincar</title>
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icon-192.png">
-  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="manifest" href="./manifest.webmanifest?v=5">
+  <link rel="icon" href="./icon-192.png?v=5">
+  <link rel="apple-touch-icon" href="./icon-192.png?v=5">
   <style>
     :root{--paper:#fffdf8;--soft:#6c817f;--gold:#d79b2e;--line:#dfecea}
     *{box-sizing:border-box}
     html,body{width:100%;height:100%;margin:0;background:var(--paper);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;overflow:hidden}
-    #painel{position:fixed;inset:0;width:100%;height:100%;border:0;background:var(--paper);z-index:1;visibility:hidden}
-    #painel.visivel{visibility:visible}
-    #splash{position:fixed;inset:0;z-index:20;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
-    #splash.oculto{display:none}
+    #painel{position:fixed;inset:0;width:100%;height:100%;border:0;background:var(--paper);z-index:1;opacity:0;pointer-events:none;transition:opacity .12s ease}
+    #painel.visivel{opacity:1;pointer-events:auto}
+    #splash{position:fixed;inset:0;z-index:20;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;transition:opacity .12s ease,visibility .12s ease}
+    #splash.oculto{opacity:0;visibility:hidden;pointer-events:none}
     .conteudo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
     .logo{width:min(46vw,220px);height:auto;max-height:150px;object-fit:contain}
     .status{display:flex;align-items:center;justify-content:center;gap:9px;color:var(--soft);font-size:13px;font-weight:600}
@@ -28,8 +31,8 @@
 <body>
   <div id="splash" aria-live="polite">
     <div class="conteudo">
-      <img class="logo" src="./logo.png" alt="Escola Infantil Tempo de Brincar">
-      <div class="status"><span class="spinner" aria-hidden="true"></span><span id="statusTexto">Sincronizando Google Drive…</span></div>
+      <img class="logo" src="./logo.png?v=5" alt="Escola Infantil Tempo de Brincar">
+      <div class="status"><span class="spinner" aria-hidden="true"></span><span>Sincronizando Google Drive…</span></div>
     </div>
   </div>
 
@@ -37,14 +40,13 @@
     id="painel"
     title="Painel Financeiro"
     allow="clipboard-read; clipboard-write"
-    src="https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec?acao=painel&pwa=1">
+    src="https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec?acao=painel&pwa=1&launcher=5">
   </iframe>
 
   <script>
     (() => {
       const frame = document.getElementById('painel');
       const splash = document.getElementById('splash');
-      const statusTexto = document.getElementById('statusTexto');
       let liberado = false;
 
       const revelar = () => {
@@ -54,31 +56,30 @@
         splash.classList.add('oculto');
       };
 
-      // O iframe trabalha em segundo plano. Só trocamos de tela quando o PIN
-      // (ou o painel já desbloqueado) estiver pronto. Assim não aparecem as
-      // telas internas de "conectando", "buscando backup" etc.
-      window.addEventListener('message', (event) => {
-        if (!event || !event.data) return;
-        if (event.data.type === 'TDB_PAINEL_READY') revelar();
-        if (event.data.type === 'TDB_PAINEL_ERROR') {
-          statusTexto.textContent = 'Não foi possível sincronizar. Toque para tentar novamente.';
-          splash.style.cursor = 'pointer';
-          splash.onclick = () => location.reload();
-        }
-      });
+      /*
+       * v5 — NÃO espera mais mensagem postMessage do Apps Script.
+       * O HtmlService do Google pode criar uma camada/iframe intermediária e a
+       * mensagem de READY não chega de forma confiável ao launcher do GitHub.
+       * Isso foi o que podia deixar a tela presa em “Sincronizando…” para sempre.
+       *
+       * Agora o launcher só cobre o carregamento inicial do iframe. Assim que a
+       * página do Apps Script carregou, mostramos o próprio painel. O index do
+       * Apps Script já usa exatamente a mesma tela (logo + sincronizando), então
+       * visualmente continua parecendo UMA única etapa até a tela do PIN.
+       */
+      frame.addEventListener('load', () => {
+        setTimeout(revelar, 120);
+      }, { once: true });
 
-      // Não revelamos o iframe por tempo limite. Se o Drive demorar, permanece
-      // na MESMA tela de sincronização em vez de mostrar etapas intermediárias.
-      setTimeout(() => {
-        if (!liberado) statusTexto.textContent = 'Sincronizando Google Drive…';
-      }, 15000);
+      // Segurança absoluta: nunca mais ficar bloqueado no splash do launcher.
+      // Mesmo se o evento load for perdido por algum comportamento do WebView,
+      // em até 4 s o próprio Apps Script assume a tela e mostra o estado real.
+      setTimeout(revelar, 4000);
 
-      // Mantém o PWA sempre buscando o launcher mais novo. O Service Worker v4
-      // não guarda o index em cache, evitando ficar preso numa abertura antiga.
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            const reg = await navigator.serviceWorker.register('./sw.js');
+            const reg = await navigator.serviceWorker.register('./sw.js?v=5');
             await reg.update().catch(() => {});
           } catch (e) {
             console.warn('Service Worker não registrado:', e);
