@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes,viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="theme-color" content="#FFFDF8">
-  <meta name="background-color" content="#FFFDF8">
   <title>Painel Financeiro - Tempo de Brincar</title>
-  <link rel="preconnect" href="https://script.google.com">
-  <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
-  <link rel="manifest" href="./manifest.webmanifest?v=9">
-  <link rel="icon" href="./icon-192.png?v=9">
-  <link rel="apple-touch-icon" href="./icon-192.png?v=9">
+  <link rel="manifest" href="./manifest.webmanifest?v=10">
+  <link rel="icon" href="./icon-192.png?v=10">
+  <link rel="apple-touch-icon" href="./icon-192.png?v=10">
   <style>
     :root{--paper:#fffdf8;--soft:#6c817f;--gold:#d79b2e;--line:#dfecea}
     *{box-sizing:border-box}
@@ -24,13 +24,12 @@
     .status{display:flex;align-items:center;justify-content:center;gap:9px;color:var(--soft);font-size:13px;font-weight:600}
     .spinner{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--gold);animation:girar .8s linear infinite;flex:none}
     @keyframes girar{to{transform:rotate(360deg)}}
-    @media (min-width:900px){.logo{width:250px;max-height:170px}.status{font-size:14px}}
   </style>
 </head>
 <body>
   <div id="splash" aria-live="polite">
     <div class="conteudo">
-      <img class="logo" src="./logo.png?v=9" alt="Escola Infantil Tempo de Brincar">
+      <img class="logo" src="./logo.png?v=10" alt="Escola Infantil Tempo de Brincar">
       <div class="status"><span class="spinner" aria-hidden="true"></span><span id="statusTxt">Abrindo painel…</span></div>
     </div>
   </div>
@@ -38,13 +37,10 @@
 
   <script>
     (() => {
-      const LAUNCHER_VERSION = '9';
+      const LAUNCHER_VERSION = '10';
       const MOBILE_BUILD = '2.4';
       const APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec';
-      const frame = document.getElementById('painel');
-      const splash = document.getElementById('splash');
       const statusTxt = document.getElementById('statusTxt');
-      let liberado = false;
 
       function detectarCelular() {
         const ua = navigator.userAgent || '';
@@ -54,25 +50,66 @@
           (window.visualViewport && window.visualViewport.width) || 9999,
           screen.width || 9999
         );
-        const porLargura = largura <= 767;
-        return porUA || porLargura;
+        return porUA || largura <= 767;
       }
 
-      const usarMobile = detectarCelular();
-      const rota = usarMobile ? 'painelMobile' : 'painel';
-      if (statusTxt) statusTxt.textContent = usarMobile ? 'Abrindo versão celular…' : 'Abrindo painel…';
+      function detectarSafariIOS() {
+        const ua = navigator.userAgent || '';
+        const iOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+        return iOS && safari;
+      }
 
-      // Query exclusiva desta versão força uma navegação nova e evita reaproveitar
-      // respostas antigas do iframe/navegador. No celular, a rota é SEMPRE painelMobile.
+      async function limparCachesAntigos() {
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister().catch(() => false)));
+          }
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.filter(k => k.startsWith('tdb-launcher-')).map(k => caches.delete(k)));
+          }
+          try { localStorage.setItem('tdbLauncherVersion', LAUNCHER_VERSION); } catch (_) {}
+        } catch (_) {}
+      }
+
+      const mobile = detectarCelular();
+      const safariIOS = detectarSafariIOS();
+      const stamp = Date.now().toString();
+
+      // SAFARI/iPHONE: não usamos iframe. O Safari pode preservar uma resposta antiga
+      // dentro do iframe/PWA. A navegação principal vai direto ao painelMobile atual.
+      if (mobile && safariIOS) {
+        if (statusTxt) statusTxt.textContent = 'Abrindo versão celular…';
+        limparCachesAntigos().finally(() => {
+          const url = APPS_SCRIPT
+            + '?acao=painelMobile'
+            + '&pwa=1'
+            + '&launcher=' + encodeURIComponent(LAUNCHER_VERSION)
+            + '&build=' + encodeURIComponent(MOBILE_BUILD)
+            + '&safari=1'
+            + '&_=' + encodeURIComponent(stamp);
+          window.location.replace(url);
+        });
+        return;
+      }
+
+      // Chrome/Android e desktop/tablet mantêm o launcher por iframe.
+      const rota = mobile ? 'painelMobile' : 'painel';
+      if (statusTxt) statusTxt.textContent = mobile ? 'Abrindo versão celular…' : 'Abrindo painel…';
+      const frame = document.getElementById('painel');
+      const splash = document.getElementById('splash');
       const qs = new URLSearchParams({
         acao: rota,
         pwa: '1',
         launcher: LAUNCHER_VERSION,
-        build: usarMobile ? MOBILE_BUILD : 'desktop',
-        _: String(Date.now())
+        build: mobile ? MOBILE_BUILD : 'desktop',
+        _: stamp
       });
       frame.src = APPS_SCRIPT + '?' + qs.toString();
 
+      let liberado = false;
       const revelar = () => {
         if (liberado) return;
         liberado = true;
@@ -82,26 +119,8 @@
       frame.addEventListener('load', revelar, { once: true });
       setTimeout(revelar, 7000);
 
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', async () => {
-          try {
-            // Migração para V9: apaga caches dos launchers anteriores uma única vez.
-            if (localStorage.getItem('tdbLauncherVersion') !== LAUNCHER_VERSION) {
-              const regs = await navigator.serviceWorker.getRegistrations();
-              await Promise.all(regs.map(r => r.unregister().catch(() => false)));
-              if ('caches' in window) {
-                const keys = await caches.keys();
-                await Promise.all(keys.filter(k => k.startsWith('tdb-launcher-')).map(k => caches.delete(k)));
-              }
-              localStorage.setItem('tdbLauncherVersion', LAUNCHER_VERSION);
-            }
-            const reg = await navigator.serviceWorker.register('./sw.js?v=9');
-            await reg.update().catch(() => {});
-          } catch (e) {
-            console.warn('Service Worker não registrado:', e);
-          }
-        });
-      }
+      // V10 não instala novo Service Worker. Primeiro remove os antigos.
+      window.addEventListener('load', () => { limparCachesAntigos(); }, { once: true });
     })();
   </script>
 </body>
