@@ -1,4 +1,4 @@
-const CACHE = 'tdb-launcher-v6';
+const CACHE = 'tdb-launcher-v7-auto';
 const SHELL = [
   './',
   './index.html',
@@ -36,8 +36,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// O launcher do GitHub abre do cache imediatamente e atualiza em segundo plano.
-// O Apps Script é de outra origem e NÃO é interceptado nem cacheado aqui.
+// O GitHub guarda somente o launcher. O Apps Script continua fora deste cache.
 self.addEventListener('fetch', event => {
   const req = event.request;
   const url = new URL(req.url);

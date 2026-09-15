@@ -8,9 +8,9 @@
   <title>Painel Financeiro - Tempo de Brincar</title>
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
-  <link rel="manifest" href="./manifest.webmanifest?v=6">
-  <link rel="icon" href="./icon-192.png?v=6">
-  <link rel="apple-touch-icon" href="./icon-192.png?v=6">
+  <link rel="manifest" href="./manifest.webmanifest?v=7">
+  <link rel="icon" href="./icon-192.png?v=7">
+  <link rel="apple-touch-icon" href="./icon-192.png?v=7">
   <style>
     :root{--paper:#fffdf8;--soft:#6c817f;--gold:#d79b2e;--line:#dfecea}
     *{box-sizing:border-box}
@@ -30,23 +30,24 @@
 <body>
   <div id="splash" aria-live="polite">
     <div class="conteudo">
-      <img class="logo" src="./logo.png?v=6" alt="Escola Infantil Tempo de Brincar">
+      <img class="logo" src="./logo.png?v=7" alt="Escola Infantil Tempo de Brincar">
       <div class="status"><span class="spinner" aria-hidden="true"></span><span>Sincronizando Google Drive…</span></div>
     </div>
   </div>
 
-  <iframe
-    id="painel"
-    title="Painel Financeiro"
-    allow="clipboard-read; clipboard-write"
-    src="https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec?acao=painel&pwa=1&launcher=6">
-  </iframe>
+  <iframe id="painel" title="Painel Financeiro" allow="clipboard-read; clipboard-write"></iframe>
 
   <script>
     (() => {
+      const BASE = 'https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec';
       const frame = document.getElementById('painel');
       const splash = document.getElementById('splash');
       let liberado = false;
+
+      // Celular usa a interface mobile. Tablet e computador continuam na interface normal.
+      const ehCelular = window.matchMedia('(max-width: 600px)').matches;
+      const acao = ehCelular ? 'painelMobile' : 'painel';
+      frame.src = `${BASE}?acao=${acao}&pwa=1&launcher=7`;
 
       const revelar = () => {
         if (liberado) return;
@@ -55,28 +56,13 @@
         splash.classList.add('oculto');
       };
 
-      /*
-       * v6 — mantém a lógica estável da v5 e elimina espera artificial postMessage do Apps Script.
-       * O HtmlService do Google pode criar uma camada/iframe intermediária e a
-       * mensagem de READY não chega de forma confiável ao launcher do GitHub.
-       * Isso foi o que podia deixar a tela presa em “Sincronizando…” para sempre.
-       *
-       * Agora o launcher só cobre o carregamento inicial do iframe. Assim que a
-       * página do Apps Script carrega, mostramos o próprio painel sem atraso extra. O index do
-       * Apps Script já usa exatamente a mesma tela (logo + sincronizando), então
-       * visualmente continua parecendo UMA única etapa até a tela do PIN.
-       */
       frame.addEventListener('load', revelar, { once: true });
-
-      // Segurança absoluta: nunca mais ficar bloqueado no splash do launcher.
-      // Mesmo se o evento load for perdido por algum comportamento do WebView,
-      // em até 4 s o próprio Apps Script assume a tela e mostra o estado real.
       setTimeout(revelar, 4000);
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', async () => {
           try {
-            const reg = await navigator.serviceWorker.register('./sw.js?v=6');
+            const reg = await navigator.serviceWorker.register('./sw.js?v=7');
             await reg.update().catch(() => {});
           } catch (e) {
             console.warn('Service Worker não registrado:', e);
