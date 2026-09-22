@@ -37,7 +37,7 @@
 
   <script>
     (() => {
-      const LAUNCHER_VERSION = '13';
+      const LAUNCHER_VERSION = '14';
       const MOBILE_BUILD = '2.6';
       const APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec';
       const statusTxt = document.getElementById('statusTxt');
@@ -160,6 +160,105 @@
       });
 
       iniciar();
+    })();
+  </script>
+  <script>
+    // v14 — MOTOR DE VOZ DO LANÇADOR
+    // O Apps Script não deixa o painel usar o microfone. Este lançador (página principal,
+    // com permissão de microfone) escuta no lugar dele e devolve o texto em tempo real;
+    // o painel mostra tudo num balão liquid glass, sem abrir outra página.
+    (() => {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const origemValida = o => /^https:\/\/[a-z0-9-]+\.googleusercontent\.com$/i.test(o || '');
+      let sessao = null;
+
+      const MENSAGENS_ERRO = {
+        'not-allowed': 'O microfone está bloqueado para este app. Libere o microfone nas permissões do navegador (ícone de cadeado / "aA" na barra de endereço) e tente de novo.',
+        'service-not-allowed': 'O reconhecimento de voz não está liberado neste navegador. Tente pelo Chrome ou Safari atualizados.',
+        'audio-capture': 'Não encontrei nenhum microfone funcionando neste aparelho.',
+        'network': 'Sem conexão com o serviço de voz. Verifique a internet e tente de novo.',
+        'language-not-supported': 'O idioma português não está disponível no reconhecimento de voz deste aparelho.'
+      };
+
+      function enviar(s, dados) {
+        try { s.fonte.postMessage(Object.assign({ origem: 'tdbLauncherVoz', id: s.id }, dados), s.origem); } catch (_) {}
+      }
+
+      function encerrar(s, tipo, extra) {
+        if (!s || s.encerrada) return;
+        s.encerrada = true;
+        clearTimeout(s.tSilencio); clearTimeout(s.tMax);
+        try { s.rec.onresult = s.rec.onerror = s.rec.onend = null; s.rec.abort(); } catch (_) {}
+        if (sessao === s) sessao = null;
+        if (tipo === 'resultado') enviar(s, { tipo: 'resultado', texto: (s.final + ' ' + s.parcial).replace(/\s+/g, ' ').trim() });
+        else if (tipo === 'erro') enviar(s, Object.assign({ tipo: 'erro' }, extra));
+      }
+
+      function iniciar(event, d) {
+        if (sessao) encerrar(sessao, 'cancelar');
+        const s = { id: d.id, fonte: event.source, origem: event.origin, final: '', parcial: '', encerrada: false, parandoPeloUsuario: false };
+        enviar(s, { tipo: 'recebido' });
+        if (!SR) { enviar(s, { tipo: 'erro', mensagem: 'Este navegador não tem reconhecimento de voz.', permitirJanela: true }); return; }
+        let rec;
+        try { rec = new SR(); } catch (_) { enviar(s, { tipo: 'erro', mensagem: 'Não consegui iniciar o reconhecimento de voz.', permitirJanela: true }); return; }
+        s.rec = rec;
+        sessao = s;
+        rec.lang = d.lang || 'pt-BR';
+        rec.interimResults = true;
+        rec.continuous = true;
+        rec.maxAlternatives = 1;
+
+        // Fecha sozinho após ~2,2 s de silêncio depois de falar, ou 60 s no total.
+        const armarSilencio = () => {
+          clearTimeout(s.tSilencio);
+          s.tSilencio = setTimeout(() => { try { rec.stop(); } catch (_) { encerrar(s, 'resultado'); } }, 2200);
+        };
+        s.tMax = setTimeout(() => { try { rec.stop(); } catch (_) { encerrar(s, 'resultado'); } }, 60000);
+
+        rec.onstart = () => enviar(s, { tipo: 'inicio' });
+        rec.onresult = e => {
+          let fin = '', par = '';
+          for (let i = 0; i < e.results.length; i++) {
+            const t = e.results[i][0] ? e.results[i][0].transcript : '';
+            if (e.results[i].isFinal) fin += t + ' '; else par += t + ' ';
+          }
+          s.final = fin.replace(/\s+/g, ' ').trim();
+          s.parcial = par.replace(/\s+/g, ' ').trim();
+          enviar(s, { tipo: 'parcial', final: s.final, parcial: s.parcial });
+          armarSilencio();
+        };
+        rec.onerror = e => {
+          const codigo = e && e.error;
+          if (codigo === 'no-speech' || codigo === 'aborted') { encerrar(s, 'resultado'); return; }
+          const permitirJanela = codigo === 'not-allowed' || codigo === 'service-not-allowed';
+          encerrar(s, 'erro', { codigo, mensagem: MENSAGENS_ERRO[codigo] || 'Não consegui reconhecer o que foi falado.', permitirJanela });
+        };
+        rec.onend = () => encerrar(s, 'resultado');
+        try { rec.start(); }
+        catch (_) { encerrar(s, 'erro', { mensagem: 'Não consegui ligar o microfone. Tente de novo.', permitirJanela: true }); }
+      }
+
+      window.addEventListener('message', event => {
+        const d = event && event.data;
+        if (!d || d.origem !== 'tdbPainel' || !origemValida(event.origin)) return;
+        if (d.tipo === 'vozPing') {
+          try { event.source.postMessage({ origem: 'tdbLauncherVoz', tipo: 'vozPong', suporta: !!SR }, event.origin); } catch (_) {}
+        } else if (d.tipo === 'vozIniciar') {
+          iniciar(event, d);
+        } else if (d.tipo === 'vozParar' && sessao && sessao.id === d.id) {
+          const s = sessao;
+          s.parandoPeloUsuario = true;
+          try { s.rec.stop(); } catch (_) { encerrar(s, 'resultado'); }
+          setTimeout(() => encerrar(s, 'resultado'), 1500); // garantia caso o navegador não dispare onend
+        } else if (d.tipo === 'vozCancelar' && sessao && sessao.id === d.id) {
+          encerrar(sessao, 'cancelar');
+        }
+      });
+
+      // Se o app for para segundo plano (ex.: bloqueou a tela), encerra e entrega o que já foi ouvido.
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && sessao) encerrar(sessao, 'resultado');
+      });
     })();
   </script>
 </body>
