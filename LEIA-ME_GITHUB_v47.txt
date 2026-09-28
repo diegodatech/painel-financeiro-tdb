@@ -1,0 +1,40 @@
+TEMPO DE BRINCAR — GITHUB v47
+
+ESTA É A VERSÃO PARA TRABALHAR COM O FRONTEND SOMENTE PELO GIT/GITHUB PAGES.
+
+O QUE VAI PARA O GITHUB
+- index.html
+- mobile.html
+- desktop.html
+- config.js
+- version.json
+- manifest.webmanifest
+- sw.js
+- icons/
+- assets/
+
+O QUE NÃO PRECISA MAIS SER COLADO NO GOOGLE APPS SCRIPT
+- index.html do painel
+- index_mobile.html
+- versões futuras do frontend
+
+O GOOGLE APPS SCRIPT CONTINUA SOMENTE COMO BACKEND/API DO GOOGLE DRIVE.
+Mantenha o Code.gs atual que já está funcionando. A URL configurada em config.js é:
+https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec
+
+COMO PUBLICAR
+1. Crie/abra o repositório do GitHub usado pelo painel.
+2. Coloque TODO o conteúdo desta pasta na raiz publicada pelo GitHub Pages.
+3. Em Settings > Pages, publique a branch usada (normalmente main / root).
+4. Abra a URL do GitHub Pages.
+5. No iPhone/Android, abra uma vez online para preencher o cache offline.
+
+ATUALIZAÇÕES FUTURAS
+- Altere mobile.html/desktop.html e mude o campo build em version.json/config.js/service worker.
+- Envie os arquivos ao Git.
+- Não é necessário substituir HTML no Apps Script.
+
+IMPORTANTE
+- O GitHub guarda somente código/interface. Os dados financeiros continuam no Google Drive via Apps Script.
+- O PDF padrão de Contratos agora está em assets/termo-consentimento.pdf e não depende mais de google.script.run.
+- A interface não depende mais do token __TDB_BOOTSTRAP_INFO_JSON__; a revisão é consultada pela API statusAbertura.
