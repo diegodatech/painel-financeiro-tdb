@@ -1524,23 +1524,14 @@ html.dark-mode {
    else change();
   }
   pending = commit;
-  if (reduce.matches || document.visibilityState === 'hidden') { commit(); return; }
-  if (typeof document.startViewTransition === 'function' && window.ReactDOM && window.ReactDOM.flushSync) {
-   try {
-    var transition = document.startViewTransition(commit); active = transition;
-    transition.ready.catch(function () {});
-    transition.updateCallbackDone.catch(function () { commit(); });
-    transition.finished.then(function () { if (active === transition) active = null; }, function () { if (active === transition) active = null; });
-    return;
-   } catch (_) { commit(); }
-  }
+  /* v53 Mobile: troca imediata. Não usa ViewTransition para não atrasar a resposta ao toque. */
   commit();
   frame = requestAnimationFrame(function () {
    frame = 0;
-   if (token !== serial || reduce.matches) return;
+   if (token !== serial || reduce.matches || document.visibilityState === 'hidden') return;
    var main = document.querySelector('.painel-main');
    if (!main || typeof main.animate !== 'function') return;
-   entrance = main.animate([{ opacity: .65, transform: 'translateY(3px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 100, easing: 'cubic-bezier(.2,.8,.2,1)' });
+   entrance = main.animate([{ opacity: .88 }, { opacity: 1 }], { duration: 45, easing: 'linear' });
    entrance.finished.catch(function () {});
   });
  }
@@ -18211,6 +18202,45 @@ html[data-tdb-aurora] body.dark-mode .contas-pessoais-raiz>.contas-pessoais-card
 </style>
 <script id="tdb-mobile-v49-touch-marker">window.__TDB_MOBILE_TOUCH_AUDIT='v49';</script>
 
+
+<style id="tdb-mobile-v53-fast-navigation">
+/* v53 — somente Mobile: menus mais soltos, abas mais rápidas e resposta de toque imediata. */
+@media (max-width:980px){
+  html body .tdb-bottom-dock .tdb-dock-rail,
+  html body .abas-menu,
+  html body .painel-main div:has(> .subtab-btn),
+  html body .festas-tdb-abas,
+  html body .mobile-saldos-scroll{
+    scroll-snap-type:none!important;
+    scroll-behavior:auto!important;
+    overscroll-behavior-x:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  html body .tdb-bottom-dock .tdb-dock-rail>.aba-item,
+  html body .abas-menu>.aba-item,
+  html body .painel-main div:has(> .subtab-btn)>.subtab-btn,
+  html body .festas-tdb-abas>button,
+  html body .mobile-saldos-scroll>*{scroll-snap-align:none!important;}
+
+  html body .tdb-bottom-dock button,
+  html body .tdb-bottom-dock .aba-item,
+  html body .subtab-btn,
+  html body .tdb-three-buttons>button,
+  html body .selection-card{
+    transition-duration:45ms!important;
+    transition-timing-function:ease-out!important;
+    -webkit-tap-highlight-color:transparent!important;
+  }
+  html body .tdb-bottom-dock button:active,
+  html body .tdb-bottom-dock .aba-item:active,
+  html body .subtab-btn:active,
+  html body .tdb-three-buttons>button:active,
+  html body .selection-card:active{
+    filter:brightness(.96)!important;
+  }
+}
+</style>
+<script id="tdb-mobile-v53-fast-navigation-marker">window.__TDB_MOBILE_FAST_NAV='v53';</script>
 </body>
 </html>
 
