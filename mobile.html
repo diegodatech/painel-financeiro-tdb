@@ -1553,11 +1553,6 @@ html.dark-mode {
 
   <style id="tdb-v50-physical-key-feedback">
     /* v50 — teclado físico: replica visualmente o toque dos botões virtuais. */
-    .pin-card .pin-tecla.tdb-keyboard-pressed {
-      transform: scale(.91) !important;
-      filter: brightness(.94) saturate(1.08) !important;
-      box-shadow: 0 3px 9px rgba(16,110,107,.16), inset 0 3px 12px rgba(16,110,107,.13) !important;
-    }
     .lgcalc-panel .lgcalc-key.tdb-keyboard-pressed {
       transform: scale(.93) !important;
       filter: brightness(.92) saturate(1.08) !important;
@@ -1567,7 +1562,6 @@ html.dark-mode {
       filter: brightness(1.18) saturate(1.08) !important;
     }
     @media (prefers-reduced-motion: reduce) {
-      .pin-card .pin-tecla.tdb-keyboard-pressed,
       .lgcalc-panel .lgcalc-key.tdb-keyboard-pressed { transition: none !important; }
     }
   </style>
@@ -2260,6 +2254,90 @@ html.dark-mode {
         }
       }
 
+
+      // v52 Git — confirmação robusta de gravação fora do HtmlService.
+      // O ContentService do Apps Script responde por redirecionamento. Em navegadores
+      // externos (GitHub Pages/PWA), a escrita pode chegar ao servidor e a resposta
+      // final não ficar legível pelo fetch. Para não deixar uma alteração presa na fila,
+      // o Git envia a gravação e confirma em seguida lendo somente a própria chave.
+      async function confirmarValorNoDrive_(key, valorEsperado, baseEsperada, removido) {
+        const esperada = valorEsperado == null ? null : String(valorEsperado);
+        const pausas = [0, 250, 650, 1300, 2200];
+        let ultimo = null;
+        for (let i = 0; i < pausas.length; i++) {
+          if (pausas[i]) await new Promise(r => setTimeout(r, pausas[i]));
+          try {
+            const url = APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key) + '&_=' + Date.now();
+            const corpo = await lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 12000));
+            ultimo = corpo;
+            const dados = corpo && corpo.dados ? corpo.dados : {};
+            const existe = Object.prototype.hasOwnProperty.call(dados, key);
+            const versaoServidor = Number(corpo && corpo.serverUpdatedAt) || 0;
+            if (removido) {
+              if (!existe && (versaoServidor > 0 || Number(baseEsperada || 0) === 0)) {
+                return { ok: true, serverUpdatedAt: versaoServidor };
+              }
+            } else if (existe && String(dados[key]) === esperada) {
+              return { ok: true, serverUpdatedAt: versaoServidor };
+            }
+            // Se a versão central já avançou para outro valor, trata como conflito real.
+            if (versaoServidor > 0 && Number(baseEsperada || 0) > 0 && versaoServidor !== Number(baseEsperada || 0)) {
+              return { ok: false, stale: true, serverUpdatedAt: versaoServidor, serverValue: existe ? String(dados[key]) : null };
+            }
+          } catch (e) {
+            ultimo = e;
+          }
+        }
+        return { ok: false, erro: ultimo && ultimo.message ? ultimo.message : 'O Drive ainda não confirmou a alteração.' };
+      }
+
+      async function postarGitEConfirmar_(corpoPost, key, valorEsperado, removido) {
+        const baseUsada = Number(corpoPost.baseUpdatedAt) || 0;
+        // Dentro do Apps Script, mantém a RPC nativa antiga e usa sua resposta direta.
+        if (window.google && window.google.script && window.google.script.run) {
+          const resp = await timeoutFetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(corpoPost),
+          }, 45000);
+          return await lerRespostaJSON(resp);
+        }
+
+        // No Git/PWA usamos uma requisição simples no-cors. Ela pode ser opaca, então
+        // a confirmação oficial é a leitura curta da própria chave logo depois.
+        try {
+          await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            cache: 'no-store',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(corpoPost),
+          });
+        } catch (e) {
+          // Mesmo quando o navegador acusa erro de transporte, o Apps Script pode já
+          // ter recebido o POST. Por isso confirmamos antes de considerar falha.
+        }
+
+        let confirmado = await confirmarValorNoDrive_(key, valorEsperado, baseUsada, !!removido);
+        if (confirmado.ok) return { ok: true, accepted: true, serverUpdatedAt: Number(confirmado.serverUpdatedAt) || 0 };
+        if (confirmado.stale) return { ok: true, accepted: false, stale: true, serverUpdatedAt: Number(confirmado.serverUpdatedAt) || 0 };
+
+        // Uma segunda tentativa única cobre quedas rápidas de rede sem multiplicar POSTs.
+        try {
+          await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            cache: 'no-store',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(corpoPost),
+          });
+        } catch (e) {}
+        confirmado = await confirmarValorNoDrive_(key, valorEsperado, baseUsada, !!removido);
+        if (confirmado.ok) return { ok: true, accepted: true, serverUpdatedAt: Number(confirmado.serverUpdatedAt) || 0 };
+        if (confirmado.stale) return { ok: true, accepted: false, stale: true, serverUpdatedAt: Number(confirmado.serverUpdatedAt) || 0 };
+        throw new Error(confirmado.erro || 'O Google Drive ainda não confirmou a alteração.');
+      }
+
       async function enviarSet_(key, val, versao, marcarFila) {
         if (!APPS_SCRIPT_URL) return { ok: true, accepted: false, localOnly: true };
         if (marcarFila !== false) marcarPendente(key);
@@ -2271,19 +2349,15 @@ html.dark-mode {
 
         for (let tentativa = 1; tentativa <= 3; tentativa++) {
           try {
-            const resp = await timeoutFetch(APPS_SCRIPT_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({
-                acao: 'set',
-                key,
-                value: val,
-                updatedAt: Number(versao) || Date.now(),
-                baseUpdatedAt: baseVersao_(key),
-                clientId: clienteId(),
-              }),
-            }, limite);
-            const corpo = await lerRespostaJSON(resp);
+            const corpoPost = {
+              acao: 'set',
+              key,
+              value: val,
+              updatedAt: Number(versao) || Date.now(),
+              baseUpdatedAt: baseVersao_(key),
+              clientId: clienteId(),
+            };
+            const corpo = await postarGitEConfirmar_(corpoPost, key, val, false);
 
             if (corpo.accepted === false && corpo.stale) {
               // Outra máquina gravou uma versão mais nova. Não fingimos sucesso:
@@ -2461,15 +2535,11 @@ html.dark-mode {
         let ultimoErro = null;
         for (let tentativa = 1; tentativa <= 3; tentativa++) {
           try {
-            const resp = await timeoutFetch(APPS_SCRIPT_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({
-                acao: 'delete', key, deletar: true,
-                updatedAt: Number(versao) || Date.now(), baseUpdatedAt: baseVersao_(key), clientId: clienteId(),
-              }),
-            }, 30000);
-            const corpo = await lerRespostaJSON(resp);
+            const corpoPost = {
+              acao: 'delete', key, deletar: true,
+              updatedAt: Number(versao) || Date.now(), baseUpdatedAt: baseVersao_(key), clientId: clienteId(),
+            };
+            const corpo = await postarGitEConfirmar_(corpoPost, key, null, true);
             if (corpo.accepted === false && corpo.stale) {
               window.__statusPlanilha = 'erro';
               window.__ultimoErroSync = 'A exclusão ficou atrás de uma alteração mais nova no Drive. Nada foi apagado à força.';
@@ -3620,7 +3690,7 @@ function validarPinSeguro(pin, registro) {
                 case 0:
                     if (!registro)
                         return [2 /*return*/, false];
-                    if (/^\d{4}$/.test(String(registro)))
+                    if (/^\d{4,6}$/.test(String(registro)))
                         return [2 /*return*/, String(pin) === String(registro)];
                     _b.label = 1;
                 case 1:
@@ -3642,29 +3712,29 @@ function validarPinSeguro(pin, registro) {
     });
 }
 function TelaBloqueio(_a) {
-    var pinConfigurado = _a.pinConfigurado, onDesbloquear = _a.onDesbloquear, onDefinirPin = _a.onDefinirPin, onRemoverPin = _a.onRemoverPin, valorInicial = _a.valorInicial;
+    var pinConfigurado = _a.pinConfigurado, onDesbloquear = _a.onDesbloquear, onDefinirPin = _a.onDefinirPin, onRemoverPin = _a.onRemoverPin, valorInicial = _a.valorInicial, tamanhoPin = _a.tamanhoPin;
+    var limitePin = tamanhoPin === 6 ? 6 : 4;
     var _b = useState(pinConfigurado ? 'entrar' : 'escolher'), modo = _b[0], setModo = _b[1];
-    var _c = useState(valorInicial || ''), digitado = _c[0], setDigitado = _c[1];
+    var _c = useState((valorInicial || '').slice(0, limitePin)), digitado = _c[0], setDigitado = _c[1];
     var _d = useState(''), primeiroPin = _d[0], setPrimeiroPin = _d[1];
     var _e = useState(''), erro = _e[0], setErro = _e[1];
     var _f = useState(0), tentativasErradas = _f[0], setTentativasErradas = _f[1];
-    var teclaFisicaPinState = useState(''), teclaFisicaPin = teclaFisicaPinState[0], setTeclaFisicaPin = teclaFisicaPinState[1];
     var containerRef = useRef(null);
     useEffect(function () {
         if (containerRef.current)
             containerRef.current.focus();
     }, []);
     useEffect(function () {
-        if (modo === 'entrar' && valorInicial && valorInicial.length === 4) {
-            confirmarDigitos(valorInicial);
+        if (modo === 'entrar' && valorInicial && valorInicial.length >= limitePin) {
+            confirmarDigitos(valorInicial.slice(0, limitePin));
         }
     }, []);
     function apertarDigito(d) {
         setDigitado(function (atual) {
-            if (atual.length >= 4)
+            if (atual.length >= limitePin)
                 return atual;
             var novo = atual + d;
-            if (novo.length === 4) {
+            if (novo.length === limitePin) {
                 setTimeout(function () { return confirmarDigitos(novo); }, 160);
             }
             return novo;
@@ -3676,35 +3746,19 @@ function TelaBloqueio(_a) {
         setErro('');
     }
     useEffect(function () {
-        function teclaPin(e) {
-            if (e.key >= '0' && e.key <= '9') return e.key;
-            if (e.key === 'Backspace') return 'Backspace';
-            return '';
-        }
         function aoPressionarTecla(e) {
-            var tecla = teclaPin(e);
-            if (!tecla) return;
-            e.preventDefault();
-            if (e.repeat) return;
-            setTeclaFisicaPin(tecla);
-            if (tecla === 'Backspace') apagar();
-            else apertarDigito(tecla);
+            if (e.key >= '0' && e.key <= '9') {
+                e.preventDefault();
+                if (!e.repeat) apertarDigito(e.key);
+            }
+            else if (e.key === 'Backspace') {
+                e.preventDefault();
+                if (!e.repeat) apagar();
+            }
         }
-        function aoSoltarTecla(e) {
-            var tecla = teclaPin(e);
-            if (!tecla) return;
-            setTeclaFisicaPin(function (atual) { return atual === tecla ? '' : atual; });
-        }
-        function aoPerderFoco() { setTeclaFisicaPin(''); }
         window.addEventListener('keydown', aoPressionarTecla);
-        window.addEventListener('keyup', aoSoltarTecla);
-        window.addEventListener('blur', aoPerderFoco);
-        return function () {
-            window.removeEventListener('keydown', aoPressionarTecla);
-            window.removeEventListener('keyup', aoSoltarTecla);
-            window.removeEventListener('blur', aoPerderFoco);
-        };
-    }, [modo, primeiroPin, pinConfigurado]);
+        return function () { return window.removeEventListener('keydown', aoPressionarTecla); };
+    }, [modo, primeiroPin, pinConfigurado, limitePin]);
     async function confirmarDigitos(valor) {
         if (modo === 'entrar') {
             if (await validarPinSeguro(valor, pinConfigurado)) {
@@ -3736,7 +3790,7 @@ function TelaBloqueio(_a) {
         }
     }
     var titulo = modo === 'entrar' ? 'Digite o PIN pra abrir o painel'
-        : modo === 'escolher' ? 'Crie um PIN de 4 dígitos'
+        : modo === 'escolher' ? 'Crie um PIN de ' + limitePin + ' dígitos'
             : 'Digite o mesmo PIN de novo';
     var subtitulo = modo === 'entrar'
         ? 'Toque nos números abaixo para entrar.'
@@ -3752,26 +3806,26 @@ function TelaBloqueio(_a) {
             border: '1px solid rgba(255,255,255,0.70)', borderRadius: 30, padding: '28px 22px 24px',
             boxShadow: '0 12px 34px rgba(16,110,107,0.12), inset 0 1px 0 rgba(255,255,255,0.86)',
             maxWidth: 348, width: '100%',
-        } }, React.createElement("img", { src: LOGO_B64, alt: "Escola Infantil Tempo de Brincar", style: { height: 66, maxWidth: '86%', objectFit: 'contain' } }), React.createElement("div", null, React.createElement("div", { style: { fontSize: 16, fontWeight: 800, color: COLORS.ink, marginBottom: 6 } }, titulo), React.createElement("div", { style: { fontSize: 12.5, color: '#6C8482', lineHeight: 1.35 } }, subtitulo)), React.createElement("div", { style: { display: 'flex', gap: 12, marginTop: 2 } }, [0, 1, 2, 3].map(function (i) { return (React.createElement("div", { key: i, className: "pin-bolinha", style: {
+        } }, React.createElement("img", { src: LOGO_B64, alt: "Escola Infantil Tempo de Brincar", style: { height: 66, maxWidth: '86%', objectFit: 'contain' } }), React.createElement("div", null, React.createElement("div", { style: { fontSize: 16, fontWeight: 800, color: COLORS.ink, marginBottom: 6 } }, titulo), React.createElement("div", { style: { fontSize: 12.5, color: '#6C8482', lineHeight: 1.35 } }, subtitulo)), React.createElement("div", { style: { display: 'flex', gap: limitePin === 6 ? 10 : 14, marginTop: 3 } }, Array.from({ length: limitePin }, function (_, i) { return i; }).map(function (i) { return (React.createElement("div", { key: i, className: "pin-bolinha", style: {
             width: 24, height: 24, borderRadius: '50%',
             border: '2px solid ' + (digitado.length > i ? '#18B9AD' : 'rgba(76,142,139,0.52)'),
             background: digitado.length > i ? '#18B9AD' : 'rgba(255,255,255,0.48)',
             color: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 0, fontWeight: 800,
             boxShadow: digitado.length > i ? '0 4px 14px rgba(24,185,173,0.28), inset 0 1px 0 rgba(255,255,255,0.55)' : 'none'
-        } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 700, lineHeight: 1.35 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, width: '100%', justifyItems: 'center' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-tecla" + (teclaFisicaPin === d ? " tdb-keyboard-pressed" : ""), onClick: function () { return apertarDigito(d); }, style: {
+        } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 700, lineHeight: 1.35 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, width: '100%', justifyItems: 'center' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-tecla", onClick: function () { return apertarDigito(d); }, style: {
             width: 72, height: 72, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.78)',
             background: 'rgba(255,255,255,0.44)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
             fontWeight: 700, fontSize: 30, color: COLORS.ink, cursor: 'pointer',
             WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', outline: 'none', overflow: 'hidden',
             boxShadow: '0 10px 18px rgba(16,110,107,0.10), inset 0 1px 0 rgba(255,255,255,0.82)',
-        } }, d)); }), React.createElement("div", { style: { width: 72, height: 72 } }), React.createElement("button", { className: "pin-tecla" + (teclaFisicaPin === "0" ? " tdb-keyboard-pressed" : ""), onClick: function () { return apertarDigito('0'); }, style: {
+        } }, d)); }), React.createElement("div", { style: { width: 72, height: 72 } }), React.createElement("button", { className: "pin-tecla", onClick: function () { return apertarDigito('0'); }, style: {
             width: 72, height: 72, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.78)',
             background: 'rgba(255,255,255,0.44)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
             fontWeight: 700, fontSize: 30, color: COLORS.ink, cursor: 'pointer',
             WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', outline: 'none', overflow: 'hidden',
             boxShadow: '0 10px 18px rgba(16,110,107,0.10), inset 0 1px 0 rgba(255,255,255,0.82)',
-        } }, "0"), React.createElement("button", { className: "pin-tecla pin-apagar" + (teclaFisicaPin === "Backspace" ? " tdb-keyboard-pressed" : ""), onClick: apagar, title: "Apagar", style: {
+        } }, "0"), React.createElement("button", { className: "pin-tecla pin-apagar", onClick: apagar, title: "Apagar", style: {
             width: 72, height: 72, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.55)',
             background: 'rgba(255,255,255,0.28)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
             fontWeight: 700, fontSize: 22, color: '#8A5C81', cursor: 'pointer',
@@ -4026,18 +4080,20 @@ function AssistenteIA(_a) {
         } }, "Enviar"))))), document.body);
 }
 function ModalAlterarPin(_a) {
-    var pinAtual = _a.pinAtual, onFechar = _a.onFechar, onSalvar = _a.onSalvar;
+    var pinAtual = _a.pinAtual, tamanhoAtual = _a.tamanhoAtual, onFechar = _a.onFechar, onSalvar = _a.onSalvar;
     var _b = useState(pinAtual ? 'atual' : 'novo'), etapa = _b[0], setEtapa = _b[1];
     var _c = useState(''), digitado = _c[0], setDigitado = _c[1];
     var _d = useState(''), novoPinTemp = _d[0], setNovoPinTemp = _d[1];
     var _e = useState(''), erro = _e[0], setErro = _e[1];
     var _f = useState(false), sucesso = _f[0], setSucesso = _f[1];
+    var _g = useState(tamanhoAtual === 6 ? 6 : 4), tamanhoNovo = _g[0], setTamanhoNovo = _g[1];
+    var limiteEtapa = etapa === 'atual' ? (tamanhoAtual === 6 ? 6 : 4) : tamanhoNovo;
     function apertar(d) {
         setDigitado(function (atual) {
-            if (atual.length >= 4)
+            if (atual.length >= limiteEtapa)
                 return atual;
             var novo = atual + d;
-            if (novo.length === 4)
+            if (novo.length === limiteEtapa)
                 setTimeout(function () { return confirmar(novo); }, 120);
             return novo;
         });
@@ -4050,11 +4106,11 @@ function ModalAlterarPin(_a) {
         function aoPressionarTecla(e) {
             if (e.key >= '0' && e.key <= '9') {
                 e.preventDefault();
-                apertar(e.key);
+                if (!e.repeat) apertar(e.key);
             }
             else if (e.key === 'Backspace') {
                 e.preventDefault();
-                apagar();
+                if (!e.repeat) apagar();
             }
             else if (e.key === 'Escape') {
                 e.preventDefault();
@@ -4062,67 +4118,66 @@ function ModalAlterarPin(_a) {
             }
             else if (e.key === 'Enter') {
                 e.preventDefault();
-                if (digitadoRef.current.length === 4)
+                if (digitadoRef.current.length === limiteEtapa)
                     confirmar(digitadoRef.current);
             }
         }
         window.addEventListener('keydown', aoPressionarTecla);
         return function () { return window.removeEventListener('keydown', aoPressionarTecla); };
-    }, [etapa, novoPinTemp]);
-    function confirmar(valor) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!(etapa === 'atual')) return [3 /*break*/, 2];
-                        return [4 /*yield*/, validarPinSeguro(valor, pinAtual)];
-                    case 1:
-                        if (_a.sent()) {
-                            setDigitado('');
-                            setEtapa('novo');
-                        }
-                        else {
-                            setErro('PIN atual incorreto. Tenta de novo.');
-                            setDigitado('');
-                        }
-                        return [3 /*break*/, 3];
-                    case 2:
-                        if (etapa === 'novo') {
-                            setNovoPinTemp(valor);
-                            setDigitado('');
-                            setEtapa('confirmar');
-                        }
-                        else if (etapa === 'confirmar') {
-                            if (valor === novoPinTemp) {
-                                onSalvar(valor);
-                                setSucesso(true);
-                                setTimeout(onFechar, 1200);
-                            }
-                            else {
-                                setErro('Os PINs não bateram, vamos de novo.');
-                                setDigitado('');
-                                setNovoPinTemp('');
-                                setEtapa('novo');
-                            }
-                        }
-                        _a.label = 3;
-                    case 3: return [2 /*return*/];
-                }
-            });
-        });
+    }, [etapa, novoPinTemp, limiteEtapa]);
+    async function confirmar(valor) {
+        if (etapa === 'atual') {
+            if (await validarPinSeguro(valor, pinAtual)) {
+                setDigitado('');
+                setEtapa('novo');
+            }
+            else {
+                setErro('PIN atual incorreto. Tenta de novo.');
+                setDigitado('');
+            }
+            return;
+        }
+        if (etapa === 'novo') {
+            setNovoPinTemp(valor);
+            setDigitado('');
+            setEtapa('confirmar');
+            return;
+        }
+        if (etapa === 'confirmar') {
+            if (valor === novoPinTemp) {
+                onSalvar(valor, tamanhoNovo);
+                setSucesso(true);
+                setTimeout(onFechar, 1200);
+            }
+            else {
+                setErro('Os PINs não bateram, vamos de novo.');
+                setDigitado('');
+                setNovoPinTemp('');
+                setEtapa('novo');
+            }
+        }
+    }
+    function escolherTamanho(n) {
+        setTamanhoNovo(n === 6 ? 6 : 4);
+        setDigitado('');
+        setNovoPinTemp('');
+        setErro('');
     }
     var titulo = sucesso ? '✓ PIN alterado com sucesso!'
-        : etapa === 'atual' ? 'Digite o PIN atual'
+        : etapa === 'atual' ? 'Digite o PIN atual (' + limiteEtapa + ' dígitos)'
             : etapa === 'novo' ? 'Digite o novo PIN'
-                : 'Confirme o novo PIN';
+                : 'Confirme o novo PIN de ' + tamanhoNovo + ' dígitos';
+    var pontos = Array.from({ length: limiteEtapa }, function (_, i) { return i; });
     return ReactDOM.createPortal(React.createElement("div", { className: "pin-modal-overlay", onClick: onFechar, style: {
             position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999,
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box',
         } }, React.createElement("div", { className: "pin-modal-card", onClick: function (e) { return e.stopPropagation(); }, style: {
-            background: '#FFFDFB', borderRadius: 14, padding: '28px 24px', maxWidth: 320, width: 'min(320px, 92vw)',
+            background: '#FFFDFB', borderRadius: 14, padding: '28px 24px', maxWidth: 340, width: 'min(340px, 92vw)',
             textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
             fontFamily: 'Inter, -apple-system, sans-serif', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box',
-        } }, React.createElement("div", { style: { fontSize: 15.5, fontWeight: 700, color: COLORS.ink } }, "\uD83D\uDD12 ", titulo), !sucesso && (React.createElement(React.Fragment, null, React.createElement("div", { style: { display: 'flex', gap: 14, justifyContent: 'center' } }, [0, 1, 2, 3].map(function (i) { return (React.createElement("div", { key: i, style: { width: 16, height: 16, borderRadius: '50%', border: '2.5px solid #C15CA0', background: digitado.length > i ? '#C15CA0' : 'transparent', flexShrink: 0 } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 600 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, justifyContent: 'center', maxWidth: 220, margin: '0 auto', width: '100%' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-modal-key", onClick: function () { return apertar(d); }, style: {
+        } }, React.createElement("div", { style: { fontSize: 15.5, fontWeight: 700, color: COLORS.ink } }, "🔒 ", titulo), !sucesso && (React.createElement(React.Fragment, null,
+        etapa === 'novo' && React.createElement("div", { style: { display: 'grid', gap: 8 } }, React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 700 } }, "Escolha o tamanho da nova senha"), React.createElement("div", { style: { display: 'flex', gap: 8, justifyContent: 'center' } }, [4, 6].map(function (n) { return React.createElement("button", { key: n, onClick: function () { return escolherTamanho(n); }, style: { border: tamanhoNovo === n ? '1.5px solid #18B9AD' : '1px solid #E8D9E5', background: tamanhoNovo === n ? 'rgba(24,185,173,.12)' : '#FFFFFF', color: tamanhoNovo === n ? '#106E6B' : COLORS.inkSoft, borderRadius: 10, padding: '9px 15px', fontSize: 13, fontWeight: 800, cursor: 'pointer' } }, n + ' dígitos'); }))),
+        React.createElement("div", { style: { display: 'flex', gap: limiteEtapa === 6 ? 9 : 14, justifyContent: 'center' } }, pontos.map(function (i) { return (React.createElement("div", { key: i, style: { width: 16, height: 16, borderRadius: '50%', border: '2.5px solid #C15CA0', background: digitado.length > i ? '#C15CA0' : 'transparent', flexShrink: 0 } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 600 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, justifyContent: 'center', maxWidth: 220, margin: '0 auto', width: '100%' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-modal-key", onClick: function () { return apertar(d); }, style: {
             aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
             fontWeight: 600, fontSize: 18, color: COLORS.ink, cursor: 'pointer', boxSizing: 'border-box',
         } }, d)); }), React.createElement("div", null), React.createElement("button", { className: "pin-modal-key", onClick: function () { return apertar('0'); }, style: {
@@ -4131,7 +4186,7 @@ function ModalAlterarPin(_a) {
         } }, "0"), React.createElement("button", { onClick: apagar, style: {
             aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: 'none', background: 'none',
             fontWeight: 600, fontSize: 13.5, color: '#8A5C81', cursor: 'pointer', boxSizing: 'border-box',
-        } }, "\u232B")), React.createElement("button", { onClick: onFechar, style: { background: 'none', border: 'none', color: '#8A5C81', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' } }, "Cancelar (ou aperte Esc)"))))), document.body);
+        } }, "⌫")), React.createElement("button", { onClick: onFechar, style: { background: 'none', border: 'none', color: '#8A5C81', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' } }, "Cancelar (ou aperte Esc)"))))), document.body);
 }
 function monthIndex(mes) { return MESES.indexOf(mes); }
 function lerPreferencia(chave) {
@@ -10267,7 +10322,7 @@ function PainelFinanceiro() {
     var pinAntecipadoRef = useRef('');
     useEffect(function () {
         function capturarCedo(e) {
-            if (e.key >= '0' && e.key <= '9' && pinAntecipadoRef.current.length < 4) {
+            if (e.key >= '0' && e.key <= '9' && pinAntecipadoRef.current.length < 6) {
                 pinAntecipadoRef.current += e.key;
             }
         }
@@ -11012,7 +11067,20 @@ function PainelFinanceiro() {
     useEffect(function () { salvarPreferencia('modoPrivadoValores', modoPrivadoValores); }, [modoPrivadoValores]);
     useEffect(function () { salvarPreferencia('modoPrivadoRematricula', modoPrivadoRematricula); }, [modoPrivadoRematricula]);
     var _3 = useState(null), pinConfigurado = _3[0], setPinConfigurado = _3[1];
+    var _3b = useState(null), tamanhoPin = _3b[0], setTamanhoPin = _3b[1];
     var _4 = useState(function () { return !!window.__painelDesbloqueadoNestaSessao; }), desbloqueado = _4[0], setDesbloqueadoEstado = _4[1];
+    useEffect(function () {
+        (async function () {
+            try {
+                var rTam = await window.storage.get('painel_pin_tamanho', false);
+                var nTam = Number(rTam && rTam.value);
+                setTamanhoPin(nTam === 6 ? 6 : 4);
+            }
+            catch (e) {
+                setTamanhoPin(4);
+            }
+        })();
+    }, []);
     var setDesbloqueado = function (valor) {
         window.__painelDesbloqueadoNestaSessao = !!valor;
         setDesbloqueadoEstado(!!valor);
@@ -11028,7 +11096,7 @@ function PainelFinanceiro() {
                     case 1:
                         r = _a.sent();
                         valorPin = r && r.value ? r.value : '';
-                        if (!/^\d{4}$/.test(String(valorPin))) return [3 /*break*/, 6];
+                        if (!/^\d{4,6}$/.test(String(valorPin))) return [3 /*break*/, 6];
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
@@ -11055,7 +11123,7 @@ function PainelFinanceiro() {
         }); })();
     }, []);
     useEffect(function () {
-        if (!loading && pinConfigurado !== null) {
+        if (!loading && pinConfigurado !== null && tamanhoPin !== null) {
             try {
                 if (window.parent && window.parent !== window) {
                     window.parent.postMessage({ type: 'TDB_PAINEL_READY' }, '*');
@@ -11063,56 +11131,29 @@ function PainelFinanceiro() {
             }
             catch (e) { }
         }
-    }, [loading, pinConfigurado]);
-    function definirPin(novoPin) {
-        return __awaiter(this, void 0, void 0, function () {
-            var registro, e_61;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        registro = novoPin;
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 4, , 5]);
-                        return [4 /*yield*/, criarRegistroPin(novoPin)];
-                    case 2:
-                        registro = _a.sent();
-                        return [4 /*yield*/, window.storage.set('painel_pin', registro, false)];
-                    case 3:
-                        _a.sent();
-                        return [3 /*break*/, 5];
-                    case 4:
-                        e_61 = _a.sent();
-                        return [3 /*break*/, 5];
-                    case 5:
-                        setPinConfigurado(registro);
-                        setDesbloqueado(true);
-                        return [2 /*return*/];
-                }
-            });
-        });
+    }, [loading, pinConfigurado, tamanhoPin]);
+    async function definirPin(novoPin, tamanhoEscolhido) {
+        var tamanho = tamanhoEscolhido === 6 || String(novoPin).length === 6 ? 6 : 4;
+        var registro = novoPin;
+        try {
+            registro = await criarRegistroPin(novoPin);
+            await window.storage.set('painel_pin', registro, false);
+            await window.storage.set('painel_pin_tamanho', String(tamanho), false);
+        }
+        catch (e) { }
+        setPinConfigurado(registro);
+        setTamanhoPin(tamanho);
+        setDesbloqueado(true);
     }
-    function removerPin() {
-        return __awaiter(this, void 0, void 0, function () {
-            var e_62;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, window.storage.set('painel_pin', '', false)];
-                    case 1:
-                        _a.sent();
-                        return [3 /*break*/, 3];
-                    case 2:
-                        e_62 = _a.sent();
-                        return [3 /*break*/, 3];
-                    case 3:
-                        setPinConfigurado('');
-                        setDesbloqueado(true);
-                        return [2 /*return*/];
-                }
-            });
-        });
+    async function removerPin() {
+        try {
+            await window.storage.set('painel_pin', '', false);
+            await window.storage.set('painel_pin_tamanho', '4', false);
+        }
+        catch (e) { }
+        setPinConfigurado('');
+        setTamanhoPin(4);
+        setDesbloqueado(true);
     }
     var _5 = useState(false), modalPinAberto = _5[0], setModalPinAberto = _5[1];
     var _6 = useState(null), statusPlanilha = _6[0], setStatusPlanilha = _6[1];
@@ -12786,14 +12827,14 @@ function PainelFinanceiro() {
             return atualmenteAberto ? {} : (_a = {}, _a[mes] = true, _a);
         });
     }
-    if (loading || pinConfigurado === null) {
+    if (loading || pinConfigurado === null || tamanhoPin === null) {
         return (React.createElement("div", { style: { background: COLORS.paper, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: COLORS.ink, gap: 18, padding: 20, textAlign: 'center' } }, React.createElement("img", { src: LOGO_B64, alt: "Escola Infantil Tempo de Brincar", className: "logo-abertura" }), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } }, React.createElement("div", { style: {
                 width: 14, height: 14, borderRadius: '50%', border: "2.5px solid ".concat(COLORS.lineSoft),
                 borderTopColor: COLORS.gold, animation: 'spin 0.8s linear infinite',
             } }), React.createElement("span", { style: { fontSize: 13.5, color: COLORS.inkSoft } }, "Sincronizando Google Drive\u2026"))));
     }
     if (!desbloqueado && (pinConfigurado || pinConfigurado === '')) {
-        return (React.createElement(TelaBloqueio, { pinConfigurado: pinConfigurado, valorInicial: pinAntecipadoRef.current, onDesbloquear: function () { return setDesbloqueado(true); }, onDefinirPin: definirPin, onRemoverPin: removerPin }));
+        return (React.createElement(TelaBloqueio, { pinConfigurado: pinConfigurado, tamanhoPin: tamanhoPin, valorInicial: pinAntecipadoRef.current, onDesbloquear: function () { return setDesbloqueado(true); }, onDefinirPin: definirPin, onRemoverPin: removerPin }));
     }
     return (React.createElement("div", { className: "painel-raiz".concat(temaEscuro ? ' dark-mode' : ''), style: {
             background: COLORS.paper, minHeight: '108.7vh', width: '108.7%',
@@ -12806,21 +12847,17 @@ function PainelFinanceiro() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
         } }, React.createElement("img", { src: LOGO_B64, alt: "Escola Infantil Tempo de Brincar", style: { width: '100%', height: '100%', objectFit: 'contain', padding: 3, boxSizing: 'border-box' } })), React.createElement("div", { className: "mobile-brand-copy" }, React.createElement("div", { style: { fontSize: 15.5, fontWeight: 700, color: COLORS.ink, lineHeight: 1.15 } }, "Tempo de Brincar"), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Painel financeiro")), statusPlanilha && (React.createElement("span", { className: "mobile-sync-pill", "data-sync-ok": syncEmAndamento === 0 && pendenciasSync === 0 && window.__driveDisponivel !== false ? "true" : "false", style: {
             display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999,
-            background: syncEmAndamento > 0 ? (COLORS.goldSoft || '#FFF4D6') : (statusPlanilha === 'ok' ? COLORS.greenBg : (pendenciasSync > 0 ? COLORS.redBg : COLORS.greenBg)),
-            border: "1px solid ".concat(syncEmAndamento > 0 ? COLORS.gold : (statusPlanilha === 'ok' ? COLORS.green : (pendenciasSync > 0 ? COLORS.red : COLORS.green)), "55"),
-            fontSize: 11.5, fontWeight: 700, color: syncEmAndamento > 0 ? COLORS.gold : (statusPlanilha === 'ok' ? COLORS.green : (pendenciasSync > 0 ? COLORS.red : COLORS.green)),
+            background: syncEmAndamento > 0 ? (COLORS.goldSoft || '#FFF4D6') : (pendenciasSync > 0 ? (COLORS.goldSoft || '#FFF4D6') : (statusPlanilha === 'ok' ? COLORS.greenBg : COLORS.greenBg)),
+            border: "1px solid ".concat(syncEmAndamento > 0 ? COLORS.gold : (pendenciasSync > 0 ? COLORS.gold : (statusPlanilha === 'ok' ? COLORS.green : COLORS.green)), "55"),
+            fontSize: 11.5, fontWeight: 700, color: syncEmAndamento > 0 ? COLORS.gold : (pendenciasSync > 0 ? COLORS.gold : (statusPlanilha === 'ok' ? COLORS.green : COLORS.green)),
             flexWrap: 'wrap', maxWidth: 420,
-        } }, React.createElement("span", { style: { width: 6, height: 6, borderRadius: '50%', background: syncEmAndamento > 0 ? COLORS.gold : (statusPlanilha === 'ok' ? COLORS.green : (pendenciasSync > 0 ? COLORS.red : COLORS.green)), display: 'block', flexShrink: 0 } }), syncEmAndamento > 0
+        } }, React.createElement("span", { style: { width: 6, height: 6, borderRadius: '50%', background: syncEmAndamento > 0 ? COLORS.gold : (pendenciasSync > 0 ? COLORS.gold : (statusPlanilha === 'ok' ? COLORS.green : COLORS.green)), display: 'block', flexShrink: 0 } }), syncEmAndamento > 0
         ? "\u2713 Salvo neste aparelho \u00B7 \u23F3 sincronizando Drive".concat(pendenciasSync > 0 ? " (".concat(pendenciasSync, ")") : '')
         : (pendenciasSync > 0
-            ? ('⚠ Alterações aguardando o Drive' + (motivoErroSync ? ('. ' + motivoErroSync) : ' — nova tentativa automática em breve'))
+            ? ('⏳ ' + pendenciasSync + ' alteraç' + (pendenciasSync === 1 ? 'ão' : 'ões') + ' aguardando confirmação do Google Drive')
             : (window.__driveDisponivel === false
                 ? '◉ Modo local — nenhuma alteração pendente'
-                : 'Sincronizado · Google Drive')))), pendenciasSync > 0 && (React.createElement("span", { title: "Essas altera\u00E7\u00F5es ainda n\u00E3o confirmaram que chegaram no Google Drive \u2014 o painel est\u00E1 tentando reenviar sozinho. Elas N\u00C3O est\u00E3o perdidas: ficam guardadas neste navegador at\u00E9 conseguir sincronizar.", style: {
-            display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999,
-            background: COLORS.goldBg || '#FCEFDD', border: "1px solid ".concat(COLORS.gold, "55"),
-            fontSize: 11.5, fontWeight: 700, color: COLORS.gold,
-        } }, React.createElement("span", { style: { width: 6, height: 6, borderRadius: '50%', background: COLORS.gold, display: 'block', flexShrink: 0 } }), "\u23F3 ", pendenciasSync, " altera\u00E7", pendenciasSync === 1 ? 'ão' : 'ões', " ainda n\u00E3o confirmada", pendenciasSync === 1 ? '' : 's', " no Drive")), avisoErroSync && (React.createElement(Toast, { mensagem: 'Não consegui salvar no Google Drive agora' + (motivoErroSync ? (': ' + motivoErroSync) : '') + '. Os dados ficaram salvos só neste navegador até a conexão voltar.', tipo: "aviso" })), React.createElement("div", { className: "mobile-header-search", style: { marginLeft: 'auto', position: 'relative', width: '100%', maxWidth: 320, flexShrink: 0 } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 14, top: 12, zIndex: 1 } }), React.createElement("input", { value: buscaGlobal, onChange: function (e) { setBuscaGlobal(e.target.value); setBuscaGlobalAberta(true); }, onFocus: function () { return setBuscaGlobalAberta(true); }, onBlur: function () { return setTimeout(function () { return setBuscaGlobalAberta(false); }, 150); }, placeholder: "Buscar aluno, conv\u00EAnio ou conta...", className: "busca-liquid-glass", style: {
+                : 'Sincronizado · Google Drive')))), avisoErroSync && (React.createElement(Toast, { mensagem: 'Não consegui salvar no Google Drive agora' + (motivoErroSync ? (': ' + motivoErroSync) : '') + '. Os dados ficaram salvos só neste navegador até a conexão voltar.', tipo: "aviso" })), React.createElement("div", { className: "mobile-header-search", style: { marginLeft: 'auto', position: 'relative', width: '100%', maxWidth: 320, flexShrink: 0 } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 14, top: 12, zIndex: 1 } }), React.createElement("input", { value: buscaGlobal, onChange: function (e) { setBuscaGlobal(e.target.value); setBuscaGlobalAberta(true); }, onFocus: function () { return setBuscaGlobalAberta(true); }, onBlur: function () { return setTimeout(function () { return setBuscaGlobalAberta(false); }, 150); }, placeholder: "Buscar aluno, conv\u00EAnio ou conta...", className: "busca-liquid-glass", style: {
             width: '100%', boxSizing: 'border-box', border: 'none', borderRadius: 999,
             padding: '10px 14px 10px 38px', fontSize: 13.5, color: COLORS.ink, position: 'relative',
         } }), buscaGlobalAberta && buscaGlobal.trim() && (React.createElement("div", { className: "busca-liquid-glass", style: {
@@ -12920,7 +12957,7 @@ function PainelFinanceiro() {
         } }, React.createElement(IconeChatAviso, { size: 14, color: COLORS.inkSoft }), mostrarLembreteBackup && (React.createElement("span", { style: {
             position: 'absolute', top: -2, right: -2, width: 9, height: 9, borderRadius: '50%',
             background: COLORS.red, border: '2px solid #FFF',
-        } }))), React.createElement(DropdownFlutuante, { aberto: avisosAbertos, anchorRef: refBotaoAvisos, onFechar: function () { return setAvisosAbertos(false); }, align: "right", width: 240 }, React.createElement("div", { style: { padding: '8px 6px', maxWidth: 236 } }, React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: COLORS.ink, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 } }, "\uD83D\uDCBE Backup"), React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, lineHeight: 1.4, marginBottom: 10 } }, "J\u00E1 faz um tempinho desde o seu \u00FAltimo backup. \u00C9 bom manter uma c\u00F3pia atualizada."), React.createElement("div", { style: { display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' } }, React.createElement("button", { onClick: function () { exportarBackup(); setMostrarLembreteBackup(false); setAvisosAbertos(false); }, style: { background: COLORS.inkButton, color: '#FFFFFF', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' } }, "Baixar agora"), React.createElement("button", { onClick: function () { setMostrarLembreteBackup(false); setAvisosAbertos(false); }, style: { background: 'none', border: 'none', color: COLORS.inkSoft, fontSize: 12, cursor: 'pointer', textDecoration: 'underline' } }, "J\u00E1 fiz, obrigado")))), React.createElement(BolhaFlutuanteIA, { onAbrir: function () { return setIaAberta(true); } }), iaConfigAberta && (React.createElement(ModalConfigIA, { chaveAtual: geminiKey, onSalvar: function (chave) { salvarGeminiKey(chave); setIaConfigAberta(false); }, onFechar: function () { return setIaConfigAberta(false); } })), iaAberta && (React.createElement(AssistenteIA, { temChave: !!geminiKey, onAbrirConfig: function () { setIaAberta(false); setIaConfigAberta(true); }, onFechar: function () { return setIaAberta(false); }, chamarIA: chamarIA, montarContextoFinanceiro: montarContextoFinanceiro, gerarAlertaProativo: gerarAlertaProativo, perguntaInicial: perguntaInicialIA, onConsumirPerguntaInicial: function () { return setPerguntaInicialIA(null); } })), modalPinAberto && (React.createElement(ModalAlterarPin, { pinAtual: pinConfigurado, onFechar: function () { return setModalPinAberto(false); }, onSalvar: definirPin })), bloqueioExercicioModal && (React.createElement(ModalExercicioEncerrado, { ano: bloqueioExercicioModal.ano, onFechar: function () { return setBloqueioExercicioModal(null); } })), gerenciarAnoAberto && (React.createElement(ModalCicloAnual, { exercicio: exercicios.find(function (x) { return Number(x.ano) === exercicioAtual; }) || { ano: exercicioAtual, status: 'ATIVO' }, anterior: exercicios.find(function (x) { return Number(x.ano) === exercicioAtual - 1; }) || null, proximo: exercicios.find(function (x) { return Number(x.ano) === exercicioAtual + 1; }) || null, transacoes: transacoes || [], saldoFinal: saldoFinalDoExercicio_(), pendencias: pendenciasSync, processando: processandoCicloAno, onFechar: function () { return !processandoCicloAno && setGerenciarAnoAberto(false); }, onConfirmar: confirmarCicloAnual })), prepararAnoAberto && (React.createElement(ModalPrepararExercicio, { anoOrigem: exercicioAtual, anoDestino: exercicioAtual + 1, transacoes: transacoes || [], carregando: preparandoAno, onFechar: function () { return !preparandoAno && setPrepararAnoAberto(false); }, onConfirmar: prepararNovoExercicio })), React.createElement(Toast, { mensagem: mensagemExercicio ? mensagemExercicio.texto : null, tipo: mensagemExercicio ? mensagemExercicio.tipo : 'ok' }), React.createElement(Toast, { mensagem: mensagemSalvarAgora ? mensagemSalvarAgora.texto : null, tipo: mensagemSalvarAgora ? mensagemSalvarAgora.tipo : 'ok' }), React.createElement("div", { className: "mono", style: { color: COLORS.red, fontSize: 11.5, marginTop: 3 } }, !storageOk && React.createElement("span", null, "\u26A0 sem conex\u00E3o com o armazenamento \u2014 altera\u00E7\u00F5es n\u00E3o v\u00E3o salvar")), React.createElement("div", { className: "mobile-header-secondary", style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' } }, React.createElement("button", { ref: refBotaoDados, onClick: function () { setDadosMenuAberto(function (v) { return !v; }); setExercicioMenuAberto(false); setConfigMenuAberto(false); }, className: "mobile-data-btn busca-liquid-glass", style: {
+        } }))), React.createElement(DropdownFlutuante, { aberto: avisosAbertos, anchorRef: refBotaoAvisos, onFechar: function () { return setAvisosAbertos(false); }, align: "right", width: 240 }, React.createElement("div", { style: { padding: '8px 6px', maxWidth: 236 } }, React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: COLORS.ink, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 } }, "\uD83D\uDCBE Backup"), React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, lineHeight: 1.4, marginBottom: 10 } }, "J\u00E1 faz um tempinho desde o seu \u00FAltimo backup. \u00C9 bom manter uma c\u00F3pia atualizada."), React.createElement("div", { style: { display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' } }, React.createElement("button", { onClick: function () { exportarBackup(); setMostrarLembreteBackup(false); setAvisosAbertos(false); }, style: { background: COLORS.inkButton, color: '#FFFFFF', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' } }, "Baixar agora"), React.createElement("button", { onClick: function () { setMostrarLembreteBackup(false); setAvisosAbertos(false); }, style: { background: 'none', border: 'none', color: COLORS.inkSoft, fontSize: 12, cursor: 'pointer', textDecoration: 'underline' } }, "J\u00E1 fiz, obrigado")))), React.createElement(BolhaFlutuanteIA, { onAbrir: function () { return setIaAberta(true); } }), iaConfigAberta && (React.createElement(ModalConfigIA, { chaveAtual: geminiKey, onSalvar: function (chave) { salvarGeminiKey(chave); setIaConfigAberta(false); }, onFechar: function () { return setIaConfigAberta(false); } })), iaAberta && (React.createElement(AssistenteIA, { temChave: !!geminiKey, onAbrirConfig: function () { setIaAberta(false); setIaConfigAberta(true); }, onFechar: function () { return setIaAberta(false); }, chamarIA: chamarIA, montarContextoFinanceiro: montarContextoFinanceiro, gerarAlertaProativo: gerarAlertaProativo, perguntaInicial: perguntaInicialIA, onConsumirPerguntaInicial: function () { return setPerguntaInicialIA(null); } })), modalPinAberto && (React.createElement(ModalAlterarPin, { pinAtual: pinConfigurado, tamanhoAtual: tamanhoPin, onFechar: function () { return setModalPinAberto(false); }, onSalvar: definirPin })), bloqueioExercicioModal && (React.createElement(ModalExercicioEncerrado, { ano: bloqueioExercicioModal.ano, onFechar: function () { return setBloqueioExercicioModal(null); } })), gerenciarAnoAberto && (React.createElement(ModalCicloAnual, { exercicio: exercicios.find(function (x) { return Number(x.ano) === exercicioAtual; }) || { ano: exercicioAtual, status: 'ATIVO' }, anterior: exercicios.find(function (x) { return Number(x.ano) === exercicioAtual - 1; }) || null, proximo: exercicios.find(function (x) { return Number(x.ano) === exercicioAtual + 1; }) || null, transacoes: transacoes || [], saldoFinal: saldoFinalDoExercicio_(), pendencias: pendenciasSync, processando: processandoCicloAno, onFechar: function () { return !processandoCicloAno && setGerenciarAnoAberto(false); }, onConfirmar: confirmarCicloAnual })), prepararAnoAberto && (React.createElement(ModalPrepararExercicio, { anoOrigem: exercicioAtual, anoDestino: exercicioAtual + 1, transacoes: transacoes || [], carregando: preparandoAno, onFechar: function () { return !preparandoAno && setPrepararAnoAberto(false); }, onConfirmar: prepararNovoExercicio })), React.createElement(Toast, { mensagem: mensagemExercicio ? mensagemExercicio.texto : null, tipo: mensagemExercicio ? mensagemExercicio.tipo : 'ok' }), React.createElement(Toast, { mensagem: mensagemSalvarAgora ? mensagemSalvarAgora.texto : null, tipo: mensagemSalvarAgora ? mensagemSalvarAgora.tipo : 'ok' }), React.createElement("div", { className: "mono", style: { color: COLORS.red, fontSize: 11.5, marginTop: 3 } }, !storageOk && React.createElement("span", null, "\u26A0 sem conex\u00E3o com o armazenamento \u2014 altera\u00E7\u00F5es n\u00E3o v\u00E3o salvar")), React.createElement("div", { className: "mobile-header-secondary", style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' } }, React.createElement("button", { ref: refBotaoDados, onClick: function () { setDadosMenuAberto(function (v) { return !v; }); setExercicioMenuAberto(false); setConfigMenuAberto(false); }, className: "mobile-data-btn busca-liquid-glass", style: {
             display: 'flex', alignItems: 'center', gap: 7, borderRadius: 12, padding: '0 12px',
             height: 40, cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.ink,
         } }, React.createElement("svg", {width:16, height:16, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round", "aria-hidden":"true"}, React.createElement("path", {d:"M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"})), "Dados", React.createElement(ChevronDown, { size: 13, color: COLORS.inkSoft, style: { transform: dadosMenuAberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' } })), React.createElement(TDBMobileNavigation, {tab:tab}, [
