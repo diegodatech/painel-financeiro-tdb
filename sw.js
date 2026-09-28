@@ -1,4 +1,4 @@
-const BUILD='tdb-12';
+const BUILD='tdb-01';
 const CACHE='tdb-financeiro-github-'+BUILD;
 const LOCAL=[
   './','./index.html','./mobile.html','./desktop.html','./config.js','./version.json','./manifest.webmanifest',
