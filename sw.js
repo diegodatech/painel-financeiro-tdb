@@ -1,4 +1,4 @@
-const BUILD='v58-git';
+const BUILD='tdb-01';
 const CACHE='tdb-financeiro-github-'+BUILD;
 const LOCAL=[
   './','./index.html','./mobile.html','./desktop.html','./config.js','./version.json','./manifest.webmanifest',
@@ -40,6 +40,14 @@ self.addEventListener('fetch',event=>{
   if(url.origin===self.location.origin){
     const isPanel=/\/(mobile|desktop)\.html$/.test(url.pathname);
     const isVersion=url.pathname.endsWith('/version.json');
+    const isLauncher=url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
+    if(isLauncher){
+      event.respondWith((async()=>{
+        const c=await caches.open(CACHE);
+        try{const n=await fetch(req,{cache:'no-store'});if(n&&n.ok)await c.put(req,n.clone());return n;}
+        catch(e){return (await c.match(req))||(await c.match('./index.html'));}
+      })());return;
+    }
     if(isVersion){ event.respondWith(fetch(req).catch(()=>cacheFallback(req,'./version.json'))); return; }
     if(isPanel){
       event.respondWith((async()=>{

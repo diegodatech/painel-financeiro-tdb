@@ -18,7 +18,7 @@
   <main><div class="box"><h2>Tempo de Brincar</h2><p><span class="dot"></span>Abrindo o painel…</p><p style="font-size:13px;opacity:.65">A interface abre pelo Git e o Google Drive sincroniza em segundo plano.</p></div></main>
   <script>
     (async function(){
-      var fallbackBuild='v58-git';
+      var fallbackBuild='tdb-01';
       var build=fallbackBuild;
       try {
         var vr=await fetch('./version.json?_='+Date.now(),{cache:'no-store'});
@@ -28,7 +28,12 @@
         try { await navigator.serviceWorker.register('./sw.js?build='+encodeURIComponent(build)); } catch(e) {}
       }
       var ua=navigator.userAgent||'';
-      var phone=/iPhone|iPod|Windows Phone|Android.*Mobile/i.test(ua);
+      var sw=(window.screen&&Number(window.screen.width))||window.innerWidth||9999;
+      var sh=(window.screen&&Number(window.screen.height))||window.innerHeight||9999;
+      var ladoMenor=Math.min(sw,sh);
+      var iphone=/iPhone|iPod|Windows Phone/i.test(ua);
+      var androidPhone=/Android/i.test(ua)&&/Mobile/i.test(ua)&&ladoMenor<=700;
+      var phone=iphone||androidPhone;
       location.replace((phone?'./mobile.html':'./desktop.html')+'?build='+encodeURIComponent(build));
     })();
   </script>
