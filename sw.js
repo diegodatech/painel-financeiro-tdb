@@ -1,15 +1,6 @@
-// TDB V12 — não mantém cache do launcher.
-self.addEventListener('install', event => { self.skipWaiting(); });
-self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    try {
-      const keys = await caches.keys();
-      await Promise.all(keys.filter(k => k.startsWith('tdb-launcher-')).map(k => caches.delete(k)));
-    } catch (_) {}
-    try { await self.registration.unregister(); } catch (_) {}
-    try {
-      const clientsList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      clientsList.forEach(client => client.navigate(client.url));
-    } catch (_) {}
-  })());
-});
+const CACHE='tdb-financeiro-v37';
+const LOCAL=['./','./index.html','./mobile.html','./desktop.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
+const REMOTE=["https://unpkg.com/react@18/umd/react.production.min.js", "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js", "https://unpkg.com/prop-types@15.8.1/prop-types.min.js", "https://unpkg.com/recharts@2.12.7/umd/Recharts.js", "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js", "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js", "https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js", "https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js", "https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js"];
+self.addEventListener('install',event=>{event.waitUntil((async()=>{const c=await caches.open(CACHE);await c.addAll(LOCAL);await Promise.allSettled(REMOTE.map(async u=>{try{const r=await fetch(u,{mode:'cors',cache:'reload'});if(r&&r.ok)await c.put(u,r.clone());}catch(e){try{const r=await fetch(u,{mode:'no-cors',cache:'reload'});if(r)await c.put(u,r.clone());}catch(_){}}}));self.skipWaiting();})());});
+self.addEventListener('activate',event=>{event.waitUntil((async()=>{const ks=await caches.keys();await Promise.all(ks.filter(k=>k!==CACHE&&k.startsWith('tdb-financeiro-')).map(k=>caches.delete(k)));await self.clients.claim();})());});
+self.addEventListener('fetch',event=>{const req=event.request;const url=new URL(req.url);if(url.hostname.includes('script.google.com')||url.hostname.includes('script.googleusercontent.com')){event.respondWith(fetch(req));return;}if(req.mode==='navigate'&&url.origin===location.origin){event.respondWith((async()=>{try{const n=await fetch(req);const c=await caches.open(CACHE);c.put(req,n.clone());return n;}catch(e){const c=await caches.open(CACHE);return (await c.match(req))||(await c.match('./index.html'));}})());return;}event.respondWith((async()=>{const c=await caches.open(CACHE);const hit=await c.match(req)||await c.match(req.url);if(hit)return hit;try{const n=await fetch(req);if(req.method==='GET'&&(url.origin===location.origin||url.hostname==='unpkg.com'||url.hostname.includes('fonts.googleapis.com')||url.hostname.includes('fonts.gstatic.com')))c.put(req,n.clone());return n;}catch(e){return hit||Response.error();}})());});
