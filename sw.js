@@ -1,4 +1,4 @@
-const CACHE='tdb-financeiro-v42';
+const CACHE='tdb-financeiro-v45';
 const LOCAL=['./','./index.html','./mobile.html','./desktop.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 const REMOTE=["https://unpkg.com/react@18/umd/react.production.min.js", "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js", "https://unpkg.com/prop-types@15.8.1/prop-types.min.js", "https://unpkg.com/recharts@2.12.7/umd/Recharts.js", "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js", "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js", "https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js", "https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js", "https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js"];
 self.addEventListener('install',event=>{event.waitUntil((async()=>{const c=await caches.open(CACHE);await c.addAll(LOCAL);await Promise.allSettled(REMOTE.map(async u=>{try{const r=await fetch(u,{mode:'cors',cache:'reload'});if(r&&r.ok)await c.put(u,r.clone());}catch(e){try{const r=await fetch(u,{mode:'no-cors',cache:'reload'});if(r)await c.put(u,r.clone());}catch(_){}}}));self.skipWaiting();})());});
