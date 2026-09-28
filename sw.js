@@ -1,4 +1,4 @@
-const BUILD='v48-git';
+const BUILD='v49-git';
 const CACHE='tdb-financeiro-github-'+BUILD;
 const LOCAL=[
   './','./index.html','./mobile.html','./desktop.html','./config.js','./version.json','./manifest.webmanifest',
