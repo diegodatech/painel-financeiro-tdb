@@ -1,6 +1,6 @@
 window.TDB_CONFIG = Object.freeze({
-  build: "tdb-02g",
-  buildLabel: "TDB 02g",
+  build: "tdb-02h",
+  buildLabel: "TDB 02h",
   appsScriptUrl: "https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec",
   frontend: "github-pages"
 });
