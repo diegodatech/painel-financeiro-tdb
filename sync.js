@@ -42,6 +42,7 @@
       // (bootstrap) que começou ANTES dessa edição nunca pode desfazê-la.
       // ====================================================================
       let seqEscritaLocal_ = 0;
+      let verificacaoNovidadesCache_ = null; // TDB 02c
       const seqPorChave_ = new Map();
       function marcarEscritaLocal_(key) { seqPorChave_.set(String(key), ++seqEscritaLocal_); }
       function gerarOpId_(versao) {
@@ -1245,7 +1246,7 @@
           const localValido = validar(local);
           const semPendencias = lerPendencias().size === 0 && lerPendenciasAnexos().size === 0;
 
-          // TDB 02b: nenhuma chamada de rede bloqueia a cópia local válida.
+          // TDB 02c: nenhuma chamada de rede bloqueia a cópia local válida.
           // Chaves ausentes ainda aguardam uma leitura real, para não criar dados-modelo.
           if (!forcarDrive && APPS_SCRIPT_URL && localValido) {
             window.__statusPlanilha = 'sincronizando';
@@ -1480,6 +1481,67 @@
           return !resultado || resultado.ok !== false;
         },
 
+        // TDB 02c — apoio ao botão "Atualizar" e ao aviso de novidades.
+        // Só USA peças que já existiam (salvarTudo, statusAbertura, refreshDrive); não muda o envio nem a abertura.
+        verificarNovidades: async () => {
+          if (!APPS_SCRIPT_URL) return { ok: false, novidades: false, localOnly: true };
+          const ocupado_ = () => !!carregamentoEmAndamento || Number(window.__syncEmAndamento || 0) > 0
+            || (lerPendencias().size + lerPendenciasAnexos().size) > 0;
+          if (ocupado_()) return { ok: true, novidades: false, ocupado: true };
+          const revLocal = lerRevisaoConfirmadaLocal_();
+          if (!revLocal.existe) return { ok: true, novidades: false, semRevisaoLocal: true };
+          const seq0 = seqEscritaLocal_;
+          let status = null;
+          try { status = await checarStatusAbertura_(); } catch (e) { return { ok: false, novidades: false, erro: String((e && e.message) || e) }; }
+          if (!status || !status.ok) return { ok: false, novidades: false };
+          // Se este aparelho começou a gravar enquanto perguntávamos, a revisão local pode estar atrasada: não avisa.
+          if (seq0 !== seqEscritaLocal_ || ocupado_()) return { ok: true, novidades: false, ocupado: true };
+          const rev = lerRevisaoConfirmadaLocal_();
+          const revServidor = Number(status.revisaoGlobal) || 0;
+          if (revServidor === rev.valor) return { ok: true, novidades: false, revisaoServidor: revServidor };
+          // A revisão do servidor é "global": ela também sobe por gravações deste próprio aparelho cuja
+          // confirmação chegou fora de ordem. Para não dar alarme falso, confere as versões POR CHAVE
+          // (as mesmas usadas no merge): só há novidade se alguma chave estiver mais nova no servidor.
+          if (verificacaoNovidadesCache_ && verificacaoNovidadesCache_.rev === revServidor) return verificacaoNovidadesCache_.resultado;
+          let corpo = null;
+          try {
+            const url = APPS_SCRIPT_URL + '?acao=bootstrap&ano=' + encodeURIComponent(Number(window.__exercicioAtual || 2026)) + '&_=' + Date.now();
+            corpo = await lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 30000));
+          } catch (e) { return { ok: false, novidades: false, erro: String((e && e.message) || e) }; }
+          if (seq0 !== seqEscritaLocal_ || ocupado_()) return { ok: true, novidades: false, ocupado: true };
+          if (!corpo || corpo.bootstrapConsistente === false || !corpo.versoes || typeof corpo.versoes !== 'object') {
+            return { ok: false, novidades: false };
+          }
+          const locais = lerVersoes();
+          const pend = lerPendencias();
+          let maisNovas = 0;
+          Object.keys(corpo.versoes).forEach(k => {
+            if (pend.has(k) || String(k).indexOf('anexo_') !== -1) return;
+            if ((Number(corpo.versoes[k]) || 0) > (Number(locais[k]) || 0)) maisNovas++;
+          });
+          const resultado = { ok: true, novidades: maisNovas > 0, chavesMaisNovas: maisNovas, revisaoServidor: revServidor };
+          if (maisNovas === 0 && Object.prototype.hasOwnProperty.call(corpo, 'revisaoGlobal')) {
+            // Nada mais novo: só a contagem da revisão estava atrasada. Corrige para não repetir a conferência.
+            salvarRevisaoConfirmadaLocal_(corpo.revisaoGlobal);
+          }
+          verificacaoNovidadesCache_ = { rev: revServidor, resultado };
+          return resultado;
+        },
+        atualizarDoDrive: async (onProgress) => {
+          if (!APPS_SCRIPT_URL) return { tipo: 'local' };
+          // 1) descarrega o que está sendo digitado e envia o que estiver pendente (igual ao botão Salvar).
+          const r1 = await window.storage.salvarTudo(onProgress);
+          if (!r1 || r1.tipo === 'falha' || r1.tipo === 'semResposta' || r1.tipo === 'local') return r1 || { tipo: 'semResposta' };
+          if (r1.tipo === 'atualizado') return { tipo: 'atualizado' };
+          if (r1.tipo === 'tudoSalvo') return { tipo: 'jaAtual' };
+          // 2) enviou algo: confere se, além disso, o servidor tem novidades de outro aparelho.
+          const nov = await window.storage.verificarNovidades();
+          if (!nov.ok) return { tipo: 'semResposta', erro: nov.erro || null };
+          if (!nov.novidades) return { tipo: 'jaAtual', enviado: true };
+          const leitura = await window.storage.refreshDrive();
+          if (!leitura.ok) return { tipo: 'semResposta', erro: leitura.erro || null };
+          return { tipo: leitura.dadosAtualizados ? 'atualizado' : 'jaAtual', enviado: true };
+        },
         resync: async (onProgress, opcoes) => {
           if (!APPS_SCRIPT_URL) return { ok: true, total: 0, falhas: 0 };
 

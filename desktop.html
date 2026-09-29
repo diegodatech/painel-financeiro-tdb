@@ -18,23 +18,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tempo de Brincar</title>
-  <!-- TDB GITHUB BUILD: TDB 02b -->
+  <!-- TDB GITHUB BUILD: TDB 02c -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-02b";
+    window.__TDB_BUILD = "tdb-02c";
   </script>
-  <script src="./config.js?build=tdb-02b"></script>
-  <!-- TDB 02b: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
+  <script src="./config.js?build=tdb-02c"></script>
+  <!-- TDB 02c: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Financeiro TDB">
   <script>
-    // TDB 02b — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
+    // TDB 02c — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
     // Enquanto a tela está visível e você está usando o painel, fazemos uma consulta mínima a cada 15 s
     // (statusAbertura: só lê uma propriedade, não toca no Drive) e uma logo que você começa a mexer.
@@ -79,12 +79,12 @@
   <meta name="theme-color" content="#106E6B">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- TDB 02b: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
+  <!-- TDB 02c: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"></noscript>
   
   <!-- React & ReactDOM -->
-  <!-- TDB 02b: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
+  <!-- TDB 02c: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
   <script src="./react.production.min.js"></script>
   <script>window.React||document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>')</script>
   <script src="./react-dom.production.min.js"></script>
@@ -114,7 +114,7 @@
       function carregarScriptUmaVez(chave, src, pronto) {
         if (pronto()) return Promise.resolve(true);
         if (promessas[chave]) return promessas[chave];
-        // TDB 02b: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
+        // TDB 02c: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
         const fontes = Array.isArray(src) ? src : [src];
         const tentar = (i) => new Promise((resolve, reject) => {
           const s = document.createElement('script');
@@ -1059,9 +1059,19 @@ html.dark-mode {
     })();
   </script>
 
-  <script src="./sync.js?build=tdb-02b"></script>
+<style id="tdb-atualizar-css">
+@keyframes tdbGirar{to{transform:rotate(360deg)}}
+.tdb-girando{animation:tdbGirar .9s linear infinite}
+.tdb-btn-atualizar{position:relative}
+.tdb-btn-atualizar:disabled{opacity:.75}
+html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:50%;background:#e5484d;border:2px solid #fff;box-sizing:border-box;animation:tdbPulsa 1.6s ease-in-out infinite}
+@keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
+</style>
+  <script src="./sync.js?build=tdb-02c"></script>
+  <script src="./atualizar.js?build=tdb-02c"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-02b-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-02c-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1251,6 +1261,10 @@ var Sun = function (_a) {
 var Save = function (_a) {
     var _b = _a.size, size = _b === void 0 ? 16 : _b, _c = _a.color, color = _c === void 0 ? "currentColor" : _c, style = _a.style;
     return (React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", style: style }, React.createElement("path", { d: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" }), React.createElement("polyline", { points: "17 21 17 13 7 13 7 21" }), React.createElement("polyline", { points: "7 3 7 8 15 8" })));
+};
+var IconeAtualizar = function (_a) {
+    var _b = _a.size, size = _b === void 0 ? 16 : _b, _c = _a.color, color = _c === void 0 ? "currentColor" : _c, style = _a.style, girando = _a.girando;
+    return (React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: girando ? 'tdb-girando' : undefined, style: style }, React.createElement("path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" }), React.createElement("path", { d: "M21 3v5h-5" }), React.createElement("path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" }), React.createElement("path", { d: "M8 16H3v5" })));
 };
 var Lock = function (_a) {
     var _b = _a.size, size = _b === void 0 ? 16 : _b, _c = _a.color, color = _c === void 0 ? "currentColor" : _c, style = _a.style;
@@ -8313,6 +8327,7 @@ function PainelFinanceiro() {
     var _g = useState(true), loading = _g[0], setLoading = _g[1];
     var _h = useState(true), storageOk = _h[0], setStorageOk = _h[1];
     var _j = useState(false), salvandoAgora = _j[0], setSalvandoAgora = _j[1];
+    var _jAt = useState(false), atualizandoAgora = _jAt[0], setAtualizandoAgora = _jAt[1];
     var pinAntecipadoRef = useRef('');
     useEffect(function () {
         function capturarCedo(e) {
@@ -8323,7 +8338,8 @@ function PainelFinanceiro() {
         window.addEventListener('keydown', capturarCedo);
         return function () { return window.removeEventListener('keydown', capturarCedo); };
     }, []);
-    var _k = useState(null), mensagemSalvarAgora = _k[0], setMensagemSalvarAgora = _k[1];
+    var _k = useState(function () { var m = window.__tdbMsgAoRemontar || null; window.__tdbMsgAoRemontar = null; return m; }), mensagemSalvarAgora = _k[0], setMensagemSalvarAgora = _k[1];
+    useEffect(function () { if (!mensagemSalvarAgora) return; var t = setTimeout(function () { setMensagemSalvarAgora(null); }, 8000); return function () { clearTimeout(t); }; }, [mensagemSalvarAgora]);
     var _l = useState(null), progressoSalvar = _l[0], setProgressoSalvar = _l[1];
     var _m = useState(''), geminiKey = _m[0], setGeminiKey = _m[1];
     var _o = useState(false), iaAberta = _o[0], setIaAberta = _o[1];
@@ -8958,7 +8974,7 @@ function PainelFinanceiro() {
         setBuscaGlobalAberta(false);
     }
 function salvarTudoAgora() {
-        // TDB 02b — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
+        // TDB 02c — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
         // mostra um resultado claro. Nunca fica preso: há um limite de 3 minutos.
         if (window.__salvandoAgoraFlag) return Promise.resolve();
         window.__salvandoAgoraFlag = true;
@@ -8999,6 +9015,40 @@ function salvarTudoAgora() {
             setTimeout(function () { return setMensagemSalvarAgora(null); }, 9000);
         })();
     }
+    function atualizarDoDriveAgora() {
+        // TDB 02c — botão "Atualizar": envia o que estiver pendente (como o Salvar), confere o Google Drive
+        // e traz as alterações feitas em OUTRO aparelho, sem fechar nem recarregar a página.
+        if (window.__atualizandoAgoraFlag || window.__salvandoAgoraFlag) return Promise.resolve();
+        window.__atualizandoAgoraFlag = true;
+        return (async function () {
+            setAtualizandoAgora(true);
+            setMensagemSalvarAgora({ tipo: 'ok', texto: 'Atualizando com o Google Drive\u2026' });
+            var msg, remontar = false;
+            try {
+                var r = await Promise.race([
+                    window.storage.atualizarDoDrive(),
+                    new Promise(function (resolve) { setTimeout(function () { resolve({ tipo: 'demorou' }); }, 120000); })
+                ]);
+                if (r.tipo === 'atualizado') { msg = { tipo: 'ok', texto: 'Atualizado: as alterações mais recentes do Google Drive chegaram.' }; remontar = true; }
+                else if (r.tipo === 'jaAtual') msg = { tipo: 'ok', texto: r.enviado ? 'Suas alterações foram enviadas. Não há nada novo no Google Drive.' : 'Já está atualizado: não há nada novo no Google Drive.' };
+                else if (r.tipo === 'falha') msg = { tipo: 'aviso', texto: 'Não consegui enviar tudo antes de atualizar. Suas alterações continuam protegidas neste aparelho; tente de novo em instantes.' };
+                else if (r.tipo === 'semResposta') msg = { tipo: 'aviso', texto: 'O Google Drive não respondeu agora. Nada foi perdido; tente atualizar de novo em instantes.' };
+                else if (r.tipo === 'demorou') msg = { tipo: 'aviso', texto: 'O Google Drive está demorando para responder. Tente atualizar de novo em instantes.' };
+                else msg = { tipo: 'aviso', texto: 'Modo local: o painel não está ligado ao Google Drive.' };
+            }
+            catch (e) {
+                msg = { tipo: 'aviso', texto: 'Não consegui atualizar agora: ' + String(e && e.message || e) };
+            }
+            try { if (msg.tipo === 'ok' && window.__tdbLimparNovidades) window.__tdbLimparNovidades(); } catch (e) { }
+            // Se a tela vai ser refeita com os dados novos, o aviso é mostrado logo depois dela.
+            if (remontar) window.__tdbMsgAoRemontar = msg;
+            setMensagemSalvarAgora(msg);
+            setAtualizandoAgora(false);
+            window.__atualizandoAgoraFlag = false;
+            setTimeout(function () { return setMensagemSalvarAgora(null); }, 8000);
+        })();
+    }
+    window.__tdbAtualizarAgora = atualizarDoDriveAgora;
     window.__tdbSalvarAgora = salvarTudoAgora;
 
     var _y = useState(function () { return lerPreferencia('modoPrivado'); }), modoPrivado = _y[0], setModoPrivado = _y[1];
@@ -9149,7 +9199,8 @@ function salvarTudoAgora() {
         var t2 = setTimeout(function () { return setAvisoErroSync(false); }, 7000);
         return function () { return clearTimeout(t2); };
     }, [avisoErroSync]);
-    var _12 = useState('visao'), tab = _12[0], setTab = _12[1];
+    var _12 = useState(function () { var t = window.__tdbAbaRestaurar || 'visao'; window.__tdbAbaRestaurar = null; return t; }), tab = _12[0], setTab = _12[1];
+    window.__tdbAbaAtual = tab;
     var _13 = useState(function () { return Number(window.__exercicioAtual) || 2026; }), exercicioAtual = _13[0], setExercicioAtual = _13[1];
     var _14 = useState([{ ano: 2026, status: 'ATIVO', criadoEm: new Date().toISOString() }]), exercicios = _14[0], setExercicios = _14[1];
     var exercicioSelecionado = exercicios.find(function (x) { return Number(x.ano) === Number(exercicioAtual); });
@@ -10873,7 +10924,13 @@ function salvarTudoAgora() {
         ? (progressoSalvar && progressoSalvar.total > 0
             ? "".concat(progressoSalvar.feitos, "/").concat(progressoSalvar.total)
             : '...')
-        : 'Salvar')), React.createElement(DropdownFlutuante, { aberto: dadosMenuAberto, anchorRef: refBotaoDados, onFechar: function () { return setDadosMenuAberto(false); }, align: "left", width: 220 }, React.createElement("button", { onClick: function () { exportarBackup(); setDadosMenuAberto(false); }, title: "Baixa um arquivo com todos os seus lan\u00E7amentos para voc\u00EA abrir em outro computador", style: {
+        : 'Salvar'), React.createElement("button", { type: "button", className: "tdb-btn-atualizar", onClick: function () { return atualizarDoDriveAgora(); }, disabled: atualizandoAgora || salvandoAgora, title: "Busca no Google Drive o que foi alterado em outro aparelho (envia antes o que estiver pendente aqui)", "aria-label": "Atualizar com o Google Drive", style: {
+            background: COLORS.paperCard, border: "1.5px solid ".concat(COLORS.line),
+            borderRadius: 10, height: 44, padding: '0 14px',
+            fontSize: 12.5, fontWeight: 700, color: COLORS.ink,
+            cursor: (atualizandoAgora || salvandoAgora) ? 'default' : 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8,
+        } }, React.createElement(IconeAtualizar, { size: 15, color: COLORS.ink, girando: atualizandoAgora }), atualizandoAgora ? '...' : 'Atualizar')), React.createElement(DropdownFlutuante, { aberto: dadosMenuAberto, anchorRef: refBotaoDados, onFechar: function () { return setDadosMenuAberto(false); }, align: "left", width: 220 }, React.createElement("button", { onClick: function () { exportarBackup(); setDadosMenuAberto(false); }, title: "Baixa um arquivo com todos os seus lan\u00E7amentos para voc\u00EA abrir em outro computador", style: {
             display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
             background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
             cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: COLORS.ink,
@@ -14208,7 +14265,7 @@ function AberturaSegura() {
                     timer = null;
                     var ativo = document.activeElement;
                     var editando = ativo && (ativo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName));
-                    // TDB 02b — não recarrega a tela com uma janela/modal aberta: isso apagava
+                    // TDB 02c — não recarrega a tela com uma janela/modal aberta: isso apagava
                     // o que a pessoa estava preenchendo. Tenta de novo em alguns segundos.
                     var haModal = false;
                     try {
@@ -14222,6 +14279,12 @@ function AberturaSegura() {
                     } catch (e) { haModal = false; }
                     if (!editando && !haModal && Number(window.__pendenciasSync || 0) === 0) {
                         tentativasAtualizar = 0;
+                        // TDB 02c — mantém a aba e a rolagem em que você estava ao trazer dados novos do Drive.
+                        try {
+                            window.__tdbAbaRestaurar = window.__tdbAbaAtual || null;
+                            var yAntes = window.scrollY || 0;
+                            [350, 900].forEach(function (ms) { setTimeout(function () { try { window.scrollTo(0, yAntes); } catch (e) { } }, ms); });
+                        } catch (e) { }
                         setChaveReidratacao(function (k) { return k + 1; });
                     }
                     else if (++tentativasAtualizar < 30) {
