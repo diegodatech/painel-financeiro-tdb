@@ -18,23 +18,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
   <title>Tempo de Brincar</title>
-  <!-- TDB GITHUB BUILD: TDB 02 -->
+  <!-- TDB GITHUB BUILD: TDB 02b -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-02";
+    window.__TDB_BUILD = "tdb-02b";
   </script>
-  <script src="./config.js?build=tdb-02"></script>
-  <!-- TDB 02: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
+  <script src="./config.js?build=tdb-02b"></script>
+  <!-- TDB 02b: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Financeiro TDB">
   <script>
-    // TDB 02 — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
+    // TDB 02b — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
     // Enquanto a tela está visível e você está usando o painel, fazemos uma consulta mínima a cada 15 s
     // (statusAbertura: só lê uma propriedade, não toca no Drive) e uma logo que você começa a mexer.
@@ -79,12 +79,12 @@
   <meta name="theme-color" content="#106E6B">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- TDB 02: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
+  <!-- TDB 02b: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"></noscript>
   
   <!-- React & ReactDOM -->
-  <!-- TDB 02: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
+  <!-- TDB 02b: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
   <script src="./react.production.min.js"></script>
   <script>window.React||document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>')</script>
   <script src="./react-dom.production.min.js"></script>
@@ -114,7 +114,7 @@
       function carregarScriptUmaVez(chave, src, pronto) {
         if (pronto()) return Promise.resolve(true);
         if (promessas[chave]) return promessas[chave];
-        // TDB 02: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
+        // TDB 02b: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
         const fontes = Array.isArray(src) ? src : [src];
         const tentar = (i) => new Promise((resolve, reject) => {
           const s = document.createElement('script');
@@ -324,6 +324,7 @@ html.dark-mode {
       background: rgba(100,100,106,.55) !important;
       border-color: rgba(255,255,255,.15) !important;
     }
+    .tabela-mensalidades td:nth-last-child(2), .tabela-mensalidades th:nth-last-child(2) { white-space: nowrap !important; }
     .dark-mode .tabela-mensalidades {
       background: #242426 !important;
     }
@@ -1670,9 +1671,9 @@ html.dark-mode {
     })();
   </script>
 
-  <script src="./sync.js?build=tdb-02"></script>
+  <script src="./sync.js?build=tdb-02b"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-02-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-02b-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9888,7 +9889,7 @@ function PainelFinanceiro() {
         setBuscaGlobalAberta(false);
     }
 function salvarTudoAgora() {
-        // TDB 02 — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
+        // TDB 02b — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
         // mostra um resultado claro. Nunca fica preso: há um limite de 3 minutos.
         if (window.__salvandoAgoraFlag) return Promise.resolve();
         window.__salvandoAgoraFlag = true;
@@ -13550,7 +13551,7 @@ function TabelaMensalidades(_a) {
     var td = { padding: '10px 10px', fontSize: 13, color: COLORS.ink, borderTop: "1px solid ".concat(COLORS.lineSoft), verticalAlign: 'middle' };
     var inputCell = __assign(__assign({}, inputStyle), { padding: '5px 7px', fontSize: 12.5, width: '100%', minWidth: 70, boxSizing: 'border-box' });
     var _f = useState(null), linhaSelecionada = _f[0], setLinhaSelecionada = _f[1];
-    return (React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("div", { style: { padding: '13px 18px', background: COLORS.paperCard, borderBottom: "1px solid ".concat(COLORS.line), fontSize: 13.5, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }, React.createElement("span", null, titulo, " ", React.createElement("span", { style: { fontWeight: 500, color: COLORS.inkSoft } }, "(", modoPrivado ? '••' : itens.length, ")"))), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '28px 0', fontSize: 14 } }, "Nenhum registro encontrado.")) : (React.createElement("div", { style: { overflowX: 'auto' } }, React.createElement("table", { className: "tabela-mensalidades", style: { width: '100%', minWidth: mostrarDetalhes ? 1220 : 750, borderCollapse: 'collapse', tableLayout: 'fixed' } }, React.createElement("colgroup", null, React.createElement("col", { style: { width: '18%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '7%' } }), React.createElement("col", { style: { width: '15%' } }), React.createElement("col", { style: { width: '6%' } }), React.createElement("col", { style: { width: '8%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '10%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '9%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '9%' } }), React.createElement("col", { style: { width: '6%' } }), React.createElement("col", { style: { width: '9%' } })), React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Nome"), mostrarDetalhes && React.createElement("th", { style: th }, "Nota"), React.createElement("th", { style: th }, "Valor a pagar"), React.createElement("th", { style: th }, "Status"), React.createElement("th", { style: th }, "Banco"), mostrarDetalhes && React.createElement("th", { style: th }, "Pai / Respons\u00E1vel"), mostrarDetalhes && React.createElement("th", { style: th }, "Tirar nota"), mostrarDetalhes && React.createElement("th", { style: th }, "Conv\u00EAnio"), React.createElement("th", { style: th }, "Data"), React.createElement("th", { style: __assign(__assign({}, th), { textAlign: 'center' }) }, "A\u00E7\u00F5es"))), React.createElement("tbody", null, itens.map(function (t) {
+    return (React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("div", { style: { padding: '13px 18px', background: COLORS.paperCard, borderBottom: "1px solid ".concat(COLORS.line), fontSize: 13.5, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }, React.createElement("span", null, titulo, " ", React.createElement("span", { style: { fontWeight: 500, color: COLORS.inkSoft } }, "(", modoPrivado ? '••' : itens.length, ")"))), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '28px 0', fontSize: 14 } }, "Nenhum registro encontrado.")) : (React.createElement("div", { style: { overflowX: 'auto' } }, React.createElement("table", { className: "tabela-mensalidades", style: { width: '100%', minWidth: mostrarDetalhes ? 1220 : 750, borderCollapse: 'collapse', tableLayout: 'fixed' } }, React.createElement("colgroup", null, React.createElement("col", { style: { width: '18%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '7%' } }), React.createElement("col", { style: { width: '13%' } }), React.createElement("col", { style: { width: '6%' } }), React.createElement("col", { style: { width: '8%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '10%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '9%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '9%' } }), React.createElement("col", { style: { width: '9%' } }), React.createElement("col", { style: { width: '9%' } })), React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Nome"), mostrarDetalhes && React.createElement("th", { style: th }, "Nota"), React.createElement("th", { style: th }, "Valor a pagar"), React.createElement("th", { style: th }, "Status"), React.createElement("th", { style: th }, "Banco"), mostrarDetalhes && React.createElement("th", { style: th }, "Pai / Respons\u00E1vel"), mostrarDetalhes && React.createElement("th", { style: th }, "Tirar nota"), mostrarDetalhes && React.createElement("th", { style: th }, "Conv\u00EAnio"), React.createElement("th", { style: th }, "Data"), React.createElement("th", { style: __assign(__assign({}, th), { textAlign: 'center' }) }, "A\u00E7\u00F5es"))), React.createElement("tbody", null, itens.map(function (t) {
         var emEdicao = editandoId === t.id && !(typeof window !== 'undefined' && window.innerWidth <= 760);
         return (React.createElement(React.Fragment, { key: t.id }, React.createElement("tr", { onClick: function () { return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
                 cursor: emEdicao ? 'default' : 'pointer',
@@ -15203,7 +15204,7 @@ function AberturaSegura() {
                     timer = null;
                     var ativo = document.activeElement;
                     var editando = ativo && (ativo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName));
-                    // TDB 02 — não recarrega a tela com uma janela/modal aberta: isso apagava
+                    // TDB 02b — não recarrega a tela com uma janela/modal aberta: isso apagava
                     // o que a pessoa estava preenchendo. Tenta de novo em alguns segundos.
                     var haModal = false;
                     try {

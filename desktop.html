@@ -18,23 +18,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tempo de Brincar</title>
-  <!-- TDB GITHUB BUILD: TDB 02 -->
+  <!-- TDB GITHUB BUILD: TDB 02b -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-02";
+    window.__TDB_BUILD = "tdb-02b";
   </script>
-  <script src="./config.js?build=tdb-02"></script>
-  <!-- TDB 02: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
+  <script src="./config.js?build=tdb-02b"></script>
+  <!-- TDB 02b: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Financeiro TDB">
   <script>
-    // TDB 02 — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
+    // TDB 02b — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
     // Enquanto a tela está visível e você está usando o painel, fazemos uma consulta mínima a cada 15 s
     // (statusAbertura: só lê uma propriedade, não toca no Drive) e uma logo que você começa a mexer.
@@ -79,12 +79,12 @@
   <meta name="theme-color" content="#106E6B">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- TDB 02: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
+  <!-- TDB 02b: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"></noscript>
   
   <!-- React & ReactDOM -->
-  <!-- TDB 02: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
+  <!-- TDB 02b: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
   <script src="./react.production.min.js"></script>
   <script>window.React||document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>')</script>
   <script src="./react-dom.production.min.js"></script>
@@ -114,7 +114,7 @@
       function carregarScriptUmaVez(chave, src, pronto) {
         if (pronto()) return Promise.resolve(true);
         if (promessas[chave]) return promessas[chave];
-        // TDB 02: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
+        // TDB 02b: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
         const fontes = Array.isArray(src) ? src : [src];
         const tentar = (i) => new Promise((resolve, reject) => {
           const s = document.createElement('script');
@@ -1059,9 +1059,9 @@ html.dark-mode {
     })();
   </script>
 
-  <script src="./sync.js?build=tdb-02"></script>
+  <script src="./sync.js?build=tdb-02b"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-02-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-02b-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7984,7 +7984,7 @@ function FestasTDB(_a) {
     var inputTop = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 9, padding: '8px 9px', fontSize: 13, background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
     var bancoTop = __assign(__assign({}, inputTop), { color: novo.banco ? corBanco(novo.banco) : COLORS.ink, fontWeight: novo.banco ? 800 : 500 });
     return React.createElement("div", { className: "festas-tdb-export-raiz", 'data-festa-chave': subTab, style: { display: 'grid', gap: 14, minWidth: 0, paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' } },
-        React.createElement("style", null, "@media(min-width:761px) and (max-width:1366px){.festas-tdb-export-raiz{min-width:0!important;max-width:100%!important;width:100%!important;overflow-x:auto!important;overflow-y:visible!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;touch-action:pan-x pan-y!important;scrollbar-gutter:stable!important;padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))!important}.festas-tdb-export-raiz>.busca-liquid-glass,.festas-tdb-export-raiz>.festas-tdb-resumo,.festas-tdb-export-raiz>.festas-grupo-card{min-width:1220px!important;width:1220px!important;box-sizing:border-box!important}.festas-grupo-card{overflow:hidden!important}.festas-tdb-scroll{display:block!important;width:100%!important;max-width:100%!important;overflow-x:scroll!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;touch-action:pan-x pan-y!important;scrollbar-gutter:stable!important;padding-bottom:10px!important}.festas-tdb-tabela{width:1280px!important;min-width:1280px!important;table-layout:fixed!important}.festas-tdb-scroll::-webkit-scrollbar,.festas-tdb-export-raiz::-webkit-scrollbar{height:11px!important}.festas-tdb-scroll::-webkit-scrollbar-thumb,.festas-tdb-export-raiz::-webkit-scrollbar-thumb{border-radius:999px!important;background:rgba(72,83,96,.35)!important}}@media(max-width:760px){.festas-tdb-abas{display:flex!important;overflow-x:auto!important;flex-wrap:nowrap!important;gap:7px!important;padding-bottom:4px!important;scroll-snap-type:x proximity}.festas-tdb-abas>button{flex:0 0 auto!important;min-width:112px!important;scroll-snap-align:start}.festas-tdb-menu-wrap form{grid-template-columns:1fr!important}.festas-tdb-menu-wrap form>*{min-width:0!important}.festas-tdb-form{grid-template-columns:1fr 1fr!important}.festas-tdb-form .festas-campo-nome{grid-column:1/-1}.festas-tdb-form .festas-add-btn{grid-column:1/-1;width:100%!important}.festas-tdb-resumo{grid-template-columns:1fr 1fr!important}.festas-tdb-exportes{width:100%!important;justify-content:stretch!important}.festas-tdb-exportes button{flex:1 1 0!important}.festas-tdb-scroll{overflow-x:auto!important}.festas-tdb-tabela{min-width:980px!important}.festas-tdb-edit-mobile{grid-template-columns:1fr 1fr!important}.festas-tdb-edit-mobile>div{min-width:0!important}}@media(max-width:420px){.festas-tdb-form{grid-template-columns:1fr!important}.festas-tdb-form>*{grid-column:auto!important}.festas-tdb-form .festas-campo-nome,.festas-tdb-form .festas-add-btn{grid-column:1!important}.festas-tdb-resumo{grid-template-columns:1fr!important}.festas-tdb-edit-mobile{grid-template-columns:1fr!important}}"),
+        React.createElement("style", null, "@media(min-width:761px) and (max-width:1366px){.festas-tdb-export-raiz{min-width:0!important;max-width:100%!important;width:100%!important;overflow-x:auto!important;overflow-y:visible!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;touch-action:pan-x pan-y!important;scrollbar-gutter:stable!important;padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))!important}.festas-tdb-export-raiz>.busca-liquid-glass,.festas-tdb-export-raiz>.festas-tdb-resumo,.festas-tdb-export-raiz>.festas-grupo-card{min-width:1280px!important;width:1280px!important;box-sizing:border-box!important}.festas-grupo-card{overflow:hidden!important}.festas-tdb-scroll{display:block!important;width:100%!important;max-width:100%!important;overflow:visible!important;touch-action:pan-x pan-y!important;padding-bottom:10px!important}.festas-tdb-tabela{width:1280px!important;min-width:1280px!important;table-layout:fixed!important}.festas-tdb-scroll::-webkit-scrollbar,.festas-tdb-export-raiz::-webkit-scrollbar{height:11px!important}.festas-tdb-scroll::-webkit-scrollbar-thumb,.festas-tdb-export-raiz::-webkit-scrollbar-thumb{border-radius:999px!important;background:rgba(72,83,96,.35)!important}}@media(max-width:760px){.festas-tdb-abas{display:flex!important;overflow-x:auto!important;flex-wrap:nowrap!important;gap:7px!important;padding-bottom:4px!important;scroll-snap-type:x proximity}.festas-tdb-abas>button{flex:0 0 auto!important;min-width:112px!important;scroll-snap-align:start}.festas-tdb-menu-wrap form{grid-template-columns:1fr!important}.festas-tdb-menu-wrap form>*{min-width:0!important}.festas-tdb-form{grid-template-columns:1fr 1fr!important}.festas-tdb-form .festas-campo-nome{grid-column:1/-1}.festas-tdb-form .festas-add-btn{grid-column:1/-1;width:100%!important}.festas-tdb-resumo{grid-template-columns:1fr 1fr!important}.festas-tdb-exportes{width:100%!important;justify-content:stretch!important}.festas-tdb-exportes button{flex:1 1 0!important}.festas-tdb-scroll{overflow-x:auto!important}.festas-tdb-tabela{min-width:980px!important}.festas-tdb-edit-mobile{grid-template-columns:1fr 1fr!important}.festas-tdb-edit-mobile>div{min-width:0!important}}@media(max-width:420px){.festas-tdb-form{grid-template-columns:1fr!important}.festas-tdb-form>*{grid-column:auto!important}.festas-tdb-form .festas-campo-nome,.festas-tdb-form .festas-add-btn{grid-column:1!important}.festas-tdb-resumo{grid-template-columns:1fr!important}.festas-tdb-edit-mobile{grid-template-columns:1fr!important}}"),
         React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 18, padding: '16px 16px 14px', display: 'grid', gap: 13 } },
             React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' } },
                 React.createElement("div", null, React.createElement("div", { className: "serif", style: { fontSize: 22, fontWeight: 800, color: COLORS.ink, display: 'flex', gap: 8, alignItems: 'center' } }, React.createElement(FestasIcon, { size: 22, color: COLORS.gold }), "Festas TDB"), React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 2 } }, "Controle de participantes e pagamentos por evento · base de alunos: " + _festasMesReferenciaLabel(), qtdBaseMesAtual ? " (" + qtdBaseMesAtual + ")" : "")),
@@ -8958,7 +8958,7 @@ function PainelFinanceiro() {
         setBuscaGlobalAberta(false);
     }
 function salvarTudoAgora() {
-        // TDB 02 — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
+        // TDB 02b — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
         // mostra um resultado claro. Nunca fica preso: há um limite de 3 minutos.
         if (window.__salvandoAgoraFlag) return Promise.resolve();
         window.__salvandoAgoraFlag = true;
@@ -14208,7 +14208,7 @@ function AberturaSegura() {
                     timer = null;
                     var ativo = document.activeElement;
                     var editando = ativo && (ativo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName));
-                    // TDB 02 — não recarrega a tela com uma janela/modal aberta: isso apagava
+                    // TDB 02b — não recarrega a tela com uma janela/modal aberta: isso apagava
                     // o que a pessoa estava preenchendo. Tenta de novo em alguns segundos.
                     var haModal = false;
                     try {
