@@ -1,9 +1,9 @@
-/* TDB 02e — aviso "Há novidades no Drive".
+/* TDB 02f — aviso "Há novidades no Drive".
    Só LÊ: pergunta ao servidor (statusAbertura) se a revisão mudou por causa de outro aparelho.
    Não grava nada e não altera a sincronização. O botão "Atualizar" fica dentro do painel (React). */
 (function () {
   'use strict';
-  // TDB 02e — diz em que tipo de aparelho o painel está rodando, para as mensagens falarem do aparelho certo.
+  // TDB 02f — diz em que tipo de aparelho o painel está rodando, para as mensagens falarem do aparelho certo.
   window.__tdbTipoAparelho = function () {
     try {
       var ua = navigator.userAgent || '';
