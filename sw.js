@@ -1,28 +1,28 @@
-// TDB 10.2 — Service Worker
+// TDB 01 — Service Worker
 // Objetivos: abrir o painel na hora (mesmo com internet ruim), nunca falhar a instalação por causa de UM arquivo,
 // e nunca interceptar as chamadas ao Google (Apps Script) — elas vão direto do navegador ao servidor.
-const BUILD='tdb-10.2';
+const BUILD='tdb-01-arquivos';
 const CACHE='tdb-financeiro-github-'+BUILD;
 const CRITICOS=[
-  './','./index.html','./desktop.html','./mobile.html','./config.js','./version.json','./manifest.webmanifest',
-  './icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-512.png',
-  './vendor/react.production.min.js','./vendor/react-dom.production.min.js','./vendor/prop-types.min.js','./vendor/Recharts.js'
+  './','./index.html','./desktop.html','./mobile.html','./config.js','./sync.js','./version.json','./manifest.webmanifest',
+  './icon-192.png','./icon-512.png','./icon-maskable-512.png',
+  './react.production.min.js','./react-dom.production.min.js','./prop-types.min.js','./Recharts.js'
 ];
-const OPCIONAIS=[
-  './vendor/jspdf.umd.min.js','./vendor/html2canvas.min.js','./vendor/pdf-lib.min.js','./vendor/pdf.min.js','./vendor/pdf.worker.min.js',
-  './assets/termo-consentimento.pdf'
-];
+const ESSENCIAIS=['./index.html','./desktop.html','./mobile.html','./config.js','./sync.js',
+  './react.production.min.js','./react-dom.production.min.js','./prop-types.min.js','./Recharts.js'];
 async function guardar(c,u){
-  try{const r=await fetch(u,{cache:'reload'});if(r&&r.ok){await c.put(u,r.clone());return true;}}catch(e){}
+  const controle=new AbortController();
+  const timer=setTimeout(()=>controle.abort(),20000);
+  try{const r=await fetch(u,{cache:'reload',signal:controle.signal});if(r&&r.ok){await c.put(u,r.clone());return true;}}catch(e){}
+  finally{clearTimeout(timer);}
   return false;
 }
 self.addEventListener('install',event=>{event.waitUntil((async()=>{
   const c=await caches.open(CACHE);
-  // tolerante: um arquivo que falhe NÃO derruba a instalação do app
-  await Promise.all(CRITICOS.map(u=>guardar(c,u)));
-  self.skipWaiting();
-  // os pesados (PDF) vêm depois, sem atrasar nada
-  Promise.all(OPCIONAIS.map(u=>guardar(c,u))).catch(()=>{});
+  const resultados=await Promise.all(CRITICOS.map(u=>guardar(c,u)));
+  if(ESSENCIAIS.some(u=>!resultados[CRITICOS.indexOf(u)])) throw new Error('Atualização incompleta: preservando a versão anterior.');
+  await self.skipWaiting();
+  // Bibliotecas de PDF só são baixadas quando usadas; não disputam a abertura.
 })());});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{
   const ks=await caches.keys();

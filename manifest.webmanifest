@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Painel Financeiro - Tempo de Brincar",
-  "short_name": "Financeiro TDB",
+  "name": "TDB 01 — Tempo de Brincar",
+  "short_name": "TDB 01",
   "description": "Painel financeiro da escola Tempo de Brincar.",
   "lang": "pt-BR",
   "start_url": "./index.html",
@@ -16,19 +16,19 @@
   ],
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-maskable-512.png",
+      "src": "icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

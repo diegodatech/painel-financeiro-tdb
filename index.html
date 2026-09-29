@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#651B58">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
-  <title>Tempo de Brincar</title>
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <title>TDB 01 — Tempo de Brincar</title>
   <style>
     html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fffdf8;color:#1f1f24}
     main{height:100%;display:grid;place-items:center;text-align:center;padding:24px;box-sizing:border-box}
@@ -15,23 +15,15 @@
   </style>
 </head>
 <body>
-  <main><div class="box"><h2>Tempo de Brincar</h2><p><span class="dot"></span>Abrindo o painel…</p><p style="font-size:13px;opacity:.65">A interface abre pelo Git e o Google Drive sincroniza em segundo plano.</p></div></main>
+  <main><div class="box"><h2>TDB 01 — Tempo de Brincar</h2><p><span class="dot"></span>Abrindo o painel…</p><p style="font-size:13px;opacity:.65">A interface abre pelo Git e o Google Drive sincroniza em segundo plano.</p></div></main>
   <script>
-    (async function(){
-      var fallbackBuild='tdb-10.2';
+    (function(){
+      var fallbackBuild='tdb-01-arquivos';
       var build=fallbackBuild;
-      // TDB 10.2: o registro do Service Worker vem primeiro e a leitura do version.json tem prazo curto
-      // (antes, uma rede lenta segurava a abertura do app).
+      // Abre sem aguardar version.json; o Service Worker atualiza os arquivos em segundo plano.
       if('serviceWorker' in navigator){
         try { navigator.serviceWorker.register('./sw.js').catch(function(){}); } catch(e) {}
       }
-      try {
-        var vr=await Promise.race([
-          fetch('./version.json?_='+Date.now(),{cache:'no-store'}),
-          new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('prazo')); },1500); })
-        ]);
-        if(vr.ok){var vj=await vr.json();if(vj&&vj.build)build=String(vj.build);}
-      } catch(e) {}
       var ua=navigator.userAgent||'';
       var sw=(window.screen&&Number(window.screen.width))||window.innerWidth||9999;
       var sh=(window.screen&&Number(window.screen.height))||window.innerHeight||9999;
