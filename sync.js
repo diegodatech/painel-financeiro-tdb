@@ -42,7 +42,7 @@
       // (bootstrap) que começou ANTES dessa edição nunca pode desfazê-la.
       // ====================================================================
       let seqEscritaLocal_ = 0;
-      let verificacaoNovidadesCache_ = null; // TDB 02d
+      let verificacaoNovidadesCache_ = null; // TDB 02e
       const seqPorChave_ = new Map();
       function marcarEscritaLocal_(key) { seqPorChave_.set(String(key), ++seqEscritaLocal_); }
       function gerarOpId_(versao) {
@@ -1246,7 +1246,7 @@
           const localValido = validar(local);
           const semPendencias = lerPendencias().size === 0 && lerPendenciasAnexos().size === 0;
 
-          // TDB 02d: nenhuma chamada de rede bloqueia a cópia local válida.
+          // TDB 02e: nenhuma chamada de rede bloqueia a cópia local válida.
           // Chaves ausentes ainda aguardam uma leitura real, para não criar dados-modelo.
           if (!forcarDrive && APPS_SCRIPT_URL && localValido) {
             window.__statusPlanilha = 'sincronizando';
@@ -1481,7 +1481,7 @@
           return !resultado || resultado.ok !== false;
         },
 
-        // TDB 02d — apoio ao botão "Atualizar" e ao aviso de novidades.
+        // TDB 02e — apoio ao botão "Atualizar" e ao aviso de novidades.
         // Só USA peças que já existiam (salvarTudo, statusAbertura, refreshDrive); não muda o envio nem a abertura.
         verificarNovidades: async () => {
           if (!APPS_SCRIPT_URL) return { ok: false, novidades: false, localOnly: true };
@@ -1528,7 +1528,7 @@
           return resultado;
         },
         atualizarDoDrive: async (onProgress) => {
-          // TDB 02d — poucos pedidos: (1) descarrega o que está sendo digitado e envia o que estiver pendente,
+          // TDB 02e — poucos pedidos: (1) descarrega o que está sendo digitado e envia o que estiver pendente,
           // (2) UMA leitura do Drive. No celular, cada pedido custa segundos; antes eram até 5 em sequência.
           if (!APPS_SCRIPT_URL) return { tipo: 'local' };
           const inicio = Date.now();

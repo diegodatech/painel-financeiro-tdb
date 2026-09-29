@@ -18,23 +18,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
   <title>Tempo de Brincar</title>
-  <!-- TDB GITHUB BUILD: TDB 02d -->
+  <!-- TDB GITHUB BUILD: TDB 02e -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-02d";
+    window.__TDB_BUILD = "tdb-02e";
   </script>
-  <script src="./config.js?build=tdb-02d"></script>
-  <!-- TDB 02d: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
+  <script src="./config.js?build=tdb-02e"></script>
+  <!-- TDB 02e: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Financeiro TDB">
   <script>
-    // TDB 02d — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
+    // TDB 02e — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
     // Enquanto a tela está visível e você está usando o painel, fazemos uma consulta mínima a cada 15 s
     // (statusAbertura: só lê uma propriedade, não toca no Drive) e uma logo que você começa a mexer.
@@ -79,12 +79,12 @@
   <meta name="theme-color" content="#106E6B">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- TDB 02d: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
+  <!-- TDB 02e: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"></noscript>
   
   <!-- React & ReactDOM -->
-  <!-- TDB 02d: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
+  <!-- TDB 02e: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
   <script src="./react.production.min.js"></script>
   <script>window.React||document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>')</script>
   <script src="./react-dom.production.min.js"></script>
@@ -114,7 +114,7 @@
       function carregarScriptUmaVez(chave, src, pronto) {
         if (pronto()) return Promise.resolve(true);
         if (promessas[chave]) return promessas[chave];
-        // TDB 02d: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
+        // TDB 02e: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
         const fontes = Array.isArray(src) ? src : [src];
         const tentar = (i) => new Promise((resolve, reject) => {
           const s = document.createElement('script');
@@ -1684,10 +1684,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-02d"></script>
-  <script src="./atualizar.js?build=tdb-02d"></script>
+  <script src="./sync.js?build=tdb-02e"></script>
+  <script src="./atualizar.js?build=tdb-02e"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-02d-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-02e-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9909,7 +9909,7 @@ function PainelFinanceiro() {
         setBuscaGlobalAberta(false);
     }
 function salvarTudoAgora() {
-        // TDB 02d — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
+        // TDB 02e — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
         // mostra um resultado claro. Nunca fica preso: há um limite de 3 minutos.
         if (window.__salvandoAgoraFlag) return Promise.resolve();
         window.__salvandoAgoraFlag = true;
@@ -9951,21 +9951,25 @@ function salvarTudoAgora() {
         })();
     }
     function atualizarDoDriveAgora() {
-        // TDB 02d — botão "Atualizar": envia o que estiver pendente (como o Salvar), confere o Google Drive
+        // TDB 02e — botão "Atualizar": envia o que estiver pendente (como o Salvar), confere o Google Drive
         // e traz as alterações feitas em OUTRO aparelho, sem fechar nem recarregar a página.
         if (window.__atualizandoAgoraFlag || window.__salvandoAgoraFlag) return Promise.resolve();
         window.__atualizandoAgoraFlag = true;
         return (async function () {
             setAtualizandoAgora(true);
-            setMensagemSalvarAgora({ tipo: 'ok', texto: 'Atualizando com o Google Drive\u2026' });
+            var aparelhoAtu = (window.__tdbTipoAparelho && window.__tdbTipoAparelho()) || 'computador';
+            var esteAtu = aparelhoAtu === 'celular' ? 'este celular' : aparelhoAtu === 'tablet' ? 'este tablet' : 'este computador';
+            var nesteAtu = 'neste' + esteAtu.slice(4);
+            var lentoAtu = aparelhoAtu === 'celular' ? ' (no celular pode demorar mais)' : aparelhoAtu === 'tablet' ? ' (no tablet pode demorar um pouco mais)' : '';
+            setMensagemSalvarAgora({ tipo: 'ok', texto: 'Atualizando ' + esteAtu + ' com o Google Drive\u2026' });
             var msg, remontar = false;
             var t0Atu = Date.now();
             // Contador ao vivo: no celular o Drive pode levar alguns segundos; assim você vê que está trabalhando.
             var relogioAtu = setInterval(function () {
                 var seg = Math.round((Date.now() - t0Atu) / 1000);
                 setMensagemSalvarAgora({ tipo: 'ok', texto: seg < 6
-                    ? 'Atualizando com o Google Drive\u2026 ' + seg + ' s'
-                    : 'Ainda buscando no Google Drive\u2026 ' + seg + ' s (no celular pode demorar mais). Não precisa tocar de novo.' });
+                    ? 'Atualizando ' + esteAtu + ' com o Google Drive\u2026 ' + seg + ' s'
+                    : 'Ainda buscando no Google Drive\u2026 ' + seg + ' s' + lentoAtu + '. Não precisa tocar de novo.' });
             }, 1000);
             try {
                 var r = await Promise.race([
@@ -9973,8 +9977,8 @@ function salvarTudoAgora() {
                     new Promise(function (resolve) { setTimeout(function () { resolve({ tipo: 'demorou' }); }, 120000); })
                 ]);
                 var tempoAtu = r && r.ms ? (' (' + (r.ms / 1000).toFixed(1).replace('.', ',') + ' s)') : '';
-                if (r.tipo === 'atualizado') { msg = { tipo: 'ok', texto: 'Atualizado: as alterações mais recentes do Google Drive chegaram.' + tempoAtu }; remontar = true; }
-                else if (r.tipo === 'jaAtual') msg = { tipo: 'ok', texto: (r.enviado ? 'Suas alterações foram enviadas. Não há nada novo no Google Drive.' : 'Já está atualizado: não há nada novo no Google Drive.') + tempoAtu };
+                if (r.tipo === 'atualizado') { msg = { tipo: 'ok', texto: 'Atualizado ' + nesteAtu + ': as alterações mais recentes do Google Drive chegaram.' + tempoAtu }; remontar = true; }
+                else if (r.tipo === 'jaAtual') msg = { tipo: 'ok', texto: (r.enviado ? 'Suas alterações foram enviadas ' + nesteAtu.replace('neste', 'deste') + '. Não há nada novo no Google Drive.' : 'Já está atualizado ' + nesteAtu + ': não há nada novo no Google Drive.') + tempoAtu };
                 else if (r.tipo === 'falha') msg = { tipo: 'aviso', texto: 'Não consegui enviar tudo antes de atualizar. Suas alterações continuam protegidas neste aparelho; tente de novo em instantes.' };
                 else if (r.tipo === 'semResposta') msg = { tipo: 'aviso', texto: 'O Google Drive não respondeu agora. Nada foi perdido; tente atualizar de novo em instantes.' };
                 else if (r.tipo === 'demorou') msg = { tipo: 'aviso', texto: 'O Google Drive está demorando para responder. Tente atualizar de novo em instantes.' };
@@ -15272,7 +15276,7 @@ function AberturaSegura() {
                     timer = null;
                     var ativo = document.activeElement;
                     var editando = ativo && (ativo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName));
-                    // TDB 02d — não recarrega a tela com uma janela/modal aberta: isso apagava
+                    // TDB 02e — não recarrega a tela com uma janela/modal aberta: isso apagava
                     // o que a pessoa estava preenchendo. Tenta de novo em alguns segundos.
                     var haModal = false;
                     try {
@@ -15286,7 +15290,7 @@ function AberturaSegura() {
                     } catch (e) { haModal = false; }
                     if (!editando && !haModal && Number(window.__pendenciasSync || 0) === 0) {
                         tentativasAtualizar = 0;
-                        // TDB 02d — mantém a aba e a rolagem em que você estava ao trazer dados novos do Drive.
+                        // TDB 02e — mantém a aba e a rolagem em que você estava ao trazer dados novos do Drive.
                         try {
                             window.__tdbAbaRestaurar = window.__tdbAbaAtual || null;
                             var yAntes = window.scrollY || 0;
@@ -17246,16 +17250,15 @@ html[data-tdb-aurora] body.dark-mode .contas-pessoais-raiz>.contas-pessoais-card
       'transform:translateX(-50%) translateY(-8px)','max-width:calc(100vw - 28px)','box-sizing:border-box',
       'padding:10px 14px','border-radius:18px','font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif',
       'font-size:13px','line-height:1.25','font-weight:700','text-align:center','color:#1f2937',
-      'background:rgba(255,255,255,.74)','border:1px solid rgba(100,100,120,.14)',
-      'box-shadow:0 8px 24px rgba(40,35,55,.11)','backdrop-filter:blur(10px) saturate(125%)',
-      '-webkit-backdrop-filter:blur(10px) saturate(125%)','opacity:0','transition:opacity .22s ease, transform .22s ease',
+      'background:#ffffff','border:1px solid rgba(60,70,90,.22)','-webkit-font-smoothing:antialiased',
+      'box-shadow:0 6px 18px rgba(40,35,55,.18)','opacity:0','transition:opacity .22s ease, transform .22s ease',
       'pointer-events:none'
     ].join(';');
 
     var linha1=document.createElement('div');
     linha1.textContent = isAppsScript ? ('⚠️ Apps Script antigo • ' + build) : ('🌐 GitHub ativo • ' + build);
     var linha2=document.createElement('div');
-    linha2.style.cssText='font-size:11.5px;font-weight:600;opacity:.72;margin-top:3px';
+    linha2.style.cssText='font-size:11.5px;font-weight:600;color:#374151;margin-top:3px';
     linha2.textContent = isGithub ? '☁️ Conferindo Google Drive…' : 'Origem: ' + (host || 'arquivo local');
     box.appendChild(linha1);
     box.appendChild(linha2);
