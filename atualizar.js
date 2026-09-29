@@ -1,4 +1,4 @@
-/* TDB 02c — aviso "Há novidades no Drive".
+/* TDB 02d — aviso "Há novidades no Drive".
    Só LÊ: pergunta ao servidor (statusAbertura) se a revisão mudou por causa de outro aparelho.
    Não grava nada e não altera a sincronização. O botão "Atualizar" fica dentro do painel (React). */
 (function () {

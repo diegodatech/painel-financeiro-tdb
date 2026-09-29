@@ -42,7 +42,7 @@
       // (bootstrap) que começou ANTES dessa edição nunca pode desfazê-la.
       // ====================================================================
       let seqEscritaLocal_ = 0;
-      let verificacaoNovidadesCache_ = null; // TDB 02c
+      let verificacaoNovidadesCache_ = null; // TDB 02d
       const seqPorChave_ = new Map();
       function marcarEscritaLocal_(key) { seqPorChave_.set(String(key), ++seqEscritaLocal_); }
       function gerarOpId_(versao) {
@@ -1246,7 +1246,7 @@
           const localValido = validar(local);
           const semPendencias = lerPendencias().size === 0 && lerPendenciasAnexos().size === 0;
 
-          // TDB 02c: nenhuma chamada de rede bloqueia a cópia local válida.
+          // TDB 02d: nenhuma chamada de rede bloqueia a cópia local válida.
           // Chaves ausentes ainda aguardam uma leitura real, para não criar dados-modelo.
           if (!forcarDrive && APPS_SCRIPT_URL && localValido) {
             window.__statusPlanilha = 'sincronizando';
@@ -1481,7 +1481,7 @@
           return !resultado || resultado.ok !== false;
         },
 
-        // TDB 02c — apoio ao botão "Atualizar" e ao aviso de novidades.
+        // TDB 02d — apoio ao botão "Atualizar" e ao aviso de novidades.
         // Só USA peças que já existiam (salvarTudo, statusAbertura, refreshDrive); não muda o envio nem a abertura.
         verificarNovidades: async () => {
           if (!APPS_SCRIPT_URL) return { ok: false, novidades: false, localOnly: true };
@@ -1528,19 +1528,28 @@
           return resultado;
         },
         atualizarDoDrive: async (onProgress) => {
+          // TDB 02d — poucos pedidos: (1) descarrega o que está sendo digitado e envia o que estiver pendente,
+          // (2) UMA leitura do Drive. No celular, cada pedido custa segundos; antes eram até 5 em sequência.
           if (!APPS_SCRIPT_URL) return { tipo: 'local' };
-          // 1) descarrega o que está sendo digitado e envia o que estiver pendente (igual ao botão Salvar).
-          const r1 = await window.storage.salvarTudo(onProgress);
-          if (!r1 || r1.tipo === 'falha' || r1.tipo === 'semResposta' || r1.tipo === 'local') return r1 || { tipo: 'semResposta' };
-          if (r1.tipo === 'atualizado') return { tipo: 'atualizado' };
-          if (r1.tipo === 'tudoSalvo') return { tipo: 'jaAtual' };
-          // 2) enviou algo: confere se, além disso, o servidor tem novidades de outro aparelho.
-          const nov = await window.storage.verificarNovidades();
-          if (!nov.ok) return { tipo: 'semResposta', erro: nov.erro || null };
-          if (!nov.novidades) return { tipo: 'jaAtual', enviado: true };
+          const inicio = Date.now();
+          let emEdicao = false;
+          try {
+            const a = document.activeElement;
+            emEdicao = !!(a && a !== document.body && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)));
+            if (a && a !== document.body && typeof a.blur === 'function') a.blur();
+          } catch (e) {}
+          try { window.dispatchEvent(new CustomEvent('painel:flush-edicoes')); } catch (e) {}
+          await new Promise(r => setTimeout(r, emEdicao ? 450 : 80));
+          try { await filaEscrita; } catch (e) {}
+          const havia = (lerPendencias().size + lerPendenciasAnexos().size) > 0;
+          if (havia) {
+            const r = await window.storage.resync(onProgress, { semLeitura: true });
+            if (!r || !r.ok) return { tipo: 'falha', falhas: r && r.falhas, erro: window.__ultimoErroSync || null, ms: Date.now() - inicio };
+          }
           const leitura = await window.storage.refreshDrive();
-          if (!leitura.ok) return { tipo: 'semResposta', erro: leitura.erro || null };
-          return { tipo: leitura.dadosAtualizados ? 'atualizado' : 'jaAtual', enviado: true };
+          const ms = Date.now() - inicio;
+          if (!leitura.ok) return { tipo: 'semResposta', erro: leitura.erro || null, ms };
+          return { tipo: leitura.dadosAtualizados ? 'atualizado' : 'jaAtual', enviado: havia, ms };
         },
         resync: async (onProgress, opcoes) => {
           if (!APPS_SCRIPT_URL) return { ok: true, total: 0, falhas: 0 };
