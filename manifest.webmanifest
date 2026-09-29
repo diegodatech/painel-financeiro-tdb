@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "TDB 01 — Tempo de Brincar",
-  "short_name": "TDB 01",
+  "name": "Painel Financeiro — Tempo de Brincar",
+  "short_name": "Financeiro TDB",
   "description": "Painel financeiro da escola Tempo de Brincar.",
   "lang": "pt-BR",
   "start_url": "./index.html",

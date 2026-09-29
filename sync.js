@@ -1245,7 +1245,7 @@
           const localValido = validar(local);
           const semPendencias = lerPendencias().size === 0 && lerPendenciasAnexos().size === 0;
 
-          // TDB 01: nenhuma chamada de rede bloqueia a cópia local válida.
+          // TDB 02: nenhuma chamada de rede bloqueia a cópia local válida.
           // Chaves ausentes ainda aguardam uma leitura real, para não criar dados-modelo.
           if (!forcarDrive && APPS_SCRIPT_URL && localValido) {
             window.__statusPlanilha = 'sincronizando';
