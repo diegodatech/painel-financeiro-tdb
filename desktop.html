@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tempo de Brincar</title>
+  <title>TDB</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-02i-revisado-6";
+    window.__TDB_BUILD = "tdb-20261001-entrega";
   </script>
-  <script src="./config.js?build=tdb-02i-revisado-6"></script>
+  <script src="./config.js?build=tdb-20261001-entrega"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Financeiro TDB">
+  <meta name="apple-mobile-web-app-title" content="TDB">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1068,10 +1068,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-02i-revisado-6"></script>
+  <script src="./sync.js?build=tdb-20261001-entrega"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-02i-revisado-6-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261001-entrega-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1673,6 +1673,32 @@ var TDBFinance = (function () {
       return g;
     });
   }
+  function sharedTuition(ts,t) {
+    if(!student(t))return null;
+    var g=groups(ts,t.mes).find(function(g){return norm(g.chave)===norm(t.categoria);});
+    return g&&g.itens.length>1&&g.itens.some(function(r){return r.status==='Parcial';})?g:null;
+  }
+  function pendingFor(t,ts) { if(!t||t.status==='Pago')return 0;var g=sharedTuition(ts,t);return g?g.pendente:debt(t); }
+  function pendingCharges(ts,visible) {
+    var all=ts||[],shown=new Set(visible||all),seen=new Set(),out=[],shared=new Map();
+    new Set(all.filter(student).map(function(t){return t.mes;})).forEach(function(m){
+      groups(all,m).forEach(function(g){if(g.itens.length>1&&g.itens.some(function(t){return t.status==='Parcial';}))g.itens.forEach(function(t){shared.set(t,g);});});
+    });
+    all.forEach(function(t){
+      if(!shown.has(t)||t.status==='Pago')return;
+      var g=shared.get(t),key=g?JSON.stringify([t.mes,norm(t.categoria)]):null;
+      if(key&&seen.has(key))return;if(key)seen.add(key);
+      var value=g?g.pendente:debt(t);
+      if(value>0)out.push({mes:t.mes,categoria:t.categoria,tipo:t.tipo,valor:value,itens:g?g.itens:[t]});
+    });return out;
+  }
+  function expected(rows) {
+    var total=sum((rows||[]).filter(function(t){return !student(t);}),due);
+    new Set((rows||[]).filter(student).map(function(t){return t.mes;})).forEach(function(m){total+=sum(groups(rows,m),function(g){return g.valorCheio;});});
+    return money(total);
+  }
+  // O encerramento afeta apenas repetições estimadas após o mês marcado.
+  function recurrenceEnded(ts,cat,idx) { return (ts||[]).some(function(t){var m=MESES.indexOf(t.mes);return t.tipo==='Fixa'&&t.categoria===cat&&t.projecaoEncerrada===true&&m>=0&&m<idx;}); }
   function year() { return typeof window !== 'undefined' ? Number(window.__exercicioAtual) || new Date().getFullYear() : new Date().getFullYear(); }
   function lastIndex(ano) { var now = new Date(); return ano < now.getFullYear() ? 11 : ano > now.getFullYear() ? -1 : now.getMonth(); }
   function reference(ts,ano) {
@@ -1684,7 +1710,7 @@ var TDBFinance = (function () {
     var end=lastIndex(ano || year()); if(closedOnly && (ano || year())===new Date().getFullYear())end--;
     return MESES.filter(function(m,i){return i<=end && (ts||[]).some(function(t){return t.mes===m && received(t)>0;});});
   }
-  function pendingSummary(ts,ano) { var end=lastIndex(ano||year()),mes=end>=0?MESES[end]:null,rows=(ts||[]).filter(function(t){var i=MESES.indexOf(t.mes);return student(t)&&i>=0&&i<=end&&debt(t)>0;});return {mes:mes,qtd:rows.length,valor:sum(rows,debt),totalAlunos:mes?count(ts,mes,[]):0,nomes:rows.map(function(t){return String(t.categoria).replace('Mensalidade - ','')+' ('+monthShort(t.mes)+')';})}; }
+  function pendingSummary(ts,ano) { var end=lastIndex(ano||year()),mes=end>=0?MESES[end]:null,rows=pendingCharges(ts).filter(function(t){var i=MESES.indexOf(t.mes);return student(t)&&i>=0&&i<=end;});return {mes:mes,qtd:rows.length,valor:sum(rows),totalAlunos:mes?count(ts,mes,[]):0,nomes:rows.map(function(t){return String(t.categoria).replace('Mensalidade - ','')+' ('+monthShort(t.mes)+')';})}; }
   function match(cat, list) { var n=norm(cat); return (list||[]).some(function(c){var b=norm(c);return b && (n===b || n.startsWith(b+' '));}); }
   function utility(cat) { var n=norm(cat); if(/(^| )(LUZ|ENERGIA|ELETRICA|RGE|CEEE|CPFL|ENEL|CELESC)( |$)/.test(n))return 'energia'; if(/(^| )(AGUA|CORSAN|SABESP|SANEPAR|COPASA|CASAN|DMAE)( |$)/.test(n))return 'agua'; return 'outros'; }
   function convenioKey(n) {return norm(n).replace(/^CONVENIO\s*-?\s*/,'').replace(/CARLOS\s*BARBOSA/g,'CARLOS BARBOSA').replace(/[^A-Z0-9]+/g,' ').trim().replace(/^COOPERATIVA SANTA CLARA$/,'SANTA CLARA');}
@@ -1770,19 +1796,19 @@ var TDBFinance = (function () {
   }
   function balance(saldos,limit) { for(var i=limit==null?11:limit;i>=0;i--){var m=MESES[i];if(saldos&&Object.hasOwn(saldos,m)&&saldos[m]!==''&&saldos[m]!=null&&parse(saldos[m])!=null)return {mes:m,valor:num(saldos[m]),idx:i};}return null; }
   function projection(ts,saldos,ref,selected) {
-    var idx=MESES.indexOf(ref), base=balance(saldos,idx), active=new Set((ts||[]).filter(function(t){return t.mes===ref&&education(t)&&(student(t)?hasTuition(t):due(t)>0);}).map(function(t){return t.categoria;}));
+    var idx=MESES.indexOf(ref), base=balance(saldos,idx), active=new Set((ts||[]).filter(function(t){return t.mes===ref&&education(t)&&(student(t)?hasTuition(t):due(t)>0);}).map(function(t){return student(t)?norm(t.categoria):t.categoria;}));
     var fixed=(function(){var win=[],c={},st=new Set();for(var w=Math.max(0,idx-2);w<=idx;w++)win.push(MESES[w]);var need=win.length>=3?2:win.length;win.forEach(function(m){var seen={};(ts||[]).forEach(function(t){if(t.mes===m&&t.tipo==='Fixa'&&due(t)>0&&!seen[t.categoria]){seen[t.categoria]=1;c[t.categoria]=(c[t.categoria]||0)+1;}});});Object.keys(c).forEach(function(k){if(c[k]>=need)st.add(k);});return st;})();
     var histMonths=MESES.slice(Math.max(0,idx-3),idx).filter(function(m){return ts.some(function(t){return t.mes===m&&received(t)>0;});});
     var hist=histMonths.map(function(m){var rows=ts.filter(function(t){return t.mes===m;}),b=balance(saldos,MESES.indexOf(m));return {mes:m,mesAbrev:MESES_ABREV[m],entradas:sum(rows.filter(function(t){return t.tipo==='Entrada';}),received),saidas:sum(rows.filter(function(t){return t.tipo!=='Entrada';}),received),saldoReal:b&&b.mes===m?b.valor:null,tipo:'Real'};});
-    function last(cat,before){for(var i=before;i>=0;i--){var rows=ts.filter(function(t){return t.mes===MESES[i]&&t.categoria===cat;});var v=sum(rows,due);if(v>0 || rows.some(hasTuition))return v;}return 0;}
+    function last(cat,before){for(var i=before;i>=0;i--){var rows=ts.filter(function(t){return t.mes===MESES[i]&&(student(t)?norm(t.categoria)===cat:t.categoria===cat);});var v=expected(rows);if(v>0 || rows.some(hasTuition))return v;}return 0;}
     var variableCats=new Set(ts.filter(function(t){return t.tipo==='Variável'&&histMonths.includes(t.mes);}).map(function(t){return t.categoria;}));
     var end=Math.max.apply(Math,[idx].concat((selected||[]).map(function(m){return MESES.indexOf(m);}))),saldo=base?base.valor:0,dados=[];
     for(var i=base?base.idx+1:idx+1;i<=end;i++){
       var m=MESES[i],rows=ts.filter(function(t){return t.mes===m;});
-      var ent=sum(rows.filter(function(t){return t.tipo==='Entrada';}),due),out=sum(rows.filter(function(t){return t.tipo!=='Entrada';}),due);
+      var ent=expected(rows.filter(function(t){return t.tipo==='Entrada';})),out=sum(rows.filter(function(t){return t.tipo!=='Entrada';}),due);
       if(i>idx){
-        active.forEach(function(cat){if(!rows.some(function(t){return t.categoria===cat&&(hasTuition(t)||due(t)>0);} ))ent+=last(cat,idx);});
-        fixed.forEach(function(cat){if(!rows.some(function(t){return t.categoria===cat&&due(t)>0;}))out+=last(cat,idx);});
+        active.forEach(function(cat){if(!rows.some(function(t){return (student(t)?norm(t.categoria)===cat:t.categoria===cat)&&(hasTuition(t)||due(t)>0);} ))ent+=last(cat,idx);});
+        fixed.forEach(function(cat){if(!recurrenceEnded(ts,cat,i)&&!rows.some(function(t){return t.categoria===cat&&due(t)>0;}))out+=last(cat,idx);});
         variableCats.forEach(function(cat){if(!rows.some(function(t){return t.categoria===cat&&due(t)>0;})&&histMonths.length)out+=sum(ts.filter(function(t){return t.categoria===cat&&histMonths.includes(t.mes);}),due)/histMonths.length;});
       }
       saldo=money(saldo+ent-out);
@@ -1790,7 +1816,7 @@ var TDBFinance = (function () {
     }
     return {historico:hist,dados:dados,saldoBase:base?base.valor:0,mesSaldoBase:base?base.mes:null,semSaldoBase:!base};
   }
-  return {parse:parse,num:num,money:money,norm:norm,student:student,hasTuition:hasTuition,decimal:decimal,monthShort:monthShort,convenioRate:convenioRate,resolveConvenio:resolveConvenio,convenioGroupNotice:convenioGroupNotice,convenioIssues:convenioIssues,aliases:aliases,convenioConflicts:convenioConflicts,education:education,received:received,due:due,debt:debt,sum:sum,children:children,groups:groups,reference:reference,actualMonths:actualMonths,pendingSummary:pendingSummary,percent:percent,adjusted:adjusted,gauge:gauge,margins:margins,match:match,utility:utility,vacancies:vacancies,extras:extras,count:count,monthly:monthly,indicators:indicators,balance:balance,projection:projection,year:year};
+  return {parse:parse,num:num,money:money,norm:norm,student:student,hasTuition:hasTuition,decimal:decimal,monthShort:monthShort,convenioRate:convenioRate,resolveConvenio:resolveConvenio,convenioGroupNotice:convenioGroupNotice,convenioIssues:convenioIssues,aliases:aliases,convenioConflicts:convenioConflicts,education:education,received:received,due:due,debt:debt,sharedTuition:sharedTuition,pendingFor:pendingFor,pendingCharges:pendingCharges,expected:expected,recurrenceEnded:recurrenceEnded,sum:sum,children:children,groups:groups,reference:reference,actualMonths:actualMonths,pendingSummary:pendingSummary,percent:percent,adjusted:adjusted,gauge:gauge,margins:margins,match:match,utility:utility,vacancies:vacancies,extras:extras,count:count,monthly:monthly,indicators:indicators,balance:balance,projection:projection,year:year};
 })();
 
 function parseBRLInput(strVal) { return TDBFinance.parse(strVal); }
@@ -3064,11 +3090,15 @@ window.__tdbLixeiraAdicionar = async function(entrada) {
 window.__tdbLixeiraRestaurarGenerico = async function(entrada) {
     var ops = (entrada && entrada.restoreOps) || [];
     async function lerJson(key, padrao) {
-        try {
-            var r = await window.storage.get(key, false);
-            if (r && r.value != null && r.value !== '') return JSON.parse(r.value);
-        } catch (e) {}
+        var r = await window.storage.get(key, false);
+        if (r && r.value != null && r.value !== '') return JSON.parse(r.value);
         return JSON.parse(JSON.stringify(padrao));
+    }
+    function mesmosDados(a, b) {
+        if (a === b) return true;
+        if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return false;
+        var ka = Object.keys(a), kb = Object.keys(b);
+        return ka.length === kb.length && ka.every(function(k) { return Object.prototype.hasOwnProperty.call(b, k) && mesmosDados(a[k], b[k]); });
     }
     function garantirPai(root, path, finalArray) {
         var cur = root;
@@ -3098,13 +3128,24 @@ window.__tdbLixeiraRestaurarGenerico = async function(entrada) {
                 alvo = gp.pai[gp.chave];
             }
             if (!Array.isArray(alvo)) alvo = [];
-            var duplicado = false;
-            if (op.uniqueField && op.item && op.item[op.uniqueField] != null) {
-                duplicado = alvo.some(function(x){ return x && String(x[op.uniqueField]) === String(op.item[op.uniqueField]); });
+            var duplicado = false, itemRestaurado = op.item;
+            var lancamento = /^transacoes_financas\d{4}$/.test(baseKey) && (!op.path || !op.path.length) && op.uniqueField === 'id';
+            var marca = entrada.id ? String(entrada.id) + ':' + i : null;
+            if (lancamento && marca) duplicado = alvo.some(function(x) { return x && x.__tdbRestauradoDaLixeira === marca; });
+            if (!duplicado && op.uniqueField && op.item && op.item[op.uniqueField] != null) {
+                var existente = alvo.find(function(x){ return x && String(x[op.uniqueField]) === String(op.item[op.uniqueField]); });
+                if (existente) {
+                    if (mesmosDados(existente, op.item)) duplicado = true;
+                    else if (lancamento && marca) {
+                        // Mantém os dois lançamentos; a marca impede duplicar em uma nova tentativa.
+                        var novoId = alvo.reduce(function(m, x) { return Math.max(m, Number(x && x.id) || 0); }, 0) + 1;
+                        itemRestaurado = Object.assign({}, op.item, { id: novoId, __tdbRestauradoDaLixeira: marca });
+                    } else throw new Error('Já existe outro registro com este identificador. O item permanece na lixeira.');
+                }
             }
             if (!duplicado) {
                 var idx = Number.isInteger(op.index) ? Math.max(0, Math.min(op.index, alvo.length)) : alvo.length;
-                alvo.splice(idx, 0, op.item);
+                alvo.splice(idx, 0, itemRestaurado);
             }
             if (op.path && op.path.length) {
                 var gp2 = garantirPai(root, op.path, true); gp2.pai[gp2.chave] = alvo;
@@ -3681,7 +3722,7 @@ function Compras(_a) {
     }
     useEffect(function () {
         (function () { return __awaiter(_this, void 0, void 0, function () {
-            var r, carregado, nomesLimpezaSeed, nomesAtuais_1, faltando, proximoId_1, novosItens, faltandoArraia_1, baseArraia_1, migrouArraia_1, mudouUnidade_1, dadosComUnidade, _i, _a, chave, lista, itensAjustados, e_7;
+            var r, carregado, faltandoArraia_1, baseArraia_1, migrouArraia_1, mudouUnidade_1, dadosComUnidade, _i, _a, chave, lista, itensAjustados, e_7;
             var _b;
             return __generator(this, function (_c) {
                 switch (_c.label) {
@@ -3698,16 +3739,8 @@ function Compras(_a) {
                         _c.sent();
                         return [3 /*break*/, 5];
                     case 3:
-                        nomesLimpezaSeed = SEED_COMPRAS.rancho.itens.filter(function (i) { return i.categoria === 'Limpeza'; });
-                        nomesAtuais_1 = new Set((((_b = carregado.rancho) === null || _b === void 0 ? void 0 : _b.itens) || []).map(function (i) { return i.nome.toUpperCase().trim(); }));
-                        faltando = nomesLimpezaSeed.filter(function (i) { return !nomesAtuais_1.has(i.nome.toUpperCase().trim()); });
-                        if (faltando.length > 0 && carregado.rancho) {
-                            proximoId_1 = Math.max.apply(Math, __spreadArray([0], carregado.rancho.itens.map(function (i) { return i.id; }), false)) + 1;
-                            novosItens = faltando.map(function (i, idx) { return (__assign(__assign({}, i), { id: proximoId_1 + idx })); });
-                            carregado = __assign(__assign({}, carregado), { rancho: __assign(__assign({}, carregado.rancho), { itens: __spreadArray(__spreadArray([], carregado.rancho.itens, true), novosItens, true) }) });
-                        }
                         faltandoArraia_1 = !carregado.arraiaTdb;
-                        migrouArraia_1 = faltandoArraia_1 || !carregado.arraiaTdb || carregado.arraiaTdb.versaoModelo !== SEED_ARRAIA_TDB.versaoModelo;
+                        migrouArraia_1 = faltandoArraia_1; // Uma lista já editada não é substituída por um modelo novo.
                         if (migrouArraia_1) {
                             baseArraia_1 = JSON.parse(JSON.stringify(SEED_ARRAIA_TDB));
                             carregado = __assign(__assign({}, carregado), { arraiaTdb: baseArraia_1 });
@@ -3730,7 +3763,7 @@ function Compras(_a) {
                             });
                             dadosComUnidade[chave] = __assign(__assign({}, lista), { itens: itensAjustados });
                         }
-                        if (!(mudouUnidade_1 || faltando.length > 0 || migrouArraia_1)) return [3 /*break*/, 5];
+                        if (!(mudouUnidade_1 || migrouArraia_1)) return [3 /*break*/, 5];
                         carregado = dadosComUnidade;
                         return [4 /*yield*/, window.storage.set('compras_listas', JSON.stringify(carregado), false)];
                     case 4:
@@ -4917,7 +4950,7 @@ function Valores(_a) {
         if(!Object.keys(historicoValores).length)historicoValores.JANEIRO=Number(anterior.valorPorAluno)||0;
         historicoValores[mesRegistro]=valorPorAluno;
         if (!Object.keys(historicoVagas).length)
-            historicoVagas[mesRegistro] = Number(anterior.vagasPreenchidas) || 0;
+            historicoVagas.JANEIRO = Number(anterior.vagasPreenchidas) || 0;
         if (mudouVagas)
             historicoVagas[mesRegistro] = vagasPreenchidas;
         next[editandoMultivaga] = {
@@ -7257,12 +7290,21 @@ function ContasPessoais(_a) {
         });
     }
     function parseValor(v) { return TDBFinance.num(v); }
+    function valorContaValido(valor) {
+        var n = typeof valor === 'string' && !valor.trim() ? 0 : TDBFinance.parse(valor);
+        return n != null && n >= 0 ? n : null;
+    }
     function alterarValor(id, mes, valor) {
-        var n = parseValor(valor);
+        var n = valorContaValido(valor);
+        if (n == null) {
+            window.alert('Informe um valor válido, igual ou maior que zero. O valor anterior foi mantido.');
+            return false;
+        }
         salvar(contas.map(function (c) {
             var _a;
             return c.id === id ? __assign(__assign({}, c), { valores: __assign(__assign({}, c.valores), (_a = {}, _a[mes] = n, _a)) }) : c;
         }));
+        return true;
     }
     function renomear(id) {
         var atual = contas.find(function (c) { return c.id === id; });
@@ -7322,7 +7364,7 @@ function ContasPessoais(_a) {
     }
     function interpretarComIA(textoOverride) {
         return __awaiter(this, void 0, void 0, function () {
-            var texto, lista, prompt, r, limpo, ini, fim, obj, next, aplicadas, _loop_1, _i, _a, a, e_35;
+            var texto, lista, prompt, r, limpo, ini, fim, obj, next, aplicadas, invalidas, _loop_1, _i, _a, a, e_35;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -7349,13 +7391,16 @@ function ContasPessoais(_a) {
                         obj = JSON.parse(limpo.slice(ini, fim + 1));
                         next = __spreadArray([], (contas || []), true);
                         aplicadas = 0;
+                        invalidas = 0;
                         _loop_1 = function (a) {
                             var _c;
                             var nomeN = normalizarTexto(a.conta);
                             var idx = next.findIndex(function (c) { return normalizarTexto(c.nome) === nomeN || normalizarTexto(c.nome).includes(nomeN) || nomeN.includes(normalizarTexto(c.nome)); });
                             var mes = MESES_CP.find(function (m) { return normalizarTexto(m) === normalizarTexto(a.mes); });
                             if (idx >= 0 && mes) {
-                                next[idx] = __assign(__assign({}, next[idx]), { valores: __assign(__assign({}, next[idx].valores), (_c = {}, _c[mes] = parseValor(a.valor), _c)) });
+                                var valorValidado = TDBFinance.parse(a.valor);
+                                if (valorValidado == null || valorValidado < 0) { invalidas++; return; }
+                                next[idx] = __assign(__assign({}, next[idx]), { valores: __assign(__assign({}, next[idx].valores), (_c = {}, _c[mes] = valorValidado, _c)) });
                                 aplicadas++;
                             }
                         };
@@ -7370,9 +7415,10 @@ function ContasPessoais(_a) {
                         setPerguntaIA('');
                         _b.label = 4;
                     case 4:
-                        setRespostaIA(aplicadas
-                            ? "\u2713 ".concat(aplicadas, " campo(s) atualizado(s) na tabela. ") + (obj.mensagem || '')
-                            : '⚠ A IA respondeu, mas não encontrei uma conta/mês válido para alterar.');
+                        setRespostaIA((aplicadas
+                            ? "\u2713 ".concat(aplicadas, " campo(s) atualizado(s) na tabela. ") + (invalidas ? '' : (obj.mensagem || ''))
+                            : (invalidas ? '' : '⚠ A IA respondeu, mas não encontrei uma conta/mês válido para alterar.'))
+                            + (invalidas ? '⚠ ' + invalidas + ' valor(es) inválido(s) ou negativo(s) ignorado(s); os valores anteriores foram mantidos.' : ''));
                         return [3 /*break*/, 6];
                     case 5:
                         e_35 = _b.sent();
@@ -7447,8 +7493,8 @@ function ContasPessoais(_a) {
                         }
                         catch (err) { }
                     }, onBlur: function (e) {
-                        alterarValor(c.id, m, e.target.value);
-                        if (!String(e.target.value || '').trim())
+                        if (!alterarValor(c.id, m, e.target.value)) e.target.value = formatBRLNumber((c.valores && c.valores[m]) || 0);
+                        else if (!String(e.target.value || '').trim())
                             e.target.value = '0,00';
                         setCelulaAtiva(null);
                     }, onKeyDown: function (e) {
@@ -7554,19 +7600,20 @@ function _festasMesclarAlunos(dados, transacoes, abasConfig) {
     });
     listaAbas.forEach(function (aba) {
         var atuais = __spreadArray([], (next[aba.key] || []), true);
-        var origemPorNome = {};
-        var manuais = [];
-        atuais.forEach(function (r) {
-            if (r && r.origemMensalidade) origemPorNome[_festasNormalizarNome(r.nome).toLocaleLowerCase('pt-BR')] = r;
-            else if (r) manuais.push(r);
+        var porNome = new Map(alunos.map(function(a){return [a.nome.toLocaleLowerCase('pt-BR'),a];}));
+        var conhecidos = new Set(), ids = new Set(atuais.map(function(r){return r&&r.id;}));
+        var rows = atuais.map(function(r){
+            if(!r)return r;
+            var k=_festasNormalizarNome(r.nome).toLocaleLowerCase('pt-BR');conhecidos.add(k);
+            var aluno=porNome.get(k);
+            return r.origemMensalidade&&aluno?__assign(__assign({},r),{nome:aluno.nome,tipo:aluno.tipo}):r;
         });
-        var sincronizados = alunos.map(function (a, i) {
-            var k = a.nome.toLocaleLowerCase('pt-BR');
-            var antigo = origemPorNome[k];
-            if (!antigo) return _festasLinhaVazia(aba.key, a, i);
-            return __assign(__assign({}, antigo), { nome: a.nome, tipo: a.tipo, origemMensalidade: true });
+        alunos.forEach(function(a,i){
+            var k=a.nome.toLocaleLowerCase('pt-BR');if(conhecidos.has(k))return;
+            var nova=_festasLinhaVazia(aba.key,a,i),baseId=nova.id,sufixo=1;
+            while(ids.has(nova.id))nova.id=baseId+'-novo-'+sufixo++;
+            ids.add(nova.id);conhecidos.add(k);rows.push(nova);
         });
-        var rows = __spreadArray(__spreadArray([], sincronizados, true), manuais, true);
         if (JSON.stringify(atuais) !== JSON.stringify(rows)) mudou = true;
         next[aba.key] = rows;
     });
@@ -8538,9 +8585,9 @@ function PainelFinanceiro() {
                             if (t.status !== 'Pago' && t.status !== 'Parcial')
                                 return;
                             if (t.tipo === 'Entrada')
-                                porMes[t.mes].entradas += t.valor || 0;
+                                porMes[t.mes].entradas += TDBFinance.received(t);
                             else
-                                porMes[t.mes].saidas += t.valor || 0;
+                                porMes[t.mes].saidas += TDBFinance.received(t);
                         });
                         linhasMes = Object.entries(porMes)
                             .filter(function (_a) {
@@ -8554,7 +8601,7 @@ function PainelFinanceiro() {
                             .join('\n');
                         porCategoria = {};
                         transacoes.filter(function (t) { return t.tipo !== 'Entrada' && (t.status === 'Pago' || t.status === 'Parcial'); }).forEach(function (t) {
-                            porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + (t.valor || 0);
+                            porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + TDBFinance.received(t);
                         });
                         topCategorias = Object.entries(porCategoria).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 12)
                             .map(function (_a) {
@@ -8611,8 +8658,8 @@ function PainelFinanceiro() {
                             var ind = calcularIndicadores(m);
                             return "".concat(m, ": ").concat(ind.totalAlunos, " alunos matriculados (precisava de ").concat((_a = ind.pontoEquilibrio) !== null && _a !== void 0 ? _a : '?', ") \u2014 custo/aluno ").concat(ind.custoPorAluno != null ? formatBRL(ind.custoPorAluno) : '?');
                         }).join('\n');
-                        totalFixas = transacoes.filter(function (t) { return t.tipo === 'Fixa' && TDBFinance.received(t)>0; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
-                        totalVariaveis = transacoes.filter(function (t) { return t.tipo === 'Variável' && TDBFinance.received(t)>0; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
+                        totalFixas = transacoes.filter(function (t) { return t.tipo === 'Fixa' && TDBFinance.received(t)>0; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
+                        totalVariaveis = transacoes.filter(function (t) { return t.tipo === 'Variável' && TDBFinance.received(t)>0; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
                         totalFixasVar = totalFixas + totalVariaveis;
                         textoFixasVariaveis = totalFixasVar > 0
                             ? "Despesas Fixas: ".concat(formatBRL(totalFixas), " (").concat(Math.round(totalFixas / totalFixasVar * 100), "%) \u2014 Despesas Vari\u00E1veis: ").concat(formatBRL(totalVariaveis), " (").concat(Math.round(totalVariaveis / totalFixasVar * 100), "%)")
@@ -8627,8 +8674,8 @@ function PainelFinanceiro() {
                         if (rm && rm.value) {
                             meta = Number(rm.value);
                             doMes = transacoes.filter(function (t) { return t.mes === mesAtual && (t.status === 'Pago' || t.status === 'Parcial'); });
-                            entradasMes = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
-                            saidasMes = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
+                            entradasMes = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
+                            saidasMes = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
                             resultadoMes = entradasMes - saidasMes;
                             textoMeta = "Meta de lucro mensal: ".concat(formatBRL(meta), ". Resultado real em ").concat(mesAtual, ": ").concat(formatBRL(resultadoMes), " \u2014 ").concat(resultadoMes >= meta ? 'BATEU a meta' : "FALTOU ".concat(formatBRL(meta - resultadoMes), " pra bater a meta"), ".");
                         }
@@ -8824,7 +8871,7 @@ function PainelFinanceiro() {
                                 var mapa = {};
                                 transacoes.filter(function (t) { return t.mes === mes && t.tipo !== 'Entrada' && (t.status === 'Pago' || t.status === 'Parcial'); }).forEach(function (t) {
                                     var cat = nomeExibicao(t.categoria);
-                                    mapa[cat] = (mapa[cat] || 0) + (t.valor || 0);
+                                    mapa[cat] = (mapa[cat] || 0) + TDBFinance.received(t);
                                 });
                                 return mapa;
                             };
@@ -8867,8 +8914,8 @@ function PainelFinanceiro() {
                         ultimosMeses = mesesComMov.slice(-3);
                         resultados = ultimosMeses.map(function (m) {
                             var doMes = transacoes.filter(function (t) { return t.mes === m && (t.status === 'Pago' || t.status === 'Parcial'); });
-                            var entradas = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
-                            var saidas = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
+                            var entradas = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
+                            var saidas = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
                             return entradas - saidas;
                         });
                         mediaResultado = resultados.reduce(function (s, v) { return s + v; }, 0) / resultados.length;
@@ -8923,42 +8970,26 @@ function PainelFinanceiro() {
         window.addEventListener('tdb-lixeira-atualizada', atualizarLixeiraExterna);
         return function () { ativo = false; window.removeEventListener('tdb-lixeira-atualizada', atualizarLixeiraExterna); };
     }, []);
-    function persistLixeira(next) {
-        return __awaiter(this, void 0, void 0, function () {
-            var e_57;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        setLixeira(next);
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, window.storage.set('lixeira_temporaria', JSON.stringify(next), false)];
-                    case 2:
-                        _a.sent();
-                        window.dispatchEvent(new CustomEvent('tdb-lixeira-atualizada', { detail: next }));
-                        return [3 /*break*/, 4];
-                    case 3:
-                        e_57 = _a.sent();
-                        return [3 /*break*/, 4];
-                    case 4: return [2 /*return*/];
-                }
-            });
-        });
+    async function persistLixeira(next) {
+        await window.storage.set('lixeira_temporaria', JSON.stringify(next), false);
+        setLixeira(next);
+        window.dispatchEvent(new CustomEvent('tdb-lixeira-atualizada', { detail: next }));
     }
     async function restaurarDaLixeira(lixId) {
         var entrada = lixeira.find(function (l) { return l.id === lixId; });
         if (!entrada) return;
+        if ((!entrada.restoreOps || !entrada.restoreOps.length) && entrada.dados) {
+            entrada = Object.assign({}, entrada, { restoreOps: [{ op: 'insert', key: 'transacoes_financas2026', path: [], item: entrada.dados, uniqueField: 'id' }] });
+        }
         if (entrada.restoreOps && entrada.restoreOps.length) {
             try {
                 await window.__tdbLixeiraRestaurarGenerico(entrada);
                 await persistLixeira(lixeira.filter(function (l) { return l.id !== lixId; }));
                 window.location.reload();
-            } catch (e) { window.alert('Não consegui restaurar este item. Tente novamente.'); }
+            } catch (e) { window.alert('Não consegui restaurar este item. Ele permanece na lixeira. ' + (e && e.message || 'Tente novamente.')); }
             return;
         }
-        persist(__spreadArray(__spreadArray([], transacoes, true), [entrada.dados], false));
-        await persistLixeira(lixeira.filter(function (l) { return l.id !== lixId; }));
+        window.alert('Este item não contém dados suficientes para restaurar e permanece na lixeira.');
     }
     async function apagarDefinitivoDaLixeira(lixId) {
         var entrada = lixeira.find(function (l) { return l.id === lixId; });
@@ -9944,8 +9975,8 @@ function salvarTudoAgora() {
                             ano: exercicioAtual, encerradoEm: agora,
                             saldoFinal: saldoFinal,
                             totalLancamentos: (transacoes || []).length,
-                            entradas: (transacoes || []).filter(function (t) { return t.tipo === 'Entrada' && (t.status === 'Pago' || t.status === 'Parcial'); }).reduce(function (a, t) { return a + (Number(t.valor) || 0); }, 0),
-                            saidas: (transacoes || []).filter(function (t) { return (t.tipo === 'Fixa' || t.tipo === 'Variável') && (t.status === 'Pago' || t.status === 'Parcial'); }).reduce(function (a, t) { return a + (Number(t.valor) || 0); }, 0),
+                            entradas: (transacoes || []).filter(function (t) { return t.tipo === 'Entrada' && (t.status === 'Pago' || t.status === 'Parcial'); }).reduce(function (a, t) { return a + TDBFinance.received(t); }, 0),
+                            saidas: (transacoes || []).filter(function (t) { return (t.tipo === 'Fixa' || t.tipo === 'Variável') && (t.status === 'Pago' || t.status === 'Parcial'); }).reduce(function (a, t) { return a + TDBFinance.received(t); }, 0),
                             proximoExercicio: proxAno_1
                         };
                         return [4 /*yield*/, window.storage.set("fechamento_exercicio__".concat(exercicioAtual), JSON.stringify(resumo), false)];
@@ -10131,7 +10162,7 @@ function salvarTudoAgora() {
                         existentes_1 = new Set(transacoes
                             .filter(Boolean)
                             .map(function (t) { return "".concat(String(t.mes || ''), "|").concat(String(t.categoria || '').trim()); }));
-                        maxId_1 = transacoes.reduce(function (m, t) { return Math.max(m, Number(t && t.id) || 0); }, 0);
+                        maxId_1 = maiorIdLancamento_();
                         novos_1 = [];
                         modelos_1.forEach(function (modelo, categoria) {
                             MESES.forEach(function (mes) {
@@ -10492,13 +10523,13 @@ function salvarTudoAgora() {
                         mes = mesEscolhido || __spreadArray([], MESES, true).reverse().find(function (m) { return transacoes.some(function (t) { return t.mes === m && (t.status === 'Pago' || t.status === 'Parcial'); }); }) || 'AGOSTO';
                         nomeMes = mes.charAt(0) + mes.slice(1).toLowerCase();
                         doMes = transacoes.filter(function (t) { return t.mes === mes && (t.status === 'Pago' || t.status === 'Parcial'); });
-                        entradas = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
-                        saidas = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
+                        entradas = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
+                        saidas = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
                         resultado = entradas - saidas;
                         saldo = (saldosMensais || {})[mes] || 0;
                         porCategoria = {};
                         doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).forEach(function (t) {
-                            porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + (t.valor || 0);
+                            porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + TDBFinance.received(t);
                         });
                         categoriasOrdenadas = Object.entries(porCategoria).sort(function (a, b) { return b[1] - a[1]; });
                         roxo = [17, 19, 24];
@@ -10698,6 +10729,17 @@ function salvarTudoAgora() {
         if (e && e.target)
             e.target.value = '';
     }
+    function maiorIdLancamento_() {
+        var maior = transacoes.reduce(function(m, t) { return Math.max(m, Number(t && t.id) || 0); }, 0);
+        (lixeira || []).forEach(function(entrada) {
+            if (Number(entrada.ano || exercicioAtual) !== Number(exercicioAtual)) return;
+            if (entrada.dados) maior = Math.max(maior, Number(entrada.dados.id) || 0);
+            (entrada.restoreOps || []).forEach(function(op) {
+                if (op.op === 'insert' && /^transacoes_financas\d{4}$/.test(op.key) && (!op.path || !op.path.length)) maior = Math.max(maior, Number(op.item && op.item.id) || 0);
+            });
+        });
+        return maior;
+    }
     function adicionarLancamento(e) {
         e.preventDefault();
         if (bloquearEdicaoSeEncerrado_())
@@ -10713,7 +10755,7 @@ function salvarTudoAgora() {
             setFormErro('Coloque um valor válido, maior que zero.');
             return;
         }
-        var maxId = transacoes.reduce(function (m, t) { return Math.max(m, t.id); }, 0);
+        var maxId = maiorIdLancamento_();
         var novo = {
             id: maxId + 1,
             mes: novoMes,
@@ -10730,7 +10772,7 @@ function salvarTudoAgora() {
         setFormOk(true);
         setTimeout(function () { return setFormOk(false); }, 4000);
     }
-    function removerLancamento(id) {
+    async function removerLancamento(id) {
         if (bloquearEdicaoSeEncerrado_())
             return;
         var item = transacoes.find(function (t) { return t.id === id; });
@@ -10739,18 +10781,35 @@ function salvarTudoAgora() {
         if (!window.confirm("Tem certeza que quer excluir \"".concat(nome, "\"").concat(valorTexto, "?\n\nVai para a lixeira e fica lá até você restaurar ou excluir definitivamente.")))
             return;
         if (item) {
-            persistLixeira(__spreadArray(__spreadArray([], lixeira, true), [{ id: 'lix' + Date.now() + Math.random().toString(36).slice(2), rotulo: nome, dados: item, origem: 'Lançamentos / Mensalidades', ano: exercicioAtual, apagadoEm: new Date().toISOString(), restoreOps: [{ op:'insert', key:'transacoes_financas2026', path:[], item:item, uniqueField:'id' }] }], false));
+            try {
+                await persistLixeira(__spreadArray(__spreadArray([], lixeira, true), [{ id: 'lix' + Date.now() + Math.random().toString(36).slice(2), rotulo: nome, dados: item, origem: 'Lançamentos / Mensalidades', ano: exercicioAtual, apagadoEm: new Date().toISOString(), restoreOps: [{ op:'insert', key:'transacoes_financas2026', path:[], item:item, uniqueField:'id' }] }], false));
+            } catch (e) { window.alert('Não consegui guardar este lançamento na lixeira. Ele foi mantido na lista.'); return; }
         }
         persist(transacoes.filter(function (t) { return t.id !== id; }));
     }
     function editarLancamento(id, updates) {
         if (bloquearEdicaoSeEncerrado_())
             return;
+        if(['valor','valorCheio','valorDevido'].some(function(k){return Object.hasOwn(updates,k)&&updates[k]!=null&&updates[k]!==''&&(TDBFinance.parse(updates[k])==null||TDBFinance.parse(updates[k])<0);})){window.alert('Informe valores válidos, sem valores negativos.');return;}
         persist(transacoes.map(function (t) { return t.id === id ? __assign(__assign({}, t), updates) : t; }));
     }
     function darBaixa(id) {
         if (bloquearEdicaoSeEncerrado_()) return;
         var item=transacoes.find(function(t){return t.id===id;}); if(!item)return;
+        var grupo=TDBFinance.sharedTuition(transacoes,item);
+        if(item.status!=='Pago'&&grupo){
+            var restante=grupo.pendente;
+            if(!window.confirm(restante>0?'Confirmar recebimento de '+formatBRL(restante)+' e quitar a mensalidade, considerando todos os pagamentos parciais?':'Os pagamentos já cobrem esta mensalidade. Marcar seus registros como quitados?'))return;
+            var hoje=new Date(),data=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
+            persist(transacoes.map(function(t){
+                if(!grupo.itens.includes(t))return t;
+                var valor=TDBFinance.money(TDBFinance.received(t)+(t.id===id?restante:0));
+                var patch={status:'Pago',valor:valor};
+                if(t.id===id&&restante>0)patch.data=data;
+                if(t.valorDevido!=null&&t.valorDevido!=='')patch.valorDevido=valor;
+                return Object.assign({},t,patch);
+            }));return;
+        }
         var amount=TDBFinance.due(item);
         if(item.status!=='Pago' && amount<=0){window.alert('Informe o valor devido antes de registrar o pagamento.');return;}
         if(item.status!=='Pago' && !window.confirm('Confirmar '+(item.tipo==='Entrada'?'recebimento':'pagamento')+' de '+formatBRL(TDBFinance.debt(item))+' e quitar este registro?'))return;
@@ -10769,7 +10828,7 @@ function salvarTudoAgora() {
     function adicionarEntrada(registro) {
         if (bloquearEdicaoSeEncerrado_())
             return;
-        var maxId = transacoes.reduce(function (m, t) { return Math.max(m, t.id); }, 0);
+        var maxId = maiorIdLancamento_();
         persist(__spreadArray(__spreadArray([], transacoes, true), [__assign(__assign({}, registro), { id: maxId + 1 })], false));
     }
     var resumoMensal = useMemo(function () {
@@ -10787,7 +10846,7 @@ function salvarTudoAgora() {
             return [];
         var porCategoria = {};
         transacoes.filter(function (t) { return t.tipo !== 'Entrada' && (t.status === 'Pago' || t.status === 'Parcial'); }).forEach(function (t) {
-            porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + (t.valor || 0);
+            porCategoria[t.categoria] = (porCategoria[t.categoria] || 0) + TDBFinance.received(t);
         });
         return Object.entries(porCategoria)
             .map(function (_a) {
@@ -11332,7 +11391,7 @@ function QuadroProjecaoCaixa(props) {
     var th={padding:'10px 12px',textAlign:'right',whiteSpace:'nowrap',fontSize:12},td={padding:'10px 12px',textAlign:'right',whiteSpace:'nowrap',borderTop:'1px solid '+COLORS.line};
     return React.createElement('section',{className:'tdb-projecao-caixa',style:{minWidth:0,maxWidth:'100%',padding:16,borderRadius:12,background:COLORS.paperCard,border:'1px solid '+COLORS.line}},
       React.createElement('div',{style:{fontSize:17,fontWeight:800,marginBottom:8}},'Projeção de caixa'),
-      React.createElement('div',{style:{fontSize:12,color:COLORS.inkSoft,lineHeight:1.5,marginBottom:10}},'Estimativa com cobranças previstas, despesas fixas recorrentes (presentes em pelo menos 2 dos últimos 3 meses; gastos pontuais como IPTU ou contratos encerrados não se repetem) e média recente das variáveis. Os meses intermediários entram na conta mesmo quando não estão selecionados. Não altera lançamentos.'),
+      React.createElement('div',{style:{fontSize:12,color:COLORS.inkSoft,lineHeight:1.5,marginBottom:10}},'Estimativa com cobranças previstas, despesas fixas recorrentes (presentes em pelo menos 2 dos últimos 3 meses; gastos pontuais como IPTU não se repetem; contratos encerrados devem ser marcados na edição de Lançamentos) e média recente das variáveis. Os meses intermediários entram na conta mesmo quando não estão selecionados. Não altera lançamentos.'),
       React.createElement('div',{style:{fontSize:13,marginBottom:12}},dados.semSaldoBase?'Sem saldo de fechamento informado até o mês de referência. As entradas e saídas são estimativas; o saldo projetado fica indisponível.':'Saldo base de '+TDBFinance.monthShort(dados.mesSaldoBase)+': '+formatBRLPrivado(dados.saldoBase,props.modoPrivado)),
       React.createElement('div',{'data-export-ignore':true,style:{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}},disponiveis.map(function(m){return React.createElement('label',{key:m,style:{display:'flex',alignItems:'center',gap:5,fontSize:13}},React.createElement('input',{type:'checkbox',checked:selecionados.includes(m),onChange:function(){props.onAlternar(m);}}),TDBFinance.monthShort(m));})),
       !disponiveis.length?React.createElement('div',null,'Não há meses futuros neste exercício.'):
@@ -11402,8 +11461,8 @@ function VisaoGeral(_a) {
         if (!transacoes)
             return 0;
         var doMes = transacoes.filter(function (t) { return t.mes === mesAtualMeta && (t.status === 'Pago' || t.status === 'Parcial'); });
-        var entradas = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
-        var saidas = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
+        var entradas = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
+        var saidas = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
         return entradas - saidas;
     }, [transacoes, mesAtualMeta]);
     var inputStyleMeta = {
@@ -11596,9 +11655,9 @@ function VisaoGeral(_a) {
         var idxAtual = MESES.indexOf(mesReferenciaInteligencia);
         var anteriores = MESES.slice(Math.max(0, idxAtual - 3), idxAtual);
         var nomeMes = MESES_ABREV[mesReferenciaInteligencia] || mesReferenciaInteligencia;
-        var mensPend = transacoes.filter(function (t) { return t.mes === mesReferenciaInteligencia && t.tipo === 'Entrada' && t.categoria && t.categoria.startsWith('Mensalidade - ') && TDBFinance.debt(t)>0; });
+        var mensPend = TDBFinance.pendingCharges(transacoes).filter(function (t) { return t.mes === mesReferenciaInteligencia && TDBFinance.student(t); });
         if (mensPend.length) {
-            var valor = TDBFinance.sum(mensPend,TDBFinance.debt);
+            var valor = TDBFinance.sum(mensPend);
             alertas.push({ nivel: 'alto', titulo: "".concat(mensPend.length, " mensalidade").concat(mensPend.length === 1 ? '' : 's', " em aberto em ").concat(nomeMes), detalhe: "".concat(formatBRL(valor), " ainda previsto para receber.") });
         }
         var pe = (evolucaoIndicadores || []).find(function (e) { return e.mesAbrev === nomeMes; }) || null;
@@ -11615,8 +11674,8 @@ function VisaoGeral(_a) {
             var categorias = Array.from(new Set(transacoes.filter(function (t) { return t.tipo !== 'Entrada' && TDBFinance.received(t)>0 && t.mes === mesReferenciaInteligencia && t.categoria; }).map(function (t) { return t.categoria; })));
             var picos_1 = [];
             categorias.forEach(function (cat) {
-                var atual = transacoes.filter(function (t) { return t.mes === mesReferenciaInteligencia && t.tipo !== 'Entrada' && TDBFinance.received(t)>0 && t.categoria === cat; }).reduce(function (s, t) { return s + (Number(t.valor) || 0); }, 0);
-                var historico = anteriores.map(function (m) { return transacoes.filter(function (t) { return t.mes === m && t.tipo !== 'Entrada' && TDBFinance.received(t)>0 && t.categoria === cat; }).reduce(function (s, t) { return s + (Number(t.valor) || 0); }, 0); }).filter(function (v) { return v > 0; });
+                var atual = transacoes.filter(function (t) { return t.mes === mesReferenciaInteligencia && t.tipo !== 'Entrada' && TDBFinance.received(t)>0 && t.categoria === cat; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
+                var historico = anteriores.map(function (m) { return transacoes.filter(function (t) { return t.mes === m && t.tipo !== 'Entrada' && TDBFinance.received(t)>0 && t.categoria === cat; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0); }).filter(function (v) { return v > 0; });
                 if (historico.length < 2)
                     return;
                 var media = historico.reduce(function (a, b) { return a + b; }, 0) / historico.length;
@@ -11636,7 +11695,7 @@ function VisaoGeral(_a) {
                 var alunos = totalAlunosNoMes_(mes);
                 if (!alunos)
                     return 0;
-                var gasto = transacoes.filter(function (t) { return t.mes === mes && t.tipo !== 'Entrada' && TDBFinance.received(t)>0 && TDBFinance.match(t.categoria,catsAlim); }).reduce(function (s, t) { return s + (Number(t.valor) || 0); }, 0);
+                var gasto = transacoes.filter(function (t) { return t.mes === mes && t.tipo !== 'Entrada' && TDBFinance.received(t)>0 && TDBFinance.match(t.categoria,catsAlim); }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
                 return gasto / alunos;
             };
             var atual = custoAluno(mesReferenciaInteligencia);
@@ -12173,6 +12232,7 @@ function Lancamentos(props) {
     var _k = useState(false), contaDigitada = _k[0], setContaDigitada = _k[1];
     var _l = useState(''), categoriaEdit = _l[0], setCategoriaEdit = _l[1];
     var _l2 = useState(''), dataLancEdit = _l2[0], setDataLancEdit = _l2[1];
+    var _recFim = useState(false), projecaoEncerradaEdit = _recFim[0], setProjecaoEncerradaEdit = _recFim[1];
     var _m = useState(null), linhaSelecionada = _m[0], setLinhaSelecionada = _m[1];
     useEffect(function () {
         function aoReceberBusca(e) {
@@ -12186,8 +12246,8 @@ function Lancamentos(props) {
         var mesAlvo = filtroMes !== 'TODOS' ? filtroMes
             : __spreadArray([], MESES, true).reverse().find(function (m) { return transacoes.some(function (t) { return t.mes === m && (t.status === 'Pago' || t.status === 'Parcial'); }); }) || 'AGOSTO';
         var doMes = transacoes.filter(function (t) { return t.mes === mesAlvo && (t.status === 'Pago' || t.status === 'Parcial'); });
-        var entradas = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
-        var saidas = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.num(t.valor); }, 0);
+        var entradas = doMes.filter(function (t) { return t.tipo === 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
+        var saidas = doMes.filter(function (t) { return t.tipo !== 'Entrada'; }).reduce(function (s, t) { return s + TDBFinance.received(t); }, 0);
         var saldoInfo = (saldosMensais || {})[mesAlvo];
         return { mesAlvo: mesAlvo, entradas: entradas, saidas: saidas, resultado: entradas - saidas, saldo: saldoInfo || 0 };
     }, [transacoes, filtroMes, saldosMensais]);
@@ -12201,12 +12261,14 @@ function Lancamentos(props) {
         setContaDigitada(false);
         setCategoriaEdit(t.categoria);
         setDataLancEdit(t.data || '');
+        setProjecaoEncerradaEdit(t.projecaoEncerrada === true);
     }
     function cancelarEdicao() {
         setEditandoId(null);
     }
     function salvarEdicao(id) {
         var valorFinal = parseBRLInput(valorEdit);
+        if(String(valorEdit).trim()&&(valorFinal==null||valorFinal<0)){window.alert('Informe um valor válido, sem valores negativos.');return;}
         var historico = historicoEdit.trim() || null;
         if (contaDigitada && valorFinal != null && editandoValorOriginal != null && valorFinal !== editandoValorOriginal) {
             var diff = valorFinal - editandoValorOriginal;
@@ -12215,13 +12277,15 @@ function Lancamentos(props) {
             historico = "".concat(base).concat(termo, "=").concat(formatBRLNumber(valorFinal));
         }
         var categoriaFinal = categoriaEdit.trim() || null;
-        editarLancamento(id, __assign({ valor: valorFinal, status: statusEdit, historico: historico, data: dataLancEdit || null }, (categoriaFinal ? { categoria: categoriaFinal } : {})));
+        editarLancamento(id, __assign({ valor: valorFinal, status: statusEdit, historico: historico, data: dataLancEdit || null, projecaoEncerrada: projecaoEncerradaEdit }, (categoriaFinal ? { categoria: categoriaFinal } : {})));
         setEditandoId(null);
     }
     var inputStyle = {
         border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '9px 11px', fontSize: 14,
         fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink,
     };
+    var itemEmEdicao=transacoes.find(function(t){return t.id===editandoId;});
+    var controleRecorrencia=itemEmEdicao&&itemEmEdicao.tipo==='Fixa'?React.createElement('label',{'data-export-ignore':true,style:{gridColumn:'1 / -1',display:'flex',gap:8,alignItems:'flex-start',padding:10,border:'1px solid '+COLORS.line,borderRadius:8,fontSize:12}},React.createElement('input',{type:'checkbox',checked:projecaoEncerradaEdit,onChange:function(e){setProjecaoEncerradaEdit(e.target.checked);}}),React.createElement('span',null,'Encerrar repetição na projeção após '+TDBFinance.monthShort(itemEmEdicao.mes)+'.',' Lançamentos já preenchidos continuam considerados. Salve para aplicar.')):null;
     return (React.createElement("div", { className: "export-pagina-lancamentos", style: { display: 'grid', gap: 22 } }, React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' } }, React.createElement("span", { style: { fontSize: 12, color: COLORS.inkSoft, fontWeight: 600 } }, 'M\u00EAs para exportar'), React.createElement("select", { value: mesExportarPdf, onChange: function (e) { return setMesExportarPdf(e.target.value); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 9px', fontSize: 13 } }, MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); }), React.createElement("option", { value: 'TODOS_MESES_PDF' }, 'Todos os 12 meses juntos')), React.createElement("button", { type: 'button', className: 'tdb-remat-exportar-tudo', disabled: exportandoMesPdf, onClick: exportarMesLancamentosPdf }, exportandoMesPdf ? 'Gerando...' : 'Exportar m\u00EAs em PDF')), React.createElement("div", null, React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 } }, React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.03em' } }, "Resumo de ", kpisMes.mesAlvo.charAt(0) + kpisMes.mesAlvo.slice(1).toLowerCase()), React.createElement("button", { onClick: function () { return setPrivadoTotais(function (v) { return !v; }); }, title: privadoTotais ? 'Mostrar totais' : 'Esconder totais', style: {
             background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             color: COLORS.inkSoft, fontSize: 12, fontWeight: 600,
@@ -12258,10 +12322,11 @@ function Lancamentos(props) {
         var mes = _a.mes, itens = _a.itens;
         var aberto = mesesAbertos[mes] === true || (!!filtroTexto && itens.length > 0);
         var totalMes = itens.reduce(function (s, t) { return s + (t.tipo === 'Entrada' ? t.valor : -t.valor); }, 0);
+        var totalCaixaMes = TDBFinance.sum(itens, function(t) { return (t.tipo === 'Entrada' ? 1 : -1) * TDBFinance.received(t); });
         return (React.createElement("div", { key: mes, className: "lancamentos-mes-card", style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("button", { onClick: function () { return toggleMes(mes); }, style: {
                 width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 padding: '13px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
-            } }, React.createElement("span", { className: "serif", style: { fontWeight: 600, fontSize: 15, color: COLORS.ink } }, mes.charAt(0) + mes.slice(1).toLowerCase(), " ", React.createElement("span", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontFamily: 'Inter, sans-serif', fontWeight: 500 } }, "(", itens.length, " lan\u00E7amentos)")), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12 } }, React.createElement("span", { className: "mono", style: { fontSize: 13.5, fontWeight: 600, color: totalMes >= 0 ? COLORS.green : COLORS.red } }, formatBRLPrivado(totalMes, privadoDetalhes)), React.createElement(ChevronDown, { size: 16, color: COLORS.inkSoft, style: { transform: aberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' } }))), aberto && (React.createElement("div", null, itens.map(function (t) {
+            } }, React.createElement("span", { className: "serif", style: { fontWeight: 600, fontSize: 15, color: COLORS.ink } }, mes.charAt(0) + mes.slice(1).toLowerCase(), " ", React.createElement("span", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontFamily: 'Inter, sans-serif', fontWeight: 500 } }, "(", itens.length, " lan\u00E7amentos)")), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12 } }, React.createElement("span", { style: { display: 'grid', gap: 3, textAlign: 'right', fontFamily: 'Inter, sans-serif', fontSize: 12, whiteSpace: 'nowrap' } }, React.createElement("span", { title: "Saldo dos valores lançados nesta lista, incluindo pendentes", style: { color: COLORS.inkSoft } }, "Lançado: ", React.createElement("span", { className: "mono" }, formatBRLPrivado(totalMes, privadoDetalhes))), React.createElement("span", { title: "Recebido menos pago nos lançamentos desta lista", style: { fontWeight: 600, color: totalCaixaMes >= 0 ? COLORS.green : COLORS.red } }, "Caixa: ", React.createElement("span", { className: "mono" }, formatBRLPrivado(totalCaixaMes, privadoDetalhes)))), React.createElement(ChevronDown, { size: 16, color: COLORS.inkSoft, style: { transform: aberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' } }))), aberto && (React.createElement("div", null, itens.map(function (t) {
             var emEdicao = editandoId === t.id;
             var semValor = t.valor == null;
             return (React.createElement("div", { key: t.id, onClick: function () { return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
@@ -12276,7 +12341,7 @@ function Lancamentos(props) {
                             : 'transparent'),
                     boxShadow: linhaSelecionada === t.id ? 'inset 0 1px 0 rgba(255,255,255,0.5)' : 'none',
                     transition: 'background 0.15s ease',
-                } }, React.createElement("div", null, emEdicao ? (React.createElement("input", { value: categoriaEdit, onChange: function (e) { return setCategoriaEdit(e.target.value); }, onKeyDown: function (e) {
+                } }, emEdicao&&controleRecorrencia, React.createElement("div", null, emEdicao ? (React.createElement("input", { value: categoriaEdit, onChange: function (e) { return setCategoriaEdit(e.target.value); }, onKeyDown: function (e) {
                     if (e.key === 'Enter')
                         salvarEdicao(t.id);
                     if (e.key === 'Escape')
@@ -12783,9 +12848,11 @@ function Mensalidades(_a) {
     }, [tabelaValores, avulsos]);
     var semFiltroNenhum = filtroMes === 'TODOS' && !filtroTexto;
     var filtradasCompleto = useMemo(function () {
+        var itensPendentes=new Set();
+        if(filtroStatus==='Pendente')TDBFinance.pendingCharges(entradas).forEach(function(c){c.itens.forEach(function(t){if(t.status!=='Pago')itensPendentes.add(t);});});
         return entradas
             .filter(function (t) { return filtroMes === 'TODOS' || t.mes === filtroMes; })
-            .filter(function (t) { return filtroStatus === 'TODOS' || (filtroStatus === 'Pendente' ? TDBFinance.debt(t)>0 : t.status === filtroStatus); })
+            .filter(function (t) { return filtroStatus === 'TODOS' || (filtroStatus === 'Pendente' ? itensPendentes.has(t) : t.status === filtroStatus); })
             .filter(function (t) { return filtroBanco === 'TODOS' || (filtroBanco === 'SEM_BANCO' ? !t.banco : t.banco === filtroBanco); })
             .filter(function (t) { return filtroConvenio === 'TODOS' || (filtroConvenio === 'SEM_CONVENIO' ? !t.convenio : t.convenio === filtroConvenio); })
             .filter(function (t) { return filtroNota === 'TODOS' || (filtroNota === 'SEM_NOTA' ? t.nota === undefined
@@ -12810,8 +12877,9 @@ function Mensalidades(_a) {
     }); }, [filtradas]);
     var resumo = useMemo(function () {
         var rows=filtradasCompleto.filter(function(t){return !['CONVÊNIO - EMPRESAS (AGREGADO)','CONVÊNIO - TDB'].includes(String(t.categoria||'').toUpperCase());});
-        return {qtdPendente:rows.filter(function(t){return TDBFinance.debt(t)>0;}).length,valorPendente:TDBFinance.sum(rows,TDBFinance.debt),qtdPago:rows.filter(function(t){return TDBFinance.received(t)>0;}).length,valorPago:TDBFinance.sum(rows,TDBFinance.received)};
-    }, [filtradasCompleto]);
+        var pendencias=TDBFinance.pendingCharges(entradas,rows);
+        return {qtdPendente:pendencias.length,valorPendente:TDBFinance.sum(pendencias),qtdPago:rows.filter(function(t){return TDBFinance.received(t)>0;}).length,valorPago:TDBFinance.sum(rows,TDBFinance.received)};
+    }, [filtradasCompleto, entradas]);
     function iniciarEdicao(t) {
         setEditandoId(t.id);
         setQuantidadeEdit(String(TDBFinance.children(t))); 
@@ -12848,7 +12916,8 @@ function Mensalidades(_a) {
         }
         var numPago = parseBRLInput(novoValor);
         var numCheio = parseBRLInput(novoValorCheio);
-        var num = (numPago && numPago > 0) ? numPago : numCheio;
+        if((String(novoValor).trim()&&(numPago==null||numPago<0))||(String(novoValorCheio).trim()&&(numCheio==null||numCheio<0))){setFormErro('Informe valores válidos, sem valores negativos.');return;}
+        var num = numPago!==null ? numPago : numCheio;
         if (!num || num <= 0) {
             setFormErro('Coloque um valor válido em algum dos dois campos (Valor a Pagar ou Valor Pago).');
             return;
@@ -12969,7 +13038,7 @@ function Mensalidades(_a) {
                 return;
             var proporcional = Math.round((base * Math.min(dias, total) / total) * 100) / 100;
             if (aplicarDescontoAvista) {
-                var pct = parseBRLInput(descontoAvista) || 0;
+                var pct = Math.min(100,Math.max(0,parseBRLInput(descontoAvista) || 0));
                 proporcional = Math.round(proporcional * (1 - pct / 100) * 100) / 100;
             }
             if (!novoValorCheio)

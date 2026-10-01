@@ -1,0 +1,28 @@
+TDB
+
+Painel financeiro com versões para computador e celular.
+
+PUBLICAÇÃO
+
+A pasta e o arquivo compactado se chamam TDB e TDB.zip. O título, o aplicativo instalado e a tela de abertura exibem TDB.
+
+Para publicar no GitHub Pages, use um repositório chamado TDB e envie o conteúdo desta pasta para a raiz usada pelo site, mantendo os arquivos juntos e incluindo .nojekyll. Não envie a pasta de auditoria do ambiente de trabalho.
+
+A conexão com o Google Drive já está configurada. Esta entrega não exige substituir o Apps Script. A URL, os pedidos de abertura, o transporte das gravações, as confirmações, os intervalos de reenvio e as regras de cache existentes foram preservados. O identificador técnico interno serve apenas para o navegador receber os arquivos atualizados.
+
+COMPORTAMENTOS CONFERIDOS
+
+- Lixeira: novos lançamentos reservam os identificadores dos itens apagados. Colisões antigas restauram os dois registros. Repetir uma restauração após falha não duplica o lançamento. Falhas ao ler ou gravar não autorizam descartar o item recuperável.
+- Contas pessoais: texto inválido e valores negativos são recusados tanto na edição manual como nas alterações retornadas pela IA. O valor anterior permanece. Zero é aceito; limpar manualmente o campo continua significando zero.
+- Compras: os itens de limpeza excluídos não são recriados ao abrir. Uma lista de Arraiá existente e editada é preservada; listas novas continuam recebendo seus itens iniciais.
+- Lançamentos: o cabeçalho distingue Lançado e Caixa. Lançado mantém o saldo dos valores registrados; Caixa considera recebido menos pago. Ambos respeitam a lista filtrada e a opção de ocultar valores. As fórmulas dos gráficos e demais indicadores financeiros foram preservadas.
+- Anexos: uma cópia que só existe neste aparelho não é descartada simplesmente por estar ausente no Drive. Ela não é enviada automaticamente apenas por ser consultada. Exclusões locais explícitas continuam na fila até serem confirmadas. Cópias já confirmadas no Drive refletem a remoção remota. Edições locais pendentes ficam protegidas contra respostas antigas.
+- Pendências antigas de anexos são tratadas na fila de anexos; a ausência de um PDF no localStorage não é interpretada como uma ordem para apagar o arquivo no Drive. Falhas de leitura preservam a pendência.
+
+VALIDAÇÃO
+
+Foram executados testes locais de cálculos, componentes, lixeira, contas pessoais, Compras, abertura, salvamento, reabertura, funcionamento offline, conflitos e anexos. Os testes usam dados fictícios e serviços simulados. A apresentação dos novos totais também foi conferida em navegador nos tamanhos de computador e celular.
+
+Nos cenários comparados, a abertura e o salvamento comum realizaram as mesmas consultas da versão anterior. Nenhuma nova consulta foi acrescentada ao caminho de abertura do painel. O tempo real continua dependendo da conexão, do aparelho e do Google.
+
+Não houve gravação, exclusão ou implantação no Google Drive real durante essa validação.

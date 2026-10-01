@@ -32,6 +32,8 @@
       const CHAVE_BASE_VERSOES = '__base_versoes_sync_v1';
       const CHAVE_CLIENTE = '__cliente_sync_v2';
       const CHAVE_PENDENCIAS_ANEXOS = '__pendencias_anexos_v1';
+      const CHAVE_EXCLUSOES_ANEXOS = '__exclusoes_anexos_v1';
+      const CHAVE_CACHE_ANEXOS = '__cache_anexos_confirmados_v1';
       const CHAVE_REVISAO_CONFIRMADA = '__drive_revisao_confirmada_v1';
       const CHAVE_CONFLITOS_OFFLINE = '__conflitos_offline_v37';
       const CHAVE_BASE_VALORES = '__base_valores_sync_v37';
@@ -44,6 +46,7 @@
       let seqEscritaLocal_ = 0;
       let verificacaoNovidadesCache_ = null; // TDB 02i
       const seqPorChave_ = new Map();
+      const conflitosParaAtualizar_ = new Set();
       function marcarEscritaLocal_(key) { seqPorChave_.set(String(key), ++seqEscritaLocal_); }
       function gerarOpId_(versao) {
         // A mesma versão local conserva a identidade inclusive depois de reabrir.
@@ -199,9 +202,54 @@
         salvarPendenciasAnexos(p);
       }
 
-      function marcarSincronizadoAnexo(key) {
+      // Metadados locais: a fila e o protocolo do Drive continuam os mesmos.
+      function lerMetadadosAnexos_(chave) {
+        try { const v = JSON.parse(localStorage.getItem(chave) || '{}'); return tdbObjeto_(v) ? v : {}; } catch (e) { return {}; }
+      }
+      function exclusaoAnexoPendente_(key) {
+        return lerPendenciasAnexos().has(key) && Number(lerMetadadosAnexos_(CHAVE_EXCLUSOES_ANEXOS)[key]) === Number(lerVersoes()[key]);
+      }
+      function limparExclusaoAnexo_(key) {
+        try { const itens = lerMetadadosAnexos_(CHAVE_EXCLUSOES_ANEXOS); delete itens[key]; localStorage.setItem(CHAVE_EXCLUSOES_ANEXOS, JSON.stringify(itens)); } catch (e) {}
+      }
+      function registrarCacheAnexo_(key, versao, removido) {
+        try { const itens = lerMetadadosAnexos_(CHAVE_CACHE_ANEXOS); itens[key] = { versao: Number(versao) || 0, atual: true, removido: !!removido, confirmado: !removido }; localStorage.setItem(CHAVE_CACHE_ANEXOS, JSON.stringify(itens)); } catch (e) {}
+      }
+      function copiaOfflineAnexo_(key, valor) {
+        try {
+          const itens = lerMetadadosAnexos_(CHAVE_CACHE_ANEXOS);
+          if (itens[key] && itens[key].atual === false) {
+            itens[key].avisar = true;
+            localStorage.setItem(CHAVE_CACHE_ANEXOS, JSON.stringify(itens));
+          }
+        } catch (e) {}
+        return { value: valor };
+      }
+      function invalidarCachesAnexos_(corpo, editouDepois) {
+        const itens = lerMetadadosAnexos_(CHAVE_CACHE_ANEXOS), anteriores = lerVersoes();
+        const versoes = corpo.versoes || {}, removidas = new Set(Array.isArray(corpo.removidas) ? corpo.removidas : []), pendentes = lerPendenciasAnexos();
+        const revisao = lerRevisaoConfirmadaLocal_();
+        const revisaoMudou = !revisao.existe || revisao.valor !== Number(corpo.revisaoGlobal);
+        let alterados = 0;
+        new Set(Object.keys(itens).concat(Object.keys(versoes), Array.from(removidas))).forEach(key => {
+          if (key.indexOf('anexo_') === -1 || pendentes.has(key) || editouDepois(key)) return;
+          const cache = itens[key];
+          const mudou = removidas.has(key) || (Object.prototype.hasOwnProperty.call(versoes, key)
+            ? Number(cache ? cache.versao : anteriores[key]) !== Number(versoes[key])
+            : revisaoMudou);
+          if (mudou && (!cache || cache.atual !== false || cache.avisar || (removidas.has(key) && !cache.remocaoConfirmada))) {
+            itens[key] = { versao: Number(cache ? cache.versao : anteriores[key]) || 0, atual: false, remocaoConfirmada: removidas.has(key), confirmado: !!(cache && (cache.confirmado || (cache.atual && !cache.removido))) };
+            if (cache || Object.prototype.hasOwnProperty.call(anteriores, key)) alterados++;
+          }
+        });
+        try { localStorage.setItem(CHAVE_CACHE_ANEXOS, JSON.stringify(itens)); } catch (e) {}
+        return alterados;
+      }
+      function marcarSincronizadoAnexo(key, versaoConfirmada) {
+        if (versaoConfirmada && Number(lerVersoes()[key]) !== Number(versaoConfirmada)) return;
         const p = lerPendenciasAnexos();
         if (p.has(key)) { p.delete(key); salvarPendenciasAnexos(p); }
+        limparExclusaoAnexo_(key);
       }
 
       function lerPendencias() {
@@ -391,6 +439,71 @@
         } catch (e) { return false; }
       }
 
+      async function lerAnexoAtual_(key) {
+        if (exclusaoAnexoPendente_(key)) return null;
+        let local = null;
+        try { local = await idbAnexoGet_(key); } catch (e) {}
+        if (local === null) {
+          try { local = localStorage.getItem(key); } catch (e) {}
+          if (local !== null) try { await idbAnexoSet_(key, local); } catch (e) {}
+        }
+        // Uma edição pendente continua soberana, inclusive durante revalidação.
+        if (lerPendenciasAnexos().has(key)) return local === null ? null : { value: local };
+        const cache = lerMetadadosAnexos_(CHAVE_CACHE_ANEXOS)[key];
+        if (cache && cache.atual) {
+          if (cache.removido) return null;
+          if (local !== null) return { value: local };
+        }
+        if (navigator.onLine === false && local !== null) return copiaOfflineAnexo_(key, local);
+        const seq = seqPorChave_.get(key) || 0;
+        try {
+          // Busca somente o arquivo solicitado. A abertura do painel não espera PDFs.
+          const corpo = await lerRespostaJSON(await timeoutFetch(
+            APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key),
+            { method: 'GET', cache: 'no-store' }, 45000
+          ));
+          if ((seqPorChave_.get(key) || 0) !== seq || lerPendenciasAnexos().has(key)) {
+            if (exclusaoAnexoPendente_(key)) return null;
+            const atual = await idbAnexoGet_(key);
+            return atual === null ? null : { value: atual };
+          }
+          const existe = corpo.dados && Object.prototype.hasOwnProperty.call(corpo.dados, key);
+          const versao = Number(corpo.serverUpdatedAt) || 0;
+          if (versao) {
+            const versoes = lerVersoes(); versoes[key] = versao;
+            try { localStorage.setItem(CHAVE_VERSOES, JSON.stringify(versoes)); } catch (e) {}
+          }
+          if (!existe) {
+            // A ausência no Drive, sozinha, não autoriza descartar a única cópia local.
+            const remocaoConfirmada = cache && (cache.remocaoConfirmada || cache.confirmado || (cache.versao > 0 && versao > cache.versao));
+            if (local !== null && !remocaoConfirmada) return copiaOfflineAnexo_(key, local);
+            await idbAnexoDelete_(key);
+            try { localStorage.removeItem(key); } catch (e) {}
+            if (cachePlanilha) delete cachePlanilha[key];
+            registrarCacheAnexo_(key, versao, true);
+            return null;
+          }
+          const valor = corpo.dados[key];
+          if (!cachePlanilha) cachePlanilha = {};
+          cachePlanilha[key] = valor;
+          try {
+            await idbAnexoSet_(key, valor);
+            localStorage.removeItem(key);
+            registrarCacheAnexo_(key, versao);
+          } catch (e) {}
+          return { value: valor };
+        } catch (e) {
+          // Mantém a última cópia para consulta offline; não a marca como atualizada.
+          if ((seqPorChave_.get(key) || 0) !== seq || lerPendenciasAnexos().has(key)) {
+            if (exclusaoAnexoPendente_(key)) return null;
+            const atual = await idbAnexoGet_(key);
+            return atual === null ? null : { value: atual };
+          }
+          if (local !== null) return copiaOfflineAnexo_(key, local);
+          throw e;
+        }
+      }
+
       function timeoutFetch(url, opcoes, ms) {
         const controlador = new AbortController();
         let timer;
@@ -570,11 +683,13 @@
               // v4.44 — o servidor devolve a versão oficial de cada chave.
               // Para chaves sem edição local pendente, esta passa a ser a base
               // para detectar se outro aparelho gravou algo antes da próxima edição.
+              const anexosAlterados = invalidarCachesAnexos_(corpo, editouDepoisDaLeitura_);
               if (corpo.versoes && typeof corpo.versoes === 'object') {
                 const versoesLocais = lerVersoes();
                 const pendentesAgora = lerPendencias();
+                const anexosPendentesAgora = lerPendenciasAnexos();
                 Object.keys(corpo.versoes).forEach(key => {
-                  if (!pendentesAgora.has(key) && !editouDepoisDaLeitura_(key)) {
+                  if (!pendentesAgora.has(key) && !anexosPendentesAgora.has(key) && !editouDepoisDaLeitura_(key)) {
                     versoesLocais[key] = Number(corpo.versoes[key]) || 0;
                     limparBaseVersao_(key);
                   }
@@ -613,7 +728,7 @@
               // O antigo reload incondicional fazia a página reiniciar até no primeiro uso.
               // Agora registramos se havia um valor local REALMENTE diferente e, somente
               // nesse caso, emitimos um evento controlado para reidratar a tela uma vez.
-              let dadosConfirmadosAlterados = 0;
+              let dadosConfirmadosAlterados = anexosAlterados;
               Object.keys(corpo.dados).forEach(key => {
                 if (pendentes.has(key) || editouDepoisDaLeitura_(key) || String(key).indexOf('anexo_') !== -1) return;
                 try {
@@ -932,6 +1047,9 @@
             aplicarConfirmacao_(key, versao, corpo.serverUpdatedAt, val);
             avancarRevisaoConfirmadaPorGravacao_(corpo);
             window.__ultimaDuracaoServidorMs = Number(corpo.duracaoMs) || null;
+            if (aindaAtual && conflitosParaAtualizar_.delete(key)) {
+              try { window.dispatchEvent(new CustomEvent('painel:drive-atualizado', { detail: { conflitoResolvido: true, key: key } })); } catch (e) {}
+            }
             return { ok: true, accepted: true, serverUpdatedAt: corpo.serverUpdatedAt };
           } catch (e) {
             ultimoErro = e;
@@ -986,11 +1104,13 @@
             }
             if (corpo.accepted === false && corpo.stale) {
               const resolvido = await resolverConflitoStale_(key, corpo.serverUpdatedAt);
-              if (resolvido) marcarSincronizadoAnexo(key);
               return { ok: false, stale: true, resolvido };
             }
-            marcarSincronizadoAnexo(key);
-            limparBaseVersao_(key);
+            const aindaAtual = Number(lerVersoes()[key]) === Number(versao);
+            marcarEscritaLocal_(key);
+            marcarSincronizadoAnexo(key, versao);
+            aplicarConfirmacao_(key, versao, corpo.serverUpdatedAt, val);
+            if (aindaAtual) registrarCacheAnexo_(key, corpo.serverUpdatedAt);
             window.__ultimoErroSync = null;
             window.__statusPlanilha = 'ok';
             registrarSync_('gravacao');
@@ -1066,6 +1186,7 @@
             try { localStorage.setItem(key, valorFinal); } catch (e) {}
             marcarPendente(key);
             const nova = novaVersao(key);
+            conflitosParaAtualizar_.add(key);
             const r = await enviarSet_(key, valorFinal, nova, false);
             if (r && r.ok) return true;
             return false;
@@ -1076,6 +1197,7 @@
             cachePlanilha[key] = valorServidor;
             if (key.indexOf('anexo_') !== -1) {
               try { await idbAnexoSet_(key, dados[key]); } catch (e) {}
+              registrarCacheAnexo_(key, serverUpdatedAt);
             } else {
               try { localStorage.setItem(key, valorServidor); } catch (e) {}
             }
@@ -1092,7 +1214,9 @@
           try { window.dispatchEvent(new CustomEvent('painel:drive-atualizado', { detail: { conflitoResolvido: true, key: key } })); } catch (e) {}
           return true;
         } catch (e) {
-          marcarPendente(key);
+          // PDF conserva sua fila; falta de localStorage não representa exclusão de anexo.
+          if (key.indexOf('anexo_') !== -1) marcarPendenteAnexo(key);
+          else marcarPendente(key);
           return false;
         }
       }
@@ -1117,7 +1241,10 @@
               return { ok: false, stale: true, resolvido };
             }
             marcarEscritaLocal_(key);
-            if (key.indexOf('anexo_') !== -1) marcarSincronizadoAnexo(key);
+            if (key.indexOf('anexo_') !== -1) {
+              if (Number(lerVersoes()[key]) === Number(versao)) registrarCacheAnexo_(key, corpo.serverUpdatedAt, true);
+              marcarSincronizadoAnexo(key, versao);
+            }
             marcarSincronizado(key, versao);
             aplicarConfirmacao_(key, versao, corpo.serverUpdatedAt, null);
             avancarRevisaoConfirmadaPorGravacao_(corpo);
@@ -1150,6 +1277,12 @@
           filaEscrita = filaEscrita.then(async () => {
             for (const key of comuns) {
               if (!lerPendencias().has(key)) continue; // já confirmado enquanto esperava na fila
+              if (String(key).indexOf('anexo_') !== -1) {
+                marcarPendenteAnexo(key);
+                const pc = lerPendencias(); pc.delete(key); salvarPendencias(pc);
+                if (!anexos.includes(key)) anexos.push(key);
+                continue;
+              }
               let valor = null;
               try { valor = localStorage.getItem(key); } catch (e) {}
               const versao = Number(lerVersoes()[key]) || Date.now();
@@ -1160,10 +1293,11 @@
 
             for (const key of anexos) {
               if (!lerPendenciasAnexos().has(key)) continue;
+              const versao = Number(lerVersoes()[key]) || novaVersao(key);
+              if (exclusaoAnexoPendente_(key)) { await enviarDelete_(key, versao); continue; }
               let valor = null;
               try { valor = await idbAnexoGet_(key); } catch (e) {}
               if (valor === null) continue;
-              const versao = Number(lerVersoes()[key]) || Date.now();
               await enviarAnexo_(key, valor, versao);
             }
           }).catch(e => {
@@ -1319,19 +1453,7 @@
           key = resolverChaveAnual_(key);
           // Anexos usam IndexedDB porque localStorage costuma ter limite de poucos MB.
           // Isso evita que um PDF grande corrompa/estoure o armazenamento local.
-          if (key.indexOf('anexo_') !== -1) {
-            try {
-              const localAnexo = await idbAnexoGet_(key);
-              if (localAnexo !== null) return { value: localAnexo };
-            } catch (e) {}
-            try {
-              const legado = localStorage.getItem(key);
-              if (legado !== null) {
-                try { await idbAnexoSet_(key, legado); } catch (e) {}
-                return { value: legado };
-              }
-            } catch (e) {}
-          }
+          if (key.indexOf('anexo_') !== -1) return lerAnexoAtual_(key);
 
           // Se esta chave foi alterada localmente e ainda está pendente, ela é a fonte
           // mais recente. Isso evita o Drive antigo aparecer por cima dela.
@@ -1367,25 +1489,6 @@
             const valor = cachePlanilha[key];
             try { if (valor !== undefined && valor !== null) localStorage.setItem(key, valor); } catch (e) {}
             return { value: valor };
-          }
-
-          // Anexos grandes não entram no GET em massa. Busca sob demanda.
-          if (APPS_SCRIPT_URL && key.indexOf('anexo_') !== -1) {
-            try {
-              const corpo = await lerRespostaJSON(await timeoutFetch(
-                APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key),
-                { method: 'GET', cache: 'no-store' },
-                45000
-              ));
-              if (corpo.dados && Object.prototype.hasOwnProperty.call(corpo.dados, key)) {
-                if (!cachePlanilha) cachePlanilha = {};
-                cachePlanilha[key] = corpo.dados[key];
-                try { await idbAnexoSet_(key, corpo.dados[key]); } catch (e) {}
-                return { value: corpo.dados[key] };
-              }
-            } catch (e) {
-              console.warn('Não consegui buscar o anexo no Drive agora:', e);
-            }
           }
 
           // Se não existe cópia local e a leitura central falhou, isso NÃO significa
@@ -1425,6 +1528,7 @@
             registrarBaseVersao_(key);
             const versao = novaVersao(key);
             marcarPendenteAnexo(key);
+            limparExclusaoAnexo_(key);
             if (!APPS_SCRIPT_URL) return true;
             filaEscrita = filaEscrita.then(async () => {
               const atual = Number(lerVersoes()[key]) || versao;
@@ -1566,7 +1670,12 @@
           // chave duas vezes em paralelo.
           const executar = async () => {
 
-          const pendentes = Array.from(lerPendencias());
+          const pendentes = Array.from(lerPendencias()).filter(key => {
+            if (String(key).indexOf('anexo_') === -1) return true;
+            marcarPendenteAnexo(key);
+            const pc = lerPendencias(); pc.delete(key); salvarPendencias(pc);
+            return false;
+          });
           const pendentesAnexos = Array.from(lerPendenciasAnexos());
           let falhas = 0;
           let feitos = 0;
@@ -1594,10 +1703,17 @@
           }
 
           for (const key of pendentesAnexos) {
+            const versao = Number(lerVersoes()[key]) || novaVersao(key);
+            if (exclusaoAnexoPendente_(key)) {
+              const resultado = await enviarDelete_(key, versao);
+              feitos++;
+              if (!resultado.ok && !(resultado.stale && resultado.resolvido)) falhas++;
+              if (onProgress) onProgress(feitos, totalTarefas);
+              continue;
+            }
             let valor = null;
             try { valor = await idbAnexoGet_(key); } catch (e) {}
             if (valor === null) { falhas++; feitos++; if (onProgress) onProgress(feitos, totalTarefas); continue; }
-            const versao = Number(lerVersoes()[key]) || Date.now();
             const resultado = await enviarAnexo_(key, valor, versao);
             feitos++;
             if (!resultado.ok) falhas++;
@@ -1693,17 +1809,22 @@
           marcarEscritaLocal_(key);
           const eAnexo = key.indexOf('anexo_') !== -1;
           if (eAnexo) {
-            await idbAnexoDelete_(key);
-            if (cachePlanilha) delete cachePlanilha[key];
             registrarBaseVersao_(key);
             const versao = novaVersao(key);
+            // Registra a intenção antes de remover o arquivo. Ausência de conteúdo,
+            // sozinha, nunca é interpretada como autorização para apagar no Drive.
+            const exclusoes = lerMetadadosAnexos_(CHAVE_EXCLUSOES_ANEXOS);
+            exclusoes[key] = versao;
+            localStorage.setItem(CHAVE_EXCLUSOES_ANEXOS, JSON.stringify(exclusoes));
             marcarPendenteAnexo(key);
+            await idbAnexoDelete_(key);
+            try { localStorage.removeItem(key); } catch (e) {}
+            if (cachePlanilha) delete cachePlanilha[key];
             if (!APPS_SCRIPT_URL) return true;
             filaEscrita = filaEscrita.then(async () => {
               const atual = Number(lerVersoes()[key]) || versao;
               if (atual !== versao) return { ok: true, ignorada: true };
               const r = await enviarDelete_(key, versao);
-              if (r.ok) marcarSincronizadoAnexo(key);
               return r;
             }).catch(e => {
               marcarPendenteAnexo(key);
