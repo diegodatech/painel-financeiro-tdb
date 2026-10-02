@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDB 2</title>
+  <title>TDB 3</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb2-20261002-totalrecibo";
+    window.__TDB_BUILD = "tdb3-20261002-recibo-a4";
   </script>
-  <script src="./config.js?build=tdb2-20261002-totalrecibo"></script>
+  <script src="./config.js?build=tdb3-20261002-recibo-a4"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 2">
+  <meta name="apple-mobile-web-app-title" content="TDB 3">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1233,10 +1233,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb2-20261002-totalrecibo"></script>
+  <script src="./sync.js?build=tdb3-20261002-recibo-a4"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb2-20261002-totalrecibo-desktop';
+window.__TDB_BUILD_EXATO = 'tdb3-20261002-recibo-a4-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -3702,10 +3702,10 @@ function Recibos(_a) {
                 doc.save(nome);
             }
         }
-        function desenharRecibo(doc, rEmp) {
+        function desenharReciboEsc(doc, rEmp, ESC) {
             var W = 595, H = 842;
             var temSeg = tdbUsaSegundaColuna(rEmp);
-            var margem = 26, interno = 34;
+            var margem = 14, interno = 34;
             var pastel1 = [250, 228, 242];
             var pastel2 = [222, 246, 246];
             var pastel3 = [248, 238, 210];
@@ -3727,32 +3727,35 @@ function Recibos(_a) {
             doc.setFillColor(255, 255, 255);
             doc.rect(0, 0, W, H, 'F');
             // As 4 bolhas ficam inteiras dentro da moldura (linha interna em 31 pt).
-            roundedFill(37, 37, 104, 84, 26, pastel1);
-            roundedFill(W - 37 - 104, 37, 104, 80, 26, pastel2);
-            roundedFill(W - 37 - 132, H - 37 - 104, 132, 104, 30, pastel3);
-            roundedFill(37, H - 37 - 88, 120, 88, 28, [240, 249, 242]);
+            roundedFill(23, 23, 104, 84, 26, pastel1);
+            roundedFill(W - 23 - 104, 23, 104, 80, 26, pastel2);
+            roundedFill(W - 23 - 132, H - 23 - 104, 132, 104, 30, pastel3);
+            roundedFill(23, H - 23 - 88, 120, 88, 28, [240, 249, 242]);
             doc.setDrawColor.apply(doc, borda1);
             doc.setLineWidth(1.4);
             doc.roundedRect(margem, margem, W - margem * 2, H - margem * 2, 12, 12);
             doc.setDrawColor.apply(doc, borda2);
             doc.setLineWidth(1.1);
             doc.roundedRect(margem + 5, margem + 5, W - margem * 2 - 10, H - margem * 2 - 10, 10, 10);
-            roundedFill(54, 56, W - 108, 120, 18, cabGlass);
+            // Conteúdo ampliado em 10% e levado para perto da borda (a moldura e as bolhas ficam no tamanho real da folha).
+            doc.saveGraphicsState();
+            doc.setCurrentTransformationMatrix(new doc.Matrix(ESC, 0, 0, ESC, (W / 2) * (1 - ESC), H - 44 - (H - 56) * ESC));
+            roundedFill(59, 56, W - 118, 120, 18, cabGlass);
             doc.setDrawColor(229, 235, 241);
             doc.setLineWidth(0.8);
-            doc.roundedRect(54, 56, W - 108, 120, 18, 18);
-            try { doc.addImage(LOGO_B64, 'PNG', W - 188, 89, 112, 54); } catch (e) {}
+            doc.roundedRect(59, 56, W - 118, 120, 18, 18);
+            try { doc.addImage(LOGO_B64, 'PNG', W - 193, 89, 112, 54); } catch (e) {}
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(17.5);
             doc.setTextColor.apply(doc, tinta);
-            doc.text('JESSICKA E DIEGO ESCOLA INFANTIL', 72, 88);
+            doc.text('JESSICKA E DIEGO ESCOLA INFANTIL', 77, 88);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(11.2);
             doc.setTextColor.apply(doc, suave);
-            doc.text('CNPJ: 22.978.931/0001-00', 72, 110);
-            doc.text('Rua: Ampélio Carlotto, 380 – Aurora  Carlos Barbosa – RS', 72, 126);
-            doc.text('Telefone: 54 3461.6393', 72, 142);
-            doc.text('Email: escolatempodebrincarcb@gmail.com', 72, 158);
+            doc.text('CNPJ: 22.978.931/0001-00', 77, 110);
+            doc.text('Rua: Ampélio Carlotto, 380 – Aurora  Carlos Barbosa – RS', 77, 126);
+            doc.text('Telefone: 54 3461.6393', 77, 142);
+            doc.text('Email: escolatempodebrincarcb@gmail.com', 77, 158);
             var y = 196;
             doc.setFont('helvetica', 'bold');
             var tamTitulo = 21, partesTitulo = String(rEmp.titulo || '').toUpperCase().split('\n'), linhasTitulo;
@@ -3783,6 +3786,8 @@ function Recibos(_a) {
                     ? [{ t: 'Nome Mãe ou Pai', w: 140 }, { t: 'Nome da Criança', w: 148 }, { t: 'Nascimento', w: 72 }, { t: 'Auxílio R$', w: 78 }, { t: 'Compl. R$', w: 78 }]
                     : [{ t: 'Nome Mãe ou Pai', w: 152 }, { t: 'Nome da Criança', w: 164 }, { t: 'Nascimento', w: 84 }, { t: rEmp.temSegundaColuna ? 'Auxílio R$' : 'Valor R$', w: 82 }];
             var larguraTabela = colunas.reduce(function (s, c) { return s + c.w; }, 0);
+            // A tabela ocupa sempre a mesma largura (cabe entre as bordas depois da ampliação de 10%).
+            (function () { var f = 470 / larguraTabela; colunas.forEach(function (c) { c.w = c.w * f; }); larguraTabela = 470; })();
             var xTabela = (W - larguraTabela) / 2;
             roundedFill(xTabela - 6, y - 8, larguraTabela + 12, 42 + Math.max(1, (rEmp.rows || []).length) * 30, 18, [252, 253, 255]);
             var x = xTabela;
@@ -3893,6 +3898,19 @@ function Recibos(_a) {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
             centeredText('Diretora', W / 2, y + 44);
+            doc.restoreGraphicsState();
+            return y + 48;
+        }
+        // A ampliação (até 10%) diminui sozinha se a lista for grande, para tudo caber dentro da moldura.
+        function desenharRecibo(doc, rEmp) {
+            var esc = 1.1;
+            try {
+                var teste = new jsPDF({ unit: 'pt', format: 'a4' });
+                var fim = desenharReciboEsc(teste, rEmp, 1.1);
+                var disponivel = 806 - 44, usado = fim - 56;
+                if (usado * 1.1 > disponivel) esc = Math.max(0.85, disponivel / usado);
+            } catch (e) { esc = 1.1; }
+            desenharReciboEsc(doc, rEmp, esc);
         }
         // Nome da pasta/arquivo: "Recibos Outubro de 2026" (mês de emissão automático); dentro, só o nome da empresa.
         var _agoraRec = new Date();
