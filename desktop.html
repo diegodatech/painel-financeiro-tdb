@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb1-20261001-correcoes";
+    window.__TDB_BUILD = "tdb1-20261001-sem-puxar";
   </script>
-  <script src="./config.js?build=tdb1-20261001-correcoes"></script>
+  <script src="./config.js?build=tdb1-20261001-sem-puxar"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1015,6 +1015,12 @@ html.dark-mode {
       }
     }
   </style>
+<style id="tdb-sem-puxar-recarregar">
+/* Evita recarregar a página sem querer ao arrastar para baixo no topo (celular/tablet).
+   Só o eixo vertical: o gesto de voltar (deslizar pela lateral) continua funcionando.
+   Para atualizar, use o botão Atualizar. */
+html, body { overscroll-behavior-y: none; }
+</style>
 </head>
 <body>
 
@@ -1068,10 +1074,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb1-20261001-correcoes"></script>
+  <script src="./sync.js?build=tdb1-20261001-sem-puxar"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb1-20261001-correcoes-desktop';
+window.__TDB_BUILD_EXATO = 'tdb1-20261001-sem-puxar-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
