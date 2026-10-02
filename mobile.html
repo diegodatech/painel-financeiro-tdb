@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 11</title>
+  <title>TDB 1</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb11-20261001";
+    window.__TDB_BUILD = "tdb1-completo-20261002";
   </script>
-  <script src="./config.js?build=tdb11-20261001"></script>
+  <script src="./config.js?build=tdb1-completo-20261002"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 11">
+  <meta name="apple-mobile-web-app-title" content="TDB 1">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1557,6 +1557,21 @@ html.dark-mode {
  window.addEventListener('resize',()=>{apply();if(dialog&&dialog.open)renderEditor();});
  function marcarMeu(){GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});cfg.meu.vidro=cfg.vidro;cfg.preset='custom';}
  function status(t){const e=document.getElementById('aurora-status');if(e)e.textContent=t;}
+ let carga={on:false,pct:0,txt:'',erro:false},cargaTimer=0,cargaHide=0,topbar=null;
+ function cargaEmpty(){return (carga.on&&!carga.erro&&carga.pct<100)?'Carregando a foto…':'Adicione uma foto para posicionar';}
+ function cargaRender(){
+  const p=Math.round(carga.pct);
+  if(topbar){topbar.classList.toggle('on',carga.on&&!carga.erro&&!(dialog&&dialog.open));topbar.firstChild.style.width=p+'%';}
+  if(!dialog)return;const b=dialog.querySelector('#aurora-load');if(!b)return;
+  b.hidden=!carga.on;b.classList.toggle('erro',!!carga.erro);b.classList.toggle('ok',carga.on&&carga.pct>=100&&!carga.erro);
+  b.querySelector('.aurora-load-txt').textContent=carga.txt;b.querySelector('.aurora-load-pct').textContent=carga.erro?'':p+'%';
+  const bar=b.querySelector('.aurora-load-bar');bar.firstChild.style.width=p+'%';bar.setAttribute('aria-valuenow',String(p));
+  const em=dialog.querySelector('.aurora-edit-empty');if(em&&!photo)em.textContent=cargaEmpty();
+ }
+ function cargaSet(pct,txt,erro){clearInterval(cargaTimer);clearTimeout(cargaHide);carga={on:true,pct:Math.max(0,Math.min(100,pct)),txt:txt||'',erro:!!erro};cargaRender();}
+ function cargaAte(txt,ini,max){cargaSet(Math.max(carga.on?carga.pct:0,ini),txt);cargaTimer=setInterval(()=>{if(carga.pct<max){carga.pct+=Math.max(.35,(max-carga.pct)*.06);cargaRender();}},180);}
+ function cargaFim(txt,erro){cargaSet(erro?carga.pct:100,txt,erro);cargaHide=setTimeout(()=>{carga.on=false;cargaRender();},erro?7000:2600);}
+ function cargaSome(){clearInterval(cargaTimer);clearTimeout(cargaHide);carga.on=false;cargaRender();}
  function apply(){
   [['opacity','--aurora-opacity',.01,''],['blur','--aurora-blur',1,'px'],['sat','--aurora-sat',.01,''],['photoBlur','--aurora-photo-blur',1,'px'],['wash','--aurora-wash',.01,''],['cor','--aurora-cor',.01,'']].forEach(([k,v,m,u])=>html.style.setProperty(v,(Math.round(cfg[k]*m*1000)/1000)+u));
   html.style.setProperty('--aurora-edge','rgba(255,255,255,'+(cfg.edge*.01).toFixed(2)+')');
@@ -1590,12 +1605,13 @@ html.dark-mode {
   }
   if(action==='delete'){await storage.delete(FUNDO_KEY,false);return true;}
  }
- function display(blob){if(url)URL.revokeObjectURL(url);photo=blob||null;url=photo?URL.createObjectURL(photo):null;const bgi=url?'url("'+url+'")':'none';const el=document.querySelector('#tdb-aurora-wallpaper .aurora-photo');if(el)el.style.backgroundImage=bgi;const fl=document.querySelector('#tdb-aurora-wallpaper .aurora-fill');if(fl)fl.style.backgroundImage=bgi;const t=document.getElementById('aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';imgRatio=0;apply();if(url){const u=url,im=new Image();im.onload=()=>{if(u===url&&im.naturalWidth&&im.naturalHeight){imgRatio=im.naturalWidth/im.naturalHeight;apply();renderEditor();}};im.src=u;}renderEditor();}
- async function resize(file){
+ function display(blob,done){if(url)URL.revokeObjectURL(url);photo=blob||null;url=photo?URL.createObjectURL(photo):null;const bgi=url?'url("'+url+'")':'none';const el=document.querySelector('#tdb-aurora-wallpaper .aurora-photo');if(el)el.style.backgroundImage=bgi;const fl=document.querySelector('#tdb-aurora-wallpaper .aurora-fill');if(fl)fl.style.backgroundImage=bgi;const t=document.getElementById('aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';imgRatio=0;apply();if(url){const u=url,im=new Image();im.onload=()=>{if(u===url&&im.naturalWidth&&im.naturalHeight){imgRatio=im.naturalWidth/im.naturalHeight;apply();renderEditor();}if(done&&u===url)done();};im.onerror=()=>{if(done&&u===url)done(true);};im.src=u;}else if(done)done();renderEditor();}
+ async function resize(file,prog){
+  prog=prog||function(){};
   if(!/^image\/(jpeg|png|webp)$/.test(file.type))throw new Error('Escolha uma foto JPG, PNG ou WebP.');
   if(file.size>20*1024*1024)throw new Error('Escolha uma foto com até 20 MB.');
   const tmp=URL.createObjectURL(file);
-  try{const img=new Image();img.src=tmp;await img.decode();if(!img.naturalWidth)throw new Error('Não foi possível abrir a foto.');const scale=Math.min(1,1920/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);return await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível preparar a foto.')),'image/jpeg',.86));}finally{URL.revokeObjectURL(tmp);}
+  try{prog(8,'Lendo a foto do aparelho…');const img=new Image();img.src=tmp;await img.decode();if(!img.naturalWidth)throw new Error('Não foi possível abrir a foto.');prog(26,'Foto aberta · ajustando o tamanho…');const scale=Math.min(1,1920/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);prog(40,'Comprimindo a foto…');return await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível preparar a foto.')),'image/jpeg',.86));}finally{URL.revokeObjectURL(tmp);}
  }
  function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){const vv=(k==='x'||k==='y'||k==='z')?getFrame()[k]:cfg[k];inp.value=vv;inp.nextElementSibling.value=Math.round(vv)+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});{const rc=dialog.querySelector('[data-setting="cor"]');if(rc)rc.parentElement.classList.toggle('aurora-off',CORES.indexOf(cfg.vidro)<0);}dialog.querySelectorAll('[data-vidro]').forEach(b=>{const on=b.dataset.vidro===(cfg.vidro||'');b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});renderEditor();const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
  function open(){
@@ -1603,6 +1619,7 @@ html.dark-mode {
    dialog=document.createElement('dialog');dialog.id='tdb-aurora-dialog';dialog.setAttribute('aria-labelledby','aurora-title');dialog.setAttribute('data-export-ignore','true');
    dialog.innerHTML='<div class="aurora-row" style="margin-top:0"><h2 id="aurora-title">Aparência</h2><button type="button" id="aurora-close" aria-label="Fechar aparência">✕</button></div><p>Liquid Glass · escolha o fundo e a transparência dos quadros.</p>'
     +'<div class="aurora-cols"><div class="aurora-col"><span class="aurora-h">Foto de fundo</span><input id="aurora-upload" class="aurora-sr" type="file" accept="image/jpeg,image/png,image/webp"><label for="aurora-upload" class="aurora-bigbtn"><span class="aurora-ic" aria-hidden="true">📷</span><span><strong id="aurora-upload-title">Adicionar foto de fundo</strong><small>Toque para escolher uma foto (JPG, PNG ou WebP, até 20 MB)</small></span></label>'
+    +'<div id="aurora-load" class="aurora-load" hidden role="status" aria-live="polite"><div class="aurora-load-top"><span class="aurora-load-txt"></span><b class="aurora-load-pct"></b></div><div class="aurora-load-bar" role="progressbar" aria-label="Carregamento da foto" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div></div>'
     +'<p style="font-size:12px">A foto de fundo é salva no Google Drive e aparece nos outros aparelhos (computador, tablet e celular). Os ajustes de opacidade/desfoque ficam só neste navegador — nenhum dos dois entra nos backups financeiros ou nos PDFs.</p>'
     +'<span class="aurora-h">Como a foto ocupa a tela</span><div class="aurora-fit" id="aurora-fit">'
     +'<button type="button" class="aurora-opc" data-fit="cover"><span class="aurora-mini"><i style="inset:0"></i></span><b>Tela cheia</b><small>Preenche tudo; as bordas podem cortar</small></button>'
@@ -1631,30 +1648,33 @@ html.dark-mode {
    dialog.querySelectorAll('[data-preset]').forEach(b=>{b.onclick=()=>{const v=b.dataset.preset;cfg.preset=v;const src=v==='custom'?cfg.meu:PRESETS[v];GLASS.forEach(k=>{cfg[k]=src[k];});cfg.vidro=src.vidro||'';syncControls();save();};});
       const footer=document.createElement('div');footer.className='aurora-row';footer.innerHTML='<button id="aurora-remove" type="button">Remover foto</button><button id="aurora-reset" type="button">Restaurar aparência</button>';dialog.appendChild(footer);
    const message=document.createElement('p');message.id='aurora-status';message.setAttribute('role','status');dialog.appendChild(message);document.body.appendChild(dialog);
-   dialog.querySelector('#aurora-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{if(lastFocus&&lastFocus.isConnected)lastFocus.focus();});
-   dialog.querySelector('#aurora-upload').onchange=async e=>{const f=e.target.files[0];if(!f)return;const token=++generation;status('Preparando foto…');try{const b=await resize(f);if(token!==generation)return;status('Enviando foto para o Google Drive…');await stored('put',b);if(token!==generation)return;display(b);status('Foto salva! Sincronizada com o Google Drive — aparece nos outros aparelhos em instantes.');}catch(err){status(err.message||'Não foi possível guardar a foto.');}finally{e.target.value='';}};
-   dialog.querySelector('#aurora-remove').onclick=async()=>{++generation;status('Removendo…');try{await stored('delete');display(null);status('Foto removida de todos os aparelhos.');}catch(e){status('Não foi possível remover a foto salva. Tente novamente.');}};
+   dialog.querySelector('#aurora-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{cargaRender();if(lastFocus&&lastFocus.isConnected)lastFocus.focus();});
+   dialog.querySelector('#aurora-upload').onchange=async e=>{const f=e.target.files[0];if(!f)return;const token=++generation;status('Preparando foto…');cargaSet(3,'Iniciando…');try{const b=await resize(f,(p,t)=>{if(token===generation)cargaSet(p,t);});if(token!==generation)return;status('Enviando foto para o Google Drive…');cargaAte('Enviando para o Google Drive…',55,94);await stored('put',b);if(token!==generation)return;cargaSet(96,'Aplicando a foto…');display(b,()=>{if(token===generation)cargaFim('Foto pronta e salva ✓');});status('Foto salva! Sincronizada com o Google Drive — aparece nos outros aparelhos em instantes.');}catch(err){if(token===generation)cargaFim(err.message||'Não foi possível guardar a foto.',true);status(err.message||'Não foi possível guardar a foto.');}finally{e.target.value='';}};
+   dialog.querySelector('#aurora-remove').onclick=async()=>{const token=++generation;status('Removendo…');cargaAte('Removendo a foto do Google Drive…',8,90);try{await stored('delete');display(null);status('Foto removida de todos os aparelhos.');if(token===generation)cargaFim('Foto removida ✓');}catch(e){status('Não foi possível remover a foto salva. Tente novamente.');if(token===generation)cargaFim('Não foi possível remover a foto salva.',true);}};
    dialog.querySelector('#aurora-reset').onclick=()=>{cfg={...defaults,meu:{...MEU_PADRAO},frames:{}};syncControls();save();};
    wireEditor();
    dialog.addEventListener('pointerdown',e=>{downFora=e.target===dialog&&fora(e);});
    dialog.addEventListener('click',e=>{if(e.target===dialog&&downFora&&fora(e))dialog.close();downFora=false;});
   }
-  lastFocus=document.activeElement;syncControls();if(!dialog.open)dialog.showModal();renderEditor();
+  lastFocus=document.activeElement;syncControls();if(!dialog.open)dialog.showModal();renderEditor();cargaRender();
  }
  function start(){
   const bg=document.createElement('div');bg.id='tdb-aurora-wallpaper';bg.setAttribute('aria-hidden','true');bg.setAttribute('data-export-ignore','true');bg.innerHTML='<div class="aurora-fill"></div><div class="aurora-photo"></div><div class="aurora-wash"></div>';document.body.prepend(bg);
+  topbar=document.createElement('div');topbar.id='aurora-topbar';topbar.setAttribute('aria-hidden','true');topbar.setAttribute('data-export-ignore','true');topbar.innerHTML='<i></i>';document.body.appendChild(topbar);
   const token=generation;
+  cargaAte('Buscando a foto de fundo no Google Drive…',5,80);
   stored('get').then(async b=>{
-   if(b instanceof Blob){if(token===generation)display(b);return;}
+   if(b instanceof Blob){if(token===generation){cargaSet(86,'Abrindo a foto de fundo…');display(b,()=>{if(token===generation)cargaFim('Foto de fundo carregada ✓');});}return;}
    try{
     const antiga=await migrarFotoAntiga_();
-    if(antiga instanceof Blob){if(token===generation)display(antiga);stored('put',antiga).catch(()=>{});}
-   }catch(e){}
-  }).catch(()=>{});
+    if(antiga instanceof Blob){if(token===generation)display(antiga,()=>{if(token===generation)cargaFim('Foto de fundo carregada ✓');});stored('put',antiga).catch(()=>{});}
+    else if(token===generation)cargaSome();
+   }catch(e){if(token===generation)cargaSome();}
+  }).catch(()=>{if(token===generation)cargaSome();});
  }
  apply();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
  window.TDBAurora={open:open};
- window.__tdbAuroraPreparePDF=function(doc){doc.documentElement.classList.add('tdb-aurora-pdf');doc.documentElement.classList.remove('dark-mode');if(doc.body)doc.body.classList.remove('dark-mode');doc.querySelectorAll('.dark-mode').forEach(el=>el.classList.remove('dark-mode'));doc.querySelectorAll('#tdb-aurora-wallpaper,#tdb-aurora-dialog').forEach(el=>el.remove());};
+ window.__tdbAuroraPreparePDF=function(doc){doc.documentElement.classList.add('tdb-aurora-pdf');doc.documentElement.classList.remove('dark-mode');if(doc.body)doc.body.classList.remove('dark-mode');doc.querySelectorAll('.dark-mode').forEach(el=>el.classList.remove('dark-mode'));doc.querySelectorAll('#tdb-aurora-wallpaper,#tdb-aurora-dialog,#aurora-topbar').forEach(el=>el.remove());};
 })();
 
 </script>
@@ -1777,10 +1797,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb11-20261001"></script>
+  <script src="./sync.js?build=tdb1-completo-20261002"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb11-20261001-mobile';
+window.__TDB_BUILD_EXATO = 'tdb1-completo-20261002-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -16645,6 +16665,32 @@ html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-seg button.on {b
 #tdb-aurora-dialog .aurora-ic {width:48px;height:48px;border-radius:14px;background:#1767cf;color:#fff;display:grid;place-items:center;font-size:24px;flex:none;}
 #tdb-aurora-dialog .aurora-bigbtn strong {display:block;font-size:16px;}
 #tdb-aurora-dialog .aurora-bigbtn small {display:block;font-size:12.5px;color:#495263;margin-top:2px;line-height:1.35;}
+#tdb-aurora-dialog .aurora-load {margin:10px 0 0;padding:11px 13px 12px;border-radius:14px;background:#eef4fd;border:1px solid #c5d8f5;}
+#tdb-aurora-dialog .aurora-load[hidden] {display:none;}
+#tdb-aurora-dialog .aurora-load-top {display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;font-weight:600;color:#1767cf;line-height:1.35;}
+#tdb-aurora-dialog .aurora-load-pct {font-variant-numeric:tabular-nums;flex:none;}
+#tdb-aurora-dialog .aurora-load-bar {height:9px;border-radius:99px;background:#d4e2f8;margin-top:8px;overflow:hidden;}
+#tdb-aurora-dialog .aurora-load-bar i {display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#4b8ef0,#1767cf);transition:width .25s ease;}
+#tdb-aurora-dialog .aurora-load.ok {background:#eaf7ee;border-color:#b9e0c4;}
+#tdb-aurora-dialog .aurora-load.ok .aurora-load-top {color:#1c7a3a;}
+#tdb-aurora-dialog .aurora-load.ok .aurora-load-bar {background:#cdebd6;}
+#tdb-aurora-dialog .aurora-load.ok .aurora-load-bar i {background:#2f9e55;}
+#tdb-aurora-dialog .aurora-load.erro {background:#fdecec;border-color:#f3b9b9;}
+#tdb-aurora-dialog .aurora-load.erro .aurora-load-top {color:#b3261e;}
+#tdb-aurora-dialog .aurora-load.erro .aurora-load-bar {background:#f6d3d3;}
+#tdb-aurora-dialog .aurora-load.erro .aurora-load-bar i {background:#d6453d;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-load {background:#1c2a44;border-color:#34507e;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-load-top {color:#cfe0ff;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-load-bar {background:#2c3f63;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-load.ok {background:#183024;border-color:#2f6646;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-load.ok .aurora-load-top {color:#bfeacd;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-load.erro {background:#3a1c1c;border-color:#7a3333;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-load.erro .aurora-load-top {color:#ffc9c4;}
+#aurora-topbar {position:fixed;left:0;top:0;height:3px;width:100%;z-index:2147483000;pointer-events:none;opacity:0;transition:opacity .25s ease;}
+#aurora-topbar.on {opacity:1;}
+#aurora-topbar i {display:block;height:100%;width:0;background:linear-gradient(90deg,#d781c2,#80d6d3,#1767cf);transition:width .25s ease;}
+@media (prefers-reduced-motion:reduce) {#tdb-aurora-dialog .aurora-load-bar i,#aurora-topbar i,#aurora-topbar {transition:none;}}
+@media print {#aurora-topbar {display:none !important;}}
 #tdb-aurora-dialog .aurora-fit {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
 #tdb-aurora-dialog .aurora-opc {padding:9px 6px 8px;border:1.5px solid #dfe4ea;border-radius:14px;text-align:center;line-height:1.25;min-height:0;font:inherit;}
 #tdb-aurora-dialog .aurora-opc b {display:block;font-size:12.5px;}
