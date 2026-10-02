@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 3</title>
+  <title>TDB 4</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb3-20261002";
+    window.__TDB_BUILD = "tdb4-20261002";
   </script>
-  <script src="./config.js?build=tdb3-20261002"></script>
+  <script src="./config.js?build=tdb4-20261002"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 3">
+  <meta name="apple-mobile-web-app-title" content="TDB 4">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1822,10 +1822,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb3-20261002"></script>
+  <script src="./sync.js?build=tdb4-20261002"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb3-20261002-mobile';
+window.__TDB_BUILD_EXATO = 'tdb4-20261002-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -17564,6 +17564,301 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body:not(.dark-m
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .painel-main table tbody tr:nth-child(even) {background:rgba(255,255,255,.08);}
 }
 </style>
+<style id="tdb-ctl">
+/* TDB 4 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
+html[data-tdb-aurora] body :is(select,input[type=date]):not(#tdb-x){
+ -webkit-appearance:none!important;appearance:none!important;box-sizing:border-box!important;
+ border-radius:12px!important;border-width:1px!important;border-style:solid!important;line-height:normal!important;
+ min-height:calc(1.2em + 14px);text-align:left!important;font-weight:500!important;cursor:pointer;
+ background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:12px 12px!important;
+ text-overflow:ellipsis;
+}
+html[data-tdb-aurora] body select:not(#tdb-x):not([multiple]):not([size]){
+ padding-right:30px!important;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%235b6472' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+}
+html[data-tdb-aurora] body input[type=date]:not(#tdb-x){
+ padding-right:32px!important;background-size:15px 15px!important;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 3.5h10a1 1 0 0 1 1 1V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1zM2 7h12M5 2v3M11 2v3' fill='none' stroke='%235b6472' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+}
+html[data-tdb-aurora] body.dark-mode select:not(#tdb-x):not([multiple]):not([size]){
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23c8ced8' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+}
+html[data-tdb-aurora] body.dark-mode input[type=date]:not(#tdb-x){
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 3.5h10a1 1 0 0 1 1 1V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1zM2 7h12M5 2v3M11 2v3' fill='none' stroke='%23c8ced8' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+}
+html[data-tdb-aurora] body input[type=date]:not(#tdb-x)::-webkit-calendar-picker-indicator{display:none!important;}
+html[data-tdb-aurora] body input[type=date]:not(#tdb-x)::-webkit-date-and-time-value{text-align:left;margin:0;min-height:0;}
+html[data-tdb-aurora] body input[type=date]:not(#tdb-x)::-webkit-datetime-edit,html[data-tdb-aurora] body input[type=date]:not(#tdb-x)::-webkit-datetime-edit-fields-wrapper{padding:0!important;}
+html[data-tdb-aurora] body input[type=date]:not(#tdb-x){font-family:inherit;}
+html[data-tdb-aurora] body select.busca-liquid-glass:not(#tdb-x){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:inset 0 1px 3px rgba(40,50,70,.025)!important;}
+html[data-tdb-aurora] body.dark-mode select.busca-liquid-glass:not(#tdb-x){box-shadow:none!important;}
+html[data-tdb-aurora] body select:not(#tdb-x) option{font-weight:500;}
+@media(min-width:761px){
+ html[data-tdb-aurora] body .painel-main td :is(select,input[type=date],input[type=text],input[type=number],input:not([type])):not(#tdb-x){font-size:12px!important;}
+ html[data-tdb-aurora] body .festas-tdb-edit-mobile :is(select,input):not(#tdb-x){font-size:12px!important;}
+}
+/* Linha de edição das Festas: tudo na mesma altura e no mesmo estilo */
+html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6px 30px 6px 9px!important;}
+/* Calendário completo (TDB 4) */
+#tdb-cal{position:fixed;z-index:2147483600;display:none;box-sizing:border-box;width:318px;max-width:calc(100vw - 16px);padding:12px;border-radius:18px;
+ background:#fff;color:#111318;border:1px solid #cfd6e1;box-shadow:0 18px 48px rgba(17,19,24,.22),0 2px 6px rgba(17,19,24,.08);font-family:inherit;font-size:13px;
+ --cal-acc:#1767cf;--cal-soft:rgba(23,103,207,.11);--cal-mut:#6b7482;--cal-bd:#d6dce5;--cal-hv:#eef2f8;--cal-bg2:#f4f6fa;user-select:none;-webkit-user-select:none;}
+#tdb-cal.on{display:block;}
+#tdb-cal[data-dark]{background:#25272d;color:#f5f5f7;border-color:#4a4e5a;box-shadow:0 18px 48px rgba(0,0,0,.55);--cal-acc:#4c9bff;--cal-soft:rgba(76,155,255,.2);--cal-mut:#aeb5c2;--cal-bd:#555b68;--cal-hv:#343741;--cal-bg2:#2f323a;}
+#tdb-cal *{box-sizing:border-box;font-family:inherit;}
+#tdb-cal button,#tdb-cal select,#tdb-cal input{font:inherit;color:inherit;margin:0;}
+#tdb-cal .cal-top{display:flex;align-items:center;gap:4px;margin-bottom:8px;}
+#tdb-cal .cal-nav{flex:0 0 auto;width:28px;height:32px;border-radius:10px;border:1px solid var(--cal-bd);background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0;}
+#tdb-cal .cal-nav:hover{background:var(--cal-hv);}
+#tdb-cal .cal-sel{flex:1 1 0;min-width:0;height:32px;border-radius:10px;border:1px solid var(--cal-bd);background:var(--cal-bg2);padding:0 20px 0 8px;font-weight:700;font-size:13px;cursor:pointer;-webkit-appearance:none;appearance:none;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23808896' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:11px;}
+#tdb-cal .cal-sel.mes{flex:1.5 1 0;}
+#tdb-cal .cal-sel.ano{flex:1 1 0;}
+#tdb-cal .cal-wk,#tdb-cal .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+#tdb-cal .cal-wk span{text-align:center;font-size:10.5px;font-weight:800;color:var(--cal-mut);padding:4px 0;letter-spacing:.03em;}
+#tdb-cal .cal-d{height:36px;border-radius:10px;border:1px solid transparent;background:transparent;cursor:pointer;font-size:13px;font-weight:600;padding:0;display:flex;align-items:center;justify-content:center;}
+#tdb-cal .cal-d:hover{background:var(--cal-hv);}
+#tdb-cal .cal-d.fora{color:var(--cal-mut);font-weight:500;opacity:.65;}
+#tdb-cal .cal-d.fds{color:#c0392b;}
+#tdb-cal[data-dark] .cal-d.fds{color:#ff9d93;}
+#tdb-cal .cal-d.fora.fds{opacity:.55;}
+#tdb-cal .cal-d.hoje{border-color:var(--cal-acc);}
+#tdb-cal .cal-d.foco{box-shadow:0 0 0 2px var(--cal-acc) inset;}
+#tdb-cal .cal-d.sel,#tdb-cal .cal-d.sel:hover{background:var(--cal-acc);color:#fff;border-color:var(--cal-acc);font-weight:800;}
+#tdb-cal .cal-d[disabled]{opacity:.28;cursor:not-allowed;}
+#tdb-cal .cal-atalhos{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+#tdb-cal .cal-at{height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--cal-bd);background:var(--cal-bg2);font-size:12px;font-weight:700;cursor:pointer;}
+#tdb-cal .cal-at:hover{background:var(--cal-soft);border-color:var(--cal-acc);}
+#tdb-cal .cal-dig{display:flex;gap:6px;margin-top:10px;}
+#tdb-cal .cal-in{flex:1 1 auto;min-width:0;height:34px;border-radius:12px;border:1px solid var(--cal-bd);background:var(--cal-bg2);padding:0 11px;font-size:13px;}
+#tdb-cal .cal-in.erro{border-color:#c0392b;}
+#tdb-cal .cal-ok{flex:0 0 auto;height:34px;padding:0 14px;border-radius:12px;border:0;background:var(--cal-acc);color:#fff;font-weight:800;cursor:pointer;}
+#tdb-cal .cal-rod{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;}
+#tdb-cal .cal-lnk{background:none;border:0;padding:6px 4px;font-size:12.5px;font-weight:800;color:var(--cal-acc);cursor:pointer;}
+#tdb-cal .cal-lnk.limpar{color:#c0392b;}
+#tdb-cal[data-dark] .cal-lnk.limpar{color:#ff9d93;}
+#tdb-cal .cal-ext{font-size:11.5px;color:var(--cal-mut);font-weight:600;flex:1;text-align:center;}
+#tdb-cal-fundo{position:fixed;inset:0;z-index:2147483599;display:none;background:rgba(10,14,22,.38);}
+#tdb-cal-fundo.on{display:block;}
+@media(max-width:600px){
+ #tdb-cal{left:0!important;right:0!important;top:auto!important;bottom:0!important;width:100%;max-width:100%;border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;}
+ #tdb-cal .cal-d{height:42px;font-size:15px;}
+ #tdb-cal .cal-nav{width:36px;}
+ #tdb-cal .cal-nav,#tdb-cal .cal-sel{height:40px;}
+ #tdb-cal .cal-sel{font-size:14px;}
+ #tdb-cal .cal-at{height:36px;font-size:13px;padding:0 13px;}
+ #tdb-cal .cal-in,#tdb-cal .cal-ok{height:42px;font-size:16px;}
+}
+@media print{#tdb-cal,#tdb-cal-fundo{display:none!important;}}
+/* Abas em grade: a coluna nunca pode ficar mais larga que a tela (tabelas rolam por dentro) */
+@media screen{
+ html[data-tdb-aurora] body [class^="export-pagina-"]:not(#tdb-x){grid-template-columns:minmax(0,1fr)!important;}
+ html[data-tdb-aurora] body [class^="export-pagina-"]>*:not(#tdb-x){min-width:0;}
+}
+/* Celular: nada passa da largura da tela */
+@media screen and (max-width:760px){
+ html[data-tdb-aurora] body .painel-main :is(select,input:not([type=checkbox]):not([type=radio]),textarea):not(#tdb-x){max-width:100%;}
+ html[data-tdb-aurora] body .painel-main div[style*="display: grid"]:not([style*="grid-template-columns"]):not([style*="grid-auto"]):not(#tdb-x){grid-template-columns:minmax(0,1fr);}
+ html[data-tdb-aurora] body .painel-main .recibos-view div[style*="minmax(360px"]:not(#tdb-x){grid-template-columns:minmax(0,1fr)!important;}
+ html[data-tdb-aurora] body .painel-main :is(.grid-saude-alertas,.grid-meta-pendencias):not(#tdb-x){grid-template-columns:minmax(0,1fr)!important;}
+ html[data-tdb-aurora] body .painel-main div[style*="repeat(6, minmax(74px"]:not(#tdb-x){grid-template-columns:repeat(auto-fit,minmax(74px,1fr))!important;}
+ html[data-tdb-aurora] body .painel-main div[style*="flex: 1 1 100%"]:not(#tdb-x){max-width:100%;min-width:0;}
+ html[data-tdb-aurora] body .painel-main .festas-tdb-edit-mobile:not(#tdb-x){position:sticky;left:0;box-sizing:border-box;width:calc(100vw - 72px);max-width:100%;}
+}
+</style>
+<script id="tdb-calendario">
+/* TDB 4 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
+(function(){
+ if(window.TDBCalendario)return;
+ var MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+ var DOW=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+ var DOWL=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+ var root,fundo,st={el:null,ext:false,vy:0,vm:0,sel:null,foco:null,min:null,max:null,teclado:false};
+ function pad(n){return String(n).padStart(2,'0');}
+ function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+ function mk(y,m,d){var x=new Date(y,m,d);return(x.getFullYear()===y&&x.getMonth()===m&&x.getDate()===d)?x:null;}
+ function day0(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+ function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+ function br(d){return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();}
+ function ext(d){return pad(d.getDate())+' de '+MES[d.getMonth()]+' de '+d.getFullYear();}
+ function parseISO(v){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(v||''));return m?mk(+m[1],+m[2]-1,+m[3]):null;}
+ function parseBR(s){
+  s=String(s||'').trim().toLowerCase();
+  var m=/^(\d{1,2})\s+de\s+([a-zç]+)\s+de\s+(\d{4})$/.exec(s);
+  if(m){var i=MES.indexOf(m[2]);return i>=0?mk(+m[3],i,+m[1]):null;}
+  m=/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2}|\d{4}))?$/.exec(s);
+  if(!m){m=/^(\d{2})(\d{2})(\d{4})$/.exec(s);}
+  if(!m)return null;
+  var y=m[3]?+m[3]:new Date().getFullYear();if(y<100)y+=2000;
+  return mk(y,+m[2]-1,+m[1]);
+ }
+ function parseVal(el){return isExt(el)?parseBR(el.value):parseISO(el.value);}
+ function isExt(el){return !!el&&el.tagName==='INPUT'&&el.type==='text'&&/de setembro de 20\d\d/.test(el.placeholder||'');}
+ function isDate(el){return !!el&&el.tagName==='INPUT'&&(el.type==='date'||isExt(el));}
+ function hoje(){return day0(new Date());}
+ function add(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+ function clamp(d){if(st.min&&d<st.min)return st.min;if(st.max&&d>st.max)return st.max;return d;}
+ function ok(d){return(!st.min||d>=st.min)&&(!st.max||d<=st.max);}
+ function setVal(el,v){
+  try{var set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;set.call(el,v);}catch(e){el.value=v;}
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  el.dispatchEvent(new Event('change',{bubbles:true}));
+ }
+ function build(){
+  if(root)return;
+  fundo=document.createElement('div');fundo.id='tdb-cal-fundo';fundo.setAttribute('data-export-ignore','true');
+  root=document.createElement('div');root.id='tdb-cal';root.setAttribute('role','dialog');root.setAttribute('aria-label','Calendário');root.setAttribute('data-export-ignore','true');
+  var mo='';MES.forEach(function(n,i){mo+='<option value="'+i+'">'+cap(n)+'</option>';});
+  root.innerHTML='<div class="cal-top"><button type="button" class="cal-nav" data-nav="-12" aria-label="Ano anterior">«</button><button type="button" class="cal-nav" data-nav="-1" aria-label="Mês anterior">‹</button><select class="cal-sel mes" aria-label="Mês">'+mo+'</select><select class="cal-sel ano" aria-label="Ano"></select><button type="button" class="cal-nav" data-nav="1" aria-label="Próximo mês">›</button><button type="button" class="cal-nav" data-nav="12" aria-label="Próximo ano">»</button></div>'
+   +'<div class="cal-wk">'+DOW.map(function(d){return '<span>'+d+'</span>';}).join('')+'</div><div class="cal-grid" role="grid"></div>'
+   +'<div class="cal-atalhos"><button type="button" class="cal-at" data-at="hoje">Hoje</button><button type="button" class="cal-at" data-at="ontem">Ontem</button><button type="button" class="cal-at" data-at="amanha">Amanhã</button><button type="button" class="cal-at" data-at="7">Em 7 dias</button><button type="button" class="cal-at" data-at="30">Em 30 dias</button><button type="button" class="cal-at" data-at="ini">1º do mês</button><button type="button" class="cal-at" data-at="fim">Último dia</button></div>'
+   +'<div class="cal-dig"><input class="cal-in" type="text" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa" aria-label="Digitar a data"><button type="button" class="cal-ok">Aplicar</button></div>'
+   +'<div class="cal-rod"><button type="button" class="cal-lnk limpar">Limpar</button><span class="cal-ext"></span><button type="button" class="cal-lnk fechar">Fechar</button></div>';
+  document.body.appendChild(fundo);document.body.appendChild(root);
+  root.addEventListener('mousedown',function(e){if(!/^(INPUT|SELECT)$/.test(e.target.tagName))e.preventDefault();});
+  root.addEventListener('click',onClick);
+  root.addEventListener('keydown',onKey);
+  root.querySelector('.mes').addEventListener('change',function(){st.vm=+this.value;render();});
+  root.querySelector('.ano').addEventListener('change',function(){st.vy=+this.value;render();});
+  var inp=root.querySelector('.cal-in');
+  inp.addEventListener('input',function(){this.classList.remove('erro');});
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();aplicarDig();}});
+  fundo.addEventListener('click',fechar);
+ }
+ function aplicarDig(){
+  var inp=root.querySelector('.cal-in');var d=parseBR(inp.value);
+  if(!d||!ok(d)){inp.classList.add('erro');return;}
+  escolher(d);
+ }
+ function escolher(d){
+  var el=st.el;if(!el)return;
+  if(!ok(d))return;
+  setVal(el,st.ext?ext(d):iso(d));
+  fechar(true);
+ }
+ function onClick(e){
+  var t=e.target.closest('button');if(!t||!root.contains(t))return;
+  if(t.classList.contains('cal-d')){if(t.disabled)return;escolher(parseISO(t.dataset.d));return;}
+  if(t.dataset.nav){var n=+t.dataset.nav;var d=new Date(st.vy,st.vm+n,1);st.vy=d.getFullYear();st.vm=d.getMonth();render();return;}
+  if(t.dataset.at){
+   var h=hoje(),a=t.dataset.at,d;
+   if(a==='hoje')d=h;else if(a==='ontem')d=add(h,-1);else if(a==='amanha')d=add(h,1);else if(a==='7')d=add(h,7);else if(a==='30')d=add(h,30);
+   else if(a==='ini')d=new Date(st.vy,st.vm,1);else d=new Date(st.vy,st.vm+1,0);
+   if(!ok(d)){d=clamp(d);}
+   escolher(d);return;
+  }
+  if(t.classList.contains('cal-ok')){aplicarDig();return;}
+  if(t.classList.contains('limpar')){var el=st.el;if(el){setVal(el,'');}fechar(true);return;}
+  if(t.classList.contains('fechar')){fechar(true);return;}
+ }
+ function onKey(e){
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();fechar(true);return;}
+  var t=e.target;
+  if(!t.classList||!t.classList.contains('cal-d')){return;}
+  var f=parseISO(t.dataset.d),n=null,k=e.key;
+  if(k==='ArrowLeft')n=add(f,-1);else if(k==='ArrowRight')n=add(f,1);else if(k==='ArrowUp')n=add(f,-7);else if(k==='ArrowDown')n=add(f,7);
+  else if(k==='PageUp')n=new Date(f.getFullYear(),f.getMonth()+(e.shiftKey?-12:-1),f.getDate());
+  else if(k==='PageDown')n=new Date(f.getFullYear(),f.getMonth()+(e.shiftKey?12:1),f.getDate());
+  else if(k==='Home')n=add(f,-f.getDay());else if(k==='End')n=add(f,6-f.getDay());
+  else if(k==='t'||k==='T'){e.preventDefault();escolher(hoje());return;}
+  if(n){
+   e.preventDefault();
+   if(n.getMonth()!==f.getMonth()||n.getFullYear()!==f.getFullYear()){var cl=new Date(n.getFullYear(),n.getMonth(),Math.min(n.getDate(),new Date(n.getFullYear(),n.getMonth()+1,0).getDate()));n=cl;}
+   st.foco=clamp(n);st.vy=st.foco.getFullYear();st.vm=st.foco.getMonth();st.teclado=true;render();
+  }
+ }
+ function render(){
+  var h=hoje(),sel=st.sel,gridEl=root.querySelector('.cal-grid');
+  var ms=root.querySelector('.mes'),ys=root.querySelector('.ano');
+  ms.value=String(st.vm);
+  var y0=Math.min(st.vy,h.getFullYear()-30),y1=Math.max(st.vy,h.getFullYear()+15);
+  if(st.min)y0=Math.max(y0,st.min.getFullYear());if(st.max)y1=Math.min(y1,st.max.getFullYear());
+  var yo='';for(var y=y0;y<=y1;y++)yo+='<option value="'+y+'">'+y+'</option>';
+  if(ys.getAttribute('data-r')!==y0+'-'+y1){ys.innerHTML=yo;ys.setAttribute('data-r',y0+'-'+y1);}
+  ys.value=String(st.vy);
+  var primeiro=new Date(st.vy,st.vm,1),ini=add(primeiro,-primeiro.getDay());
+  if(!st.foco||st.foco.getMonth()!==st.vm||st.foco.getFullYear()!==st.vy){st.foco=(sel&&sel.getMonth()===st.vm&&sel.getFullYear()===st.vy)?sel:(h.getMonth()===st.vm&&h.getFullYear()===st.vy?h:primeiro);}
+  var html='';
+  for(var i=0;i<42;i++){
+   var d=add(ini,i),fora=d.getMonth()!==st.vm,c='cal-d'+(fora?' fora':'')+((d.getDay()===0||d.getDay()===6)?' fds':'');
+   var isH=d.getTime()===h.getTime(),isS=!!sel&&d.getTime()===sel.getTime(),isF=d.getTime()===st.foco.getTime();
+   if(isH)c+=' hoje';if(isS)c+=' sel';
+   html+='<button type="button" class="'+c+'" data-d="'+iso(d)+'" tabindex="'+(isF?'0':'-1')+'"'+(ok(d)?'':' disabled')+' aria-label="'+d.getDate()+' de '+MES[d.getMonth()]+' de '+d.getFullYear()+', '+DOWL[d.getDay()]+'"'+(isS?' aria-pressed="true"':'')+'>'+d.getDate()+'</button>';
+  }
+  gridEl.innerHTML=html;
+  if(st.teclado){var b=gridEl.querySelector('[tabindex="0"]');if(b)b.focus();}
+  root.querySelector('.cal-in').value=sel?br(sel):'';
+  root.querySelector('.cal-in').classList.remove('erro');
+  root.querySelector('.cal-ext').textContent=sel?(DOWL[sel.getDay()]):'sem data';
+ }
+ function posicionar(){
+  if(!st.el||!root.classList.contains('on'))return;
+  if(window.innerWidth<=600){root.style.left=root.style.top='';return;}
+  var r=st.el.getBoundingClientRect(),vw=window.innerWidth,vh=window.innerHeight;
+  if(r.bottom<0||r.top>vh){fechar(false);return;}
+  var w=root.offsetWidth,h=root.offsetHeight;
+  var left=Math.max(8,Math.min(r.left,vw-w-8)),top=r.bottom+6;
+  if(top+h>vh-8){var up=r.top-6-h;top=up>=8?up:Math.max(8,vh-h-8);}
+  root.style.left=left+'px';root.style.top=top+'px';
+ }
+ function abrir(el,teclado){
+  build();
+  if(!document.body.contains(el))return;
+  if(st.el&&st.el!==el)fechar(false);
+  st.el=el;st.ext=isExt(el);st.teclado=!!teclado;
+  st.min=el.min?parseISO(el.min):null;st.max=el.max?parseISO(el.max):null;
+  var sel=parseVal(el);st.sel=sel;
+  var base=sel||clamp(hoje());st.vy=base.getFullYear();st.vm=base.getMonth();st.foco=sel||base;
+  var dark=document.body.classList.contains('dark-mode')||document.documentElement.classList.contains('dark-mode');
+  if(dark)root.setAttribute('data-dark','1');else root.removeAttribute('data-dark');
+  root.classList.add('on');
+  if(window.innerWidth<=600)fundo.classList.add('on');
+  render();posicionar();
+  if(st.ext&&window.matchMedia&&window.matchMedia('(pointer:coarse)').matches){try{el.blur();}catch(e){}}
+ }
+ function fechar(volta){
+  if(!root)return;
+  var el=st.el;root.classList.remove('on');fundo.classList.remove('on');st.el=null;st.teclado=false;
+  if(volta&&el&&document.body.contains(el)&&!isExt(el)){try{el.focus({preventScroll:true});}catch(e){}}
+ }
+ // ligação com as caixas de data
+ function marcar(el){if(el.type==='date'&&!el.readOnly){el.readOnly=true;el.setAttribute('autocomplete','off');}}
+ document.addEventListener('click',function(e){
+  var el=e.target;
+  if(!isDate(el))return;
+  if(el.disabled)return;
+  marcar(el);
+  if(el.type==='date'){e.preventDefault();e.stopPropagation();}
+  if(root&&root.classList.contains('on')&&st.el===el&&el.type==='date'){fechar(false);return;}
+  abrir(el,false);
+ },true);
+ document.addEventListener('keydown',function(e){
+  var el=e.target;if(!isDate(el)||el.type!=='date')return;
+  if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();abrir(el,true);}
+  else if((e.key==='Backspace'||e.key==='Delete')&&el.value){e.preventDefault();setVal(el,'');}
+ },true);
+ document.addEventListener('focusin',function(e){if(e.target&&e.target.type==='date')marcar(e.target);},true);
+ document.addEventListener('input',function(e){
+  if(st.el&&e.target===st.el&&st.ext&&root.classList.contains('on')){var d=parseBR(st.el.value);st.sel=d;if(d){st.vy=d.getFullYear();st.vm=d.getMonth();st.foco=d;}render();}
+ },true);
+ document.addEventListener('pointerdown',function(e){
+  if(!root||!root.classList.contains('on'))return;
+  if(root.contains(e.target)||e.target===st.el)return;
+  fechar(false);
+ },true);
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&root&&root.classList.contains('on')){fechar(true);}},true);
+ window.addEventListener('resize',function(){posicionar();});
+ window.addEventListener('scroll',function(e){if(root&&root.contains(e.target))return;posicionar();},true);
+ try{
+  var obs=new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes&&m.addedNodes.forEach(function(n){if(n.nodeType!==1)return;if(n.tagName==='INPUT')marcar(n);else if(n.querySelectorAll)n.querySelectorAll('input[type=date]').forEach(marcar);});});
+   if(st.el&&!document.body.contains(st.el))fechar(false);});
+  obs.observe(document.body,{childList:true,subtree:true});
+  document.querySelectorAll('input[type=date]').forEach(marcar);
+ }catch(e){}
+ window.TDBCalendario={abrir:abrir,fechar:fechar};
+})();
+</script>
 </body>
 </html>
 
