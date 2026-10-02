@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDB 5</title>
+  <title>TDB 6</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb5-20261002";
+    window.__TDB_BUILD = "tdb6-20261002";
   </script>
-  <script src="./config.js?build=tdb5-20261002"></script>
+  <script src="./config.js?build=tdb6-20261002"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 5">
+  <meta name="apple-mobile-web-app-title" content="TDB 6">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1233,10 +1233,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb5-20261002"></script>
+  <script src="./sync.js?build=tdb6-20261002"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb5-20261002-desktop';
+window.__TDB_BUILD_EXATO = 'tdb6-20261002-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -15124,7 +15124,7 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .
 }
 </style>
 <style id="tdb-ctl">
-/* TDB 5 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
+/* TDB 6 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
 html[data-tdb-aurora] body :is(select,input[type=date]):not(#tdb-x){
  -webkit-appearance:none!important;appearance:none!important;box-sizing:border-box!important;
  border-radius:12px!important;border-width:1px!important;border-style:solid!important;line-height:normal!important;
@@ -15159,7 +15159,7 @@ html[data-tdb-aurora] body select:not(#tdb-x) option{font-weight:500;}
 }
 /* Linha de edição das Festas: tudo na mesma altura e no mesmo estilo */
 html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6px 30px 6px 9px!important;}
-/* Calendário completo (TDB 5) */
+/* Calendário completo (TDB 6) */
 #tdb-cal{position:fixed;z-index:2147483600;display:none;box-sizing:border-box;width:318px;max-width:calc(100vw - 16px);padding:12px;border-radius:18px;
  background:#fff;color:#111318;border:1px solid #cfd6e1;box-shadow:0 18px 48px rgba(17,19,24,.22),0 2px 6px rgba(17,19,24,.08);font-family:inherit;font-size:13px;
  --cal-acc:#1767cf;--cal-soft:rgba(23,103,207,.11);--cal-mut:#6b7482;--cal-bd:#d6dce5;--cal-hv:#eef2f8;--cal-bg2:#f4f6fa;user-select:none;-webkit-user-select:none;}
@@ -15227,7 +15227,7 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
 }
 </style>
 <script id="tdb-calendario">
-/* TDB 5 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
+/* TDB 6 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
 (function(){
  if(window.TDBCalendario)return;
  var MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -15419,7 +15419,7 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
 })();
 </script>
 <style id="tdb-calapp">
-/* TDB 5 — aba Calendário. Só aparência da aba nova + selo no botão da aba. */
+/* TDB 6 — aba Calendário. Só aparência da aba nova + selo no botão da aba. */
 .tcal,#tcal-pop,#tcal-modal,#tcal-toast{--t-ink:var(--c-ink,#111318);--t-soft:var(--c-inkSoft,#454c59);--t-line:var(--c-line,#d7dce5);--t-acc:var(--c-inkButton,#1767cf);--t-solid:#fff;--t-field:#fff;--t-chip:rgba(23,103,207,.12);--t-hover:rgba(23,103,207,.07);--t-aviso-bg:#fff4dc;--t-aviso-bd:#f0d28a;--t-aviso-tx:#6b5a2a;--t-red:#c62d36;--t-green:#1c9e8f;--t-amber:#d98a00}
 body.dark-mode .tcal,#tcal-pop.dk,#tcal-modal.dk,#tcal-toast.dk{--t-solid:#2a2c33;--t-field:#1f2127;--t-chip:rgba(106,168,245,.18);--t-hover:rgba(255,255,255,.06);--t-aviso-bg:#3b3320;--t-aviso-bd:#6e5a24;--t-aviso-tx:#e9d9a8;--t-acc:#6aa8f5;--t-red:#ff8a90;--t-line:#555b68;--t-ink:#f6f7f9;--t-soft:#d0d4dc}
 .tcal{color:var(--t-ink);font-family:inherit;position:relative;min-width:0}
@@ -15644,9 +15644,14 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .aba-icon svg > :nth-child(2){stroke:#C15CA0!important;}
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .aba-icon svg > :nth-child(3){stroke:#B87A1A!important;}
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .aba-icon svg > :nth-child(4){stroke:#1C9E8F!important;}
+/* eventos que vêm da Google Agenda (só leitura): mesmo tamanho, mas "vazados" e com a faixa colorida */
+.tcal-ev.g{background:color-mix(in srgb,var(--c) 16%,var(--t-solid));color:var(--t-ink);border-left:3px solid var(--c);border-radius:5px 7px 7px 5px}
+.tcal-ev.g b{color:var(--t-ink)}
+.tcal-blk.g{background:color-mix(in srgb,var(--c) 18%,var(--t-solid));color:var(--t-ink);border-left:3px solid var(--c);box-shadow:none}
+.tcal-gnota{display:block;font-size:11px;line-height:1.35;color:var(--t-aviso-tx);background:var(--t-aviso-bg);border:1px solid var(--t-aviso-bd);border-radius:10px;padding:6px 8px;margin:4px 0 2px}
 </style>
 <script id="tdb-calapp-js">
-/* TDB 5 — aba Calendário (agenda estilo Google Agenda). Dados na chave própria calendario_tdb_v1 via window.storage
+/* TDB 6 — aba Calendário (agenda estilo Google Agenda). Dados na chave própria calendario_tdb_v1 via window.storage
    (a mesma sincronização de sempre, sem alterá-la). Envio à Google Agenda: ação separada "agenda" no Apps Script. */
 (function(){
  'use strict';
@@ -15660,7 +15665,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
  var CORES=['#c15ca0','#1c9e8f','#1767cf','#d98a00','#7b6bd6','#d93025','#5b6472'];
  var AV_PADRAO={fe:1440,pa:1440,re:60,pg:2880,ou:60};
  var HP=48; // altura de 1 hora na grade
- var S={data:{agendas:{},eventos:{},tomb:{},del:{}},loaded:false,view:'month',cur:null,sel:null,q:'',host:null,draft:null,pop:null,ga:{estado:'?',msg:''},festas:[],off:{},timer:null,saveT:null,gaBusy:false,montado:false,vistos:{}};
+ var S={data:{agendas:{},eventos:{},tomb:{},del:{}},loaded:false,view:'month',cur:null,sel:null,q:'',host:null,draft:null,pop:null,ga:{estado:'?',msg:''},festas:[],off:{},timer:null,saveT:null,gaBusy:false,montado:false,vistos:{},g:{},gm:{},gbusy:false,gerr:'',gfail:0};
  function pad(n){return String(n).padStart(2,'0');}
  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
  function hoje(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
@@ -15747,6 +15752,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
    if(q&&!achou(ev,q))return;
    ocorr(ev,ini,fim).forEach(function(x){o.push(x);});
   });
+  if(gMostra())gOcorr(ini,fim).forEach(function(x){o.push(x);});
   o.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:(a.dia===b.dia?(a.h<b.h?-1:a.h>b.h?1:0):(a.dia?-1:1));});
   return o;
  }
@@ -15808,6 +15814,57 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
    }).catch(function(){falhou=true;S.ga={estado:'offline',msg:'Sem conexão agora.'};}).then(prox);
   }
   return prox();
+ }
+
+ /* ---------- eventos que já existem na Google Agenda (só leitura) ---------- */
+ var GCOR={'1':'#7986cb','2':'#33b679','3':'#8e24aa','4':'#e67c73','5':'#f6bf26','6':'#f4511e','7':'#039be5','8':'#616161','9':'#3f51b5','10':'#0b8043','11':'#d50000'};
+ var GAZUL='#4285f4';
+ function mkey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1);}
+ function mesesDe(ini,fim){var o=[],c=new Date(ini.getFullYear(),ini.getMonth(),1);while(c<=fim){o.push(mkey(c));c=addM(c,1);}return o;}
+ function gMostra(){var e=S.ga.estado;return agOn('gg')&&e!=='auth'&&e!=='inativo';}
+ function agsTodas(){var o=ags();if(S.ga.estado==='ok'||Object.keys(S.g).length)o.gg={n:'Minha Google Agenda',c:GAZUL};return o;}
+ function faixa(){
+  var c=curr(),h=hoje(),a,b;
+  if(S.q.trim()){a=add(h,-180);b=add(h,365);}
+  else if(S.view==='month'){var pri=new Date(c.getFullYear(),c.getMonth(),1);a=sow(pri);b=add(a,41);}
+  else if(S.view==='week'){a=sow(c);b=add(a,6);}
+  else if(S.view==='day'){a=c;b=c;}
+  else if(S.view==='year'){a=new Date(c.getFullYear(),0,1);b=new Date(c.getFullYear(),11,31);}
+  else{a=c;b=add(c,90);}
+  return [a<h?a:h,b>add(h,120)?b:add(h,120)];
+ }
+ function gSalvarCache(){lsSet('tdb_cal_g',{g:S.g,gm:S.gm});}
+ function gGarantir(){
+  if(S.ga.estado!=='ok'||S.gbusy||S.gerr==='atualizar'||!agOn('gg'))return;
+  if(Date.now()-S.gfail<30000)return;
+  var f=faixa(),agora=Date.now();
+  var falta=mesesDe(f[0],f[1]).filter(function(m){return !S.gm[m]||agora-S.gm[m]>300000;});
+  if(!falta.length)return;
+  var pa=falta[0].split('-'),pb=falta[falta.length-1].split('-');
+  var de=falta[0]+'-01',ate=ymd(new Date(+pb[0],+pb[1],0));
+  S.gbusy=true;
+  gaPost({op:'listar',de:de,ate:ate}).then(function(r){
+   if(r&&r.ok&&Array.isArray(r.eventos)){
+    Object.keys(S.g).forEach(function(k){var x=S.g[k];if(x.d>=de&&x.d<=ate)delete S.g[k];});
+    r.eventos.forEach(function(e){S.g[e.id+'|'+e.d]=e;});
+    mesesDe(new Date(+pa[0],+pa[1]-1,1),new Date(+pb[0],+pb[1],0)).forEach(function(m){S.gm[m]=Date.now();});
+    S.gerr='';gSalvarCache();
+   }else{
+    S.gfail=Date.now();
+    var er=(r&&r.erro)||'';
+    if(/desconhecida/i.test(er))S.gerr='atualizar';else if(r&&r.precisaAutorizar){S.ga={estado:'auth',msg:'Falta autorizar o acesso à Google Agenda.'};}else S.gerr=er||'erro';
+   }
+  }).catch(function(){S.gfail=Date.now();}).then(function(){S.gbusy=false;if(S.host){syncPill();renderMain();renderSide();renderChips();gGarantir();}});
+ }
+ function gOcorr(ini,fim){
+  var q=S.q.trim().toLowerCase(),o=[];
+  Object.keys(S.g).forEach(function(k){
+   var e=S.g[k],a=pY(e.d),b=pY(e.df||e.d);if(!a||!b||b<ini||a>fim)return;
+   var ev={id:'g:'+e.id,t:e.t,loc:e.loc||'',desc:e.desc||'',cor:GCOR[e.c]||GAZUL,g:true,ag:'gg'};
+   if(q&&!achou(ev,q))return;
+   o.push({id:'g:'+e.id,ev:ev,d:e.d,df:e.df||e.d,h:e.h||'',hf:e.hf||'',dia:!!e.dia,span:diffD(a,b)});
+  });
+  return o;
  }
  function payload(ev){
   return {id:ev.id,t:ev.t,d:ev.d,h:ev.dia?'':ev.h,df:ev.df||ev.d,hf:ev.dia?'':(ev.hf||''),dia:!!ev.dia,rep:ev.rep||'',loc:ev.loc||'',conv:ev.conv||[],av:(ev.av||[]).slice(0,5),cor:corEv(ev),desc:(ev.desc||'')+(ev.festa?'\n\n[Painel TDB · Festa: '+ev.festa+']':'')};
@@ -15874,16 +15931,16 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
 
  /* ---------- peças de HTML ---------- */
  function pill(x,mini){
-  var ev=x.ev,c=corEv(ev),arrastavel=!ev.rep&&!isPhone();
+  var ev=x.ev,c=corEv(ev),arrastavel=!ev.rep&&!ev.g&&!isPhone();
   var t=(x.dia||!x.h)?'':'<b>'+esc(x.h)+'</b> ';
-  return '<div class="tcal-ev'+(x.dia?' dia':'')+(mini?' mini':'')+'" draggable="'+arrastavel+'" data-act="ev" data-id="'+esc(x.id)+'" data-d="'+x.d+'" style="--c:'+esc(c)+'" title="'+esc(ev.t)+'">'+t+esc(ev.t)+'</div>';
+  return '<div class="tcal-ev'+(x.dia?' dia':'')+(mini?' mini':'')+(ev.g?' g':'')+'" draggable="'+arrastavel+'" data-act="ev" data-id="'+esc(x.id)+'" data-d="'+x.d+'" style="--c:'+esc(c)+'" title="'+esc(ev.t)+'">'+t+esc(ev.t)+'</div>';
  }
  function dot(x){return '<i class="tcal-dot" style="background:'+esc(corEv(x.ev))+'"></i>';}
  function rowEv(x,extra){
   var ev=x.ev,c=corEv(ev);var av=(ev.av||[])[0];
   var quando_=x.dia?'dia todo':(x.h+(x.hf?' – '+x.hf:''));
   var a=pY(x.d);
-  return '<div class="tcal-li" data-act="ev" data-id="'+esc(x.id)+'" data-d="'+x.d+'"><div class="tcal-bar" style="background:'+esc(c)+'"></div><div class="tcal-li-t"><b>'+esc(ev.t)+'</b><small>'+(extra===false?'':DOWA[a.getDay()]+', '+a.getDate()+' '+MESA[a.getMonth()]+' · ')+esc(quando_)+(ev.loc?' · '+esc(ev.loc):'')+(ev.rep?' · repete':'')+'</small></div>'+(av!=null?'<span class="tcal-bell">🔔 '+esc(avCurto(av,x.dia))+'</span>':'')+'</div>';
+  return '<div class="tcal-li" data-act="ev" data-id="'+esc(x.id)+'" data-d="'+x.d+'"><div class="tcal-bar" style="background:'+esc(c)+'"></div><div class="tcal-li-t"><b>'+esc(ev.t)+'</b><small>'+(extra===false?'':DOWA[a.getDay()]+', '+a.getDate()+' '+MESA[a.getMonth()]+' · ')+esc(quando_)+(ev.loc?' · '+esc(ev.loc):'')+(ev.rep?' · repete':'')+(ev.g?' · Google':'')+'</small></div>'+(av!=null?'<span class="tcal-bell">🔔 '+esc(avCurto(av,x.dia))+'</span>':'')+'</div>';
  }
 
  function vMes(){
@@ -15928,7 +15985,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
    colunas(its);
    s+='<div class="tcal-col'+(k===h?' hoje':'')+'" data-act="slot" data-d="'+k+'">';
    its.forEach(function(it){var ev=it.x.ev,c=corEv(ev);var w=100/it.n,t=it.s*HP/60,ht=Math.max(22,(it.e-it.s)*HP/60-2);
-    s+='<div class="tcal-blk" draggable="'+(!ev.rep&&!isPhone())+'" data-act="ev" data-id="'+esc(it.x.id)+'" data-d="'+it.x.d+'" style="--c:'+esc(c)+';top:'+t+'px;height:'+ht+'px;left:calc('+(it.c*w)+'% + 2px);width:calc('+w+'% - 6px)"><b>'+esc(ev.t)+'</b><small>'+esc(it.x.h)+(it.x.hf?' – '+esc(it.x.hf):'')+'</small></div>';});
+    s+='<div class="tcal-blk'+(ev.g?' g':'')+'" draggable="'+(!ev.rep&&!ev.g&&!isPhone())+'" data-act="ev" data-id="'+esc(it.x.id)+'" data-d="'+it.x.d+'" style="--c:'+esc(c)+';top:'+t+'px;height:'+ht+'px;left:calc('+(it.c*w)+'% + 2px);width:calc('+w+'% - 6px)"><b>'+esc(ev.t)+'</b><small>'+esc(it.x.h)+(it.x.hf?' – '+esc(it.x.hf):'')+'</small></div>';});
    if(k===h){var nw=new Date();s+='<div class="tcal-now" style="top:'+((nw.getHours()*60+nw.getMinutes())*HP/60)+'px"></div>';}
    s+='</div>';
   });
@@ -15967,7 +16024,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   var el=S.host.querySelector('.tcal-main');if(!el)return;
   var nav='<div class="tcal-nav"><button class="tcal-sq" data-act="prev" aria-label="Anterior">‹</button><b class="tcal-tt">'+esc(titulo())+'</b><button class="tcal-btn" data-act="hoje">Hoje</button><button class="tcal-sq" data-act="next" aria-label="Próximo">›</button></div>';
   var corpo=S.q.trim()?vBusca():S.view==='month'?vMes():S.view==='week'?vSemana():S.view==='day'?vDia():S.view==='year'?vAno():vAgenda();
-  var leg='<div class="tcal-leg">'+Object.keys(ags()).filter(agOn).map(function(k){var a=ags()[k];return '<span style="--c:'+esc(a.c)+'">'+esc(a.n)+'</span>';}).join('')+'</div>';
+  var leg='<div class="tcal-leg">'+Object.keys(agsTodas()).filter(agOn).map(function(k){var a=agsTodas()[k];return '<span style="--c:'+esc(a.c)+'">'+esc(a.n)+'</span>';}).join('')+'</div>';
   var sc=el.querySelector('.tcal-wk-sc'),top=sc?sc.scrollTop:null;
   el.innerHTML=nav+corpo+(S.view==='month'||S.view==='year'||S.q.trim()?leg:'');
   var sc2=el.querySelector('.tcal-wk-sc');if(sc2)sc2.scrollTop=top!=null?top:(7*HP-6);
@@ -15978,6 +16035,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   var A=ags(),s='';
   if(!isPhone()){
    s+='<div class="tcal-card tcal-box tcal-ags"><h3>Minhas agendas</h3>'+Object.keys(A).map(function(k){var on=agOn(k);return '<button class="tcal-agi" data-act="ag" data-k="'+k+'"><span class="tcal-ck'+(on?'':' off')+'" style="--c:'+esc(A[k].c)+'">✓</span>'+esc(A[k].n)+'</button>';}).join('')
+    +(S.ga.estado==='ok'||Object.keys(S.g).length?'<button class="tcal-agi" data-act="ag" data-k="gg"><span class="tcal-ck'+(agOn('gg')?'':' off')+'" style="--c:'+GAZUL+'">✓</span>Minha Google Agenda</button>'+(S.gerr==='atualizar'?'<small class="tcal-gnota">Para ver os eventos do Google, troque o código do Apps Script pelo novo (veja “Como ativar”).</small>':''):'')
     +'<div class="tcal-novaag"><button class="tcal-lnk" data-act="novaag">+ Nova agenda</button></div></div>';
   }
   var pa=proximoAviso();
@@ -15992,7 +16050,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
  function renderChips(){
   var el=S.host.querySelector('.tcal-chips');if(!el)return;
   if(!isPhone()){el.innerHTML='';return;}
-  var A=ags(),todas=Object.keys(A).every(agOn);
+  var A=agsTodas(),todas=Object.keys(A).every(agOn);
   el.innerHTML='<button class="tcal-chip'+(todas?' on':'')+'" data-act="chip" data-k="*">Todas</button>'+Object.keys(A).map(function(k){var on=!todas&&agOn(k);return '<button class="tcal-chip'+(on?' on':'')+'" data-act="chip" data-k="'+k+'" style="--c:'+esc(A[k].c)+'">'+esc(A[k].n)+'</button>';}).join('');
  }
  function renderAlertas(){
@@ -16007,7 +16065,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
  function render(){
   if(!S.host)return;
   var rt=S.host.querySelector('.tcal')||S.host;rt.setAttribute('data-narrow',isNarrow()?'1':'0');rt.setAttribute('data-phone',isPhone()?'1':'0');
-  renderHead();renderAlertas();renderChips();renderMain();renderSide();badge();
+  renderHead();renderAlertas();renderChips();renderMain();renderSide();badge();gGarantir();
   if(S.draft&&isNarrow())abrirModalForm();
  }
 
@@ -16031,7 +16089,18 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   if(x.dia)return base+(x.df!==x.d?' – '+b.getDate()+' de '+MES[b.getMonth()]:'')+' · dia todo';
   return base+' · '+x.h+(x.hf?(x.df!==x.d?' – '+b.getDate()+'/'+pad(b.getMonth()+1)+' '+x.hf:' – '+x.hf):'');
  }
+ function popGoogle(id,d,rect){
+  var e=S.g[id.slice(2)+'|'+d];if(!e)return;
+  var x={d:e.d,df:e.df||e.d,h:e.h,hf:e.hf,dia:!!e.dia},a=pY(e.d);
+  var h='<div class="tcal-pop-h"><span class="tcal-sw" style="background:'+esc(GCOR[e.c]||GAZUL)+'"></span><b>'+esc(e.t)+'</b><span class="tcal-pop-bt"><button data-act="fechapop" title="Fechar">✕</button></span></div>';
+  h+='<div class="tcal-row"><span class="tcal-ic">🕐</span><span>'+esc(resumoQuando(x))+'</span></div>';
+  if(e.loc)h+='<div class="tcal-row"><span class="tcal-ic">📍</span><span>'+esc(e.loc)+'</span></div>';
+  if(e.desc)h+='<div class="tcal-row"><span class="tcal-ic">📝</span><span class="tcal-desc">'+esc(e.desc)+'</span></div>';
+  h+='<div class="tcal-row sm"><span class="tcal-tag">Google Agenda</span><span>Para editar ou excluir, use o Google Agenda. <a class="tcal-lnk" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/u/0/r/day/'+a.getFullYear()+'/'+(a.getMonth()+1)+'/'+a.getDate()+'">Abrir</a></span></div>';
+  S.pop={tipo:'ev',id:id};popAbrir(h,rect);
+ }
  function popEvento(id,d,rect){
+  if(String(id).indexOf('g:')===0)return popGoogle(id,d,rect);
   var ev=S.data.eventos[id];if(!ev)return;
   var x=ocorr(ev,pY(d),pY(d))[0]||{id:id,ev:ev,d:ev.d,df:ev.df||ev.d,h:ev.h,hf:ev.hf,dia:ev.dia,span:0};
   var c=corEv(ev),A=ags();
@@ -16176,8 +16245,8 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   var st=e==='ok'?'<p class="ok">✓ Ligada: os eventos vão para a agenda “'+esc(S.ga.msg)+'” da sua conta Google.</p>':
    '<p class="pe">'+esc(S.ga.msg||'Ainda não verificada.')+'</p>';
   m.innerHTML='<div class="tcal-ov" data-act="nada"><div class="tcal-md"><div class="tcal-fh"><h3>Google Agenda</h3><button class="tcal-x" data-act="fechainfo">✕</button></div><div class="tcal-form">'+st
-   +'<p>Seus eventos ficam sempre salvos aqui no painel. Para o <b>alarme tocar no celular</b>, o painel os envia para uma agenda chamada “Tempo de Brincar” na sua Google Agenda. Para ligar (uma vez só):</p>'
-   +'<ol><li>Abra o Apps Script do painel e troque o código pelo arquivo <b>Codigo-COM-AGENDA-para-colar-no-Apps-Script.gs</b> (vem junto do TDB 5). Salve.</li><li>No editor, escolha a função <b>autorizarAgenda</b>, clique em Executar e aceite o acesso à Google Agenda.</li><li>Implantar → Gerenciar implantações → lápis → Versão: <b>Nova versão</b> → Implantar.</li><li>Volte aqui e toque em “Verificar de novo”.</li></ol>'
+   +'<p>Seus eventos ficam sempre salvos aqui no painel. Para o <b>alarme tocar no celular</b>, o painel os envia para uma agenda chamada “Tempo de Brincar” na sua Google Agenda. Com ela ligada, o painel também mostra aqui os eventos que você já tem na sua Google Agenda principal (só para ver; para editar, use o Google Agenda). Para ligar (uma vez só):</p>'
+   +'<ol><li>Abra o Apps Script do painel e troque o código pelo arquivo <b>Codigo-COM-AGENDA-para-colar-no-Apps-Script.gs</b> (vem junto do TDB 6). Salve.</li><li>No editor, escolha a função <b>autorizarAgenda</b>, clique em Executar e aceite o acesso à Google Agenda.</li><li>Implantar → Gerenciar implantações → lápis → Versão: <b>Nova versão</b> → Implantar.</li><li>Volte aqui e toque em “Verificar de novo”.</li></ol>'
    +'<div class="tcal-fb"><span class="grow"></span><button class="tcal-btn" data-act="fechainfo">Fechar</button><button class="tcal-btn p" data-act="gaverifica">Verificar de novo</button></div></div></div></div>';
  }
  function fechaInfo(){var m=document.getElementById('tcal-modal');if(m&&m.classList.contains('info')){m.className='';m.innerHTML='';}if(S.draft&&isNarrow())abrirModalForm();}
@@ -16210,7 +16279,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   if(a==='view'){S.view=t.getAttribute('data-v');S.q='';var si=S.host.querySelector('.tcal-search input');if(si)si.value='';lsSet('tdb_cal_prefs',{view:S.view,off:S.off});fecharPop();render();return;}
   if(a==='limpabusca'){S.q='';var s2=S.host.querySelector('.tcal-search input');if(s2)s2.value='';render();return;}
   if(a==='ag'){if(S.off[k])delete S.off[k];else S.off[k]=1;lsSet('tdb_cal_prefs',{view:S.view,off:S.off});render();return;}
-  if(a==='chip'){var A=ags();if(k==='*'){S.off={};}else{var solo=Object.keys(A).every(function(x){return x===k?agOn(x):!agOn(x);});S.off={};if(!solo)Object.keys(A).forEach(function(x){if(x!==k)S.off[x]=1;});}lsSet('tdb_cal_prefs',{view:S.view,off:S.off});render();return;}
+  if(a==='chip'){var A=agsTodas();if(k==='*'){S.off={};}else{var solo=Object.keys(A).every(function(x){return x===k?agOn(x):!agOn(x);});S.off={};if(!solo)Object.keys(A).forEach(function(x){if(x!==k)S.off[x]=1;});}lsSet('tdb_cal_prefs',{view:S.view,off:S.off});render();return;}
   if(a==='novaag'){var box=t.parentNode;box.innerHTML='<div class="tcal-na"><input class="tcal-in" placeholder="Nome da agenda" maxlength="30" id="tcal-na-n"><div class="tcal-swr">'+CORES.map(function(c,i){return '<button type="button" class="tcal-swb'+(i===0?' on':'')+'" data-act="na-cor" data-c="'+c+'" style="--c:'+c+'"></button>';}).join('')+'</div><div class="tcal-fb"><button class="tcal-btn" data-act="render">Cancelar</button><button class="tcal-btn p" data-act="na-ok">Criar</button></div></div>';var ni=box.querySelector('input');if(ni)ni.focus();return;}
   if(a==='na-cor'){t.parentNode.querySelectorAll('.tcal-swb').forEach(function(b){b.classList.remove('on');});t.classList.add('on');return;}
   if(a==='render'){renderSide();return;}
@@ -16218,7 +16287,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   if(a==='dispensar'){S.vistos[k]=Date.now();lsSet('tdb_cal_vistos',S.vistos);render();return;}
   if(a==='gainfo'){gaInfo();return;}
   if(a==='fechainfo'){fechaInfo();return;}
-  if(a==='gaverifica'){S.ga={estado:'?',msg:''};gaInfo();gaStatus().then(function(){return gaSincronizar();}).then(function(){if(document.getElementById('tcal-modal').classList.contains('info'))gaInfo();render();});return;}
+  if(a==='gaverifica'){S.gerr='';S.gfail=0;S.gm={};S.ga={estado:'?',msg:''};gaInfo();gaStatus().then(function(){return gaSincronizar();}).then(function(){if(document.getElementById('tcal-modal').classList.contains('info'))gaInfo();render();});return;}
   if(a==='fechapop'){fecharPop();return;}
   if(a==='editar'){var ev=S.data.eventos[id];if(ev)abrirForm(draftDe(ev));return;}
   if(a==='excluir'){
@@ -16306,6 +16375,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   ligar();
   var pr=lsGet('tdb_cal_prefs',{});S.view=pr.view||S.view||'month';S.off=pr.off||{};S.vistos=lsGet('tdb_cal_vistos',{});
   if(!S.cur)S.cur=hoje();if(isPhone()&&!S.sel)S.sel=hoje();
+  var gc=lsGet('tdb_cal_g',null);if(gc&&!Object.keys(S.g).length){S.g=gc.g||{};S.gm={};}
   S.host=el;el.innerHTML=shell();render();
   carregar().then(function(){lerFestas();render();return gaStatus();}).then(function(){render();return gaSincronizar();}).then(function(){syncPill();});
   clearInterval(S.timer);S.timer=setInterval(function(){if(S.host&&document.body.contains(S.host)){renderAlertas();renderSide();badge();if(S.view==='week'||S.view==='day')renderMain();}else badge();},60000);
