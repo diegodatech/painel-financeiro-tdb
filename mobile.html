@@ -3979,6 +3979,28 @@ function tdbMontarZip(arquivos) {
     partes.push(new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length), u32(tamCentral), u32(iniCentral), u16(0))));
     return new Blob(partes, { type: 'application/zip' });
 }
+// Soma da lista de crianças de um recibo (mostrada na tela e no PDF).
+function tdbNumBR(v) { var t = String(v == null ? '' : v).replace(/[^0-9,.-]/g, ''); if (!t) return 0; if (t.indexOf(',') >= 0) t = t.replace(/\./g, '').replace(',', '.'); var n = parseFloat(t); return isFinite(n) ? n : 0; }
+// A 2ª coluna (complemento) só vai para o recibo quando pelo menos uma criança tem valor nela.
+function tdbUsaSegundaColuna(r) { return !!(r && r.temSegundaColuna && !r.semColunaValor && (r.rows || []).some(function (row) { return tdbNumBR(row.valor2) > 0; })); }
+function tdbSomaRecibo(r) {
+    function numBR(v) { var t = String(v == null ? '' : v).replace(/[^0-9,.-]/g, ''); if (!t) return 0; if (t.indexOf(',') >= 0) t = t.replace(/\./g, '').replace(',', '.'); var n = parseFloat(t); return isFinite(n) ? n : 0; }
+    var s1 = 0, s2 = 0;
+    var usa2 = tdbUsaSegundaColuna(r);
+    if (r && !r.semColunaValor) (r.rows || []).forEach(function (row) { s1 += numBR(row.valor); if (usa2) s2 += numBR(row.valor2); });
+    return { s1: s1, s2: s2, total: Math.round((s1 + s2) * 100) / 100, dois: usa2, n: (r && r.rows ? r.rows.length : 0) };
+}
+function tdbBRL2(n) { return Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function tdbTotalRecibo(r, preview) {
+    var t = tdbSomaRecibo(r);
+    if (!(t.total > 0)) return null;
+    return React.createElement('div', { className: 'recibo-valor-total', style: { display: 'flex', justifyContent: preview ? 'flex-end' : 'stretch', marginTop: preview ? 8 : 4, padding: preview ? '0 28px' : 0, boxSizing: 'border-box' } },
+        React.createElement('div', { style: { background: '#E8F6F3', border: '1.5px solid #1FA69D', borderRadius: 12, padding: '8px 14px', minWidth: preview ? 210 : 0, width: preview ? 'auto' : '100%', boxSizing: 'border-box', display: 'grid', gap: 2 } },
+            React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 4, flexWrap: 'wrap' } },
+                React.createElement('span', { style: { fontSize: 11, fontWeight: 700, color: '#596170', letterSpacing: '.03em' } }, preview ? 'VALOR TOTAL' : 'VALOR TOTAL (soma da lista, ' + t.n + (t.n === 1 ? ' criança)' : ' crianças)')),
+                React.createElement('span', { style: { whiteSpace: 'nowrap', marginLeft: 'auto', fontSize: 16, fontWeight: 800, color: '#181C26', fontFamily: "'IBM Plex Mono', monospace" } }, 'R$ ' + tdbBRL2(t.total))),
+            t.dois && React.createElement('div', { style: { fontSize: 10.5, color: '#596170', textAlign: 'right' } }, 'Auxílio R$ ' + tdbBRL2(t.s1) + '  +  Compl. R$ ' + tdbBRL2(t.s2))));
+}
 function Recibos(_a) {
     var _this = this;
     var chamarIA = _a.chamarIA;
@@ -4184,6 +4206,7 @@ function Recibos(_a) {
         }
         function desenharRecibo(doc, rEmp) {
             var W = 595, H = 842;
+            var temSeg = tdbUsaSegundaColuna(rEmp);
             var margem = 26, interno = 34;
             var pastel1 = [250, 228, 242];
             var pastel2 = [222, 246, 246];
@@ -4258,9 +4281,9 @@ function Recibos(_a) {
             y += linhasSub.length * 17 + 16;
             var colunas = rEmp.semColunaValor
                 ? [{ t: 'Nome Mãe ou Pai', w: 182 }, { t: 'Nome da Criança', w: 190 }, { t: 'Nascimento', w: 95 }]
-                : rEmp.temSegundaColuna
+                : temSeg
                     ? [{ t: 'Nome Mãe ou Pai', w: 140 }, { t: 'Nome da Criança', w: 148 }, { t: 'Nascimento', w: 72 }, { t: 'Auxílio R$', w: 78 }, { t: 'Compl. R$', w: 78 }]
-                    : [{ t: 'Nome Mãe ou Pai', w: 152 }, { t: 'Nome da Criança', w: 164 }, { t: 'Nascimento', w: 84 }, { t: 'Valor R$', w: 82 }];
+                    : [{ t: 'Nome Mãe ou Pai', w: 152 }, { t: 'Nome da Criança', w: 164 }, { t: 'Nascimento', w: 84 }, { t: rEmp.temSegundaColuna ? 'Auxílio R$' : 'Valor R$', w: 82 }];
             var larguraTabela = colunas.reduce(function (s, c) { return s + c.w; }, 0);
             var xTabela = (W - larguraTabela) / 2;
             roundedFill(xTabela - 6, y - 8, larguraTabela + 12, 42 + Math.max(1, (rEmp.rows || []).length) * 30, 18, [252, 253, 255]);
@@ -4283,7 +4306,7 @@ function Recibos(_a) {
             (rEmp.rows || []).forEach(function (row, idx) {
                 var valores = rEmp.semColunaValor
                     ? [row.pai, row.crianca, row.nascimento]
-                    : rEmp.temSegundaColuna
+                    : temSeg
                         ? [row.pai, row.crianca, row.nascimento, row.valor, row.valor2]
                         : [row.pai, row.crianca, row.nascimento, row.valor];
                 var alturaLinha = 28;
@@ -4308,10 +4331,10 @@ function Recibos(_a) {
                 function numBR(v) { var t = String(v == null ? '' : v).replace(/[^0-9,.-]/g, ''); if (!t) return 0; if (t.indexOf(',') >= 0) t = t.replace(/\./g, '').replace(',', '.'); var n = parseFloat(t); return isFinite(n) ? n : 0; }
                 function brl(n) { return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
                 var s1 = 0, s2 = 0;
-                (rEmp.rows || []).forEach(function (r) { s1 += numBR(r.valor); if (rEmp.temSegundaColuna) s2 += numBR(r.valor2); });
+                (rEmp.rows || []).forEach(function (r) { s1 += numBR(r.valor); if (temSeg) s2 += numBR(r.valor2); });
                 var totalGeral = Math.round((s1 + s2) * 100) / 100;
                 if (!(totalGeral > 0)) return;
-                var wCampo = rEmp.temSegundaColuna ? 300 : 230, hCampo = rEmp.temSegundaColuna ? 50 : 38;
+                var wCampo = temSeg ? 300 : 230, hCampo = temSeg ? 50 : 38;
                 var xCampo = xTabela + larguraTabela - wCampo;
                 y += 4;
                 roundedFill(xCampo, y, wCampo, hCampo, 14, [232, 246, 243]);
@@ -4321,11 +4344,11 @@ function Recibos(_a) {
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(10.4);
                 doc.setTextColor.apply(doc, suave);
-                doc.text('VALOR TOTAL', xCampo + 16, y + (rEmp.temSegundaColuna ? 20 : 24));
+                doc.text('VALOR TOTAL', xCampo + 16, y + (temSeg ? 20 : 24));
                 doc.setFontSize(15);
                 doc.setTextColor.apply(doc, tinta);
-                doc.text('R$ ' + brl(totalGeral), xCampo + wCampo - 16, y + (rEmp.temSegundaColuna ? 21 : 25), { align: 'right' });
-                if (rEmp.temSegundaColuna) {
+                doc.text('R$ ' + brl(totalGeral), xCampo + wCampo - 16, y + (temSeg ? 21 : 25), { align: 'right' });
+                if (temSeg) {
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(9);
                     doc.setTextColor.apply(doc, suave);
@@ -4425,6 +4448,7 @@ function Recibos(_a) {
         : r.temSegundaColuna
             ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$'], ['valor2', 'Valor R$']]
             : [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$']];
+    var colsPrev = (r.temSegundaColuna && !tdbUsaSegundaColuna(r)) ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Auxílio R$']] : (r.temSegundaColuna ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Auxílio R$'], ['valor2', 'Compl. R$']] : cols);
     return (React.createElement("div", { className: "recibos-view", style: { display: 'grid', gap: 20 } }, React.createElement(Toast, { mensagem: toastMsg }), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, CATEGORIAS_RECIBOS.map(function (c) { return (React.createElement("button", { key: c.key, className: "subtab-btn selection-card ".concat(subTab === c.key ? 'subtab-ativa selection-card-ativa' : ''), onClick: function () { return setSubTab(c.key); }, style: {
             padding: '9px 16px', borderRadius: 8, border: "1px solid ".concat(COLORS.line), cursor: 'pointer',
             fontWeight: 700, fontSize: 13.5,
@@ -4491,19 +4515,19 @@ function Recibos(_a) {
             var campo = _a[0], label = _a[1];
             return (React.createElement("div", { key: campo + ci, style: { display: 'grid', gap: 2 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft } }, label, ci === 4 ? ' (2ª coluna)' : ''), React.createElement("input", { value: row[campo] || '', onChange: function (e) { return atualizarRow(idx, campo, e.target.value); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '6px 8px', fontSize: 13, boxSizing: 'border-box' } })));
         })))));
-    }))), React.createElement("button", { onClick: function () { return exportarPDFRecibo([subTab]); }, style: {
+    }))), tdbTotalRecibo(r, false), React.createElement("button", { onClick: function () { return exportarPDFRecibo([subTab]); }, style: {
             background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '10px 16px',
             fontWeight: 600, fontSize: 13.5, cursor: 'pointer',
         } }, "\uD83D\uDCC4 Gerar PDF s\u00F3 desta empresa"), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.4 } }, "A assinatura da diretora j\u00E1 sai como imagem de verdade no PDF, em cima da linha.")), React.createElement("div", { className: "recibo-preview", style: {
             background: '#FFFFFF', borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
             border: '3px solid #1C9E8F', padding: 3,
-        } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } }, React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain' } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), React.createElement("div", { style: { fontSize: 13.5, marginTop: 10, color: '#222' } }, "LISTA DE CRIAN\u00C7AS QUE RECEBEM AUX\u00CDLIO", React.createElement("br", null), r.valorPadrao ? "CRECHE NO VALOR DE R$ ".concat(r.valorPadrao) : 'CRECHE')), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, cols.map(function (_a, i) {
+        } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } }, React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain' } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), React.createElement("div", { style: { fontSize: 13.5, marginTop: 10, color: '#222' } }, "LISTA DE CRIAN\u00C7AS QUE RECEBEM AUX\u00CDLIO", React.createElement("br", null), r.valorPadrao ? "CRECHE NO VALOR DE R$ ".concat(r.valorPadrao) : 'CRECHE')), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, colsPrev.map(function (_a, i) {
         var campo = _a[0], label = _a[1];
         return (React.createElement("th", { key: campo + i, style: { background: COLORS.gold, color: '#FFF', padding: '7px 6px', fontWeight: 700, fontSize: 12 } }, label));
-    }))), React.createElement("tbody", null, r.rows.map(function (row, idx) { return (React.createElement("tr", { key: idx }, cols.map(function (_a, ci) {
+    }))), React.createElement("tbody", null, r.rows.map(function (row, idx) { return (React.createElement("tr", { key: idx }, colsPrev.map(function (_a, ci) {
         var campo = _a[0];
         return (React.createElement("td", { key: campo + ci, style: { border: "1px solid ".concat(COLORS.line), padding: '8px 6px', textAlign: 'center', color: '#222' } }, row[campo] || '—'));
-    }))); })))), React.createElement("div", { style: { textAlign: 'center', fontSize: 12, color: '#222', marginTop: 6 } }, React.createElement("div", { style: { fontWeight: 700 } }, "DADOS BANC\u00C1RIOS PARA DEP\u00D3SITO DO CONV\u00CANIO"), r.banco.map(function (linha, i) { return React.createElement("div", { key: i }, linha); })), React.createElement("div", { style: { textAlign: 'center', fontWeight: 700, fontSize: 15.5, marginTop: 22 } }, "Carlos Barbosa, ", r.data), React.createElement("div", { style: { textAlign: 'center', fontSize: 11, marginTop: 20, color: '#333', position: 'relative' } }, React.createElement("div", { style: { width: 160, borderTop: '1px solid #333', margin: '0 auto 6px' } }), "ESCOLA INFANTIL TEMPO DE BRINCAR", React.createElement("br", null), "CNPJ: 22.978.931/0001-00", React.createElement("br", null), React.createElement("strong", null, "J\u00E9ssicka Gomes"), React.createElement("br", null), "Diretora", React.createElement("img", { src: ASSINATURA_B64, alt: "Assinatura", style: {
+    }))); })))), tdbTotalRecibo(r, true), React.createElement("div", { style: { textAlign: 'center', fontSize: 12, color: '#222', marginTop: 6 } }, React.createElement("div", { style: { fontWeight: 700 } }, "DADOS BANC\u00C1RIOS PARA DEP\u00D3SITO DO CONV\u00CANIO"), r.banco.map(function (linha, i) { return React.createElement("div", { key: i }, linha); })), React.createElement("div", { style: { textAlign: 'center', fontWeight: 700, fontSize: 15.5, marginTop: 22 } }, "Carlos Barbosa, ", r.data), React.createElement("div", { style: { textAlign: 'center', fontSize: 11, marginTop: 20, color: '#333', position: 'relative' } }, React.createElement("div", { style: { width: 160, borderTop: '1px solid #333', margin: '0 auto 6px' } }), "ESCOLA INFANTIL TEMPO DE BRINCAR", React.createElement("br", null), "CNPJ: 22.978.931/0001-00", React.createElement("br", null), React.createElement("strong", null, "J\u00E9ssicka Gomes"), React.createElement("br", null), "Diretora", React.createElement("img", { src: ASSINATURA_B64, alt: "Assinatura", style: {
             position: 'absolute', top: -36, left: '50%', transform: 'translateX(-50%)',
             height: 82, pointerEvents: 'none',
         } })), React.createElement("div", { style: { height: 40 } }))))));
@@ -6724,6 +6748,33 @@ function _cortesSemanticosPDF(alvoClonado, escala) {
     Array.from(alvoClonado.querySelectorAll('tr,[data-pdf-linha]')).forEach(adicionar);
     return Array.from(new Set(candidatos)).sort(function (a,b) { return a-b; });
 }
+// Captura em ALTA QUALIDADE para os PDFs: escala 3, com recuo automático (3 -> 2 -> 1,5) se o aparelho não aguentar.
+function _escalaAltaPDF(el, opts) {
+    var ios = false;
+    try { ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/i.test(navigator.userAgent) && (navigator.maxTouchPoints || 0) > 1); } catch (e) { }
+    if (!ios) return 3;
+    // iPhone/iPad limitam o canvas a ~16,7 milhões de pixels.
+    var w = Math.max((opts && opts.windowWidth) || 0, (el && el.offsetWidth) || 0, 600);
+    var h = Math.max((el && el.scrollHeight) || 0, (el && el.offsetHeight) || 0, 400) * 1.3;
+    return Math.max(2, Math.floor(Math.min(3, Math.sqrt(15000000 / (w * h))) * 10) / 10);
+}
+function _canvasEmBranco(c) {
+    try {
+        var ctx = c.getContext('2d'), pts = [[1, 1], [c.width - 2, 1], [1, c.height - 2], [c.width - 2, c.height - 2], [c.width >> 1, c.height >> 1]];
+        return pts.every(function (pt) { return ctx.getImageData(pt[0], pt[1], 1, 1).data[3] === 0; });
+    } catch (e) { return false; }
+}
+window.__tdbH2C = async function (el, opts) {
+    var tentativas = [_escalaAltaPDF(el, opts), 2, 1.5], ultimo = null;
+    for (var i = 0; i < tentativas.length; i++) {
+        opts.scale = tentativas[i];
+        try {
+            var c = await window.html2canvas(el, opts);
+            if (c && c.width > 0 && c.height > 0 && !_canvasEmBranco(c)) return c;
+        } catch (e) { ultimo = e; }
+    }
+    throw ultimo || new Error('Não foi possível gerar a imagem do PDF.');
+};
 async function _capturarElementoPadraoPDF(elemento, preferirHorizontal, paginaUnica) {
     var perfil = _perfilPadraoPDF(elemento, preferirHorizontal, paginaUnica), cortesPx = null;
     await _aguardarRecursosPDF(elemento);
@@ -6813,7 +6864,7 @@ async function _capturarElementoPadraoPDF(elemento, preferirHorizontal, paginaUn
             }
             cortesPx=_cortesSemanticosPDF(alvoClonado,opcoesCaptura.scale);
         }};
-    var canvas=await window.html2canvas(elemento,opcoesCaptura);
+    var canvas=await window.__tdbH2C(elemento,opcoesCaptura);
     return {canvas:canvas,perfil:perfil,usarHorizontal:!!perfil.horizontal,cortesPx:cortesPx||[]};
 }
 
@@ -6863,15 +6914,15 @@ function _adicionarCanvasNoDocPDF(doc, canvas, tituloPagina, usarHorizontal, opt
             if(alturaContas>alturaDisponivel){alturaContas=alturaDisponivel;larguraContas=alturaContas*razaoContas;}
             var xContas=margem+(larguraUtil-larguraContas)/2;
             var yContas=topoConteudo+(alturaDisponivel-alturaContas)/2;
-            doc.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',xContas,yContas,larguraContas,alturaContas);return;
+            doc.addImage(canvas.toDataURL('image/jpeg', 0.98),'JPEG',xContas,yContas,larguraContas,alturaContas);return;
         }
         var razao=canvas.width/canvas.height, largura=larguraUtil, altura=largura/razao;
         if(altura>alturaDisponivel){altura=alturaDisponivel;largura=altura*razao;}
-        doc.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',margem+(larguraUtil-largura)/2,topoConteudo+(alturaDisponivel-altura)/2,largura,altura);return;
+        doc.addImage(canvas.toDataURL('image/jpeg', 0.98),'JPEG',margem+(larguraUtil-largura)/2,topoConteudo+(alturaDisponivel-altura)/2,largura,altura);return;
     }
     if(alturaImgComLarguraTotal<=alturaDisponivel){
         var r=canvas.width/canvas.height, a=alturaDisponivel, l=a*r;if(l>larguraUtil){l=larguraUtil;a=l/r;}
-        doc.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',margem+(larguraUtil-l)/2,topoConteudo,l,a);return;
+        doc.addImage(canvas.toDataURL('image/jpeg', 0.98),'JPEG',margem+(larguraUtil-l)/2,topoConteudo,l,a);return;
     }
     var pxPorPt=canvas.width/larguraUtil, alturaPaginaPx=alturaDisponivel*pxPorPt, offsetPx=0, primeira=true;
     while(offsetPx<canvas.height){
@@ -6885,7 +6936,7 @@ function _adicionarCanvasNoDocPDF(doc, canvas, tituloPagina, usarHorizontal, opt
         var fatia=document.createElement('canvas');fatia.width=canvas.width;fatia.height=Math.ceil(fatiaAlturaPx);
         fatia.getContext('2d').drawImage(canvas,0,offsetPx,canvas.width,fatiaAlturaPx,0,0,canvas.width,fatiaAlturaPx);
         var fatiaPt=(fatiaAlturaPx*larguraUtil)/canvas.width;
-        doc.addImage(fatia.toDataURL('image/jpeg',0.94),'JPEG',margem,topoConteudo,larguraUtil,fatiaPt);
+        doc.addImage(fatia.toDataURL('image/jpeg', 0.98),'JPEG',margem,topoConteudo,larguraUtil,fatiaPt);
         offsetPx+=fatiaAlturaPx;primeira=false;
     }
 }
@@ -6895,7 +6946,7 @@ async function _capturarRematriculaPDF(card) {
     if (window.TDBAuroraMotion) window.TDBAuroraMotion.stop();
     await _aguardarRecursosPDF(card);
     var faixas = [], alturaClone = 1;
-    var canvas = await window.html2canvas(card, {
+    var canvas = await window.__tdbH2C(card, {
         scale: 2, windowWidth: 1280, backgroundColor: '#ffffff', useCORS: true,
         onclone: function (doc, alvo) {
             if (window.__tdbAuroraPreparePDF) window.__tdbAuroraPreparePDF(doc);
@@ -7036,7 +7087,7 @@ async function exportarRematriculaPDF(alvo, botao) {
                 // Pequeno ajuste proporcional evita deixar só o rodapé de um quadro na próxima folha.
                 if (offsetPx === 0 && restantePt > disponivel && disponivel / restantePt >= 0.72) {
                     var ajuste = disponivel / restantePt, larguraAjustada = larguraUtil * ajuste;
-                    doc.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', margem + (larguraUtil - larguraAjustada) / 2, y, larguraAjustada, disponivel);
+                    doc.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', margem + (larguraUtil - larguraAjustada) / 2, y, larguraAjustada, disponivel);
                     y += disponivel; offsetPx = canvas.height; break;
                 }
                 var fim = Math.min(canvas.height, Math.floor(offsetPx + disponivel * pxPorPt));
@@ -7060,7 +7111,7 @@ async function exportarRematriculaPDF(alvo, botao) {
                 fatia.width = canvas.width; fatia.height = alturaPx;
                 fatia.getContext('2d').drawImage(canvas, 0, offsetPx, canvas.width, alturaPx, 0, 0, canvas.width, alturaPx);
                 var alturaPt = alturaPx / pxPorPt;
-                doc.addImage(fatia.toDataURL('image/jpeg', 0.94), 'JPEG', margem, y, larguraUtil, alturaPt);
+                doc.addImage(fatia.toDataURL('image/jpeg', 0.98), 'JPEG', margem, y, larguraUtil, alturaPt);
                 y += alturaPt;
                 offsetPx = fim;
                 if (offsetPx < canvas.height) { doc.addPage(); cabecalho(); }
@@ -11546,7 +11597,7 @@ function salvarTudoAgora() {
         var cancelado = false;
         (async function () {
             try {
-                var marca = await window.storage.get('replicar_caio_melissa_set_v10', false);
+                var marca = await window.storage.get('replicar_caio_melissa_set_v11', false);
                 if (cancelado || (marca && marca.value === 'true')) return;
                 var norm = TDBFinance.norm, meses = ['OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], alvos = ['CAIO', 'MELISSA'];
                 var palavras = function (cat) { return norm(cat).split(/[^A-Z0-9]+/).filter(Boolean); };
@@ -11566,20 +11617,31 @@ function salvarTudoAgora() {
                     return alvos.some(function (n) { return k === 'MENSALIDADE - ' + n && completos.some(function (c) { return c !== k && palavras(c).indexOf(n) >= 0; }); })
                         && t.valor == null && t.valorCheio == null && !t.data && !t.banco && t.status === 'Pendente';
                 };
-                var base = transacoes.filter(function (t) { return !ehVazio(t); });
+                // Valor que a família de fato paga (o da direita: ex. 1.562 → 1.483 vale 1.483); só usa o "cheio" se não houver outro.
+                var valorDevidoDe = function (ref) { var d = TDBFinance.due(ref); return d > 0 ? d : (TDBFinance.num(ref.valorCheio) > 0 ? ref.valorCheio : null); };
+                var corrigiu = false;
+                var base = transacoes.filter(function (t) { return !ehVazio(t); }).map(function (t) {
+                    // Corrige cópias ainda intocadas feitas antes com o valor cheio (esquerda) em vez do valor pago (direita).
+                    var ref = meses.indexOf(t.mes) >= 0 && String(t.categoria || '').startsWith('Mensalidade - ') ? porCat.get(norm(t.categoria)) : null;
+                    if (!ref || t.status !== 'Pendente' || t.valor != null || t.data || t.banco) return t;
+                    var certo = valorDevidoDe(ref);
+                    if (certo == null || TDBFinance.num(t.valorCheio) === TDBFinance.num(certo) || TDBFinance.num(t.valorCheio) !== TDBFinance.num(ref.valorCheio)) return t;
+                    corrigiu = true;
+                    return Object.assign({}, t, { valorCheio: certo });
+                });
                 var existentes = new Set(base.map(function (t) { return norm(t.categoria) + '|' + t.mes; }));
                 var maxId = maiorIdLancamento_(), novos = [];
                 porCat.forEach(function (ref, k) {
                     meses.forEach(function (mes) {
                         if (existentes.has(k + '|' + mes)) return;
-                        var devido = TDBFinance.num(ref.valorCheio) > 0 ? ref.valorCheio : (TDBFinance.due(ref) > 0 ? TDBFinance.due(ref) : null);
+                        var devido = valorDevidoDe(ref);
                         novos.push({ id: ++maxId, mes: mes, categoria: ref.categoria, tipo: 'Entrada', valor: null, valorCheio: devido, quantidadeAlunos: TDBFinance.children(ref), status: 'Pendente', data: null, banco: null, nota: 'Pendente', pai: ref.pai != null ? ref.pai : null, tirarNota: ref.tirarNota != null ? ref.tirarNota : null, convenio: ref.convenio != null ? ref.convenio : null, foto: ref.foto || null, exercicio: 2026 });
                     });
                 });
-                if (novos.length || base.length !== transacoes.length) {
+                if (novos.length || corrigiu || base.length !== transacoes.length) {
                     if ((await persist(base.concat(novos))) === false) return;
                 }
-                await window.storage.set('replicar_caio_melissa_set_v10', 'true', false);
+                await window.storage.set('replicar_caio_melissa_set_v11', 'true', false);
             } catch (e_n10) { }
         })();
         return function () { cancelado = true; };
