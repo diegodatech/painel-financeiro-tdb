@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB</title>
+  <title>TDB 1</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261001-tdb1";
+    window.__TDB_BUILD = "tdb1-20261001-correcoes";
   </script>
-  <script src="./config.js?build=tdb-20261001-tdb1"></script>
+  <script src="./config.js?build=tdb1-20261001-correcoes"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB">
+  <meta name="apple-mobile-web-app-title" content="TDB 1">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1684,10 +1684,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261001-tdb1"></script>
+  <script src="./sync.js?build=tdb1-20261001-correcoes"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261001-tdb1-mobile';
+window.__TDB_BUILD_EXATO = 'tdb1-20261001-correcoes-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7984,7 +7984,7 @@ function ContasPessoais(_a) {
                         return [4 /*yield*/, window.storage.get('contas_pessoais_hist_2026_v1', false)];
                     case 3:
                         rm = _a.sent();
-                        migrado = !!(rm && rm.value === 'ok');
+                        migrado = Number(window.__exercicioAtual || 2026) !== 2026 || !!(rm && rm.value === 'ok');
                         return [3 /*break*/, 5];
                     case 4:
                         e_31 = _a.sent();
@@ -8010,7 +8010,8 @@ function ContasPessoais(_a) {
                         return [3 /*break*/, 12];
                     case 11:
                         e_33 = _a.sent();
-                        setContas(aplicarHistoricoCP2026(CONTAS_PADRAO.map(function (nome, i) { return ({ id: 'cp' + (i + 1), nome: nome, valores: Object.fromEntries(MESES_CP.map(function (m) { return [m, 0]; })) }); })));
+                        var listaPadraoCP_ = CONTAS_PADRAO.map(function (nome, i) { return ({ id: 'cp' + (i + 1), nome: nome, valores: Object.fromEntries(MESES_CP.map(function (m) { return [m, 0]; })) }); });
+                        setContas(Number(window.__exercicioAtual || 2026) === 2026 ? aplicarHistoricoCP2026(listaPadraoCP_) : listaPadraoCP_);
                         return [3 /*break*/, 12];
                     case 12: return [2 /*return*/];
                 }
@@ -8367,10 +8368,24 @@ function _festasMesclarAlunos(dados, transacoes, abasConfig) {
             while(ids.has(nova.id))nova.id=baseId+'-novo-'+sufixo++;
             ids.add(nova.id);conhecidos.add(k);rows.push(nova);
         });
+        if (alunos.length) {
+            var nomesDoMes_ = {};
+            alunos.forEach(function (a) { nomesDoMes_[a.nome.toLocaleLowerCase('pt-BR')] = true; });
+            // Criança que veio de Mensalidades e saiu do mês atual: remove somente se a linha estiver vazia.
+            // Linha já preenchida (pessoas, valor, banco, data ou pagamento) é preservada.
+            rows = rows.filter(function (r) { return !(_festasForaDoMes(r, nomesDoMes_) && _festasLinhaVazia_(r)); });
+        }
         if (JSON.stringify(atuais) !== JSON.stringify(rows)) mudou = true;
         next[aba.key] = rows;
     });
     return { dados: next, mudou: mudou, quantidadeBase: alunos.length };
+}
+function _festasContarCriancas(rows, transacoes) {
+    var alunos = _festasAlunosMensalidades(transacoes);
+    if (!alunos.length) return (rows || []).length;
+    var nomes = {};
+    alunos.forEach(function (a) { nomes[a.nome.toLocaleLowerCase('pt-BR')] = true; });
+    return (rows || []).filter(function (r) { return !_festasForaDoMes(r, nomes); }).length;
 }
 function _festasNumero(v) { return Math.max(0,TDBFinance.num(v)); }
 
@@ -8385,6 +8400,31 @@ function _festasDataBR(data) {
 }
 function _festasPago(r) {
     return r && (r.pago === true || r.pago === 'Pago' || r.pago === 'PAGO');
+}
+function _festasStatus(r) {
+    if (_festasPago(r)) return 'Pago';
+    if (r && (r.pago === 'Parcial' || r.pago === 'PARCIAL')) return 'Parcial';
+    return 'Pendente';
+}
+function _festasPagoValor(status) {
+    return status === 'Pago' ? true : (status === 'Parcial' ? 'Parcial' : false);
+}
+function _festasCorStatus(r, verde, ouro, verm) {
+    var s = _festasStatus(r);
+    return s === 'Pago' ? verde : (s === 'Parcial' ? ouro : verm);
+}
+function _festasValorCadastro(txt) {
+    var t = String(txt == null ? '' : txt).trim();
+    if (!t) return { ok: true, texto: '' };
+    var n = TDBFinance.parse(t);
+    if (n == null || !isFinite(n) || n < 0) return { ok: false, texto: '' };
+    return { ok: true, texto: n ? n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '' };
+}
+function _festasForaDoMes(r, nomesDoMes) {
+    return !!(r && r.origemMensalidade && !nomesDoMes[_festasNormalizarNome(r.nome).toLocaleLowerCase('pt-BR')]);
+}
+function _festasLinhaVazia_(r) {
+    return !!r && !String(r.pessoas || '').trim() && !String(r.valor || '').trim() && !String(r.banco || '').trim() && !String(r.data || '').trim() && !_festasPago(r) && r.pago !== 'Parcial' && r.pago !== 'PARCIAL';
 }
 function _festasHexRgb(hex) {
     var h = String(hex || '#6B6B6B').replace('#', '');
@@ -8476,8 +8516,8 @@ async function _festasGerarPDF(dados, chaves, nomeArquivo, abasConfig) {
             } else { doc.setTextColor(110,116,126); doc.setFont('helvetica','normal'); doc.text('—', colX[3] + colW[3] / 2, y + rowH - 2.1, { align: 'center' }); }
             doc.setTextColor(48,54,64); doc.setFont('helvetica','normal');
             doc.text(_festasDataBR(r.data), colX[4] + colW[4] / 2, y + rowH - 2.1, { align: 'center' });
-            var pago = _festasPago(r); doc.setFont('helvetica','bold'); doc.setTextColor(pago ? 28 : 193, pago ? 140 : 39, pago ? 70 : 45);
-            doc.text(pago ? 'PAGO' : 'PENDENTE', colX[5] + colW[5] / 2, y + rowH - 2.1, { align: 'center' });
+            var stPdf = _festasStatus(r); doc.setFont('helvetica','bold'); doc.setTextColor(stPdf === 'Pago' ? 28 : (stPdf === 'Parcial' ? 176 : 193), stPdf === 'Pago' ? 140 : (stPdf === 'Parcial' ? 124 : 39), stPdf === 'Pago' ? 70 : (stPdf === 'Parcial' ? 0 : 45));
+            doc.text(stPdf.toUpperCase(), colX[5] + colW[5] / 2, y + rowH - 2.1, { align: 'center' });
             y += rowH; linhaHorizontal(y);
         });
         doc.setFillColor(246,248,251); doc.rect(margem, y, larguraUtil, 12, 'F');
@@ -8634,7 +8674,9 @@ function FestasTDB(_a) {
         var valorBR = valorNum ? valorNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
         var dataRaw = String(r.data || '');
         var dataBR = dataRaw ? _festasDataBR(dataRaw) : '';
-        var statusBusca = _festasPago(r)
+        var statusBusca = _festasStatus(r) === 'Parcial'
+            ? 'parcial parciais parcialmente pago em aberto'
+            : _festasPago(r)
             ? 'pago pagos quitado quitados'
             : 'pendente pendentes nao pago nao pagos não pago não pagos em aberto';
         var grupoBusca = r.tipo === 'PREFEITURA' ? 'prefeitura convenio convênio' : 'particular';
@@ -8650,7 +8692,7 @@ function FestasTDB(_a) {
     function iniciarEdicaoRow(r) {
         setEditandoId(r.id);
         setLinhaSelecionada(r.id);
-        setEditRow(__assign(__assign({}, r), { valor: _festasValorInput(r.valor), pago: _festasPago(r) ? 'Pago' : 'Pendente' }));
+        setEditRow(__assign(__assign({}, r), { valor: _festasValorInput(r.valor), pago: _festasStatus(r) }));
     }
     function alterarEdit(campo, valor) {
         setEditRow(function (atual) { var _a; return atual ? __assign(__assign({}, atual), (_a = {}, _a[campo] = valor, _a)) : atual; });
@@ -8663,13 +8705,15 @@ function FestasTDB(_a) {
         if (!editRow || !editandoId) return;
         var nome = _festasNormalizarNome(editRow.nome);
         if (!nome) return;
+        var vcEdicao = _festasValorCadastro(editRow.valor);
+        if (!vcEdicao.ok) { window.alert('Informe um valor válido para o campo VALOR (ex.: 1.500,00), sem letras e sem número negativo. Nada foi salvo.'); return; }
         var nValor = _festasNumero(editRow.valor);
         var atualizado = __assign(__assign({}, editRow), {
             nome: nome,
             tipo: editRow.tipo === 'PREFEITURA' ? 'PREFEITURA' : 'PARTICULAR',
             pessoas: String(editRow.pessoas || '').replace(/[^0-9]/g, ''),
             valor: nValor ? nValor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '',
-            banco: editRow.banco || '', data: editRow.data || '', pago: editRow.pago === 'Pago'
+            banco: editRow.banco || '', data: editRow.data || '', pago: _festasPagoValor(editRow.pago)
         });
         var nextRows = rows.map(function (r) { return r.id === editandoId ? atualizado : r; });
         var next = __assign({}, dados); next[subTab] = nextRows; salvar(next);
@@ -8686,10 +8730,12 @@ function FestasTDB(_a) {
         if (e) e.preventDefault();
         var nome = _festasNormalizarNome(novo.nome);
         if (!nome) return;
+        var vcNovo = _festasValorCadastro(novo.valor);
+        if (!vcNovo.ok) { window.alert('Informe um valor válido para o campo VALOR (ex.: 1.500,00), sem letras e sem número negativo. Nada foi salvo.'); return; }
         var next = __assign({}, dados);
         next[subTab] = __spreadArray(__spreadArray([], rows, true), [{
             id: subTab + '-n-' + Date.now() + '-' + Math.random().toString(36).slice(2), nome: nome,
-            tipo: novo.tipo || 'PARTICULAR', pessoas: novo.pessoas || '', valor: novo.valor || '', banco: novo.banco || '', data: novo.data || '', pago: novo.pago === 'Pago', origemMensalidade: false
+            tipo: novo.tipo || 'PARTICULAR', pessoas: novo.pessoas || '', valor: vcNovo.texto, banco: novo.banco || '', data: novo.data || '', pago: _festasPagoValor(novo.pago), origemMensalidade: false
         }], false);
         salvar(next);
         setNovo({ nome: '', tipo: novo.tipo || 'PARTICULAR', pessoas: '', valor: '', banco: '', data: '', pago: 'Pendente' });
@@ -8799,7 +8845,7 @@ function FestasTDB(_a) {
                         React.createElement("td", { style: td }, React.createElement("span", { className: "mono", style: { fontWeight: 700, color: _festasNumero(r.valor) > 0 ? COLORS.green : COLORS.inkSoft } }, _festasNumero(r.valor) > 0 ? formatBRL(_festasNumero(r.valor)) : '—')),
                         React.createElement("td", { style: td }, (r.banco ? React.createElement("span", { className: "busca-liquid-glass", style: { display: 'inline-flex', minWidth: 74, justifyContent: 'center', borderRadius: 20, padding: '5px 8px', fontSize: 10.5, fontWeight: 800, color: corBanco(r.banco), border: '1px solid ' + corBanco(r.banco) + '55' } }, r.banco) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—'))),
                         React.createElement("td", { style: td }, React.createElement("span", { className: "mono", style: { whiteSpace: 'nowrap', color: r.data ? COLORS.ink : COLORS.inkSoft } }, r.data ? formatarData(r.data) : '—')),
-                        React.createElement("td", { style: td }, React.createElement("span", { className: "selection-chip", style: { display: 'inline-flex', width: '100%', boxSizing: 'border-box', justifyContent: 'center', border: '1px solid ' + (_festasPago(r) ? COLORS.green : COLORS.red), borderRadius: 7, padding: '6px 5px', fontWeight: 800, fontSize: 11.5, color: _festasPago(r) ? COLORS.green : COLORS.red, background: _festasPago(r) ? COLORS.greenBg : COLORS.redBg } }, _festasPago(r) ? 'Pago' : 'Pendente')),
+                        React.createElement("td", { style: td }, React.createElement("span", { className: "selection-chip", style: { display: 'inline-flex', width: '100%', boxSizing: 'border-box', justifyContent: 'center', border: '1px solid ' + (_festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red)), borderRadius: 7, padding: '6px 5px', fontWeight: 800, fontSize: 11.5, color: _festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red), background: _festasCorStatus(r, COLORS.greenBg, COLORS.goldSoft, COLORS.redBg) } }, _festasStatus(r))),
                         React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, React.createElement("span", { style: { fontWeight: 800, color: COLORS.inkButton, fontSize: 11 } }, 'Editando'))
                     );
                 }
@@ -8815,7 +8861,7 @@ function FestasTDB(_a) {
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { value: editRow.valor || '', inputMode: "decimal", onChange: function (e) { return alterarEdit('valor', e.target.value); }, placeholder: "0,00", className: "mono", style: inp }) : React.createElement("span", { className: "mono", style: { fontWeight: 700, color: _festasNumero(r.valor) > 0 ? COLORS.green : COLORS.inkSoft } }, _festasNumero(r.valor) > 0 ? formatBRL(_festasNumero(r.valor)) : '—')),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.banco || '', onChange: function (e) { return alterarEdit('banco', e.target.value); }, className: "busca-liquid-glass", style: bancoStyle }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })) : (r.banco ? React.createElement("span", { className: "busca-liquid-glass", style: { display: 'inline-flex', minWidth: 74, justifyContent: 'center', borderRadius: 20, padding: '5px 8px', fontSize: 10.5, fontWeight: 800, color: corBanco(r.banco), border: '1px solid ' + corBanco(r.banco) + '55' } }, r.banco) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—'))),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { type: "date", value: editRow.data || '', onChange: function (e) { return alterarEdit('data', e.target.value); }, onClick: function (e) { e.stopPropagation(); try { e.target.showPicker(); } catch (err) { } }, style: __assign(__assign({}, inp), { cursor: 'pointer' }) }) : React.createElement("span", { className: "mono", style: { whiteSpace: 'nowrap', color: r.data ? COLORS.ink : COLORS.inkSoft } }, r.data ? formatarData(r.data) : '—')),
-                    React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.pago || 'Pendente', onChange: function (e) { return alterarEdit('pago', e.target.value); }, style: inp }, React.createElement("option", { value: "Pendente" }, "Pendente"), React.createElement("option", { value: "Pago" }, "Pago")) : React.createElement("span", { className: "selection-chip", style: { display: 'inline-flex', width: '100%', boxSizing: 'border-box', justifyContent: 'center', border: '1px solid ' + (_festasPago(r) ? COLORS.green : COLORS.red), borderRadius: 7, padding: '6px 5px', fontWeight: 800, fontSize: 11.5, color: _festasPago(r) ? COLORS.green : COLORS.red, background: _festasPago(r) ? COLORS.greenBg : COLORS.redBg } }, _festasPago(r) ? 'Pago' : 'Pendente')),
+                    React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.pago || 'Pendente', onChange: function (e) { return alterarEdit('pago', e.target.value); }, style: inp }, React.createElement("option", { value: "Pendente" }, "Pendente"), React.createElement("option", { value: "Parcial" }, "Parcial"), React.createElement("option", { value: "Pago" }, "Pago")) : React.createElement("span", { className: "selection-chip", style: { display: 'inline-flex', width: '100%', boxSizing: 'border-box', justifyContent: 'center', border: '1px solid ' + (_festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red)), borderRadius: 7, padding: '6px 5px', fontWeight: 800, fontSize: 11.5, color: _festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red), background: _festasCorStatus(r, COLORS.greenBg, COLORS.goldSoft, COLORS.redBg) } }, _festasStatus(r))),
                     React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, emEdicao ? React.createElement("div", { style: { display: 'flex', justifyContent: 'center', gap: 4 } },
                         React.createElement("button", { type: "button", title: "Salvar alterações", onClick: function (e) { e.stopPropagation(); salvarEdicaoRow(); }, style: { background: COLORS.green, color: '#fff', border: 'none', borderRadius: 7, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 800 } }, React.createElement(Check, { size: 12, color: "#FFFFFF" }), " Salvar"),
                         React.createElement("button", { type: "button", title: "Cancelar edição", onClick: function (e) { e.stopPropagation(); cancelarEdicaoRow(); }, style: { background: COLORS.redBg, color: COLORS.red, border: '1px solid ' + COLORS.red + '44', borderRadius: 7, padding: '5px 7px', cursor: 'pointer', display: 'flex', alignItems: 'center' } }, React.createElement(X, { size: 12, color: COLORS.red }))
@@ -8863,7 +8909,7 @@ function FestasTDB(_a) {
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "VALOR"), React.createElement("input", { value: editRow.valor || '', inputMode: "decimal", onChange: function (e) { return alterarEdit('valor', e.target.value); }, placeholder: "0,00", className: "mono", style: inpMobile })),
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "BANCO"), React.createElement("select", { value: editRow.banco || '', onChange: function (e) { return alterarEdit('banco', e.target.value); }, style: bancoMobile }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))),
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "DATA"), React.createElement("input", { type: "date", value: editRow.data || '', onChange: function (e) { return alterarEdit('data', e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) {} }, style: inpMobile })),
-            React.createElement("div", { style: { display: 'grid', gap: 4, gridColumn: '1/-1' } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "PAGO"), React.createElement("select", { value: editRow.pago || 'Pendente', onChange: function (e) { return alterarEdit('pago', e.target.value); }, style: inpMobile }, React.createElement("option", { value: "Pendente" }, "Pendente"), React.createElement("option", { value: "Pago" }, "Pago")))
+            React.createElement("div", { style: { display: 'grid', gap: 4, gridColumn: '1/-1' } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "PAGO"), React.createElement("select", { value: editRow.pago || 'Pendente', onChange: function (e) { return alterarEdit('pago', e.target.value); }, style: inpMobile }, React.createElement("option", { value: "Pendente" }, "Pendente"), React.createElement("option", { value: "Parcial" }, "Parcial"), React.createElement("option", { value: "Pago" }, "Pago")))
         ));
     }
     var modalNovoParticipanteMobileFestas = ehMobileFestas && novoParticipanteMobileAberto ? React.createElement(TDBMobileEditSheet, {
@@ -8957,7 +9003,7 @@ function FestasTDB(_a) {
                 React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "PAGO"), React.createElement("select", { value: novo.pago, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { pago: e.target.value })); }, style: inputTop }, React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"), React.createElement("option", null, "Pago"))),
                 React.createElement("button", { type: "submit", className: "festas-add-btn", style: { height: 38, border: 'none', borderRadius: 10, background: COLORS.inkButton, color: '#fff', fontWeight: 800, padding: '0 14px', cursor: 'pointer' } }, "+ Adicionar"))),
         React.createElement("div", { className: "festas-tdb-resumo", style: { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 10 } },
-            React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Crianças: ", React.createElement("b", { style: { color: COLORS.ink, fontSize: 16 } }, rows.length)),
+            React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Crianças: ", React.createElement("b", { style: { color: COLORS.ink, fontSize: 16 } }, _festasContarCriancas(rows, transacoes))),
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Total de pessoas: ", React.createElement("b", { style: { color: COLORS.inkButton, fontSize: 16 } }, totalGeral.pessoas)),
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Total em valor: ", React.createElement("b", { className: "mono", style: { color: COLORS.green, fontSize: 16 } }, formatBRL(totalGeral.valor)))),
         termoBuscaFestas && rowsFiltradosFestas.length === 0 ? React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '16px 14px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13 } }, "Nenhum participante encontrado para ‘" + buscaFestas + "’.") : null,
