@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDB 6</title>
+  <title>TDB 9</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb6-20261002";
+    window.__TDB_BUILD = "tdb9-20261002";
   </script>
-  <script src="./config.js?build=tdb6-20261002"></script>
+  <script src="./config.js?build=tdb9-20261002"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 6">
+  <meta name="apple-mobile-web-app-title" content="TDB 9">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1233,10 +1233,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb6-20261002"></script>
+  <script src="./sync.js?build=tdb9-20261002"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb6-20261002-desktop';
+window.__TDB_BUILD_EXATO = 'tdb9-20261002-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1842,6 +1842,18 @@ var TDBFinance = (function () {
     if (Number.isInteger(q) && q > 0) return q;
     return Math.max(1, String(t.categoria || '').replace(/^Mensalidade - /, '').split('/').filter(function (n) { return n.trim(); }).length);
   }
+  // Conta crianças das linhas listadas (irmãos = 2). Mesma família em vários meses/pagamentos conta uma vez.
+  function listed(rows) {
+    var map = new Map(), lines = 0;
+    (rows || []).forEach(function (t) {
+      if (!t || !String(t.categoria || '').startsWith('Mensalidade - ')) return;
+      lines++;
+      var k = norm(t.categoria), q = children(t);
+      if (!map.has(k) || q > map.get(k)) map.set(k, q);
+    });
+    var total = 0; map.forEach(function (q) { total += q; });
+    return { alunos: total, familias: map.size, linhas: lines };
+  }
   function groups(ts, mes) {
     var map = new Map();
     (ts || []).filter(function (t) { return hasTuition(t) && t.mes === mes; }).forEach(function (t) {
@@ -2000,7 +2012,7 @@ var TDBFinance = (function () {
     }
     return {historico:hist,dados:dados,saldoBase:base?base.valor:0,mesSaldoBase:base?base.mes:null,semSaldoBase:!base};
   }
-  return {parse:parse,num:num,money:money,norm:norm,student:student,hasTuition:hasTuition,decimal:decimal,monthShort:monthShort,convenioRate:convenioRate,resolveConvenio:resolveConvenio,convenioGroupNotice:convenioGroupNotice,convenioIssues:convenioIssues,aliases:aliases,convenioConflicts:convenioConflicts,education:education,received:received,due:due,debt:debt,sharedTuition:sharedTuition,pendingFor:pendingFor,pendingCharges:pendingCharges,expected:expected,recurrenceEnded:recurrenceEnded,sum:sum,children:children,groups:groups,reference:reference,actualMonths:actualMonths,pendingSummary:pendingSummary,percent:percent,adjusted:adjusted,gauge:gauge,margins:margins,match:match,utility:utility,vacancies:vacancies,extras:extras,count:count,monthly:monthly,indicators:indicators,balance:balance,projection:projection,year:year};
+  return {listed:listed,parse:parse,num:num,money:money,norm:norm,student:student,hasTuition:hasTuition,decimal:decimal,monthShort:monthShort,convenioRate:convenioRate,resolveConvenio:resolveConvenio,convenioGroupNotice:convenioGroupNotice,convenioIssues:convenioIssues,aliases:aliases,convenioConflicts:convenioConflicts,education:education,received:received,due:due,debt:debt,sharedTuition:sharedTuition,pendingFor:pendingFor,pendingCharges:pendingCharges,expected:expected,recurrenceEnded:recurrenceEnded,sum:sum,children:children,groups:groups,reference:reference,actualMonths:actualMonths,pendingSummary:pendingSummary,percent:percent,adjusted:adjusted,gauge:gauge,margins:margins,match:match,utility:utility,vacancies:vacancies,extras:extras,count:count,monthly:monthly,indicators:indicators,balance:balance,projection:projection,year:year};
 })();
 
 function parseBRLInput(strVal) { return TDBFinance.parse(strVal); }
@@ -3350,6 +3362,36 @@ window.__tdbLixeiraExcluirGenerico = async function(entrada) {
     }
 };
 
+function tdbMontarZip(arquivos) {
+    // ZIP simples (sem compressão — PDF já vem comprimido). arquivos: [{nome, dados:Uint8Array}]
+    var tabela = tdbMontarZip._t;
+    if (!tabela) {
+        tabela = tdbMontarZip._t = [];
+        for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); tabela[n] = c >>> 0; }
+    }
+    function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = tabela[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+    var enc = new TextEncoder(), agora = new Date();
+    var hora = (agora.getHours() << 11) | (agora.getMinutes() << 5) | (agora.getSeconds() >> 1);
+    var data = ((agora.getFullYear() - 1980) << 9) | ((agora.getMonth() + 1) << 5) | agora.getDate();
+    var partes = [], central = [], pos = 0;
+    function u16(v) { return [v & 255, (v >>> 8) & 255]; }
+    function u32(v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; }
+    arquivos.forEach(function (a) {
+        var nome = enc.encode(a.nome), d = a.dados, crc = crc32(d);
+        var cab = new Uint8Array([].concat(u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(hora), u16(data), u32(crc), u32(d.length), u32(d.length), u16(nome.length), u16(0)));
+        partes.push(cab, nome, d);
+        central.push({ nome: nome, crc: crc, tam: d.length, off: pos });
+        pos += cab.length + nome.length + d.length;
+    });
+    var iniCentral = pos, tamCentral = 0;
+    central.forEach(function (c) {
+        var cab = new Uint8Array([].concat(u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(hora), u16(data), u32(c.crc), u32(c.tam), u32(c.tam), u16(c.nome.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(c.off)));
+        partes.push(cab, c.nome);
+        tamCentral += cab.length + c.nome.length;
+    });
+    partes.push(new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length), u32(tamCentral), u32(iniCentral), u16(0))));
+    return new Blob(partes, { type: 'application/zip' });
+}
 function Recibos(_a) {
     var _this = this;
     var chamarIA = _a.chamarIA;
@@ -3710,12 +3752,39 @@ function Recibos(_a) {
             doc.setFontSize(10);
             centeredText('Diretora', W / 2, y + 44);
         }
+        var dia = new Date().toISOString().slice(0, 10);
+        if (chavesEmpresas.length === 1) {
+            // uma empresa só (manual): baixa apenas o PDF
+            var doc1 = new jsPDF({ unit: 'pt', format: 'a4' });
+            desenharRecibo(doc1, dados[chavesEmpresas[0]]);
+            baixarDoc(doc1, 'recibo_' + chavesEmpresas[0] + '_' + dia + '.pdf');
+            mostrarToast('✓ PDF gerado!');
+            return;
+        }
+        // várias empresas: o navegador só deixa baixar 1 arquivo por clique, então vai tudo
+        // junto num único .zip, já com a pasta "Recibos" dentro.
+        var arquivos = [];
         chavesEmpresas.forEach(function (chave) {
+            if (!dados[chave]) return;
             var doc = new jsPDF({ unit: 'pt', format: 'a4' });
             desenharRecibo(doc, dados[chave]);
-            baixarDoc(doc, 'recibo_' + chave + '_' + new Date().toISOString().slice(0, 10) + '.pdf');
+            arquivos.push({ nome: 'Recibos/recibo_' + chave + '_' + dia + '.pdf', dados: new Uint8Array(doc.output('arraybuffer')) });
         });
-        mostrarToast(chavesEmpresas.length === 1 ? '✓ PDF gerado!' : '✓ ' + chavesEmpresas.length + ' PDFs gerados, um por empresa!');
+        try {
+            var blobZip = tdbMontarZip(arquivos);
+            var urlZip = URL.createObjectURL(blobZip);
+            var aZip = document.createElement('a');
+            aZip.href = urlZip;
+            aZip.download = 'Recibos_' + dia + '.zip';
+            aZip.style.display = 'none';
+            document.body.appendChild(aZip);
+            aZip.click();
+            aZip.remove();
+            setTimeout(function () { try { URL.revokeObjectURL(urlZip); } catch (e) {} }, 4000);
+            mostrarToast('✓ ' + arquivos.length + ' recibos salvos na pasta Recibos (arquivo Recibos_' + dia + '.zip)');
+        } catch (e) {
+            alert('Não consegui montar o arquivo .zip dos recibos: ' + (e.message || e));
+        }
     }
     var cols = r.semColunaValor
         ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento']]
@@ -3747,7 +3816,7 @@ function Recibos(_a) {
             backdropFilter: 'blur(24px) saturate(1.35)', WebkitBackdropFilter: 'blur(24px) saturate(1.35)',
             borderRadius: 22, padding: 22, width: 420, maxWidth: 'calc(100vw - 32px)',
             maxHeight: 'min(80vh, 720px)', overflowY: 'auto', display: 'grid', gap: 14, boxSizing: 'border-box',
-        } }, React.createElement("div", { style: { fontSize: 16.5, fontWeight: 700, color: COLORS.ink } }, "Exportar recibos"), React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft } }, "Marque quais empresas voc\u00EA quer incluir \u2014 sai tudo num \u00FAnico PDF, cada empresa numa folha A4 pr\u00F3pria."), React.createElement("div", { style: { display: 'flex', gap: 8 } }, React.createElement("button", { onClick: function () { return setEmpresasSelecionadas(Object.fromEntries(CATEGORIAS_RECIBOS.map(function (c) { return [c.key, true]; }))); }, style: { background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12.5, color: COLORS.inkSoft } }, "Marcar todas"), React.createElement("button", { onClick: function () { return setEmpresasSelecionadas({}); }, style: { background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12.5, color: COLORS.inkSoft } }, "Desmarcar todas")), React.createElement("div", { style: { display: 'grid', gap: 6 } }, CATEGORIAS_RECIBOS.map(function (c) { return (React.createElement("label", { key: c.key, style: {
+        } }, React.createElement("div", { style: { fontSize: 16.5, fontWeight: 700, color: COLORS.ink } }, "Exportar recibos"), React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft } }, "Marque quais empresas voc\u00EA quer incluir. Se marcar mais de uma, baixa um arquivo .zip com a pasta Recibos e um PDF por empresa; se marcar s\u00F3 uma, baixa s\u00F3 o PDF."), React.createElement("div", { style: { display: 'flex', gap: 8 } }, React.createElement("button", { onClick: function () { return setEmpresasSelecionadas(Object.fromEntries(CATEGORIAS_RECIBOS.map(function (c) { return [c.key, true]; }))); }, style: { background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12.5, color: COLORS.inkSoft } }, "Marcar todas"), React.createElement("button", { onClick: function () { return setEmpresasSelecionadas({}); }, style: { background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12.5, color: COLORS.inkSoft } }, "Desmarcar todas")), React.createElement("div", { style: { display: 'grid', gap: 6 } }, CATEGORIAS_RECIBOS.map(function (c) { return (React.createElement("label", { key: c.key, style: {
             display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, cursor: 'pointer',
             background: empresasSelecionadas[c.key] ? COLORS.goldSoft : COLORS.lineSoft,
         } }, React.createElement("input", { type: "checkbox", checked: !!empresasSelecionadas[c.key], onChange: function (e) { return setEmpresasSelecionadas(function (s) {
@@ -10499,6 +10568,49 @@ function salvarTudoAgora() {
             });
         });
     }
+    // TDB 9: inclui os alunos novos Melissa e Caio em Outubro, Novembro e Dezembro (uma única vez, sem duplicar).
+    useEffect(function () {
+        if (!transacoes || !transacoes.length || !window.__transacoesProntas) return;
+        if (Number(exercicioAtual) !== 2026 || exercicioEncerrado) return;
+        var cancelado = false;
+        (function () { return __awaiter(_this, void 0, void 0, function () {
+            var marca, existentes, maxId, novos, e_n9;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 4, , 5]);
+                        return [4 /*yield*/, window.storage.get('novos_alunos_melissa_caio_v9', false)];
+                    case 1:
+                        marca = _a.sent();
+                        if (cancelado || (marca && marca.value === 'true')) return [2 /*return*/];
+                        existentes = new Set(transacoes.map(function (t) { return TDBFinance.norm(t.categoria) + '|' + t.mes; }));
+                        maxId = maiorIdLancamento_();
+                        novos = [];
+                        ['MELISSA', 'CAIO'].forEach(function (nome) {
+                            ['OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'].forEach(function (mes) {
+                                var cat = 'Mensalidade - ' + nome;
+                                if (existentes.has(TDBFinance.norm(cat) + '|' + mes)) return;
+                                novos.push({ id: ++maxId, mes: mes, categoria: cat, tipo: 'Entrada', valor: null, valorCheio: null, quantidadeAlunos: 1, status: 'Pendente', data: null, banco: null, nota: 'Pendente', pai: null, tirarNota: null, convenio: null, exercicio: 2026 });
+                            });
+                        });
+                        if (!novos.length) return [3 /*break*/, 3];
+                        return [4 /*yield*/, persist(transacoes.concat(novos))];
+                    case 2:
+                        if (_a.sent() === false) return [2 /*return*/];
+                        _a.label = 3;
+                    case 3: return [4 /*yield*/, window.storage.set('novos_alunos_melissa_caio_v9', 'true', false)];
+                    case 4:
+                        _a.sent();
+                        return [3 /*break*/, 6];
+                    case 5:
+                        e_n9 = _a.sent();
+                        return [3 /*break*/, 6];
+                    case 6: return [2 /*return*/];
+                }
+            });
+        }); })();
+        return function () { cancelado = true; };
+    }, [!!(transacoes && transacoes.length)]);
     useEffect(function () {
         if (!transacoes)
             return;
@@ -11382,7 +11494,7 @@ function ModalCicloAnual(_a) {
     var anteriorPendente = !!(anterior && anterior.status !== 'ENCERRADO');
     var podeReverter = status === 'ATIVO' && !!(anterior && anterior.status === 'ENCERRADO');
     var _b = useState(false), confirmarReversao = _b[0], setConfirmarReversao = _b[1];
-    var alunos = new Set((transacoes || []).filter(function (t) { return String(t.categoria || '').startsWith('Mensalidade - '); }).map(function (t) { return t.categoria; })).size;
+    var alunos = TDBFinance.listed(transacoes).alunos;
     var agoraCiclo = new Date();
     var anoHoje = agoraCiclo.getFullYear();
     var mesHojeIdx = agoraCiclo.getMonth();
@@ -12633,7 +12745,7 @@ function formatarData(iso) {
 }
 function TabelaMensalidades(_a) {
     var titulo = _a.titulo, itens = _a.itens, mostrarDetalhes = _a.mostrarDetalhes, editandoId = _a.editandoId, iniciarEdicao = _a.iniciarEdicao, cancelarEdicao = _a.cancelarEdicao, salvarEdicao = _a.salvarEdicao, darBaixa = _a.darBaixa, darNota = _a.darNota, definirFoto = _a.definirFoto, removerLancamento = _a.removerLancamento, valorEdit = _a.valorEdit, setValorEdit = _a.setValorEdit, valorCheioEdit = _a.valorCheioEdit, setValorCheioEdit = _a.setValorCheioEdit, statusEdit = _a.statusEdit, setStatusEdit = _a.setStatusEdit, bancoEdit = _a.bancoEdit, setBancoEdit = _a.setBancoEdit, paiEdit = _a.paiEdit, setPaiEdit = _a.setPaiEdit, tirarNotaEdit = _a.tirarNotaEdit, setTirarNotaEdit = _a.setTirarNotaEdit, convenioEdit = _a.convenioEdit, setConvenioEdit = _a.setConvenioEdit, dataEdit = _a.dataEdit, setDataEdit = _a.setDataEdit, okEdit = _a.okEdit, setOkEdit = _a.setOkEdit, inputStyle = _a.inputStyle, modoPrivado = _a.modoPrivado, nomeEdit = _a.nomeEdit, setNomeEdit = _a.setNomeEdit, avulsos = _a.avulsos, diasLetivos = _a.diasLetivos, tabelaValores = _a.tabelaValores;
-    var quantidadeEdit = _a.quantidadeEdit, setQuantidadeEdit = _a.setQuantidadeEdit;
+    var quantidadeEdit = _a.quantidadeEdit, setQuantidadeEdit = _a.setQuantidadeEdit, contagemAlunos = _a.contagemAlunos;
     var _b = useState(false), proporcionalAberto = _b[0], setProporcionalAberto = _b[1];
     var _c = useState(''), diasFrequentados = _c[0], setDiasFrequentados = _c[1];
     var _d = useState(false), aplicarDescontoAvista = _d[0], setAplicarDescontoAvista = _d[1];
@@ -12642,7 +12754,7 @@ function TabelaMensalidades(_a) {
     var td = { padding: '10px 10px', fontSize: 13, color: COLORS.ink, borderTop: "1px solid ".concat(COLORS.lineSoft), verticalAlign: 'middle', overflow: 'hidden' };
     var inputCell = __assign(__assign({}, inputStyle), { padding: '5px 7px', fontSize: 12.5, width: '100%', minWidth: 70, boxSizing: 'border-box' });
     var _f = useState(null), linhaSelecionada = _f[0], setLinhaSelecionada = _f[1];
-    return (React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("div", { style: { padding: '13px 18px', background: COLORS.paperCard, borderBottom: "1px solid ".concat(COLORS.line), fontSize: 13.5, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }, React.createElement("span", null, titulo, " ", React.createElement("span", { style: { fontWeight: 500, color: COLORS.inkSoft } }, "(", modoPrivado ? '••' : itens.length, ")")), React.createElement("span", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 500 } }, "Dica: Voc\u00EA pode digitar contas nos valores (ex: ", React.createElement("b", null, "900+150"), " ou ", React.createElement("b", null, "1483-200"), ") e salvar")), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '28px 0', fontSize: 14 } }, "Nenhum registro encontrado.")) : (React.createElement("div", { style: { overflowX: 'auto' } }, React.createElement("table", { className: "tabela-mensalidades", style: { width: '100%', minWidth: mostrarDetalhes ? 1450 : 1000, borderCollapse: 'collapse', tableLayout: 'fixed' } }, React.createElement("colgroup", null, React.createElement("col", { style: { width: mostrarDetalhes ? '16%' : '22%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '6%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '20%' : '26%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '6%' : '10%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '8%' : '14%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '9%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '8%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '8%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '7%' : '12%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '12%' : '16%' } })), React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Nome"), mostrarDetalhes && React.createElement("th", { style: th }, "Nota"), React.createElement("th", { style: th }, "Valor a pagar"), React.createElement("th", { style: th }, "Status"), React.createElement("th", { style: th }, "Banco"), mostrarDetalhes && React.createElement("th", { style: th }, "Pai / Respons\u00E1vel"), mostrarDetalhes && React.createElement("th", { style: th }, "Tirar nota"), mostrarDetalhes && React.createElement("th", { style: th }, "Conv\u00EAnio"), React.createElement("th", { style: th }, "Data"), React.createElement("th", { style: __assign(__assign({}, th), { textAlign: 'center' }) }, "A\u00E7\u00F5es"))), React.createElement("tbody", null, itens.map(function (t) {
+    return (React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("div", { style: { padding: '13px 18px', background: COLORS.paperCard, borderBottom: "1px solid ".concat(COLORS.line), fontSize: 13.5, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }, React.createElement("span", null, titulo, " ", React.createElement("span", { style: { fontWeight: 500, color: COLORS.inkSoft } }, "(", modoPrivado ? '••' : (titulo === 'Alunos' ? (contagemAlunos != null ? contagemAlunos.alunos : TDBFinance.listed(itens).alunos) : itens.length), ")"), titulo === 'Alunos' && !modoPrivado && (function () { var c = contagemAlunos != null ? contagemAlunos : TDBFinance.listed(itens); return c.linhas !== c.alunos ? React.createElement("span", { className: "tdb-contagem-linhas", title: "Cada linha de irm\u00E3os conta 2 alunos", style: {whiteSpace:"nowrap", fontWeight: 500, color: COLORS.inkSoft, fontSize: 11.5, marginLeft: 8 } }, "\u00B7 ", c.linhas, " linhas") : null; })()), React.createElement("span", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 500 } }, "Dica: Voc\u00EA pode digitar contas nos valores (ex: ", React.createElement("b", null, "900+150"), " ou ", React.createElement("b", null, "1483-200"), ") e salvar")), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '28px 0', fontSize: 14 } }, "Nenhum registro encontrado.")) : (React.createElement("div", { style: { overflowX: 'auto' } }, React.createElement("table", { className: "tabela-mensalidades", style: { width: '100%', minWidth: mostrarDetalhes ? 1450 : 1000, borderCollapse: 'collapse', tableLayout: 'fixed' } }, React.createElement("colgroup", null, React.createElement("col", { style: { width: mostrarDetalhes ? '16%' : '22%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '6%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '20%' : '26%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '6%' : '10%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '8%' : '14%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '9%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '8%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '8%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '7%' : '12%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '12%' : '16%' } })), React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Nome"), mostrarDetalhes && React.createElement("th", { style: th }, "Nota"), React.createElement("th", { style: th }, "Valor a pagar"), React.createElement("th", { style: th }, "Status"), React.createElement("th", { style: th }, "Banco"), mostrarDetalhes && React.createElement("th", { style: th }, "Pai / Respons\u00E1vel"), mostrarDetalhes && React.createElement("th", { style: th }, "Tirar nota"), mostrarDetalhes && React.createElement("th", { style: th }, "Conv\u00EAnio"), React.createElement("th", { style: th }, "Data"), React.createElement("th", { style: __assign(__assign({}, th), { textAlign: 'center' }) }, "A\u00E7\u00F5es"))), React.createElement("tbody", null, itens.map(function (t) {
         var emEdicao = editandoId === t.id;
         return (React.createElement(React.Fragment, { key: t.id }, React.createElement("tr", { onClick: function () { return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
                 cursor: emEdicao ? 'default' : 'pointer',
@@ -13095,6 +13207,7 @@ function Mensalidades(_a) {
     }, [entradas, filtroMes, filtroStatus, filtroBanco, filtroConvenio, filtroNota, filtroData, filtroTexto]);
     var filtradas = semFiltroNenhum ? filtradasCompleto.slice(0, 100) : filtradasCompleto;
     var alunosLista = useMemo(function () { return filtradas.filter(function (t) { return t.categoria.startsWith('Mensalidade - '); }); }, [filtradas]);
+    var contagemAlunosLista = useMemo(function () { return TDBFinance.listed(filtradasCompleto); }, [filtradasCompleto]);
     var empresasLista = useMemo(function () { return filtradas.filter(function (t) {
         var cat = String(t.categoria || '').trim();
         var catUpper = cat.toUpperCase();
@@ -13281,7 +13394,7 @@ function Mensalidades(_a) {
         } }, "Aplicar no Valor Pago"))) : (React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft } }, "Cadastre quantos dias letivos tem ", MESES_ABREV[novoMes], " na aba ", React.createElement("b", null, "Valores"), " (se\u00E7\u00E3o \"\uD83D\uDCC5 Calend\u00E1rio letivo\") pra poder calcular.")))))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { style: { position: 'relative', flex: '0 1 150px' } }, React.createElement(Search, { size: 13, color: COLORS.inkSoft, style: { position: 'absolute', left: 10, top: 12 } }), React.createElement("input", { value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, placeholder: "Buscar por data...", title: "Busca pela data do pagamento (ex: 01/09 ou 01/09/2026)", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 30, boxSizing: 'border-box' }) })), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement("select", { value: filtroBanco, onChange: function (e) { return setFiltroBanco(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os bancos"), React.createElement("option", { value: "SEM_BANCO" }, "Sem banco"), bancosDisponiveis.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })), React.createElement("select", { value: filtroConvenio, onChange: function (e) { return setFiltroConvenio(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os conv\u00EAnios"), React.createElement("option", { value: "SEM_CONVENIO" }, "Sem conv\u00EAnio"), conveniosDisponiveis.map(function (c) { return React.createElement("option", { key: c, value: c }, c); })), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
-        } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), semFiltroNenhum && filtradasCompleto.length > 100 && (React.createElement("div", { style: { fontSize: 13, color: COLORS.gold, background: COLORS.goldSoft, borderRadius: 8, padding: '8px 12px' } }, "Mostrando s\u00F3 os 100 primeiros de ", filtradasCompleto.length, " registros \u2014 escolha um m\u00EAs ou busque um nome pra ver o resto (evita travar a tela).")), React.createElement("datalist", { id: "convenios-lista" }, CONVENIOS_CONHECIDOS.map(function (c) { return React.createElement("option", { key: c, value: c }); })), React.createElement("datalist", { id: "valores-fotos-lista" }, valoresConhecidos.map(function (v, i) { return (React.createElement("option", { key: i, value: formatBRLNumber(v) })); })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Alunos", itens: alunosLista, mostrarDetalhes: true }, linhaHandlers), { modoPrivado: privadoDetalhes })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Empresas / Conv\u00EAnios", itens: empresasLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes })), outrosLista.length > 0 && React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Outros", itens: outrosLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes }))));
+        } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), semFiltroNenhum && filtradasCompleto.length > 100 && (React.createElement("div", { style: { fontSize: 13, color: COLORS.gold, background: COLORS.goldSoft, borderRadius: 8, padding: '8px 12px' } }, "Mostrando s\u00F3 os 100 primeiros de ", filtradasCompleto.length, " registros \u2014 escolha um m\u00EAs ou busque um nome pra ver o resto (evita travar a tela).")), React.createElement("datalist", { id: "convenios-lista" }, CONVENIOS_CONHECIDOS.map(function (c) { return React.createElement("option", { key: c, value: c }); })), React.createElement("datalist", { id: "valores-fotos-lista" }, valoresConhecidos.map(function (v, i) { return (React.createElement("option", { key: i, value: formatBRLNumber(v) })); })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Alunos", itens: alunosLista, contagemAlunos: contagemAlunosLista, mostrarDetalhes: true }, linhaHandlers), { modoPrivado: privadoDetalhes })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Empresas / Conv\u00EAnios", itens: empresasLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes })), outrosLista.length > 0 && React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Outros", itens: outrosLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes }))));
 }
 var SEED_CONTRATO_IMAGEM = {
     id: 'contrato_termo_imagem_lei_felca',
@@ -15124,7 +15237,7 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .
 }
 </style>
 <style id="tdb-ctl">
-/* TDB 6 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
+/* TDB 9 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
 html[data-tdb-aurora] body :is(select,input[type=date]):not(#tdb-x){
  -webkit-appearance:none!important;appearance:none!important;box-sizing:border-box!important;
  border-radius:12px!important;border-width:1px!important;border-style:solid!important;line-height:normal!important;
@@ -15159,7 +15272,7 @@ html[data-tdb-aurora] body select:not(#tdb-x) option{font-weight:500;}
 }
 /* Linha de edição das Festas: tudo na mesma altura e no mesmo estilo */
 html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6px 30px 6px 9px!important;}
-/* Calendário completo (TDB 6) */
+/* Calendário completo (TDB 9) */
 #tdb-cal{position:fixed;z-index:2147483600;display:none;box-sizing:border-box;width:318px;max-width:calc(100vw - 16px);padding:12px;border-radius:18px;
  background:#fff;color:#111318;border:1px solid #cfd6e1;box-shadow:0 18px 48px rgba(17,19,24,.22),0 2px 6px rgba(17,19,24,.08);font-family:inherit;font-size:13px;
  --cal-acc:#1767cf;--cal-soft:rgba(23,103,207,.11);--cal-mut:#6b7482;--cal-bd:#d6dce5;--cal-hv:#eef2f8;--cal-bg2:#f4f6fa;user-select:none;-webkit-user-select:none;}
@@ -15227,7 +15340,7 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
 }
 </style>
 <script id="tdb-calendario">
-/* TDB 6 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
+/* TDB 9 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
 (function(){
  if(window.TDBCalendario)return;
  var MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -15419,7 +15532,7 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
 })();
 </script>
 <style id="tdb-calapp">
-/* TDB 6 — aba Calendário. Só aparência da aba nova + selo no botão da aba. */
+/* TDB 5 — aba Calendário. Só aparência da aba nova + selo no botão da aba. */
 .tcal,#tcal-pop,#tcal-modal,#tcal-toast{--t-ink:var(--c-ink,#111318);--t-soft:var(--c-inkSoft,#454c59);--t-line:var(--c-line,#d7dce5);--t-acc:var(--c-inkButton,#1767cf);--t-solid:#fff;--t-field:#fff;--t-chip:rgba(23,103,207,.12);--t-hover:rgba(23,103,207,.07);--t-aviso-bg:#fff4dc;--t-aviso-bd:#f0d28a;--t-aviso-tx:#6b5a2a;--t-red:#c62d36;--t-green:#1c9e8f;--t-amber:#d98a00}
 body.dark-mode .tcal,#tcal-pop.dk,#tcal-modal.dk,#tcal-toast.dk{--t-solid:#2a2c33;--t-field:#1f2127;--t-chip:rgba(106,168,245,.18);--t-hover:rgba(255,255,255,.06);--t-aviso-bg:#3b3320;--t-aviso-bd:#6e5a24;--t-aviso-tx:#e9d9a8;--t-acc:#6aa8f5;--t-red:#ff8a90;--t-line:#555b68;--t-ink:#f6f7f9;--t-soft:#d0d4dc}
 .tcal{color:var(--t-ink);font-family:inherit;position:relative;min-width:0}
@@ -15649,9 +15762,38 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
 .tcal-ev.g b{color:var(--t-ink)}
 .tcal-blk.g{background:color-mix(in srgb,var(--c) 18%,var(--t-solid));color:var(--t-ink);border-left:3px solid var(--c);box-shadow:none}
 .tcal-gnota{display:block;font-size:11px;line-height:1.35;color:var(--t-aviso-tx);background:var(--t-aviso-bg);border:1px solid var(--t-aviso-bd);border-radius:10px;padding:6px 8px;margin:4px 0 2px}
+/* seletor de hora com rolagem */
+.tcal-time{cursor:pointer;caret-color:transparent;padding-right:34px!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:15px 15px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6.2' fill='none' stroke='%235b6472' stroke-width='1.5'/%3E%3Cpath d='M8 4.6V8l2.3 1.5' fill='none' stroke='%235b6472' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")!important}
+body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6.2' fill='none' stroke='%23c8ced8' stroke-width='1.5'/%3E%3Cpath d='M8 4.6V8l2.3 1.5' fill='none' stroke='%23c8ced8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")!important}
+.tcal-time:focus,.tcal-time:hover{border-color:var(--t-acc)}
+#tcal-tp{--t-ink:var(--c-ink,#111318);--t-soft:var(--c-inkSoft,#454c59);--t-line:var(--c-line,#d7dce5);--t-acc:var(--c-inkButton,#1767cf);--t-solid:#fff;--t-field:#fff;--t-chip:rgba(23,103,207,.12);--t-hover:rgba(23,103,207,.07);display:none;position:fixed;z-index:2147482500;width:272px;max-width:calc(100vw - 16px);background:var(--t-solid);color:var(--t-ink);border:1px solid var(--t-line);border-radius:18px;box-shadow:0 18px 48px rgba(17,19,24,.3);padding:12px;box-sizing:border-box;font-size:13px}
+#tcal-tp *{box-sizing:border-box}
+#tcal-tp.dk{--t-solid:#2a2c33;--t-field:#1f2127;--t-chip:rgba(106,168,245,.18);--t-hover:rgba(255,255,255,.06);--t-acc:#6aa8f5;--t-line:#555b68;--t-ink:#f6f7f9;--t-soft:#d0d4dc}
+#tcal-tp.on{display:block}
+#tcal-tp.sheet{left:0!important;right:0;top:auto!important;bottom:0;width:100%;max-width:none;border-radius:22px 22px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+#tcal-tp button{font-family:inherit;cursor:pointer;color:inherit}
+.tp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:14px}
+.tp-dgw{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.tp-dgw .tp-dig{width:96px;text-align:center;font-weight:800;font-size:18px;letter-spacing:.04em;padding:7px 8px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-field);color:var(--t-ink);outline:none;font-family:inherit}
+.tp-dgw .tp-dig:focus{border-color:var(--t-acc)}
+.tp-dgw span{font-size:11.5px;color:var(--t-soft)}
+.tp-wheel{position:relative;display:flex;align-items:center;gap:4px;height:180px;border-radius:14px;background:var(--t-field);border:1px solid var(--t-line);overflow:hidden}
+.tp-wheel:before,.tp-wheel:after{content:"";position:absolute;left:0;right:0;height:62px;z-index:2;pointer-events:none}
+.tp-wheel:before{top:0;background:linear-gradient(to bottom,var(--t-field),transparent)}
+.tp-wheel:after{bottom:0;background:linear-gradient(to top,var(--t-field),transparent)}
+.tp-band{position:absolute;left:8px;right:8px;top:72px;height:36px;border-radius:10px;background:var(--t-chip);pointer-events:none;z-index:1}
+.tp-col{flex:1;height:180px;overflow-y:auto;scroll-snap-type:y mandatory;padding:72px 0;scrollbar-width:none;text-align:center;position:relative;z-index:3;outline:none;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.tp-col::-webkit-scrollbar{display:none}
+.tp-i{display:block;width:100%;height:36px;line-height:36px;padding:0;border:0;background:transparent;scroll-snap-align:center;font-weight:700;font-size:17px;color:var(--t-soft)}
+.tp-i.on{color:var(--t-ink);font-size:21px;font-weight:800}
+.tp-sep{font-weight:800;font-size:20px;z-index:3;position:relative}
+.tp-q{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tp-q .tcal-chip{padding:5px 10px;font-size:12px}
+.tp-f{display:flex;justify-content:flex-end;margin-top:10px}
+.tp-f .tcal-btn{height:38px;min-width:96px}
 </style>
 <script id="tdb-calapp-js">
-/* TDB 6 — aba Calendário (agenda estilo Google Agenda). Dados na chave própria calendario_tdb_v1 via window.storage
+/* TDB 5 — aba Calendário (agenda estilo Google Agenda). Dados na chave própria calendario_tdb_v1 via window.storage
    (a mesma sincronização de sempre, sem alterá-la). Envio à Google Agenda: ação separada "agenda" no Apps Script. */
 (function(){
  'use strict';
@@ -16152,8 +16294,8 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   s+='<label class="tcal-f"><span>TÍTULO</span><input class="tcal-in'+(q.err.t?' erro':'')+'" data-f="t" value="'+esc(q.t)+'" placeholder="Ex.: Noite do Pijama" maxlength="120">'+(q.err.t?'<em>'+esc(q.err.t)+'</em>':'')+'</label>';
   s+='<div class="tcal-chips-t">'+Object.keys(A).map(function(k){return '<button type="button" class="tcal-chip'+(q.ag===k?' on':'')+'" data-act="fag" data-k="'+k+'" style="--c:'+esc(A[k].c)+'">'+esc(A[k].n)+'</button>';}).join('')+'</div>';
   s+='<label class="tcal-f"><span>LIGAR A UMA FESTA JÁ CADASTRADA</span><select class="tcal-in" data-f="festa"><option value="">— nenhuma —</option>'+S.festas.map(function(f){return '<option value="'+esc(f.label)+'"'+(q.festa===f.label?' selected':'')+'>'+esc(f.emoji+' '+f.label)+'</option>';}).join('')+(q.festa&&!S.festas.some(function(f){return f.label===q.festa;})?'<option value="'+esc(q.festa)+'" selected>'+esc(q.festa)+'</option>':'')+'</select></label>';
-  s+='<div class="tcal-two"><label class="tcal-f"><span>DATA</span><input class="tcal-in'+(q.err.d?' erro':'')+'" type="date" data-f="d" value="'+esc(q.d)+'"></label><label class="tcal-f"><span>HORA</span><input class="tcal-in" type="time" data-f="h" value="'+esc(q.dia?'':q.h)+'"'+(q.dia?' disabled':'')+'></label></div>';
-  s+='<div class="tcal-two"><label class="tcal-f"><span>TERMINA EM</span><input class="tcal-in'+(q.err.df?' erro':'')+'" type="date" data-f="df" value="'+esc(q.df)+'"></label><label class="tcal-f"><span>HORA</span><input class="tcal-in" type="time" data-f="hf" value="'+esc(q.dia?'':q.hf)+'"'+(q.dia?' disabled':'')+'></label></div>';
+  s+='<div class="tcal-two"><label class="tcal-f"><span>DATA</span><input class="tcal-in'+(q.err.d?' erro':'')+'" type="date" data-f="d" value="'+esc(q.d)+'"></label><label class="tcal-f"><span>HORA</span><input class="tcal-in tcal-time" type="text" readonly inputmode="none" data-act="hora" data-lb="Hora de início" data-f="h" placeholder="--:--" value="'+esc(q.dia?'':q.h)+'"'+(q.dia?' disabled':'')+'></label></div>';
+  s+='<div class="tcal-two"><label class="tcal-f"><span>TERMINA EM</span><input class="tcal-in'+(q.err.df?' erro':'')+'" type="date" data-f="df" value="'+esc(q.df)+'"></label><label class="tcal-f"><span>HORA</span><input class="tcal-in tcal-time" type="text" readonly inputmode="none" data-act="hora" data-lb="Hora de término" data-f="hf" placeholder="--:--" value="'+esc(q.dia?'':q.hf)+'"'+(q.dia?' disabled':'')+'></label></div>';
   s+='<div class="tcal-tg"><button type="button" class="tcal-tgb'+(q.dia?' on':'')+'" data-act="fdia" role="switch" aria-checked="'+(q.dia?'true':'false')+'"><i></i></button><span>Dia inteiro</span><select class="tcal-in sm" data-f="rep" aria-label="Repetir"><option value=""'+(q.rep===''?' selected':'')+'>Não repete</option><option value="dia"'+(q.rep==='dia'?' selected':'')+'>Todo dia</option><option value="sem"'+(q.rep==='sem'?' selected':'')+'>Toda semana</option><option value="mes"'+(q.rep==='mes'?' selected':'')+'>Todo mês</option><option value="ano"'+(q.rep==='ano'?' selected':'')+'>Todo ano</option></select></div>';
   s+='<label class="tcal-f"><span>LOCAL</span><input class="tcal-in" data-f="loc" value="'+esc(q.loc)+'" placeholder="📍 Escola · Pátio principal" maxlength="160"></label>';
   s+='<label class="tcal-f"><span>CONVIDADOS (E-MAIL)</span><input class="tcal-in'+(q.err.conv?' erro':'')+'" data-f="conv" value="'+esc(q.conv)+'" placeholder="professores@escola.com, ana@email.com" autocomplete="off">'+(q.err.conv?'<em>'+esc(q.err.conv)+'</em>':'')+'</label>';
@@ -16176,13 +16318,15 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
    var v=t.value;
    if(k==='d'){var old=q.d;q.d=v;if(!q.df||q.df===old||q.df<v)q.df=v;var ni=root.querySelector('[data-f="df"]');if(ni)ni.value=q.df;q.err.d='';t.classList.remove('erro');return;}
    if(k==='df'){q.df=v;q.err.df='';t.classList.remove('erro');return;}
-   if(k==='h'){q.h=v;if(q.df===q.d&&(!q.hf||minOf(q.hf)<=minOf(v))){q.hf=hh(Math.min(1439,minOf(v)+60));var hi=root.querySelector('[data-f="hf"]');if(hi)hi.value=q.hf;}return;}
+   if(k==='h'){var antes=q.h;q.h=v;if(q.df===q.d&&v){var dur=(q.hf&&antes)?minOf(q.hf)-minOf(antes):60;if(!(dur>0))dur=60;q.hf=hh(Math.min(1439,minOf(v)+dur));var hi=root.querySelector('[data-f="hf"]');if(hi)hi.value=q.hf;}return;}
    if(k==='festa'){q.festa=v;if(v&&!q.t.trim()){q.t=v;var ti=root.querySelector('[data-f="t"]');if(ti)ti.value=v;}if(v&&q.ag!=='fe'&&!q.id){q.ag='fe';renderFormChips(root);}return;}
    if(k==='t'||k==='conv'){q.err[k]='';t.classList.remove('erro');var em=t.parentNode.querySelector('em');if(em)em.remove();}
    q[k]=v;
   }
   f.addEventListener('input',upd);f.addEventListener('change',upd);
-  f.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type!=='date'){e.preventDefault();salvarForm();}});
+  f.addEventListener('keydown',function(e){
+   if(e.target.classList&&e.target.classList.contains('tcal-time')){if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();abrirHora(e.target);}return;}
+   if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type!=='date'){e.preventDefault();salvarForm();}});
  }
  function renderFormChips(root){
   var c=root.querySelector('.tcal-chips-t');if(!c)return;var A=ags();
@@ -16202,11 +16346,11 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   }
  }
  function fecharForm(){
-  S.draft=null;var m=document.getElementById('tcal-modal');if(m){m.className='';m.innerHTML='';m.removeAttribute('data-id');}
+  fecharHora();S.draft=null;var m=document.getElementById('tcal-modal');if(m){m.className='';m.innerHTML='';m.removeAttribute('data-id');}
   if(S.host)renderSide();
  }
  function reRenderForm(){
-  var m=document.getElementById('tcal-modal');
+  fecharHora();var m=document.getElementById('tcal-modal');
   if(m&&m.className.indexOf('on')>=0){var sc=m.querySelector('.tcal-md');var top=sc?sc.scrollTop:0;m.querySelector('.tcal-md').innerHTML=formHtml();wireForm(m);m.querySelector('.tcal-md').scrollTop=top;}
   else if(S.host){var sd=S.host.querySelector('.tcal-side');if(sd){var tp=sd.scrollTop;renderSide();sd.scrollTop=tp;}}
  }
@@ -16238,6 +16382,64 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   gaSincronizar().then(syncPill);
  }
 
+
+ /* ---------- seletor de hora (rolagem) ---------- */
+ var TP_H=36;
+ function tpEl(){var p=document.getElementById('tcal-tp');if(!p){p=document.createElement('div');p.id='tcal-tp';p.setAttribute('data-export-ignore','true');document.body.appendChild(p);}return p;}
+ function fecharHora(){var p=document.getElementById('tcal-tp');if(p){p.className='';p.innerHTML='';}S.tp=null;}
+ function tpValor(){return pad(S.tp.h)+':'+pad(S.tp.m);}
+ function tpAplicar(){
+  var t=S.tp;if(!t||!t.inp)return;var v=tpValor();
+  if(t.inp.value!==v){t.inp.value=v;t.inp.dispatchEvent(new Event('input',{bubbles:true}));t.inp.dispatchEvent(new Event('change',{bubbles:true}));}
+  var dg=document.querySelector('#tcal-tp .tp-dig');if(dg&&document.activeElement!==dg)dg.value=v;
+  Array.prototype.forEach.call(document.querySelectorAll('#tcal-tp .tp-i'),function(b){var c=b.getAttribute('data-c'),x=+b.getAttribute('data-v');b.classList.toggle('on',x===(c==='h'?t.h:t.m));});
+ }
+ function tpRolar(suave){
+  var p=document.getElementById('tcal-tp');if(!p||!S.tp)return;S.tp.prog=Date.now()+(suave?550:150);
+  ['h','m'].forEach(function(c){var col=p.querySelector('.tp-col[data-c="'+c+'"]');if(col)col.scrollTo?col.scrollTo({top:(c==='h'?S.tp.h:S.tp.m)*TP_H,behavior:suave?'smooth':'auto'}):(col.scrollTop=(c==='h'?S.tp.h:S.tp.m)*TP_H);});
+ }
+ function abrirHora(inp){
+  if(!inp||inp.disabled)return;
+  var cur=/^\d{1,2}:\d{2}$/.test(inp.value)?inp.value:(inp.getAttribute('data-f')==='hf'?(function(){var f=inp.closest('[data-form]'),hi=f&&f.querySelector('[data-f="h"]');var m=hi&&/^\d{1,2}:\d{2}$/.test(hi.value)?minOf(hi.value)+60:600;return hh(Math.min(1439,m));})():'09:00');
+  var h=+cur.split(':')[0],m=+cur.split(':')[1];
+  S.tp={inp:inp,h:h,m:m,prog:0};
+  var p=tpEl();
+  var lista=function(c,n){var s='';for(var i=0;i<n;i++)s+='<button type="button" class="tp-i" data-act="tpi" data-c="'+c+'" data-v="'+i+'">'+pad(i)+'</button>';return s;};
+  var rapidos=['08:00','09:00','12:00','14:00','16:00','18:00','19:00'];
+  p.innerHTML='<div class="tp-top"><b>'+esc(inp.getAttribute('data-lb')||'Hora')+'</b><button type="button" class="tcal-x" data-act="tpx" aria-label="Fechar">✕</button></div>'
+   +'<div class="tp-dgw"><input class="tcal-in tp-dig" value="'+pad(h)+':'+pad(m)+'" inputmode="numeric" maxlength="5" autocomplete="off" aria-label="Digitar a hora, ex.: 1930"><span>ou role</span></div>'
+   +'<div class="tp-wheel"><div class="tp-band"></div><div class="tp-col" data-c="h" tabindex="0" aria-label="Horas">'+lista('h',24)+'</div><span class="tp-sep">:</span><div class="tp-col" data-c="m" tabindex="0" aria-label="Minutos">'+lista('m',60)+'</div></div>'
+   +'<div class="tp-q">'+rapidos.map(function(r){return '<button type="button" class="tcal-chip" data-act="tpq" data-v="'+r+'">'+r+'</button>';}).join('')+'</div>'
+   +'<div class="tp-f"><button type="button" class="tcal-btn p" data-act="tpok">Pronto</button></div>';
+  p.className='on'+(dark()?' dk':'')+(isPhone()?' sheet':'');
+  if(!isPhone()){
+   var r=inp.getBoundingClientRect(),w=p.offsetWidth,hgt=p.offsetHeight,vw=window.innerWidth,vh=window.innerHeight;
+   var left=Math.max(8,Math.min(r.left,vw-w-8)),top=r.bottom+6;if(top+hgt>vh-8)top=Math.max(8,r.top-hgt-6);
+   p.style.left=left+'px';p.style.top=top+'px';
+  }else{p.style.left=p.style.top='';}
+  tpAplicar();tpRolar(false);
+  Array.prototype.forEach.call(p.querySelectorAll('.tp-col'),function(col){
+   col.addEventListener('scroll',function(){
+    if(!S.tp||Date.now()<S.tp.prog)return;
+    clearTimeout(col._t);col._t=setTimeout(function(){if(!S.tp)return;var i=Math.max(0,Math.min(col.getAttribute('data-c')==='h'?23:59,Math.round(col.scrollTop/TP_H)));if(col.getAttribute('data-c')==='h')S.tp.h=i;else S.tp.m=i;tpAplicar();},90);
+   });
+   col.addEventListener('keydown',function(e){
+    if(e.key!=='ArrowUp'&&e.key!=='ArrowDown')return;e.preventDefault();var c=col.getAttribute('data-c'),d=e.key==='ArrowUp'?-1:1;
+    if(c==='h')S.tp.h=(S.tp.h+d+24)%24;else S.tp.m=(S.tp.m+d+60)%60;tpAplicar();tpRolar(true);
+   });
+  });
+  var dg=p.querySelector('.tp-dig');
+  dg.addEventListener('input',function(){var v=tpLer(dg.value);if(v){S.tp.h=v[0];S.tp.m=v[1];var f=dg.value;tpAplicar();dg.value=f;tpRolar(false);}});
+  dg.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();var v=tpLer(dg.value);if(v){S.tp.h=v[0];S.tp.m=v[1];tpAplicar();}fecharHora();}});
+  dg.addEventListener('blur',function(){var v=tpLer(dg.value);if(v){S.tp&&(S.tp.h=v[0],S.tp.m=v[1]);tpAplicar();}});
+ }
+ function tpLer(t){ // aceita 1930, 19:30, 930, 7, 7:5
+  t=String(t||'').trim();var m=/^(\d{1,2})[:h.,]?(\d{0,2})$/.exec(t);
+  if(!m){m=/^(\d{1,2})(\d{2})$/.exec(t);if(!m)return null;}
+  var hr=+m[1],mi=m[2]===''?0:+m[2];
+  if(/^\d{3,4}$/.test(t)){hr=+t.slice(0,t.length-2);mi=+t.slice(-2);}
+  if(hr>23||mi>59)return null;return [hr,mi];
+ }
  /* ---------- janela "como ativar" ---------- */
  function gaInfo(){
   var m=modalEl();m.className='on info'+(dark()?' dk':'')+(isPhone()?' sheet':'');m.removeAttribute('data-id');
@@ -16246,7 +16448,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
    '<p class="pe">'+esc(S.ga.msg||'Ainda não verificada.')+'</p>';
   m.innerHTML='<div class="tcal-ov" data-act="nada"><div class="tcal-md"><div class="tcal-fh"><h3>Google Agenda</h3><button class="tcal-x" data-act="fechainfo">✕</button></div><div class="tcal-form">'+st
    +'<p>Seus eventos ficam sempre salvos aqui no painel. Para o <b>alarme tocar no celular</b>, o painel os envia para uma agenda chamada “Tempo de Brincar” na sua Google Agenda. Com ela ligada, o painel também mostra aqui os eventos que você já tem na sua Google Agenda principal (só para ver; para editar, use o Google Agenda). Para ligar (uma vez só):</p>'
-   +'<ol><li>Abra o Apps Script do painel e troque o código pelo arquivo <b>Codigo-COM-AGENDA-para-colar-no-Apps-Script.gs</b> (vem junto do TDB 6). Salve.</li><li>No editor, escolha a função <b>autorizarAgenda</b>, clique em Executar e aceite o acesso à Google Agenda.</li><li>Implantar → Gerenciar implantações → lápis → Versão: <b>Nova versão</b> → Implantar.</li><li>Volte aqui e toque em “Verificar de novo”.</li></ol>'
+   +'<ol><li>Abra o Apps Script do painel e troque o código pelo arquivo <b>Codigo-COM-AGENDA-para-colar-no-Apps-Script.gs</b> (vem junto do TDB 5). Salve.</li><li>No editor, escolha a função <b>autorizarAgenda</b>, clique em Executar e aceite o acesso à Google Agenda.</li><li>Implantar → Gerenciar implantações → lápis → Versão: <b>Nova versão</b> → Implantar.</li><li>Volte aqui e toque em “Verificar de novo”.</li></ol>'
    +'<div class="tcal-fb"><span class="grow"></span><button class="tcal-btn" data-act="fechainfo">Fechar</button><button class="tcal-btn p" data-act="gaverifica">Verificar de novo</button></div></div></div></div>';
  }
  function fechaInfo(){var m=document.getElementById('tcal-modal');if(m&&m.classList.contains('info')){m.className='';m.innerHTML='';}if(S.draft&&isNarrow())abrirModalForm();}
@@ -16255,11 +16457,16 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
  function celRect(el){return el.getBoundingClientRect();}
  function minutosDoClique(col,e){var r=col.getBoundingClientRect(),y=e.clientY-r.top;return Math.max(0,Math.min(23*60+30,Math.round(y/HP*60/30)*30));}
  function onClick(e){
-  var raiz=e.target.closest&&e.target.closest('.tcal,#tcal-pop,#tcal-modal');
+  if(S.tp){var dentro=e.target.closest&&e.target.closest('#tcal-tp'),campo=e.target.closest&&e.target.closest('.tcal-time');if(!dentro&&!campo)fecharHora();}
+  var raiz=e.target.closest&&e.target.closest('.tcal,#tcal-pop,#tcal-modal,#tcal-tp');
   if(!raiz){if(S.pop)fecharPop();return;}
   var t=e.target.closest('[data-act]');
   if(!t){if(raiz.id==='tcal-pop')return;if(S.pop&&raiz.classList.contains('tcal'))fecharPop();return;}
   var a=t.getAttribute('data-act'),d=t.getAttribute('data-d'),k=t.getAttribute('data-k'),id=t.getAttribute('data-id');
+  if(a==='hora'){abrirHora(t);return;}
+  if(a==='tpi'){var cc=t.getAttribute('data-c'),vv=+t.getAttribute('data-v');if(S.tp){if(cc==='h')S.tp.h=vv;else S.tp.m=vv;tpAplicar();tpRolar(true);}return;}
+  if(a==='tpq'){var rq=t.getAttribute('data-v').split(':');if(S.tp){S.tp.h=+rq[0];S.tp.m=+rq[1];tpAplicar();tpRolar(true);}return;}
+  if(a==='tpok'||a==='tpx'){fecharHora();return;}
   if(a==='nada'){if(e.target===t&&false)return;return;}
   if(a==='ev'){e.stopPropagation();popEvento(id,d,celRect(t));return;}
   if(a==='cel'){
@@ -16318,6 +16525,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
  function onKey(e){
   if(!S.host||!document.body.contains(S.host))return;
   var t=e.target,tag=t&&t.tagName;
+  if(e.key==='Escape'&&S.tp){fecharHora();e.stopPropagation();return;}
   if(e.key==='Escape'){var m=document.getElementById('tcal-modal');if(m&&m.classList.contains('on')){if(m.classList.contains('info'))fechaInfo();else fecharForm();return;}if(S.pop){fecharPop();return;}if(S.draft&&!isNarrow()){fecharForm();return;}}
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return;
   if(e.ctrlKey||e.metaKey||e.altKey)return;
@@ -16369,7 +16577,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   document.addEventListener('dragover',onDragOver,false);
   document.addEventListener('drop',onDrop,false);
   document.addEventListener('input',onSearch,false);
-  window.addEventListener('resize',function(){if(S.host&&document.body.contains(S.host)){clearTimeout(S._rz);S._rz=setTimeout(function(){fecharPop();render();},150);}});
+  window.addEventListener('resize',function(){if(S.host&&document.body.contains(S.host)){clearTimeout(S._rz);S._rz=setTimeout(function(){fecharPop();fecharHora();render();},150);}});
  }
  function mount(el){
   ligar();
@@ -16380,7 +16588,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .
   carregar().then(function(){lerFestas();render();return gaStatus();}).then(function(){render();return gaSincronizar();}).then(function(){syncPill();});
   clearInterval(S.timer);S.timer=setInterval(function(){if(S.host&&document.body.contains(S.host)){renderAlertas();renderSide();badge();if(S.view==='week'||S.view==='day')renderMain();}else badge();},60000);
   S.montado=true;
-  return function(){fecharPop();var m=document.getElementById('tcal-modal');if(m){m.className='';m.innerHTML='';}S.host=null;S.draft=null;};
+  return function(){fecharPop();fecharHora();var m=document.getElementById('tcal-modal');if(m){m.className='';m.innerHTML='';}S.host=null;S.draft=null;};
  }
  function boot(){
   ligar();
