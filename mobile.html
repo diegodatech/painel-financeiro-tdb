@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 9</title>
+  <title>TDB 11</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb9-20261002";
+    window.__TDB_BUILD = "tdb11-20261002";
   </script>
-  <script src="./config.js?build=tdb9-20261002"></script>
+  <script src="./config.js?build=tdb11-20261002"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 9">
+  <meta name="apple-mobile-web-app-title" content="TDB 11">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1822,10 +1822,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb9-20261002"></script>
+  <script src="./sync.js?build=tdb11-20261002"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb9-20261002-mobile';
+window.__TDB_BUILD_EXATO = 'tdb11-20261002-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4320,36 +4320,47 @@ function Recibos(_a) {
             doc.setFontSize(10);
             centeredText('Diretora', W / 2, y + 44);
         }
-        var dia = new Date().toISOString().slice(0, 10);
+        // Nome da pasta/arquivo: "Recibos Outubro de 2026" (mês de emissão automático); dentro, só o nome da empresa.
+        var _agoraRec = new Date();
+        var _mesesRec = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        var nomePasta = 'Recibos ' + _mesesRec[_agoraRec.getMonth()] + ' de ' + _agoraRec.getFullYear();
+        function nomeEmpresaArq(chave) {
+            var c = CATEGORIAS_RECIBOS.find(function (x) { return x.key === chave; });
+            var n = String((c && c.label) || (dados[chave] && dados[chave].label) || chave).replace(/[\\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+            return n || chave;
+        }
         if (chavesEmpresas.length === 1) {
             // uma empresa só (manual): baixa apenas o PDF
             var doc1 = new jsPDF({ unit: 'pt', format: 'a4' });
             desenharRecibo(doc1, dados[chavesEmpresas[0]]);
-            baixarDoc(doc1, 'recibo_' + chavesEmpresas[0] + '_' + dia + '.pdf');
+            baixarDoc(doc1, nomeEmpresaArq(chavesEmpresas[0]) + '.pdf');
             mostrarToast('✓ PDF gerado!');
             return;
         }
         // várias empresas: o navegador só deixa baixar 1 arquivo por clique, então vai tudo
         // junto num único .zip, já com a pasta "Recibos" dentro.
-        var arquivos = [];
+        var arquivos = [], usados = {};
         chavesEmpresas.forEach(function (chave) {
             if (!dados[chave]) return;
             var doc = new jsPDF({ unit: 'pt', format: 'a4' });
             desenharRecibo(doc, dados[chave]);
-            arquivos.push({ nome: 'Recibos/recibo_' + chave + '_' + dia + '.pdf', dados: new Uint8Array(doc.output('arraybuffer')) });
+            var base = nomeEmpresaArq(chave), nomeArq = base, n = 2;
+            while (usados[nomeArq.toLowerCase()]) nomeArq = base + ' ' + (n++);
+            usados[nomeArq.toLowerCase()] = 1;
+            arquivos.push({ nome: nomePasta + '/' + nomeArq + '.pdf', dados: new Uint8Array(doc.output('arraybuffer')) });
         });
         try {
             var blobZip = tdbMontarZip(arquivos);
             var urlZip = URL.createObjectURL(blobZip);
             var aZip = document.createElement('a');
             aZip.href = urlZip;
-            aZip.download = 'Recibos_' + dia + '.zip';
+            aZip.download = nomePasta + '.zip';
             aZip.style.display = 'none';
             document.body.appendChild(aZip);
             aZip.click();
             aZip.remove();
             setTimeout(function () { try { URL.revokeObjectURL(urlZip); } catch (e) {} }, 4000);
-            mostrarToast('✓ ' + arquivos.length + ' recibos salvos na pasta Recibos (arquivo Recibos_' + dia + '.zip)');
+            mostrarToast('✓ ' + arquivos.length + ' recibos salvos na pasta "' + nomePasta + '" (arquivo ' + nomePasta + '.zip)');
         } catch (e) {
             alert('Não consegui montar o arquivo .zip dos recibos: ' + (e.message || e));
         }
@@ -11473,47 +11484,49 @@ function salvarTudoAgora() {
             });
         });
     }
-    // TDB 9: inclui os alunos novos Melissa e Caio em Outubro, Novembro e Dezembro (uma única vez, sem duplicar).
+    // TDB 11: copia o cadastro de Caio e Melissa de SETEMBRO para OUTUBRO, NOVEMBRO e DEZEMBRO (uma vez, sem duplicar).
     useEffect(function () {
         if (!transacoes || !transacoes.length || !window.__transacoesProntas) return;
         if (Number(exercicioAtual) !== 2026 || exercicioEncerrado) return;
         var cancelado = false;
-        (function () { return __awaiter(_this, void 0, void 0, function () {
-            var marca, existentes, maxId, novos, e_n9;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 4, , 5]);
-                        return [4 /*yield*/, window.storage.get('novos_alunos_melissa_caio_v9', false)];
-                    case 1:
-                        marca = _a.sent();
-                        if (cancelado || (marca && marca.value === 'true')) return [2 /*return*/];
-                        existentes = new Set(transacoes.map(function (t) { return TDBFinance.norm(t.categoria) + '|' + t.mes; }));
-                        maxId = maiorIdLancamento_();
-                        novos = [];
-                        ['MELISSA', 'CAIO'].forEach(function (nome) {
-                            ['OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'].forEach(function (mes) {
-                                var cat = 'Mensalidade - ' + nome;
-                                if (existentes.has(TDBFinance.norm(cat) + '|' + mes)) return;
-                                novos.push({ id: ++maxId, mes: mes, categoria: cat, tipo: 'Entrada', valor: null, valorCheio: null, quantidadeAlunos: 1, status: 'Pendente', data: null, banco: null, nota: 'Pendente', pai: null, tirarNota: null, convenio: null, exercicio: 2026 });
-                            });
-                        });
-                        if (!novos.length) return [3 /*break*/, 3];
-                        return [4 /*yield*/, persist(transacoes.concat(novos))];
-                    case 2:
-                        if (_a.sent() === false) return [2 /*return*/];
-                        _a.label = 3;
-                    case 3: return [4 /*yield*/, window.storage.set('novos_alunos_melissa_caio_v9', 'true', false)];
-                    case 4:
-                        _a.sent();
-                        return [3 /*break*/, 6];
-                    case 5:
-                        e_n9 = _a.sent();
-                        return [3 /*break*/, 6];
-                    case 6: return [2 /*return*/];
+        (async function () {
+            try {
+                var marca = await window.storage.get('replicar_caio_melissa_set_v10', false);
+                if (cancelado || (marca && marca.value === 'true')) return;
+                var norm = TDBFinance.norm, meses = ['OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'], alvos = ['CAIO', 'MELISSA'];
+                var palavras = function (cat) { return norm(cat).split(/[^A-Z0-9]+/).filter(Boolean); };
+                var porCat = new Map();
+                transacoes.forEach(function (t) {
+                    if (t.mes !== 'SETEMBRO' || !String(t.categoria || '').startsWith('Mensalidade - ')) return;
+                    if (!palavras(t.categoria).some(function (w) { return alvos.indexOf(w) >= 0; })) return;
+                    var k = norm(t.categoria), a = porCat.get(k);
+                    if (!a || TDBFinance.due(t) > TDBFinance.due(a)) porCat.set(k, t);
+                });
+                if (!porCat.size) return;
+                // Remove só os cadastros vazios "MELISSA"/"CAIO" criados pelo TDB 9, quando existe o cadastro completo em Setembro.
+                var completos = Array.from(porCat.keys());
+                var ehVazio = function (t) {
+                    if (meses.indexOf(t.mes) < 0) return false;
+                    var k = norm(t.categoria);
+                    return alvos.some(function (n) { return k === 'MENSALIDADE - ' + n && completos.some(function (c) { return c !== k && palavras(c).indexOf(n) >= 0; }); })
+                        && t.valor == null && t.valorCheio == null && !t.data && !t.banco && t.status === 'Pendente';
+                };
+                var base = transacoes.filter(function (t) { return !ehVazio(t); });
+                var existentes = new Set(base.map(function (t) { return norm(t.categoria) + '|' + t.mes; }));
+                var maxId = maiorIdLancamento_(), novos = [];
+                porCat.forEach(function (ref, k) {
+                    meses.forEach(function (mes) {
+                        if (existentes.has(k + '|' + mes)) return;
+                        var devido = TDBFinance.num(ref.valorCheio) > 0 ? ref.valorCheio : (TDBFinance.due(ref) > 0 ? TDBFinance.due(ref) : null);
+                        novos.push({ id: ++maxId, mes: mes, categoria: ref.categoria, tipo: 'Entrada', valor: null, valorCheio: devido, quantidadeAlunos: TDBFinance.children(ref), status: 'Pendente', data: null, banco: null, nota: 'Pendente', pai: ref.pai != null ? ref.pai : null, tirarNota: ref.tirarNota != null ? ref.tirarNota : null, convenio: ref.convenio != null ? ref.convenio : null, foto: ref.foto || null, exercicio: 2026 });
+                    });
+                });
+                if (novos.length || base.length !== transacoes.length) {
+                    if ((await persist(base.concat(novos))) === false) return;
                 }
-            });
-        }); })();
+                await window.storage.set('replicar_caio_melissa_set_v10', 'true', false);
+            } catch (e_n10) { }
+        })();
         return function () { cancelado = true; };
     }, [!!(transacoes && transacoes.length)]);
     useEffect(function () {
@@ -17698,7 +17711,7 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .
 }
 </style>
 <style id="tdb-ctl">
-/* TDB 9 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
+/* TDB 11 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
 html[data-tdb-aurora] body :is(select,input[type=date]):not(#tdb-x){
  -webkit-appearance:none!important;appearance:none!important;box-sizing:border-box!important;
  border-radius:12px!important;border-width:1px!important;border-style:solid!important;line-height:normal!important;
@@ -17733,7 +17746,7 @@ html[data-tdb-aurora] body select:not(#tdb-x) option{font-weight:500;}
 }
 /* Linha de edição das Festas: tudo na mesma altura e no mesmo estilo */
 html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6px 30px 6px 9px!important;}
-/* Calendário completo (TDB 9) */
+/* Calendário completo (TDB 11) */
 #tdb-cal{position:fixed;z-index:2147483600;display:none;box-sizing:border-box;width:318px;max-width:calc(100vw - 16px);padding:12px;border-radius:18px;
  background:#fff;color:#111318;border:1px solid #cfd6e1;box-shadow:0 18px 48px rgba(17,19,24,.22),0 2px 6px rgba(17,19,24,.08);font-family:inherit;font-size:13px;
  --cal-acc:#1767cf;--cal-soft:rgba(23,103,207,.11);--cal-mut:#6b7482;--cal-bd:#d6dce5;--cal-hv:#eef2f8;--cal-bg2:#f4f6fa;user-select:none;-webkit-user-select:none;}
@@ -17801,7 +17814,7 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
 }
 </style>
 <script id="tdb-calendario">
-/* TDB 9 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
+/* TDB 11 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
 (function(){
  if(window.TDBCalendario)return;
  var MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
