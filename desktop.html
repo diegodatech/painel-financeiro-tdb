@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDB 1</title>
+  <title>TDB 2</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb1-20261001-sem-puxar";
+    window.__TDB_BUILD = "tdb2-20261001";
   </script>
-  <script src="./config.js?build=tdb1-20261001-sem-puxar"></script>
+  <script src="./config.js?build=tdb2-20261001"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 1">
+  <meta name="apple-mobile-web-app-title" content="TDB 2">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1015,12 +1015,39 @@ html.dark-mode {
       }
     }
   </style>
-<style id="tdb-sem-puxar-recarregar">
-/* Evita recarregar a página sem querer ao arrastar para baixo no topo (celular/tablet).
-   Só o eixo vertical: o gesto de voltar (deslizar pela lateral) continua funcionando.
+<script id="tdb-sem-puxar-recarregar">
+/* Tablet/computador: evita recarregar a página sem querer ao arrastar para baixo no topo.
+   Só age quando o toque COMEÇA no topo da página e o dedo desce; qualquer outra rolagem (para cima,
+   no meio da página, dentro de listas ou janelas) passa normalmente. O gesto de voltar não é afetado.
    Para atualizar, use o botão Atualizar. */
-html, body { overscroll-behavior-y: none; }
-</style>
+(function () {
+  try {
+    if (!(('ontouchstart' in window) || (navigator.maxTouchPoints > 0))) return;
+    var ultimoY = 0, topoNoInicio = false, ativo = false;
+    function raiz() { return document.scrollingElement || document.documentElement; }
+    document.addEventListener('touchstart', function (e) {
+      ativo = e.touches.length === 1;
+      if (!ativo) return;
+      ultimoY = e.touches[0].clientY;
+      topoNoInicio = raiz().scrollTop <= 0;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (!ativo || e.touches.length !== 1 || !topoNoInicio) return;
+      var y = e.touches[0].clientY, dy = y - ultimoY; ultimoY = y;
+      if (dy <= 0) { topoNoInicio = false; return; }
+      if (raiz().scrollTop > 0) { topoNoInicio = false; return; }
+      for (var el = e.target; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+        if (el.nodeType !== 1) continue;
+        var oy = getComputedStyle(el).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight && el.scrollTop > 0) return;
+      }
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchend', function () { ativo = false; topoNoInicio = false; }, { passive: true });
+    document.addEventListener('touchcancel', function () { ativo = false; topoNoInicio = false; }, { passive: true });
+  } catch (err) {}
+})();
+</script>
 </head>
 <body>
 
@@ -1074,10 +1101,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb1-20261001-sem-puxar"></script>
+  <script src="./sync.js?build=tdb2-20261001"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb1-20261001-sem-puxar-desktop';
+window.__TDB_BUILD_EXATO = 'tdb2-20261001-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
