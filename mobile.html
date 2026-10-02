@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 4</title>
+  <title>TDB 5</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb4-20261002";
+    window.__TDB_BUILD = "tdb5-20261002";
   </script>
-  <script src="./config.js?build=tdb4-20261002"></script>
+  <script src="./config.js?build=tdb5-20261002"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 4">
+  <meta name="apple-mobile-web-app-title" content="TDB 5">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1822,10 +1822,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb4-20261002"></script>
+  <script src="./sync.js?build=tdb5-20261002"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb4-20261002-mobile';
+window.__TDB_BUILD_EXATO = 'tdb5-20261002-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1986,6 +1986,25 @@ var RematriculaIcon = function (_a) {
         React.createElement("path", { d: "M19 20.3a3.6 3.6 0 0 0-5.3 1", stroke: "#2FD08A", strokeWidth: "2" }),
         React.createElement("path", { d: "M13.8 22.5v-1.7h1.7", stroke: "#2FD08A", strokeWidth: "2" })));
 };
+var CalendarioIcon = function (_a) {
+    var _b = _a.size, size = _b === void 0 ? 16 : _b, style = _a.style;
+    return (React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "none", strokeLinecap: "round", strokeLinejoin: "round", style: style },
+        React.createElement("rect", { x: "4", y: "5.5", width: "16", height: "14.5", rx: "3", stroke: "#3E7ACC", strokeWidth: "1.9" }),
+        React.createElement("path", { d: "M4 10h16", stroke: "#C15CA0", strokeWidth: "1.9" }),
+        React.createElement("path", { d: "M8.5 3.5v3.2M15.5 3.5v3.2", stroke: "#B87A1A", strokeWidth: "2" }),
+        React.createElement("path", { d: "M8.5 14h.01M12 14h.01M15.5 14h.01M8.5 17h.01M12 17h.01", stroke: "#1C9E8F", strokeWidth: "2.6" })));
+};
+function CalendarioTDB() {
+    var ref = useRef(null);
+    useEffect(function () {
+        var el = ref.current, off = null, t = null, vivo = true;
+        function ir() { if (vivo && window.TDBCalApp && el) off = window.TDBCalApp.mount(el); }
+        if (window.TDBCalApp) ir();
+        else t = setInterval(function () { if (window.TDBCalApp) { clearInterval(t); t = null; ir(); } }, 100);
+        return function () { vivo = false; if (t) clearInterval(t); if (off) off(); };
+    }, []);
+    return React.createElement("div", { ref: ref, className: "tcal-raiz", style: { minWidth: 0 } });
+}
 var FestasIcon = function (_a) {
     var _b = _a.size, size = _b === void 0 ? 16 : _b, style = _a.style;
     return (React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "none", strokeLinecap: "round", strokeLinejoin: "round", style: style },
@@ -9126,11 +9145,6 @@ function FestasTDB(_a) {
                     )
                 )
             ),
-            React.createElement("div", { className: "busca-liquid-glass festas-tdb-busca", style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 14, padding: '9px 11px', minWidth: 0 } },
-                React.createElement(Search, { size: 17, color: COLORS.inkSoft, style: { flex: '0 0 auto' } }),
-                React.createElement("input", { type: "search", value: buscaFestas, onChange: function (e) { return setBuscaFestas(e.target.value); }, placeholder: "Pesquisar nome, valor, data, banco, pago ou não pago...", autoComplete: "off", spellCheck: "false", 'aria-label': "Pesquisar participantes da festa", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 16.5, padding: '7px 4px' } }),
-                termoBuscaFestas ? React.createElement("button", { type: "button", onClick: function () { return setBuscaFestas(''); }, title: "Limpar pesquisa", 'aria-label': "Limpar pesquisa", style: { width: 36, height: 36, flex: '0 0 36px', border: '1px solid ' + COLORS.line, borderRadius: 12, background: COLORS.paperCard, color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 15 })) : null,
-                termoBuscaFestas ? React.createElement("span", { className: "mono", style: { flex: '0 0 auto', fontSize: 11.5, fontWeight: 800, color: COLORS.inkButton, whiteSpace: 'nowrap' } }, rowsFiltradosFestas.length + " de " + rows.length) : null),
             ehMobileFestas && React.createElement("button", { type: "button", onClick: function () { return setNovoParticipanteMobileAberto(true); }, className: "busca-liquid-glass", style: { minHeight: 48, borderRadius: 14, border: '1px dashed ' + COLORS.gold, background: COLORS.paperCard, color: COLORS.ink, fontWeight: 850, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 } }, React.createElement(Plus, { size: 16 }), "Adicionar participante"), !ehMobileFestas && React.createElement("form", { onSubmit: adicionarRow, className: "festas-tdb-form busca-liquid-glass", style: { display: 'grid', gridTemplateColumns: 'minmax(180px,2fr) 140px 105px 120px 135px 140px 110px auto', gap: 8, alignItems: 'end', padding: 12, borderRadius: 14 } },
                 React.createElement("div", { className: "festas-campo-nome", style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "NOME"), React.createElement("input", { value: novo.nome, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { nome: e.target.value })); }, placeholder: "Nome da criança", style: inputTop })),
                 React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "GRUPO"), React.createElement("select", { value: novo.tipo, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { tipo: e.target.value })); }, style: inputTop }, React.createElement("option", { value: "PARTICULAR" }, "Particular"), React.createElement("option", { value: "PREFEITURA" }, "Prefeitura"))),
@@ -9144,6 +9158,11 @@ function FestasTDB(_a) {
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Crianças: ", React.createElement("b", { style: { color: COLORS.ink, fontSize: 16 } }, _festasContarCriancas(rows, transacoes))),
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Total de pessoas: ", React.createElement("b", { style: { color: COLORS.inkButton, fontSize: 16 } }, totalGeral.pessoas)),
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Total em valor: ", React.createElement("b", { className: "mono", style: { color: COLORS.green, fontSize: 16 } }, formatBRL(totalGeral.valor)))),
+        React.createElement("div", { className: "busca-liquid-glass festas-tdb-busca", style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 14, padding: '9px 11px', minWidth: 0 } },
+            React.createElement(Search, { size: 17, color: COLORS.inkSoft, style: { flex: '0 0 auto' } }),
+            React.createElement("input", { type: "search", value: buscaFestas, onChange: function (e) { return setBuscaFestas(e.target.value); }, placeholder: "Pesquisar nome, valor, data, banco, pago ou não pago...", autoComplete: "off", spellCheck: "false", 'aria-label': "Pesquisar participantes da festa", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 16.5, padding: '7px 4px' } }),
+            termoBuscaFestas ? React.createElement("button", { type: "button", onClick: function () { return setBuscaFestas(''); }, title: "Limpar pesquisa", 'aria-label': "Limpar pesquisa", style: { width: 36, height: 36, flex: '0 0 36px', border: '1px solid ' + COLORS.line, borderRadius: 12, background: COLORS.paperCard, color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 15 })) : null,
+            termoBuscaFestas ? React.createElement("span", { className: "mono", style: { flex: '0 0 auto', fontSize: 11.5, fontWeight: 800, color: COLORS.inkButton, whiteSpace: 'nowrap' } }, rowsFiltradosFestas.length + " de " + rows.length) : null),
         termoBuscaFestas && rowsFiltradosFestas.length === 0 ? React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '16px 14px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13 } }, "Nenhum participante encontrado para ‘" + buscaFestas + "’.") : null,
         blocoGrupo('PARTICULAR', 'Particulares'),
         blocoGrupo('PREFEITURA', 'Prefeitura'),
@@ -12175,6 +12194,7 @@ function salvarTudoAgora() {
         ['anotacoes', 'Anotações', NotebookText, '#B87A1A', '#FCEFDD'],
         ['arquivos', 'Arquivos', ImageIcon, '#5B8DEF', '#E7EEFC'],
         ['festasTdb', 'Festas TDB', FestasIcon, '#B87A1A', '#FCEFDD'],
+        ['calendario', 'Calendário', CalendarioIcon, '#3E7ACC', '#E4EEFC'],
         ['contasPessoais', 'Pessoais', Wallet, '#C15CA0', '#F8E4F1'],
     ].map(function (_a) {
         var key = _a[0], label = _a[1], Icone = _a[2], cor = _a[3], corFundo = _a[4];
@@ -12213,7 +12233,7 @@ function salvarTudoAgora() {
             { label: 'Saídas (com dados)', valor: kpis.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
             { label: 'Resultado', valor: kpis.resultado, icon: kpis.resultado >= 0 ? TrendingUp : TrendingDown, cor: '#4A5A58', bg: COLORS.lineSoft, destaque: true },
             { label: 'A receber', valor: aReceber.valor, icon: Receipt, cor: '#2878de', bg: COLORS.paperCard, detalhe: aReceber.mes ? (MESES_ABREV[aReceber.mes] + ' · ' + (modoPrivado ? 'mensalidades em aberto' : aReceber.qtd + (aReceber.qtd === 1 ? ' mensalidade em aberto' : ' mensalidades em aberto'))) : 'Sem mensalidades cadastradas' },
-        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
+        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
 }
 function ModalExercicioEncerrado(_a) {
     var ano = _a.ano, onFechar = _a.onFechar;
@@ -17565,7 +17585,7 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .
 }
 </style>
 <style id="tdb-ctl">
-/* TDB 4 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
+/* TDB 5 — caixas de seleção e datas iguais às demais caixas (bolha arredondada). Só aparência. */
 html[data-tdb-aurora] body :is(select,input[type=date]):not(#tdb-x){
  -webkit-appearance:none!important;appearance:none!important;box-sizing:border-box!important;
  border-radius:12px!important;border-width:1px!important;border-style:solid!important;line-height:normal!important;
@@ -17600,7 +17620,7 @@ html[data-tdb-aurora] body select:not(#tdb-x) option{font-weight:500;}
 }
 /* Linha de edição das Festas: tudo na mesma altura e no mesmo estilo */
 html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6px 30px 6px 9px!important;}
-/* Calendário completo (TDB 4) */
+/* Calendário completo (TDB 5) */
 #tdb-cal{position:fixed;z-index:2147483600;display:none;box-sizing:border-box;width:318px;max-width:calc(100vw - 16px);padding:12px;border-radius:18px;
  background:#fff;color:#111318;border:1px solid #cfd6e1;box-shadow:0 18px 48px rgba(17,19,24,.22),0 2px 6px rgba(17,19,24,.08);font-family:inherit;font-size:13px;
  --cal-acc:#1767cf;--cal-soft:rgba(23,103,207,.11);--cal-mut:#6b7482;--cal-bd:#d6dce5;--cal-hv:#eef2f8;--cal-bg2:#f4f6fa;user-select:none;-webkit-user-select:none;}
@@ -17668,7 +17688,7 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
 }
 </style>
 <script id="tdb-calendario">
-/* TDB 4 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
+/* TDB 5 — calendário completo. Só aparência/entrada de data: o valor continua no mesmo formato (aaaa-mm-dd) e avisa o app pelos mesmos eventos de sempre. */
 (function(){
  if(window.TDBCalendario)return;
  var MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -17858,6 +17878,919 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
  }catch(e){}
  window.TDBCalendario={abrir:abrir,fechar:fechar};
 })();
+</script>
+<style id="tdb-calapp">
+/* TDB 5 — aba Calendário. Só aparência da aba nova + selo no botão da aba. */
+.tcal,#tcal-pop,#tcal-modal,#tcal-toast{--t-ink:var(--c-ink,#111318);--t-soft:var(--c-inkSoft,#454c59);--t-line:var(--c-line,#d7dce5);--t-acc:var(--c-inkButton,#1767cf);--t-solid:#fff;--t-field:#fff;--t-chip:rgba(23,103,207,.12);--t-hover:rgba(23,103,207,.07);--t-aviso-bg:#fff4dc;--t-aviso-bd:#f0d28a;--t-aviso-tx:#6b5a2a;--t-red:#c62d36;--t-green:#1c9e8f;--t-amber:#d98a00}
+body.dark-mode .tcal,#tcal-pop.dk,#tcal-modal.dk,#tcal-toast.dk{--t-solid:#2a2c33;--t-field:#1f2127;--t-chip:rgba(106,168,245,.18);--t-hover:rgba(255,255,255,.06);--t-aviso-bg:#3b3320;--t-aviso-bd:#6e5a24;--t-aviso-tx:#e9d9a8;--t-acc:#6aa8f5;--t-red:#ff8a90;--t-line:#555b68;--t-ink:#f6f7f9;--t-soft:#d0d4dc}
+.tcal{color:var(--t-ink);font-family:inherit;position:relative;min-width:0}
+.tcal,.tcal *,#tcal-pop,#tcal-pop *,#tcal-modal,#tcal-modal *{box-sizing:border-box}
+.tcal button,#tcal-pop button,#tcal-modal button{font-family:inherit;cursor:pointer;color:inherit}
+.tcal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.tcal-h{font-size:22px;font-weight:800;margin:0 auto 0 0;line-height:1.2;color:var(--t-ink)}
+.tcal-sync{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--t-soft);background:transparent;border:0;padding:4px 2px;text-align:left}
+.tcal-sync i{width:9px;height:9px;border-radius:50%;background:var(--t-green);flex:0 0 auto}
+.tcal-sync.pend i{background:var(--t-amber)}.tcal-sync.erro i{background:var(--t-red)}
+.tcal-sync:hover span{text-decoration:underline}
+.tcal-search{display:flex;align-items:center;gap:6px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-field);padding:0 11px;height:38px;width:200px;max-width:100%}
+.tcal-search span{font-size:13px;opacity:.7}
+.tcal-search input{border:0!important;background:transparent!important;outline:none;box-shadow:none!important;color:var(--t-ink);font-size:13px;flex:1;min-width:0;padding:0!important;height:100%;font-family:inherit}
+.tcal-search input::placeholder{color:var(--t-soft);opacity:.75}
+.tcal-seg{display:flex;border:1px solid var(--t-line);border-radius:12px;overflow:hidden;background:var(--t-field)}
+.tcal-seg button{border:0;background:transparent;padding:0 14px;height:36px;font-size:13px;font-weight:700;color:var(--t-soft)}
+.tcal-seg button.on{background:var(--t-chip);color:var(--t-acc)}
+.tcal-btn{border:1px solid var(--t-line);background:var(--t-field);border-radius:12px;padding:0 13px;height:36px;font-size:13px;font-weight:700;color:var(--t-ink)}
+.tcal-btn:hover{background:var(--t-hover)}
+.tcal-btn.p{background:var(--t-acc);border-color:var(--t-acc);color:#fff}
+.tcal-btn.p:hover{filter:brightness(1.06)}
+.tcal-btn.danger{color:var(--t-red);border-color:color-mix(in srgb,var(--t-red) 45%,transparent)}
+.tcal-novo{height:38px}
+.tcal-lnk{border:0;background:transparent;color:var(--t-acc);font-weight:800;font-size:12.5px;padding:4px 0}
+.tcal-lnk:hover{text-decoration:underline}
+.tcal-alertas{display:grid;gap:8px;margin-bottom:12px}.tcal-alertas:empty{display:none}
+.tcal-chips{display:none}
+.tcal-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.tcal[data-narrow="1"] .tcal-layout{grid-template-columns:minmax(0,1fr)}
+.tcal-card{background:var(--c-paperCard,#fff);border:1px solid var(--t-line);border-radius:18px;box-shadow:0 8px 24px rgba(30,40,70,.07)}
+body.dark-mode .tcal-card{box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.tcal-main{padding:14px;min-width:0}
+.tcal-side{display:grid;gap:14px;align-content:start;min-width:0}
+.tcal-box{padding:14px}
+.tcal-box h3{margin:0 0 10px;font-size:14px;font-weight:800;color:var(--t-ink)}
+.tcal-ags .tcal-agi{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;text-align:left;padding:5px 2px;font-size:13px;font-weight:700;border-radius:8px}
+.tcal-ags .tcal-agi:hover{background:var(--t-hover)}
+.tcal-ck{width:17px;height:17px;border-radius:5px;background:var(--c);display:inline-grid;place-items:center;color:#fff;font-size:11px;font-weight:900;flex:0 0 auto;border:2px solid var(--c)}
+.tcal-ck.off{background:transparent;color:transparent}
+.tcal-novaag{margin-top:6px}
+.tcal-na{display:grid;gap:8px}
+.tcal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.tcal-tt{font-size:17px;font-weight:800;margin-right:auto;text-transform:none}
+.tcal-sq{width:34px;height:34px;border:1px solid var(--t-line);border-radius:10px;background:var(--t-field);display:grid;place-items:center;font-weight:800;font-size:18px;line-height:1;padding:0}
+.tcal-sq:hover{background:var(--t-hover)}
+.tcal-dw{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.tcal-dw span{font-size:11px;font-weight:800;color:var(--t-soft);text-align:center;padding:4px 0}
+.tcal-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.tcal-d{border:1px solid color-mix(in srgb,var(--t-line) 60%,transparent);border-radius:12px;padding:6px;background:var(--t-solid);background:color-mix(in srgb,var(--t-solid) 70%,transparent);font-size:12px;font-weight:700;position:relative;min-width:0;overflow:hidden;cursor:pointer}
+.tcal-d:hover{border-color:var(--t-acc)}
+.tcal-d.out{opacity:.5}
+.tcal-d.hoje{border:1.5px solid var(--t-acc);background:var(--t-hover)}
+.tcal-d.sel{outline:2px solid var(--t-acc);outline-offset:-2px}
+.tcal-d.drop,.tcal-col.drop,.tcal-ad-c.drop{background:var(--t-chip)}
+.tcal-n{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:50%;padding:0 3px}
+.tcal-d.hoje .tcal-n{background:var(--t-acc);color:#fff}
+.tcal-ev{display:block;margin-top:3px;padding:2px 6px;border-radius:7px;font-size:10.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;background:var(--c);cursor:pointer;line-height:1.35}
+.tcal-ev b{font-weight:800;opacity:.92}
+.tcal-ev:hover{filter:brightness(1.08)}
+.tcal-more{display:block;margin-top:3px;border:0;background:transparent;font-size:10.5px;font-weight:800;color:var(--t-acc);padding:0 2px}
+.tcal-dots{display:inline-flex;gap:3px;margin-left:3px;vertical-align:middle;flex-wrap:wrap}
+.tcal-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.tcal-diasel{margin-top:12px;border-top:1px solid var(--t-line);padding-top:10px}
+.tcal-diasel-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;font-size:13px}
+.tcal-leg{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:var(--t-soft);margin-top:10px}
+.tcal-leg span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;background:var(--c)}
+/* semana / dia */
+.tcal-wk{border:1px solid color-mix(in srgb,var(--t-line) 70%,transparent);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--t-solid) 60%,transparent)}
+.tcal-wk-h,.tcal-wk-ad{display:grid;grid-template-columns:52px repeat(var(--nd),minmax(0,1fr))}
+.tcal-wk-g{display:grid;grid-template-columns:52px repeat(var(--nd),minmax(0,1fr));position:relative}
+.tcal-gut{font-size:10px;font-weight:700;color:var(--t-soft);padding:4px 6px;text-align:right}
+.tcal-wk-d{text-align:center;font-size:11px;font-weight:800;color:var(--t-soft);padding:6px 2px;cursor:pointer;border-left:1px solid color-mix(in srgb,var(--t-line) 60%,transparent)}
+.tcal-wk-d b{display:grid;place-items:center;width:30px;height:30px;margin:2px auto 0;border-radius:50%;font-size:15px;color:var(--t-ink)}
+.tcal-wk-d.hoje b{background:var(--t-acc);color:#fff}
+.tcal-wk-ad{border-top:1px solid color-mix(in srgb,var(--t-line) 60%,transparent);min-height:30px}
+.tcal-ad-c{border-left:1px solid color-mix(in srgb,var(--t-line) 60%,transparent);padding:2px 3px 4px;min-width:0}
+.tcal-wk-sc{max-height:560px;overflow-y:auto;border-top:1px solid color-mix(in srgb,var(--t-line) 60%,transparent);scrollbar-width:none}
+.tcal-wk-sc::-webkit-scrollbar{display:none}
+.tcal-hrs div{font-size:10px;font-weight:700;color:var(--t-soft);text-align:right;padding:0 6px;transform:translateY(-6px)}
+.tcal-hrs{padding:0}
+.tcal-col{position:relative;border-left:1px solid color-mix(in srgb,var(--t-line) 60%,transparent);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,color-mix(in srgb,var(--t-line) 55%,transparent) 47px,color-mix(in srgb,var(--t-line) 55%,transparent) 48px);cursor:pointer;min-width:0}
+.tcal-col.hoje{background-color:var(--t-hover)}
+.tcal-blk{position:absolute;border-radius:8px;background:var(--c);color:#fff;padding:2px 6px;font-size:11px;overflow:hidden;cursor:pointer;line-height:1.25;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.tcal-blk b{display:block;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcal-blk small{font-size:10px;opacity:.92;white-space:nowrap}
+.tcal-now{position:absolute;left:0;right:0;height:2px;background:var(--t-red);z-index:2;pointer-events:none}
+.tcal-now:before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--t-red)}
+/* ano */
+.tcal-year{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.tcal[data-narrow="1"] .tcal-year{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tcal[data-phone="1"] .tcal-year{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tcal-mini{min-width:0}
+.tcal-mini-t{border:0;background:transparent;font-weight:800;font-size:13px;color:var(--t-ink);padding:2px 0 4px;text-align:left}
+.tcal-mg{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;font-size:10.5px;text-align:center}
+.tcal-mg .w{font-weight:800;color:var(--t-soft)}
+.tcal-mc{border:0;background:transparent;padding:3px 0;border-radius:50%;font-size:10.5px;font-weight:600;color:var(--t-ink);aspect-ratio:1;display:grid;place-items:center}
+.tcal-mc.tem{background:var(--t-chip);color:var(--t-acc);font-weight:800}
+.tcal-mc.hoje{background:var(--t-acc);color:#fff}
+/* agenda / lista */
+.tcal-ag-d{display:flex;align-items:baseline;gap:10px;padding:10px 2px 4px;border-bottom:1px solid var(--t-line);margin-top:6px}
+.tcal-ag-d b{font-size:20px}.tcal-ag-d span{font-size:11px;font-weight:800;color:var(--t-soft);letter-spacing:.03em}
+.tcal-ag-d.hoje b{color:var(--t-acc)}
+.tcal-bus-h{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px;margin-bottom:4px}
+.tcal-li{display:flex;gap:10px;padding:9px 0;border-top:1px solid color-mix(in srgb,var(--t-line) 45%,transparent);align-items:center;cursor:pointer;min-width:0}
+.tcal-li:first-of-type{border-top:0}
+.tcal-li:hover{background:var(--t-hover)}
+.tcal-bar{width:9px;height:36px;border-radius:6px;flex:0 0 auto}
+.tcal-li-t{min-width:0;flex:1}
+.tcal-li-t b{font-size:13px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tcal-li-t small{color:var(--t-soft);font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tcal-bell{margin-left:auto;font-size:11px;font-weight:800;color:var(--t-acc);background:var(--t-chip);border-radius:999px;padding:4px 8px;white-space:nowrap;flex:0 0 auto}
+.tcal-vazio{color:var(--t-soft);font-size:12.5px;padding:12px 2px;text-align:center}
+.tcal-aviso{display:flex;gap:10px;align-items:center;padding:12px;border-radius:14px;background:var(--t-aviso-bg);border:1px solid var(--t-aviso-bd);font-size:13px;font-weight:700;color:var(--t-ink)}
+.tcal-aviso small{display:block;font-weight:500;color:var(--t-aviso-tx);margin-top:2px;line-height:1.35}
+.tcal-aviso-i{font-size:22px;flex:0 0 auto}
+.tcal-aviso>div{min-width:0;flex:1}
+.tcal-aviso.due{border-color:var(--t-amber);box-shadow:0 0 0 2px color-mix(in srgb,var(--t-amber) 25%,transparent)}
+/* chips */
+.tcal-chip{padding:6px 12px;border-radius:999px;border:1.5px solid var(--c,var(--t-acc));background:transparent;font-size:12px;font-weight:800;color:var(--c,var(--t-acc));white-space:nowrap}
+.tcal-chip.on{background:color-mix(in srgb,var(--c,var(--t-acc)) 16%,transparent)}
+.tcal-chips-t{display:flex;gap:6px;flex-wrap:wrap}
+/* popover */
+#tcal-pop{display:none;position:fixed;z-index:2147482000;width:310px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;background:var(--t-solid);color:var(--t-ink);border:1px solid var(--t-line);border-radius:18px;box-shadow:0 18px 48px rgba(17,19,24,.28);padding:14px;font-size:13px}
+#tcal-pop.on{display:block}
+#tcal-pop.sheet{left:0!important;right:0;top:auto!important;bottom:0;width:100%;max-width:none;max-height:78vh;border-radius:22px 22px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.tcal-pop-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tcal-pop-h b{font-size:15px;flex:1;min-width:0;overflow-wrap:anywhere}
+.tcal-pop-bt{display:inline-flex;gap:2px;flex:0 0 auto}
+.tcal-pop-bt button{border:0;background:transparent;width:30px;height:30px;border-radius:8px;font-size:14px;color:var(--t-soft)}
+.tcal-pop-bt button:hover{background:var(--t-hover);color:var(--t-ink)}
+.tcal-pop-bt button.sure{width:auto;padding:0 8px;font-size:12px;font-weight:800;color:var(--t-red)}
+.tcal-sw{width:12px;height:12px;border-radius:4px;flex:0 0 auto}
+.tcal-row{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;margin:7px 0;line-height:1.4}
+.tcal-row.sm{font-size:11.5px}
+.tcal-ic{width:20px;text-align:center;flex:0 0 auto}
+.tcal-desc{white-space:pre-wrap;overflow-wrap:anywhere}
+.tcal-tag{display:inline-block;background:var(--t-aviso-bg);border:1px solid var(--t-aviso-bd);border-radius:999px;font-size:10px;font-weight:800;padding:1px 7px;color:var(--t-aviso-tx);margin-left:4px}
+.tcal-ok{color:var(--t-green);font-weight:800}.tcal-pe{color:var(--t-amber);font-weight:800}
+.tcal-pop-f{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+/* campos */
+.tcal-in{width:100%;border:1px solid var(--t-line);border-radius:12px;background:var(--t-field);color:var(--t-ink);padding:9px 11px;font-size:13px;font-family:inherit;min-width:0;outline:none}
+textarea.tcal-in{resize:vertical;min-height:70px;line-height:1.4}
+.tcal-in:focus{border-color:var(--t-acc)}
+.tcal-in.erro{border-color:var(--t-red)}
+.tcal-in.sm{width:auto;padding:7px 28px 7px 10px;font-weight:700;margin-left:auto}
+.tcal-in:disabled{opacity:.5}
+.tcal-in::placeholder{color:var(--t-soft);opacity:.7}
+#tcal-pop .tcal-in{margin-bottom:8px}
+/* formulário */
+.tcal-fh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tcal-fh h3{margin:0;font-size:16px;font-weight:800}
+.tcal-x{border:0;background:transparent;width:30px;height:30px;border-radius:8px;color:var(--t-soft);font-size:15px;font-weight:800;flex:0 0 auto}
+.tcal-x:hover{background:var(--t-hover);color:var(--t-ink)}
+.tcal-form{display:grid;gap:10px}
+.tcal-form p{margin:0;font-size:13px;line-height:1.5}
+.tcal-form ol{margin:0;padding-left:20px;font-size:13px;line-height:1.55;display:grid;gap:6px}
+.tcal-form p.ok{color:var(--t-green);font-weight:800}.tcal-form p.pe{color:var(--t-amber);font-weight:800}
+.tcal-f{display:grid;gap:4px;min-width:0}
+.tcal-f>span{font-size:10.5px;font-weight:800;color:var(--t-soft);letter-spacing:.03em}
+.tcal-f em{font-style:normal;font-size:11.5px;color:var(--t-red);font-weight:700}
+.tcal-f small{font-size:11px;color:var(--t-soft);line-height:1.35}
+.tcal-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tcal-tg{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700}
+.tcal-tgb{width:38px;height:22px;border-radius:12px;background:color-mix(in srgb,var(--t-soft) 40%,transparent);border:0;position:relative;padding:0;flex:0 0 auto}
+.tcal-tgb i{position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.tcal-tgb.on{background:var(--t-acc)}.tcal-tgb.on i{left:19px}
+.tcal-rem{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.tcal-swr{display:flex;gap:8px;flex-wrap:wrap}
+.tcal-swb{width:24px;height:24px;border-radius:50%;background:var(--c);border:0;padding:0}
+.tcal-swb.on{outline:2px solid var(--t-ink);outline-offset:2px}
+.tcal-fb{display:flex;gap:8px;align-items:center;margin-top:4px}
+.tcal-fb .grow,.grow{flex:1}
+.tcal-fb .tcal-btn{height:38px}
+.tcal-hint{font-size:11.5px;color:var(--t-soft);line-height:1.4}
+.tcal-keys{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--t-soft);margin-top:2px}
+.tcal-keys b{background:var(--t-chip);border-radius:6px;padding:2px 6px;color:var(--t-ink);margin-right:2px}
+/* janela */
+#tcal-modal{display:none;position:fixed;inset:0;z-index:2147481000}
+#tcal-modal.on{display:block}
+#tcal-modal .tcal-ov{position:absolute;inset:0;background:rgba(15,18,25,.5);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+#tcal-modal .tcal-md{width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--t-solid);color:var(--t-ink);border:1px solid var(--t-line);border-radius:20px;padding:18px;box-shadow:0 24px 64px rgba(0,0,0,.35);font-size:13px}
+#tcal-modal.sheet .tcal-ov{align-items:flex-end;padding:0}
+#tcal-modal.sheet .tcal-md{width:100%;max-height:92vh;border-radius:22px 22px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+/* aviso rápido */
+#tcal-toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:2147483000;background:#1f2430;color:#fff;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;transition:opacity .2s,transform .2s;max-width:calc(100vw - 32px);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#tcal-toast.on{opacity:1;transform:translate(-50%,0)}
+#tcal-toast.aviso{background:#8a2a2f}
+/* botão flutuante (celular) */
+.tcal-fab{display:none}
+.tcal[data-phone="1"] .tcal-fab{display:grid;place-items:center;position:fixed;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:18px;border:0;background:var(--t-acc);color:#fff;font-size:30px;font-weight:400;line-height:1;box-shadow:0 10px 24px rgba(23,103,207,.4);z-index:50}
+/* celular */
+.tcal[data-phone="1"] .tcal-head{display:grid;grid-template-columns:1fr;gap:8px}
+.tcal[data-phone="1"] .tcal-h{margin:0;font-size:20px}
+.tcal[data-phone="1"] .tcal-novo{display:none}
+.tcal[data-phone="1"] .tcal-search{width:100%}
+.tcal[data-phone="1"] .tcal-seg{width:100%}
+.tcal[data-phone="1"] .tcal-seg button{flex:1;padding:0 4px}
+.tcal[data-phone="1"] .tcal-chips{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;margin:0 0 4px;scrollbar-width:none}
+.tcal[data-phone="1"] .tcal-chips::-webkit-scrollbar{display:none}
+.tcal[data-phone="1"] .tcal-main{padding:10px}
+.tcal[data-phone="1"] .tcal-month,.tcal[data-phone="1"] .tcal-dw{gap:3px}
+.tcal[data-phone="1"] .tcal-d{padding:3px 3px 2px;border-radius:10px;min-height:50px;display:flex;flex-direction:column;align-items:flex-start}
+.tcal[data-phone="1"] .tcal-dots{margin:2px 0 0;gap:2px}
+.tcal[data-phone="1"] .tcal-dot{width:7px;height:7px}
+.tcal[data-phone="1"] .tcal-wk-h,.tcal[data-phone="1"] .tcal-wk-ad,.tcal[data-phone="1"] .tcal-wk-g{grid-template-columns:34px repeat(var(--nd),minmax(0,1fr))}
+.tcal[data-phone="1"] .tcal-gut{padding:4px 3px;font-size:9px}
+.tcal[data-phone="1"] .tcal-wk-d{font-size:9.5px}
+.tcal[data-phone="1"] .tcal-wk-d b{width:24px;height:24px;font-size:12.5px}
+.tcal[data-phone="1"] .tcal-blk{font-size:9.5px;padding:1px 3px}
+.tcal[data-phone="1"] .tcal-blk small{display:none}
+.tcal[data-phone="1"] .tcal-ev{font-size:9.5px;padding:1px 3px}
+.tcal[data-phone="1"] .tcal-tt{font-size:15.5px}
+.tcal[data-phone="1"] .tcal-two{grid-template-columns:1fr 1fr}
+.tcal[data-phone="1"] .tcal-bell{display:none}
+/* selo da aba */
+.abas-menu .aba-item[data-aurora-icon="calendario"]{position:relative}
+.abas-menu .aba-item[data-cal-badge]::after,.abas-menu [data-aurora-icon="calendario"][data-cal-badge]::after{content:attr(data-cal-badge);position:absolute;top:3px;right:5px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#c62d36;color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;box-shadow:0 0 0 2px var(--c-paperCard,#fff)}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"]{--aurora-icon:#1767cf}
+html[data-tdb-aurora] body.dark-mode .abas-menu .aba-item[data-aurora-icon="calendario"]{--aurora-icon:#79adf4}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .aba-icon svg > :nth-child(1){stroke:#3E7ACC!important;}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .aba-icon svg > :nth-child(2){stroke:#C15CA0!important;}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .aba-icon svg > :nth-child(3){stroke:#B87A1A!important;}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="calendario"] .aba-icon svg > :nth-child(4){stroke:#1C9E8F!important;}
+</style>
+<script id="tdb-calapp-js">
+/* TDB 5 — aba Calendário (agenda estilo Google Agenda). Dados na chave própria calendario_tdb_v1 via window.storage
+   (a mesma sincronização de sempre, sem alterá-la). Envio à Google Agenda: ação separada "agenda" no Apps Script. */
+(function(){
+ 'use strict';
+ if(window.TDBCalApp)return;
+ var KEY='calendario_tdb_v1';
+ var MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+ var MESA=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+ var DOWL=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+ var DOWA=['dom','seg','ter','qua','qui','sex','sáb'];
+ var AG0={fe:{n:'Festas',c:'#c15ca0'},pa:{n:'Passeios',c:'#1c9e8f'},re:{n:'Reuniões',c:'#1767cf'},pg:{n:'Pagamentos',c:'#d98a00'},ou:{n:'Outros',c:'#7b6bd6'}};
+ var CORES=['#c15ca0','#1c9e8f','#1767cf','#d98a00','#7b6bd6','#d93025','#5b6472'];
+ var AV_PADRAO={fe:1440,pa:1440,re:60,pg:2880,ou:60};
+ var HP=48; // altura de 1 hora na grade
+ var S={data:{agendas:{},eventos:{},tomb:{},del:{}},loaded:false,view:'month',cur:null,sel:null,q:'',host:null,draft:null,pop:null,ga:{estado:'?',msg:''},festas:[],off:{},timer:null,saveT:null,gaBusy:false,montado:false,vistos:{}};
+ function pad(n){return String(n).padStart(2,'0');}
+ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+ function hoje(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+ function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+ function pY(s){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s||''));return m?new Date(+m[1],+m[2]-1,+m[3]):null;}
+ function add(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+ function addM(d,n){return new Date(d.getFullYear(),d.getMonth()+n,1);}
+ function diffD(a,b){return Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000);}
+ function sow(d){return add(d,-d.getDay());}
+ function minOf(h){var m=/^(\d{1,2}):(\d{2})/.exec(h||'');return m?(+m[1])*60+(+m[2]):0;}
+ function hh(min){min=Math.max(0,Math.min(1439,min));return pad(Math.floor(min/60))+':'+pad(min%60);}
+ function dtOf(d,h){var x=pY(d);if(!x)return null;var m=minOf(h);return new Date(x.getFullYear(),x.getMonth(),x.getDate(),Math.floor(m/60),m%60);}
+ function curr(){var v=S.cur||hoje();return v;}
+ function isPhone(){return window.innerWidth<=760;}
+ function isNarrow(){return window.innerWidth<=1000;}
+ function uid(){return 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+ function lsGet(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+ /* ---------- dados ---------- */
+ function ags(){var o={};Object.keys(AG0).forEach(function(k){o[k]={n:AG0[k].n,c:AG0[k].c,b:1};});Object.keys(S.data.agendas||{}).forEach(function(k){var a=S.data.agendas[k];if(a&&a.n){o[k]={n:a.n,c:a.c||'#5b6472'};}});return o;}
+ function agOn(k){return !S.off[k];}
+ function corEv(ev){var a=ags()[ev.ag];return ev.cor||(a&&a.c)||'#5b6472';}
+ function merge(a,b){
+  var o={agendas:{},eventos:{},tomb:{},del:{}};
+  [a,b].forEach(function(x){if(!x)return;
+   Object.keys(x.agendas||{}).forEach(function(k){var n=x.agendas[k],c=o.agendas[k];if(!c||(n.upd||0)>=(c.upd||0))o.agendas[k]=n;});
+   Object.keys(x.eventos||{}).forEach(function(k){var n=x.eventos[k],c=o.eventos[k];if(!n)return;if(!c||(n.upd||0)>=(c.upd||0))o.eventos[k]=n;});
+   Object.keys(x.tomb||{}).forEach(function(k){o.tomb[k]=Math.max(o.tomb[k]||0,x.tomb[k]||0);});
+   Object.keys(x.del||{}).forEach(function(k){o.del[k]=x.del[k];});
+  });
+  Object.keys(o.tomb).forEach(function(k){if(o.eventos[k]&&(o.eventos[k].upd||0)<=o.tomb[k])delete o.eventos[k];});
+  return o;
+ }
+ function carregar(){
+  if(!window.storage||!window.storage.get)return Promise.resolve();
+  return window.storage.get(KEY,false).then(function(r){
+   var v=null;try{v=r&&r.value?JSON.parse(r.value):null;}catch(e){}
+   S.data=merge(S.data,v);S.loaded=true;
+  }).catch(function(){S.loaded=true;});
+ }
+ function salvar(){
+  clearTimeout(S.saveT);
+  S.saveT=setTimeout(function(){
+   if(!window.storage||!window.storage.set)return;
+   var atual=S.data;
+   window.storage.get(KEY,false).then(function(r){var v=null;try{v=r&&r.value?JSON.parse(r.value):null;}catch(e){}return merge(v,atual);}).catch(function(){return atual;}).then(function(m){
+    S.data=m;
+    return window.storage.set(KEY,JSON.stringify(m),false);
+   }).catch(function(){toast('Não consegui guardar o calendário agora. Tente de novo.','aviso');});
+  },250);
+ }
+ function lerFestas(){
+  if(!window.storage||!window.storage.get)return;
+  window.storage.get('festas_tdb_abas',false).then(function(r){var l=null;try{l=r&&r.value?JSON.parse(r.value):null;}catch(e){}
+   if(Array.isArray(l))S.festas=l.filter(function(a){return a&&a.key&&a.label;}).map(function(a){return {key:String(a.key),label:String(a.label),emoji:String(a.emoji||'🎉')};});
+  }).catch(function(){});
+ }
+
+ /* ---------- ocorrências ---------- */
+ function evFim(ev){ // data final (inclusive) de uma ocorrência que começa em ev.d
+  var d=pY(ev.d),f=pY(ev.df||ev.d);if(!d||!f||f<d)return 0;return diffD(d,f);
+ }
+ function ocorr(ev,ini,fim){ // ini/fim: Date (dias inclusivos)
+  var out=[],b=pY(ev.d);if(!b)return out;var span=evFim(ev);
+  function push(c){out.push({id:ev.id,ev:ev,d:ymd(c),df:ymd(add(c,span)),h:ev.h||'',hf:ev.hf||'',dia:!!ev.dia,span:span});}
+  var rep=ev.rep||'';
+  if(!rep){var e=add(b,span);if(e>=ini&&b<=fim)push(b);return out;}
+  var s=add(ini,-span);if(s<b)s=b;
+  for(var c=s;c<=fim;c=add(c,1)){
+   var ok=false;
+   if(rep==='dia')ok=true;
+   else if(rep==='sem')ok=c.getDay()===b.getDay();
+   else if(rep==='mes')ok=c.getDate()===b.getDate();
+   else if(rep==='ano')ok=c.getDate()===b.getDate()&&c.getMonth()===b.getMonth();
+   if(ok&&c>=b)push(c);
+  }
+  return out;
+ }
+ function visiveis(ini,fim){
+  var q=S.q.trim().toLowerCase(),o=[];
+  Object.keys(S.data.eventos).forEach(function(k){
+   var ev=S.data.eventos[k];if(!ev||!agOn(ev.ag))return;
+   if(q&&!achou(ev,q))return;
+   ocorr(ev,ini,fim).forEach(function(x){o.push(x);});
+  });
+  o.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:(a.dia===b.dia?(a.h<b.h?-1:a.h>b.h?1:0):(a.dia?-1:1));});
+  return o;
+ }
+ function achou(ev,q){return [ev.t,ev.loc,ev.desc,(ev.conv||[]).join(' ')].join(' ').toLowerCase().indexOf(q)>=0;}
+ function porDia(list){var m={};list.forEach(function(x){var a=pY(x.d);for(var i=0;i<=x.span;i++){var k=ymd(add(a,i));(m[k]=m[k]||[]).push(x);}});return m;}
+
+ /* ---------- avisos ---------- */
+ function inicioDt(x){return dtOf(x.d,x.dia?'00:00':x.h);}
+ function fimDt(x){if(x.dia)return add(pY(x.df),1);var f=dtOf(x.df,x.hf||'');if(!x.hf||f<=inicioDt(x))return new Date(inicioDt(x).getTime()+3600000);return f;}
+ function avisos(ate){ // lista de {fire,x,m} entre agora-48h e ate
+  var agora=new Date(),ini=add(hoje(),-3),out=[];
+  Object.keys(S.data.eventos).forEach(function(k){var ev=S.data.eventos[k];if(!ev||!agOn(ev.ag))return;
+   var av=ev.av||[];if(!av.length)return;
+   ocorr(ev,ini,add(hoje(),ate||60)).forEach(function(x){var st=inicioDt(x);av.forEach(function(m){out.push({fire:new Date(st.getTime()-m*60000),x:x,m:m,key:x.id+'|'+x.d+'|'+m});});});
+  });
+  out.sort(function(a,b){return a.fire-b.fire;});return out;
+ }
+ function pendentes(){var agora=Date.now();return avisos(2).filter(function(a){return a.fire.getTime()<=agora&&fimDt(a.x).getTime()>=agora&&!S.vistos[a.key];});}
+ function proximoAviso(){var agora=Date.now();var l=avisos(60).filter(function(a){return a.fire.getTime()>agora;});return l[0]||null;}
+ function quando(d,x){var a=pY(d),h=hoje(),n=diffD(h,a);var t=n===0?'hoje':n===1?'amanhã':n===-1?'ontem':(n>1&&n<7?'em '+n+' dias':DOWA[a.getDay()]+', '+a.getDate()+' '+MESA[a.getMonth()]);return t+(x&&!x.dia&&x.h?' · '+x.h:'');}
+ function badge(){
+  var n=S.loaded?pendentes().length:0;
+  Array.prototype.forEach.call(document.querySelectorAll('.abas-menu [data-aurora-icon="calendario"]'),function(b){if(n)b.setAttribute('data-cal-badge',String(n>9?'9+':n));else b.removeAttribute('data-cal-badge');});
+ }
+
+ /* ---------- Google Agenda ---------- */
+ function gaUrl(){return window.TDB_CONFIG&&window.TDB_CONFIG.appsScriptUrl||'';}
+ function gaPost(body){
+  var url=gaUrl();if(!url)return Promise.reject(new Error('sem endereço'));
+  var ctl=typeof AbortController!=='undefined'?new AbortController():null;var t=setTimeout(function(){if(ctl)ctl.abort();},25000);
+  return fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({acao:'agenda'},body)),signal:ctl?ctl.signal:undefined}).then(function(r){clearTimeout(t);return r.json();});
+ }
+ function gaStatus(){
+  return gaPost({op:'status'}).then(function(r){
+   if(r&&r.ok&&r.agenda){S.ga={estado:'ok',msg:r.agenda};lsSet('tdb_cal_ga_ok',true);}
+   else if(r&&r.precisaAutorizar){S.ga={estado:'auth',msg:'Falta autorizar o acesso à Google Agenda.'};}
+   else S.ga={estado:'inativo',msg:'Ainda não ativada no Apps Script.'};
+  }).catch(function(){S.ga={estado:S.ga.estado==='ok'?'ok':'offline',msg:'Sem conexão agora.'};}).then(function(){syncPill();});
+ }
+ function precisaSync(ev){return (ev.gs||0)!==(ev.upd||0);}
+ function gaSincronizar(){
+  if(S.gaBusy||S.ga.estado!=='ok')return Promise.resolve();
+  var fila=[];
+  Object.keys(S.data.del||{}).forEach(function(id){fila.push({op:'delete',id:id,gid:S.data.del[id]});});
+  Object.keys(S.data.eventos).forEach(function(k){var ev=S.data.eventos[k];if(ev&&precisaSync(ev))fila.push({op:'upsert',ev:ev});});
+  if(!fila.length)return Promise.resolve();
+  S.gaBusy=true;syncPill();
+  var i=0,falhou=false;
+  function prox(){
+   if(i>=fila.length||falhou){S.gaBusy=false;syncPill();if(S.host)render();return Promise.resolve();}
+   var f=fila[i++];
+   var body=f.op==='delete'?{op:'delete',id:f.id,gid:f.gid}:{op:'upsert',ev:payload(f.ev),gid:f.ev.gid||''};
+   return gaPost(body).then(function(r){
+    if(r&&r.ok){
+     if(f.op==='delete'){delete S.data.del[f.id];}
+     else{var cur=S.data.eventos[f.ev.id];if(cur&&cur.upd===f.ev.upd){cur.gid=r.gid||cur.gid;cur.gs=cur.upd;}}
+     salvar();
+    }else{falhou=true;S.ga={estado:r&&r.precisaAutorizar?'auth':'erro',msg:(r&&r.erro)||'Erro ao enviar.'};}
+   }).catch(function(){falhou=true;S.ga={estado:'offline',msg:'Sem conexão agora.'};}).then(prox);
+  }
+  return prox();
+ }
+ function payload(ev){
+  return {id:ev.id,t:ev.t,d:ev.d,h:ev.dia?'':ev.h,df:ev.df||ev.d,hf:ev.dia?'':(ev.hf||''),dia:!!ev.dia,rep:ev.rep||'',loc:ev.loc||'',conv:ev.conv||[],av:(ev.av||[]).slice(0,5),cor:corEv(ev),desc:(ev.desc||'')+(ev.festa?'\n\n[Painel TDB · Festa: '+ev.festa+']':'')};
+ }
+ function syncPill(){
+  var el=S.host&&S.host.querySelector('.tcal-sync');if(!el)return;
+  var e=S.ga.estado,pend=Object.keys(S.data.eventos).filter(function(k){return precisaSync(S.data.eventos[k]);}).length+Object.keys(S.data.del||{}).length;
+  var t,c;
+  if(e==='ok'){t=S.gaBusy?'Enviando à Google Agenda…':(pend?'Google Agenda · '+pend+' a enviar':'Ligado à Google Agenda · '+esc(S.ga.msg));c=pend||S.gaBusy?'pend':'ok';}
+  else if(e==='auth'){t='Google Agenda: falta autorizar';c='erro';}
+  else if(e==='inativo'){t='Google Agenda não ativada · ver como ativar';c='erro';}
+  else if(e==='offline'){t='Google Agenda sem conexão · '+pend+' a enviar';c='pend';}
+  else if(e==='erro'){t='Google Agenda: erro ao enviar';c='erro';}
+  else {t='Verificando Google Agenda…';c='pend';}
+  el.className='tcal-sync '+c;el.innerHTML='<i></i><span>'+t+'</span>';el.setAttribute('data-act','gainfo');
+ }
+
+ /* ---------- toast ---------- */
+ function toast(msg,tipo){
+  var t=document.getElementById('tcal-toast');if(!t){t=document.createElement('div');t.id='tcal-toast';t.setAttribute('data-export-ignore','true');document.body.appendChild(t);}
+  t.className='on '+(tipo||'ok');t.textContent=msg;clearTimeout(t._t);t._t=setTimeout(function(){t.className='';},3400);
+ }
+
+ /* ---------- avisos: rótulos ---------- */
+ function avLabel(m,dia){
+  if(dia){
+   if(m<=0)return 'No dia · '+hh(-m);
+   var d=Math.ceil(m/1440);return (d===1?'1 dia antes':d+' dias antes')+' · '+hh(d*1440-m);
+  }
+  if(m===0)return 'Na hora';
+  if(m<60)return m+' min antes';
+  if(m<1440){var h=Math.round(m/60);return h+(h===1?' hora antes':' horas antes');}
+  if(m%10080===0){var s=m/10080;return s+(s===1?' semana antes':' semanas antes');}
+  var dd=Math.round(m/1440);return dd+(dd===1?' dia antes':' dias antes');
+ }
+ function avOpcoes(dia){
+  return dia?[[-480,'No dia · 08:00'],[960,'1 dia antes · 08:00'],[2400,'2 dias antes · 08:00'],[9600,'1 semana antes · 08:00']]
+            :[[0,'Na hora'],[10,'10 min antes'],[30,'30 min antes'],[60,'1 hora antes'],[120,'2 horas antes'],[1440,'1 dia antes'],[2880,'2 dias antes'],[10080,'1 semana antes']];
+ }
+ function avPadrao(ag,dia){var m=AV_PADRAO[ag]||60;if(dia){return m>=1440?(m>=10080?9600:(m>=2880?2400:960)):-480;}return m;}
+ function avCurto(m,dia){var l=avLabel(m,dia);return dia?l.split(' · ')[0]:l;}
+
+ /* ---------- títulos e navegação ---------- */
+ function titulo(){
+  var c=curr();
+  if(S.q.trim())return 'Resultados da busca';
+  if(S.view==='month')return MES[c.getMonth()].charAt(0).toUpperCase()+MES[c.getMonth()].slice(1)+' de '+c.getFullYear();
+  if(S.view==='week'){var a=sow(c),b=add(a,6);return a.getDate()+(a.getMonth()!==b.getMonth()?' '+MESA[a.getMonth()]:'')+' – '+b.getDate()+' '+MESA[b.getMonth()]+' de '+b.getFullYear();}
+  if(S.view==='day')return DOWL[c.getDay()]+', '+c.getDate()+' de '+MES[c.getMonth()]+' de '+c.getFullYear();
+  if(S.view==='year')return String(c.getFullYear());
+  return 'Agenda · a partir de '+c.getDate()+' '+MESA[c.getMonth()]+' '+c.getFullYear();
+ }
+ function mover(n){
+  var c=curr();
+  if(S.view==='month')S.cur=addM(c,n);
+  else if(S.view==='week')S.cur=add(c,7*n);
+  else if(S.view==='day')S.cur=add(c,n);
+  else if(S.view==='year')S.cur=new Date(c.getFullYear()+n,c.getMonth(),Math.min(c.getDate(),28));
+  else S.cur=add(c,30*n);
+  S.sel=S.view==='day'?S.cur:S.sel;
+  fecharPop();render();
+ }
+ function irPara(d,view){S.cur=d;S.sel=d;if(view)S.view=view;lsSet('tdb_cal_prefs',{view:S.view,off:S.off});fecharPop();render();}
+
+ /* ---------- peças de HTML ---------- */
+ function pill(x,mini){
+  var ev=x.ev,c=corEv(ev),arrastavel=!ev.rep&&!isPhone();
+  var t=(x.dia||!x.h)?'':'<b>'+esc(x.h)+'</b> ';
+  return '<div class="tcal-ev'+(x.dia?' dia':'')+(mini?' mini':'')+'" draggable="'+arrastavel+'" data-act="ev" data-id="'+esc(x.id)+'" data-d="'+x.d+'" style="--c:'+esc(c)+'" title="'+esc(ev.t)+'">'+t+esc(ev.t)+'</div>';
+ }
+ function dot(x){return '<i class="tcal-dot" style="background:'+esc(corEv(x.ev))+'"></i>';}
+ function rowEv(x,extra){
+  var ev=x.ev,c=corEv(ev);var av=(ev.av||[])[0];
+  var quando_=x.dia?'dia todo':(x.h+(x.hf?' – '+x.hf:''));
+  var a=pY(x.d);
+  return '<div class="tcal-li" data-act="ev" data-id="'+esc(x.id)+'" data-d="'+x.d+'"><div class="tcal-bar" style="background:'+esc(c)+'"></div><div class="tcal-li-t"><b>'+esc(ev.t)+'</b><small>'+(extra===false?'':DOWA[a.getDay()]+', '+a.getDate()+' '+MESA[a.getMonth()]+' · ')+esc(quando_)+(ev.loc?' · '+esc(ev.loc):'')+(ev.rep?' · repete':'')+'</small></div>'+(av!=null?'<span class="tcal-bell">🔔 '+esc(avCurto(av,x.dia))+'</span>':'')+'</div>';
+ }
+
+ function vMes(){
+  var c=curr(),pri=new Date(c.getFullYear(),c.getMonth(),1),ini=sow(pri),n=Math.ceil((pri.getDay()+new Date(c.getFullYear(),c.getMonth()+1,0).getDate())/7);
+  var fim=add(ini,n*7-1),m=porDia(visiveis(ini,fim)),h=ymd(hoje()),phone=isPhone();
+  var s='<div class="tcal-dw">'+DOWA.map(function(d){return '<span>'+(phone?d.charAt(0).toUpperCase():d.toUpperCase())+'</span>';}).join('')+'</div><div class="tcal-month" style="grid-template-rows:repeat('+n+',minmax('+(phone?50:104)+'px,1fr))">';
+  for(var i=0;i<n*7;i++){
+   var d=add(ini,i),k=ymd(d),l=m[k]||[],out=d.getMonth()!==c.getMonth();
+   s+='<div class="tcal-d'+(out?' out':'')+(k===h?' hoje':'')+(S.sel&&k===ymd(S.sel)?' sel':'')+'" data-act="cel" data-d="'+k+'"><span class="tcal-n">'+d.getDate()+'</span>';
+   if(phone){s+='<span class="tcal-dots">'+l.slice(0,4).map(dot).join('')+'</span>';}
+   else{s+=l.slice(0,3).map(function(x){return pill(x);}).join('')+(l.length>3?'<button class="tcal-more" data-act="dia" data-d="'+k+'">+'+(l.length-3)+' mais</button>':'');}
+   s+='</div>';
+  }
+  s+='</div>';
+  if(phone&&S.sel){var k2=ymd(S.sel),l2=m[k2]||[];s+='<div class="tcal-diasel"><div class="tcal-diasel-h"><b>'+DOWL[S.sel.getDay()]+', '+S.sel.getDate()+' de '+MES[S.sel.getMonth()]+'</b><button class="tcal-lnk" data-act="novo-dia" data-d="'+k2+'">+ Adicionar</button></div>'+(l2.length?l2.map(function(x){return rowEv(x,false);}).join(''):'<div class="tcal-vazio">Nenhum evento neste dia.</div>')+'</div>';}
+  return s;
+ }
+ function colunas(items){ // items: {s,e,x} em minutos
+  items.sort(function(a,b){return a.s-b.s||b.e-a.e;});
+  var cl=[],fim=-1,cols=[];
+  function fechar(){cl.forEach(function(i){i.n=cols.length;});cl=[];cols=[];}
+  items.forEach(function(it){
+   if(it.s>=fim&&cl.length)fechar();
+   var c=0;while(cols[c]!==undefined&&cols[c]>it.s)c++;
+   cols[c]=it.e;it.c=c;cl.push(it);fim=Math.max(fim<0?0:fim,it.e);
+   if(cl.length===1)fim=it.e;else fim=Math.max(fim,it.e);
+  });
+  fechar();return items;
+ }
+ function vGrade(dias){
+  var ini=dias[0],fim=dias[dias.length-1],m=porDia(visiveis(ini,fim)),h=ymd(hoje());
+  var s='<div class="tcal-wk" style="--nd:'+dias.length+'"><div class="tcal-wk-h"><div class="tcal-gut"></div>';
+  dias.forEach(function(d){var k=ymd(d);s+='<div class="tcal-wk-d'+(k===h?' hoje':'')+'" data-act="dia" data-d="'+k+'">'+DOWA[d.getDay()].toUpperCase()+'<b>'+d.getDate()+'</b></div>';});
+  s+='</div><div class="tcal-wk-ad"><div class="tcal-gut">dia todo</div>';
+  dias.forEach(function(d){var k=ymd(d);s+='<div class="tcal-ad-c" data-act="cel" data-d="'+k+'">'+(m[k]||[]).filter(function(x){return x.dia||x.span>0;}).map(function(x){return pill(x);}).join('')+'</div>';});
+  s+='</div><div class="tcal-wk-sc"><div class="tcal-wk-g" style="height:'+(24*HP)+'px"><div class="tcal-gut tcal-hrs">';
+  for(var i=0;i<24;i++)s+='<div style="height:'+HP+'px">'+(i?pad(i)+':00':'')+'</div>';
+  s+='</div>';
+  dias.forEach(function(d){
+   var k=ymd(d),its=[];
+   (m[k]||[]).forEach(function(x){if(x.dia||x.span>0)return;var a=minOf(x.h),b=x.hf?minOf(x.hf):a+60;if(b<=a)b=Math.min(1440,a+60);its.push({s:a,e:b,x:x});});
+   colunas(its);
+   s+='<div class="tcal-col'+(k===h?' hoje':'')+'" data-act="slot" data-d="'+k+'">';
+   its.forEach(function(it){var ev=it.x.ev,c=corEv(ev);var w=100/it.n,t=it.s*HP/60,ht=Math.max(22,(it.e-it.s)*HP/60-2);
+    s+='<div class="tcal-blk" draggable="'+(!ev.rep&&!isPhone())+'" data-act="ev" data-id="'+esc(it.x.id)+'" data-d="'+it.x.d+'" style="--c:'+esc(c)+';top:'+t+'px;height:'+ht+'px;left:calc('+(it.c*w)+'% + 2px);width:calc('+w+'% - 6px)"><b>'+esc(ev.t)+'</b><small>'+esc(it.x.h)+(it.x.hf?' – '+esc(it.x.hf):'')+'</small></div>';});
+   if(k===h){var nw=new Date();s+='<div class="tcal-now" style="top:'+((nw.getHours()*60+nw.getMinutes())*HP/60)+'px"></div>';}
+   s+='</div>';
+  });
+  s+='</div></div></div>';
+  return s;
+ }
+ function vSemana(){var a=sow(curr()),d=[];for(var i=0;i<7;i++)d.push(add(a,i));return vGrade(d);}
+ function vDia(){return vGrade([curr()]);}
+ function vAno(){
+  var y=curr().getFullYear(),ini=new Date(y,0,1),fim=new Date(y,11,31),m=porDia(visiveis(ini,fim)),h=ymd(hoje());
+  var s='<div class="tcal-year">';
+  for(var mm=0;mm<12;mm++){
+   var pri=new Date(y,mm,1),st=sow(pri),nd=new Date(y,mm+1,0).getDate();
+   s+='<div class="tcal-mini"><button class="tcal-mini-t" data-act="irmes" data-d="'+ymd(pri)+'">'+MES[mm].charAt(0).toUpperCase()+MES[mm].slice(1)+'</button><div class="tcal-mg">'+DOWA.map(function(d){return '<span class="w">'+d.charAt(0).toUpperCase()+'</span>';}).join('');
+   for(var i=0;i<pri.getDay();i++)s+='<span></span>';
+   for(var d=1;d<=nd;d++){var k=ymd(new Date(y,mm,d));s+='<button class="tcal-mc'+(k===h?' hoje':'')+((m[k]&&m[k].length)?' tem':'')+'" data-act="dia" data-d="'+k+'">'+d+'</button>';}
+   s+='</div></div>';
+  }
+  return s+'</div>';
+ }
+ function listaAgrupada(list,vazio){
+  if(!list.length)return '<div class="tcal-vazio">'+vazio+'</div>';
+  var s='',ult='';
+  list.forEach(function(x){
+   if(x.d!==ult){ult=x.d;var a=pY(x.d),t=ymd(hoje())===x.d;s+='<div class="tcal-ag-d'+(t?' hoje':'')+'"><b>'+a.getDate()+'</b><span>'+(t?'HOJE · ':'')+DOWA[a.getDay()].toUpperCase()+' · '+MESA[a.getMonth()].toUpperCase()+' '+a.getFullYear()+'</span></div>';}
+   s+=rowEv(x,false);
+  });
+  return s;
+ }
+ function vAgenda(){var c=curr(),l=visiveis(c,add(c,90));return listaAgrupada(l,'Nenhum evento nos próximos 90 dias.');}
+ function vBusca(){
+  var l=visiveis(add(hoje(),-365),add(hoje(),730));
+  return '<div class="tcal-bus-h"><b>Resultados para “'+esc(S.q.trim())+'” ('+l.length+')</b><button class="tcal-lnk" data-act="limpabusca">Limpar busca</button></div>'+listaAgrupada(l,'Nada encontrado.');
+ }
+ function renderMain(){
+  var el=S.host.querySelector('.tcal-main');if(!el)return;
+  var nav='<div class="tcal-nav"><button class="tcal-sq" data-act="prev" aria-label="Anterior">‹</button><b class="tcal-tt">'+esc(titulo())+'</b><button class="tcal-btn" data-act="hoje">Hoje</button><button class="tcal-sq" data-act="next" aria-label="Próximo">›</button></div>';
+  var corpo=S.q.trim()?vBusca():S.view==='month'?vMes():S.view==='week'?vSemana():S.view==='day'?vDia():S.view==='year'?vAno():vAgenda();
+  var leg='<div class="tcal-leg">'+Object.keys(ags()).filter(agOn).map(function(k){var a=ags()[k];return '<span style="--c:'+esc(a.c)+'">'+esc(a.n)+'</span>';}).join('')+'</div>';
+  var sc=el.querySelector('.tcal-wk-sc'),top=sc?sc.scrollTop:null;
+  el.innerHTML=nav+corpo+(S.view==='month'||S.view==='year'||S.q.trim()?leg:'');
+  var sc2=el.querySelector('.tcal-wk-sc');if(sc2)sc2.scrollTop=top!=null?top:(7*HP-6);
+ }
+ function renderSide(){
+  var el=S.host.querySelector('.tcal-side');if(!el)return;
+  if(S.draft&&!isNarrow()){el.innerHTML='<div class="tcal-card tcal-box">'+formHtml()+'</div>';wireForm(el);return;}
+  var A=ags(),s='';
+  if(!isPhone()){
+   s+='<div class="tcal-card tcal-box tcal-ags"><h3>Minhas agendas</h3>'+Object.keys(A).map(function(k){var on=agOn(k);return '<button class="tcal-agi" data-act="ag" data-k="'+k+'"><span class="tcal-ck'+(on?'':' off')+'" style="--c:'+esc(A[k].c)+'">✓</span>'+esc(A[k].n)+'</button>';}).join('')
+    +'<div class="tcal-novaag"><button class="tcal-lnk" data-act="novaag">+ Nova agenda</button></div></div>';
+  }
+  var pa=proximoAviso();
+  if(pa){
+   var gaok=S.ga.estado==='ok';
+   s+='<div class="tcal-aviso"><span class="tcal-aviso-i">🔔</span><div><b>Próximo aviso: '+esc(pa.x.ev.t)+' '+esc(quando(pa.x.d,pa.x))+'</b><small>'+(gaok?'Alarme toca na Google Agenda · ':'Aviso aqui no painel · ')+esc(avLabel(pa.m,pa.x.dia))+(gaok?'':' (Google Agenda não ativada)')+'</small></div></div>';
+  }
+  var prox=visiveis(hoje(),add(hoje(),120)).filter(function(x){return fimDt(x).getTime()>=Date.now();}).slice(0,isPhone()?4:6);
+  s+='<div class="tcal-card tcal-box"><h3>Próximos eventos</h3>'+(prox.length?prox.map(function(x){return rowEv(x);}).join(''):'<div class="tcal-vazio">Nenhum evento marcado. Use “+ Novo evento”.</div>')+'</div>';
+  el.innerHTML=s;
+ }
+ function renderChips(){
+  var el=S.host.querySelector('.tcal-chips');if(!el)return;
+  if(!isPhone()){el.innerHTML='';return;}
+  var A=ags(),todas=Object.keys(A).every(agOn);
+  el.innerHTML='<button class="tcal-chip'+(todas?' on':'')+'" data-act="chip" data-k="*">Todas</button>'+Object.keys(A).map(function(k){var on=!todas&&agOn(k);return '<button class="tcal-chip'+(on?' on':'')+'" data-act="chip" data-k="'+k+'" style="--c:'+esc(A[k].c)+'">'+esc(A[k].n)+'</button>';}).join('');
+ }
+ function renderAlertas(){
+  var el=S.host.querySelector('.tcal-alertas');if(!el)return;
+  var p=pendentes();
+  el.innerHTML=p.length?p.slice(0,5).map(function(a){return '<div class="tcal-aviso due"><span class="tcal-aviso-i">🔔</span><div><b>'+esc(a.x.ev.t)+' · '+esc(quando(a.x.d,a.x))+'</b><small>Aviso de '+esc(avLabel(a.m,a.x.dia))+'</small></div><button class="tcal-btn" data-act="dispensar" data-k="'+esc(a.key)+'">Dispensar</button></div>';}).join(''):'';
+ }
+ function renderHead(){
+  var seg=S.host.querySelector('.tcal-seg');if(seg)Array.prototype.forEach.call(seg.children,function(b){b.classList.toggle('on',b.getAttribute('data-v')===S.view);});
+  syncPill();
+ }
+ function render(){
+  if(!S.host)return;
+  var rt=S.host.querySelector('.tcal')||S.host;rt.setAttribute('data-narrow',isNarrow()?'1':'0');rt.setAttribute('data-phone',isPhone()?'1':'0');
+  renderHead();renderAlertas();renderChips();renderMain();renderSide();badge();
+  if(S.draft&&isNarrow())abrirModalForm();
+ }
+
+ /* ---------- popovers ---------- */
+ function popEl(){var p=document.getElementById('tcal-pop');if(!p){p=document.createElement('div');p.id='tcal-pop';p.setAttribute('data-export-ignore','true');document.body.appendChild(p);}return p;}
+ function fecharPop(){var p=document.getElementById('tcal-pop');if(p){p.className='';p.innerHTML='';}S.pop=null;}
+ function posPop(p,r){
+  var w=p.offsetWidth,h=p.offsetHeight,vw=window.innerWidth,vh=window.innerHeight;
+  var left=r.right+8;if(left+w>vw-8)left=r.left-w-8;if(left<8)left=Math.max(8,Math.min(r.left,vw-w-8));
+  var top=Math.max(8,Math.min(r.top-10,vh-h-8));
+  p.style.left=left+'px';p.style.top=top+'px';
+ }
+ function dark(){return document.body.classList.contains('dark-mode')||document.documentElement.classList.contains('dark-mode');}
+ function popAbrir(html,rect){
+  var p=popEl();p.innerHTML=html;p.className='on'+(dark()?' dk':'');p.style.left='0px';p.style.top='0px';
+  if(isPhone()){p.classList.add('sheet');p.style.left=p.style.top='';}else posPop(p,rect);
+ }
+ function resumoQuando(x){
+  var a=pY(x.d),b=pY(x.df);
+  var base=DOWA[a.getDay()]+', '+a.getDate()+' de '+MES[a.getMonth()];
+  if(x.dia)return base+(x.df!==x.d?' – '+b.getDate()+' de '+MES[b.getMonth()]:'')+' · dia todo';
+  return base+' · '+x.h+(x.hf?(x.df!==x.d?' – '+b.getDate()+'/'+pad(b.getMonth()+1)+' '+x.hf:' – '+x.hf):'');
+ }
+ function popEvento(id,d,rect){
+  var ev=S.data.eventos[id];if(!ev)return;
+  var x=ocorr(ev,pY(d),pY(d))[0]||{id:id,ev:ev,d:ev.d,df:ev.df||ev.d,h:ev.h,hf:ev.hf,dia:ev.dia,span:0};
+  var c=corEv(ev),A=ags();
+  var gs=ev.gs===ev.upd?'<span class="tcal-ok">✓ na Google Agenda</span>':(S.ga.estado==='ok'?'<span class="tcal-pe">enviando…</span>':'<span class="tcal-pe">ainda não enviado à Google Agenda</span>');
+  var h='<div class="tcal-pop-h"><span class="tcal-sw" style="background:'+esc(c)+'"></span><b>'+esc(ev.t)+'</b><span class="tcal-pop-bt"><button data-act="editar" data-id="'+esc(id)+'" title="Editar">✎</button><button data-act="excluir" data-id="'+esc(id)+'" title="Excluir">🗑</button><button data-act="fechapop" title="Fechar">✕</button></span></div>';
+  h+='<div class="tcal-row"><span class="tcal-ic">🕐</span><span>'+esc(resumoQuando(x))+(ev.rep?' · repete '+({dia:'todo dia',sem:'toda semana',mes:'todo mês',ano:'todo ano'}[ev.rep]):'')+'</span></div>';
+  h+='<div class="tcal-row"><span class="tcal-ic">📂</span><span>'+esc((A[ev.ag]||{n:'Outros'}).n)+'</span></div>';
+  if(ev.loc)h+='<div class="tcal-row"><span class="tcal-ic">📍</span><span>'+esc(ev.loc)+'</span></div>';
+  if(ev.festa)h+='<div class="tcal-row"><span class="tcal-ic">🎉</span><span>Festas TDB · '+esc(ev.festa)+' <button class="tcal-lnk" data-act="abrirfesta" data-f="'+esc(ev.festa)+'">abrir</button></span></div>';
+  if((ev.av||[]).length)h+='<div class="tcal-row"><span class="tcal-ic">🔔</span><span>'+ev.av.map(function(m){return esc(avLabel(m,ev.dia));}).join(' · ')+'</span></div>';
+  if((ev.conv||[]).length)h+='<div class="tcal-row"><span class="tcal-ic">👥</span><span>'+ev.conv.length+' convidado'+(ev.conv.length>1?'s':'')+': '+esc(ev.conv.join(', '))+'</span></div>';
+  if(ev.desc)h+='<div class="tcal-row"><span class="tcal-ic">📝</span><span class="tcal-desc">'+esc(ev.desc)+'</span></div>';
+  h+='<div class="tcal-row sm">'+gs+'</div>';
+  S.pop={tipo:'ev',id:id};
+  popAbrir(h,rect);
+ }
+ function popRapido(d,h,rect){
+  var dia=!h;var ag='fe';
+  var q={t:'',ag:ag,d:d,h:h||'',df:d,hf:h?hh(Math.min(1439,minOf(h)+60)):'',dia:dia};
+  S.pop={tipo:'rapido',q:q};
+  popRapidoHtml(rect);
+ }
+ function popRapidoHtml(rect){
+  var q=S.pop.q,A=ags();
+  var h='<div class="tcal-pop-h"><b>Novo evento</b><span class="tcal-pop-bt"><button data-act="fechapop">✕</button></span></div>';
+  h+='<input class="tcal-in" id="tcal-q-t" placeholder="Adicionar título" value="'+esc(q.t)+'" maxlength="120">';
+  h+='<div class="tcal-chips-t">'+Object.keys(A).map(function(k){return '<button class="tcal-chip'+(q.ag===k?' on':'')+'" data-act="qag" data-k="'+k+'" style="--c:'+esc(A[k].c)+'">'+esc(A[k].n)+'</button>';}).join('')+'</div>';
+  var a=pY(q.d);
+  h+='<div class="tcal-row"><span class="tcal-ic">🕐</span><span>'+DOWA[a.getDay()]+', '+a.getDate()+' de '+MES[a.getMonth()]+(q.dia?' · dia todo':' · '+q.h+' – '+q.hf)+'</span></div>';
+  var av=avPadrao(q.ag,q.dia);
+  h+='<div class="tcal-row"><span class="tcal-ic">🔔</span><span>'+esc(avLabel(av,q.dia))+' <span class="tcal-tag">painel + Google Agenda</span></span></div>';
+  h+='<div class="tcal-pop-f"><button class="tcal-lnk" data-act="maisopcoes">Mais opções</button><button class="tcal-btn p" data-act="qsalvar">Salvar</button></div>';
+  var p=popEl();var foc=document.activeElement&&document.activeElement.id==='tcal-q-t';
+  popAbrir(h,rect||{left:window.innerWidth/2-150,right:window.innerWidth/2+150,top:120});
+  var inp=document.getElementById('tcal-q-t');if(inp&&!isPhone()){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+ }
+
+ /* ---------- formulário completo ---------- */
+ function draftNovo(d,h,ag){
+  var dia=!h;ag=ag||'fe';
+  return {id:'',t:'',ag:ag,festa:'',d:d,h:h||'09:00',df:d,hf:h?hh(Math.min(1439,minOf(h)+60)):'10:00',dia:dia,rep:'',loc:'',conv:'',av:[avPadrao(ag,dia)],avAuto:true,cor:'',desc:'',err:{}};
+ }
+ function draftDe(ev){
+  return {id:ev.id,t:ev.t,ag:ev.ag,festa:ev.festa||'',d:ev.d,h:ev.h||'09:00',df:ev.df||ev.d,hf:ev.hf||'',dia:!!ev.dia,rep:ev.rep||'',loc:ev.loc||'',conv:(ev.conv||[]).join(', '),av:(ev.av||[]).slice(),avAuto:false,cor:ev.cor||'',desc:ev.desc||'',err:{}};
+ }
+ function formHtml(){
+  var q=S.draft,A=ags(),novo=!q.id;
+  var s='<div class="tcal-fh"><h3>'+(novo?'Novo evento':'Editar evento')+'</h3><button class="tcal-x" data-act="fechaform" aria-label="Fechar">✕</button></div><div class="tcal-form" data-form="1">';
+  s+='<label class="tcal-f"><span>TÍTULO</span><input class="tcal-in'+(q.err.t?' erro':'')+'" data-f="t" value="'+esc(q.t)+'" placeholder="Ex.: Noite do Pijama" maxlength="120">'+(q.err.t?'<em>'+esc(q.err.t)+'</em>':'')+'</label>';
+  s+='<div class="tcal-chips-t">'+Object.keys(A).map(function(k){return '<button type="button" class="tcal-chip'+(q.ag===k?' on':'')+'" data-act="fag" data-k="'+k+'" style="--c:'+esc(A[k].c)+'">'+esc(A[k].n)+'</button>';}).join('')+'</div>';
+  s+='<label class="tcal-f"><span>LIGAR A UMA FESTA JÁ CADASTRADA</span><select class="tcal-in" data-f="festa"><option value="">— nenhuma —</option>'+S.festas.map(function(f){return '<option value="'+esc(f.label)+'"'+(q.festa===f.label?' selected':'')+'>'+esc(f.emoji+' '+f.label)+'</option>';}).join('')+(q.festa&&!S.festas.some(function(f){return f.label===q.festa;})?'<option value="'+esc(q.festa)+'" selected>'+esc(q.festa)+'</option>':'')+'</select></label>';
+  s+='<div class="tcal-two"><label class="tcal-f"><span>DATA</span><input class="tcal-in'+(q.err.d?' erro':'')+'" type="date" data-f="d" value="'+esc(q.d)+'"></label><label class="tcal-f"><span>HORA</span><input class="tcal-in" type="time" data-f="h" value="'+esc(q.dia?'':q.h)+'"'+(q.dia?' disabled':'')+'></label></div>';
+  s+='<div class="tcal-two"><label class="tcal-f"><span>TERMINA EM</span><input class="tcal-in'+(q.err.df?' erro':'')+'" type="date" data-f="df" value="'+esc(q.df)+'"></label><label class="tcal-f"><span>HORA</span><input class="tcal-in" type="time" data-f="hf" value="'+esc(q.dia?'':q.hf)+'"'+(q.dia?' disabled':'')+'></label></div>';
+  s+='<div class="tcal-tg"><button type="button" class="tcal-tgb'+(q.dia?' on':'')+'" data-act="fdia" role="switch" aria-checked="'+(q.dia?'true':'false')+'"><i></i></button><span>Dia inteiro</span><select class="tcal-in sm" data-f="rep" aria-label="Repetir"><option value=""'+(q.rep===''?' selected':'')+'>Não repete</option><option value="dia"'+(q.rep==='dia'?' selected':'')+'>Todo dia</option><option value="sem"'+(q.rep==='sem'?' selected':'')+'>Toda semana</option><option value="mes"'+(q.rep==='mes'?' selected':'')+'>Todo mês</option><option value="ano"'+(q.rep==='ano'?' selected':'')+'>Todo ano</option></select></div>';
+  s+='<label class="tcal-f"><span>LOCAL</span><input class="tcal-in" data-f="loc" value="'+esc(q.loc)+'" placeholder="📍 Escola · Pátio principal" maxlength="160"></label>';
+  s+='<label class="tcal-f"><span>CONVIDADOS (E-MAIL)</span><input class="tcal-in'+(q.err.conv?' erro':'')+'" data-f="conv" value="'+esc(q.conv)+'" placeholder="professores@escola.com, ana@email.com" autocomplete="off">'+(q.err.conv?'<em>'+esc(q.err.conv)+'</em>':'')+'</label>';
+  s+='<div class="tcal-f"><span>NOTIFICAÇÕES</span>'+q.av.map(function(m,i){var op=avOpcoes(q.dia),has=op.some(function(o){return o[0]===m;});
+   return '<div class="tcal-rem"><select class="tcal-in" data-f="av" data-i="'+i+'">'+op.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===m?' selected':'')+'>🔔 '+esc(o[1])+'</option>';}).join('')+(has?'':'<option value="'+m+'" selected>🔔 '+esc(avLabel(m,q.dia))+'</option>')+'</select><button type="button" class="tcal-x" data-act="fremav" data-i="'+i+'" aria-label="Remover aviso">✕</button></div>';}).join('')
+   +(q.av.length<5?'<button type="button" class="tcal-lnk" data-act="faddav">+ Adicionar notificação</button>':'')+'<small>Toca na Google Agenda e avisa aqui no painel quando você abrir.</small></div>';
+  s+='<div class="tcal-f"><span>COR</span><div class="tcal-swr"><button type="button" class="tcal-swb'+(q.cor===''?' on':'')+'" data-act="fcor" data-c="" style="--c:'+esc((A[q.ag]||{c:'#5b6472'}).c)+'" title="Cor da agenda"></button>'+CORES.map(function(c){return '<button type="button" class="tcal-swb'+(q.cor===c?' on':'')+'" data-act="fcor" data-c="'+c+'" style="--c:'+c+'"></button>';}).join('')+'</div></div>';
+  s+='<label class="tcal-f"><span>DESCRIÇÃO</span><textarea class="tcal-in" data-f="desc" rows="3" placeholder="levar lanche, avisar os pais pelo grupo…" maxlength="1500">'+esc(q.desc)+'</textarea></label>';
+  s+='<div class="tcal-fb">'+(novo?'':'<button type="button" class="tcal-btn danger" data-act="fexcluir">Excluir</button>')+'<span class="grow"></span><button type="button" class="tcal-btn" data-act="fechaform">Cancelar</button><button type="button" class="tcal-btn p" data-act="fsalvar">Salvar</button></div>';
+  s+='<div class="tcal-hint">'+(S.ga.estado==='ok'?'Ao salvar, o evento vai para a Google Agenda “'+esc(S.ga.msg)+'”.':'Ao salvar, o evento fica aqui no painel e segue para a Google Agenda quando ela estiver ativada.')+'</div>';
+  if(!isPhone())s+='<div class="tcal-keys"><span><b>C</b> criar</span><span><b>T</b> hoje</span><span><b>←</b><b>→</b> período</span><span><b>1</b>–<b>5</b> visões</span><span>arraste um evento para mudar o dia</span></div>';
+  return s+'</div>';
+ }
+ function lerForm(root){ /* os campos já atualizam S.draft a cada digitação */ }
+ function wireForm(root){
+  var f=root.querySelector('[data-form]');if(!f)return;
+  function upd(e){
+   var t=e.target,k=t.getAttribute&&t.getAttribute('data-f');if(!k)return;var q=S.draft;if(!q)return;
+   if(k==='av'){q.av[+t.getAttribute('data-i')]=+t.value;q.avAuto=false;return;}
+   var v=t.value;
+   if(k==='d'){var old=q.d;q.d=v;if(!q.df||q.df===old||q.df<v)q.df=v;var ni=root.querySelector('[data-f="df"]');if(ni)ni.value=q.df;q.err.d='';t.classList.remove('erro');return;}
+   if(k==='df'){q.df=v;q.err.df='';t.classList.remove('erro');return;}
+   if(k==='h'){q.h=v;if(q.df===q.d&&(!q.hf||minOf(q.hf)<=minOf(v))){q.hf=hh(Math.min(1439,minOf(v)+60));var hi=root.querySelector('[data-f="hf"]');if(hi)hi.value=q.hf;}return;}
+   if(k==='festa'){q.festa=v;if(v&&!q.t.trim()){q.t=v;var ti=root.querySelector('[data-f="t"]');if(ti)ti.value=v;}if(v&&q.ag!=='fe'&&!q.id){q.ag='fe';renderFormChips(root);}return;}
+   if(k==='t'||k==='conv'){q.err[k]='';t.classList.remove('erro');var em=t.parentNode.querySelector('em');if(em)em.remove();}
+   q[k]=v;
+  }
+  f.addEventListener('input',upd);f.addEventListener('change',upd);
+  f.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type!=='date'){e.preventDefault();salvarForm();}});
+ }
+ function renderFormChips(root){
+  var c=root.querySelector('.tcal-chips-t');if(!c)return;var A=ags();
+  c.innerHTML=Object.keys(A).map(function(k){return '<button type="button" class="tcal-chip'+(S.draft.ag===k?' on':'')+'" data-act="fag" data-k="'+k+'" style="--c:'+esc(A[k].c)+'">'+esc(A[k].n)+'</button>';}).join('');
+ }
+ function abrirForm(draft){
+  fecharPop();S.draft=draft;
+  if(isNarrow()){abrirModalForm();}else{renderSide();var f=S.host&&S.host.querySelector('.tcal-side [data-f="t"]');if(f)f.focus();}
+ }
+ function modalEl(){var m=document.getElementById('tcal-modal');if(!m){m=document.createElement('div');m.id='tcal-modal';m.setAttribute('data-export-ignore','true');document.body.appendChild(m);}return m;}
+ function abrirModalForm(){
+  var m=modalEl();m.className='on'+(dark()?' dk':'')+(isPhone()?' sheet':'');
+  if(!m.querySelector('[data-form]')||m.getAttribute('data-id')!==String(S.draft.id||'novo')){
+   m.setAttribute('data-id',String(S.draft.id||'novo'));
+   m.innerHTML='<div class="tcal-ov" data-act="nada"><div class="tcal-md">'+formHtml()+'</div></div>';wireForm(m);
+   var f=m.querySelector('[data-f="t"]');if(f&&!isPhone())f.focus();
+  }
+ }
+ function fecharForm(){
+  S.draft=null;var m=document.getElementById('tcal-modal');if(m){m.className='';m.innerHTML='';m.removeAttribute('data-id');}
+  if(S.host)renderSide();
+ }
+ function reRenderForm(){
+  var m=document.getElementById('tcal-modal');
+  if(m&&m.className.indexOf('on')>=0){var sc=m.querySelector('.tcal-md');var top=sc?sc.scrollTop:0;m.querySelector('.tcal-md').innerHTML=formHtml();wireForm(m);m.querySelector('.tcal-md').scrollTop=top;}
+  else if(S.host){var sd=S.host.querySelector('.tcal-side');if(sd){var tp=sd.scrollTop;renderSide();sd.scrollTop=tp;}}
+ }
+ function emails(txt){var l=String(txt||'').split(/[,;\s]+/).filter(Boolean),bad=[];l.forEach(function(e){if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e))bad.push(e);});return {ok:l,bad:bad};}
+ function salvarForm(){
+  var q=S.draft;if(!q)return;q.err={};var ok=true;
+  q.t=String(q.t||'').trim();
+  if(!q.t){q.err.t='Escreva um título.';ok=false;}
+  if(!pY(q.d)){q.err.d='1';ok=false;}
+  if(!pY(q.df)){q.df=q.d;}
+  if(pY(q.df)<pY(q.d)){q.df=q.d;}
+  var em=emails(q.conv);if(em.bad.length){q.err.conv='E-mail inválido: '+em.bad[0];ok=false;}
+  if(!ok){reRenderForm();var m=document.getElementById('tcal-modal');var bad=(m&&m.classList.contains('on')?m:S.host).querySelector('.erro');if(bad)bad.focus();return;}
+  if(!q.dia&&!q.h)q.h='09:00';
+  if(!q.dia&&q.df===q.d&&(!q.hf||minOf(q.hf)<=minOf(q.h)))q.hf=hh(Math.min(1439,minOf(q.h)+60));
+  var ev=S.data.eventos[q.id]||{id:q.id||uid()};
+  ev.t=q.t;ev.ag=q.ag;ev.festa=q.festa||'';ev.d=q.d;ev.h=q.dia?'':q.h;ev.df=q.df;ev.hf=q.dia?'':q.hf;ev.dia=!!q.dia;ev.rep=q.rep||'';ev.loc=String(q.loc||'').trim();ev.conv=em.ok;
+  ev.av=q.av.filter(function(m,i,a){return a.indexOf(m)===i;}).slice(0,5);ev.cor=q.cor||'';ev.desc=String(q.desc||'').trim();ev.upd=Date.now();
+  S.data.eventos[ev.id]=ev;
+  S.sel=pY(ev.d);
+  var novo=!q.id;fecharForm();salvar();render();toast(novo?'Evento criado.':'Evento atualizado.');
+  gaSincronizar().then(syncPill);
+ }
+ function excluirEvento(id){
+  var ev=S.data.eventos[id];if(!ev)return;
+  if(ev.gid)S.data.del[id]=ev.gid;
+  S.data.tomb[id]=Date.now();delete S.data.eventos[id];
+  salvar();fecharPop();if(S.draft&&S.draft.id===id)fecharForm();render();toast('Evento excluído.');
+  gaSincronizar().then(syncPill);
+ }
+
+ /* ---------- janela "como ativar" ---------- */
+ function gaInfo(){
+  var m=modalEl();m.className='on info'+(dark()?' dk':'')+(isPhone()?' sheet':'');m.removeAttribute('data-id');
+  var e=S.ga.estado;
+  var st=e==='ok'?'<p class="ok">✓ Ligada: os eventos vão para a agenda “'+esc(S.ga.msg)+'” da sua conta Google.</p>':
+   '<p class="pe">'+esc(S.ga.msg||'Ainda não verificada.')+'</p>';
+  m.innerHTML='<div class="tcal-ov" data-act="nada"><div class="tcal-md"><div class="tcal-fh"><h3>Google Agenda</h3><button class="tcal-x" data-act="fechainfo">✕</button></div><div class="tcal-form">'+st
+   +'<p>Seus eventos ficam sempre salvos aqui no painel. Para o <b>alarme tocar no celular</b>, o painel os envia para uma agenda chamada “Tempo de Brincar” na sua Google Agenda. Para ligar (uma vez só):</p>'
+   +'<ol><li>Abra o Apps Script do painel e troque o código pelo arquivo <b>Codigo-COM-AGENDA-para-colar-no-Apps-Script.gs</b> (vem junto do TDB 5). Salve.</li><li>No editor, escolha a função <b>autorizarAgenda</b>, clique em Executar e aceite o acesso à Google Agenda.</li><li>Implantar → Gerenciar implantações → lápis → Versão: <b>Nova versão</b> → Implantar.</li><li>Volte aqui e toque em “Verificar de novo”.</li></ol>'
+   +'<div class="tcal-fb"><span class="grow"></span><button class="tcal-btn" data-act="fechainfo">Fechar</button><button class="tcal-btn p" data-act="gaverifica">Verificar de novo</button></div></div></div></div>';
+ }
+ function fechaInfo(){var m=document.getElementById('tcal-modal');if(m&&m.classList.contains('info')){m.className='';m.innerHTML='';}if(S.draft&&isNarrow())abrirModalForm();}
+
+ /* ---------- eventos da interface ---------- */
+ function celRect(el){return el.getBoundingClientRect();}
+ function minutosDoClique(col,e){var r=col.getBoundingClientRect(),y=e.clientY-r.top;return Math.max(0,Math.min(23*60+30,Math.round(y/HP*60/30)*30));}
+ function onClick(e){
+  var raiz=e.target.closest&&e.target.closest('.tcal,#tcal-pop,#tcal-modal');
+  if(!raiz){if(S.pop)fecharPop();return;}
+  var t=e.target.closest('[data-act]');
+  if(!t){if(raiz.id==='tcal-pop')return;if(S.pop&&raiz.classList.contains('tcal'))fecharPop();return;}
+  var a=t.getAttribute('data-act'),d=t.getAttribute('data-d'),k=t.getAttribute('data-k'),id=t.getAttribute('data-id');
+  if(a==='nada'){if(e.target===t&&false)return;return;}
+  if(a==='ev'){e.stopPropagation();popEvento(id,d,celRect(t));return;}
+  if(a==='cel'){
+   if(S.pop&&S.pop.tipo)fecharPop();
+   if(isPhone()){S.sel=pY(d);render();return;}
+   S.sel=pY(d);popRapido(d,'',celRect(t));
+   var prev=S.host.querySelector('.tcal-d.sel');if(prev)prev.classList.remove('sel');t.classList.add('sel');return;
+  }
+  if(a==='slot'){var m=minutosDoClique(t,e);S.sel=pY(d);popRapido(d,hh(m),{left:e.clientX-4,right:e.clientX+4,top:e.clientY});return;}
+  if(a==='dia'){irPara(pY(d),S.view==='year'||S.view==='month'?'day':S.view);return;}
+  if(a==='irmes'){irPara(pY(d),'month');return;}
+  if(a==='novo'){abrirForm(draftNovo(ymd(S.sel||hoje()),'09:00',null));return;}
+  if(a==='novo-dia'){abrirForm(draftNovo(d,'09:00',null));return;}
+  if(a==='prev'){mover(-1);return;}
+  if(a==='next'){mover(1);return;}
+  if(a==='hoje'){S.cur=hoje();S.sel=hoje();fecharPop();render();return;}
+  if(a==='view'){S.view=t.getAttribute('data-v');S.q='';var si=S.host.querySelector('.tcal-search input');if(si)si.value='';lsSet('tdb_cal_prefs',{view:S.view,off:S.off});fecharPop();render();return;}
+  if(a==='limpabusca'){S.q='';var s2=S.host.querySelector('.tcal-search input');if(s2)s2.value='';render();return;}
+  if(a==='ag'){if(S.off[k])delete S.off[k];else S.off[k]=1;lsSet('tdb_cal_prefs',{view:S.view,off:S.off});render();return;}
+  if(a==='chip'){var A=ags();if(k==='*'){S.off={};}else{var solo=Object.keys(A).every(function(x){return x===k?agOn(x):!agOn(x);});S.off={};if(!solo)Object.keys(A).forEach(function(x){if(x!==k)S.off[x]=1;});}lsSet('tdb_cal_prefs',{view:S.view,off:S.off});render();return;}
+  if(a==='novaag'){var box=t.parentNode;box.innerHTML='<div class="tcal-na"><input class="tcal-in" placeholder="Nome da agenda" maxlength="30" id="tcal-na-n"><div class="tcal-swr">'+CORES.map(function(c,i){return '<button type="button" class="tcal-swb'+(i===0?' on':'')+'" data-act="na-cor" data-c="'+c+'" style="--c:'+c+'"></button>';}).join('')+'</div><div class="tcal-fb"><button class="tcal-btn" data-act="render">Cancelar</button><button class="tcal-btn p" data-act="na-ok">Criar</button></div></div>';var ni=box.querySelector('input');if(ni)ni.focus();return;}
+  if(a==='na-cor'){t.parentNode.querySelectorAll('.tcal-swb').forEach(function(b){b.classList.remove('on');});t.classList.add('on');return;}
+  if(a==='render'){renderSide();return;}
+  if(a==='na-ok'){var nm=(document.getElementById('tcal-na-n').value||'').trim();if(!nm){document.getElementById('tcal-na-n').classList.add('erro');return;}var cor=(t.parentNode.parentNode.querySelector('.tcal-swb.on')||{getAttribute:function(){return '#5b6472';}}).getAttribute('data-c');var key='x'+Date.now().toString(36);S.data.agendas[key]={n:nm,c:cor,upd:Date.now()};salvar();render();return;}
+  if(a==='dispensar'){S.vistos[k]=Date.now();lsSet('tdb_cal_vistos',S.vistos);render();return;}
+  if(a==='gainfo'){gaInfo();return;}
+  if(a==='fechainfo'){fechaInfo();return;}
+  if(a==='gaverifica'){S.ga={estado:'?',msg:''};gaInfo();gaStatus().then(function(){return gaSincronizar();}).then(function(){if(document.getElementById('tcal-modal').classList.contains('info'))gaInfo();render();});return;}
+  if(a==='fechapop'){fecharPop();return;}
+  if(a==='editar'){var ev=S.data.eventos[id];if(ev)abrirForm(draftDe(ev));return;}
+  if(a==='excluir'){
+   if(t.getAttribute('data-sure')==='1'){excluirEvento(id);return;}
+   t.setAttribute('data-sure','1');t.textContent='Confirmar?';t.classList.add('sure');setTimeout(function(){if(t.parentNode){t.removeAttribute('data-sure');t.textContent='🗑';t.classList.remove('sure');}},3000);return;
+  }
+  if(a==='abrirfesta'){var bt=document.querySelector('.abas-menu [data-aurora-icon="festasTdb"]');fecharPop();if(bt){bt.click();toast('Abra a festa “'+t.getAttribute('data-f')+'” nas abas de Festas TDB.');}return;}
+  if(a==='qag'){var ti=document.getElementById('tcal-q-t');if(ti)S.pop.q.t=ti.value;S.pop.q.ag=k;popRapidoHtml(null);var p=document.getElementById('tcal-pop');return;}
+  if(a==='maisopcoes'){var ti2=document.getElementById('tcal-q-t'),q=S.pop.q;if(ti2)q.t=ti2.value;var dr=draftNovo(q.d,q.dia?'':q.h,q.ag);dr.t=q.t;dr.hf=q.dia?dr.hf:q.hf;abrirForm(dr);return;}
+  if(a==='qsalvar'){
+   var ti3=document.getElementById('tcal-q-t'),qq=S.pop.q;qq.t=(ti3?ti3.value:'').trim();
+   if(!qq.t){if(ti3){ti3.classList.add('erro');ti3.focus();}return;}
+   var ev2={id:uid(),t:qq.t,ag:qq.ag,festa:'',d:qq.d,h:qq.dia?'':qq.h,df:qq.d,hf:qq.dia?'':qq.hf,dia:qq.dia,rep:'',loc:'',conv:[],av:[avPadrao(qq.ag,qq.dia)],cor:'',desc:'',upd:Date.now()};
+   S.data.eventos[ev2.id]=ev2;fecharPop();salvar();render();toast('Evento criado.');gaSincronizar().then(syncPill);return;
+  }
+  if(a==='fag'){var q2=S.draft;if(!q2)return;q2.ag=k;if(q2.avAuto){q2.av=[avPadrao(k,q2.dia)];}reRenderForm();return;}
+  if(a==='fdia'){var q3=S.draft;if(!q3)return;q3.dia=!q3.dia;q3.av=q3.av.map(function(m){return q3.dia?avPadrao(q3.ag,true):(m>=1440||m<=0?avPadrao(q3.ag,false):m);});if(q3.dia&&q3.av.length===0)q3.av=[avPadrao(q3.ag,true)];if(!q3.dia&&!q3.h)q3.h='09:00';if(!q3.dia&&!q3.hf)q3.hf=hh(minOf(q3.h)+60);reRenderForm();return;}
+  if(a==='fcor'){S.draft.cor=t.getAttribute('data-c')||'';reRenderForm();return;}
+  if(a==='faddav'){var q4=S.draft;var op=avOpcoes(q4.dia);var cand=op.map(function(o){return o[0];}).filter(function(m){return q4.av.indexOf(m)<0;})[0];q4.av.push(cand!=null?cand:op[0][0]);q4.avAuto=false;reRenderForm();return;}
+  if(a==='fremav'){S.draft.av.splice(+t.getAttribute('data-i'),1);S.draft.avAuto=false;reRenderForm();return;}
+  if(a==='fsalvar'){salvarForm();return;}
+  if(a==='fechaform'){fecharForm();return;}
+  if(a==='fexcluir'){
+   if(t.getAttribute('data-sure')==='1'){excluirEvento(S.draft.id);return;}
+   t.setAttribute('data-sure','1');t.textContent='Confirmar exclusão?';setTimeout(function(){if(t.parentNode){t.removeAttribute('data-sure');t.textContent='Excluir';}},3000);return;
+  }
+ }
+ function onKey(e){
+  if(!S.host||!document.body.contains(S.host))return;
+  var t=e.target,tag=t&&t.tagName;
+  if(e.key==='Escape'){var m=document.getElementById('tcal-modal');if(m&&m.classList.contains('on')){if(m.classList.contains('info'))fechaInfo();else fecharForm();return;}if(S.pop){fecharPop();return;}if(S.draft&&!isNarrow()){fecharForm();return;}}
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  var k=e.key;
+  if(document.getElementById('tdb-cal')&&document.getElementById('tdb-cal').classList.contains('on'))return;
+  if(k==='c'||k==='C'){e.preventDefault();abrirForm(draftNovo(ymd(S.sel||hoje()),'09:00',null));}
+  else if(k==='t'||k==='T'){S.cur=hoje();S.sel=hoje();render();}
+  else if(k==='ArrowLeft'){mover(-1);}
+  else if(k==='ArrowRight'){mover(1);}
+  else if(k>='1'&&k<='5'){S.view=['day','week','month','year','agenda'][+k-1];S.q='';lsSet('tdb_cal_prefs',{view:S.view,off:S.off});render();}
+ }
+ function onDragStart(e){
+  var t=e.target.closest&&e.target.closest('[data-act="ev"][draggable="true"]');if(!t||!S.host||!S.host.contains(t))return;
+  e.dataTransfer.setData('text/plain',t.getAttribute('data-id')+'|'+t.getAttribute('data-d'));e.dataTransfer.effectAllowed='move';fecharPop();
+ }
+ function onDragOver(e){
+  if(!S.host||!S.host.contains(e.target))return;
+  var z=e.target.closest('.tcal-d,.tcal-col,.tcal-ad-c');if(!z)return;e.preventDefault();
+  S.host.querySelectorAll('.drop').forEach(function(x){if(x!==z)x.classList.remove('drop');});z.classList.add('drop');
+ }
+ function onDrop(e){
+  if(!S.host||!S.host.contains(e.target))return;
+  var z=e.target.closest('.tcal-d,.tcal-col,.tcal-ad-c');if(!z)return;e.preventDefault();
+  S.host.querySelectorAll('.drop').forEach(function(x){x.classList.remove('drop');});
+  var p=(e.dataTransfer.getData('text/plain')||'').split('|'),ev=S.data.eventos[p[0]];if(!ev||ev.rep)return;
+  var nd=z.getAttribute('data-d');if(!nd)return;
+  var delta=diffD(pY(ev.d),pY(nd));
+  var dur=0;if(!ev.dia&&ev.h&&ev.hf&&ev.df===ev.d)dur=minOf(ev.hf)-minOf(ev.h);
+  if(z.classList.contains('tcal-col')&&!ev.dia){var mm=Math.round(((e.clientY-z.getBoundingClientRect().top)/HP*60)/15)*15;mm=Math.max(0,Math.min(1425,mm));ev.h=hh(mm);if(ev.df===ev.d||dur>0)ev.hf=hh(Math.min(1439,mm+(dur>0?dur:60)));}
+  ev.d=nd;ev.df=ymd(add(pY(ev.df||p[1]),delta));if(ev.df<ev.d)ev.df=ev.d;
+  ev.upd=Date.now();S.data.eventos[ev.id]=ev;salvar();render();toast('Evento movido para '+quando(nd,ev.dia?{dia:true}:{h:ev.h})+'.');gaSincronizar().then(syncPill);
+ }
+ function onSearch(e){var t=e.target;if(!t.closest||!t.closest('.tcal-search'))return;S.q=t.value;clearTimeout(S._st);S._st=setTimeout(function(){renderMain();},120);}
+
+ /* ---------- montagem ---------- */
+ function shell(){
+  return '<div class="tcal" data-narrow="0" data-phone="0"><div class="tcal-head"><h2 class="tcal-h">Calendário</h2><button type="button" class="tcal-sync pend" data-act="gainfo"><i></i><span>Verificando Google Agenda…</span></button>'
+   +'<label class="tcal-search"><span aria-hidden="true">🔍</span><input type="search" placeholder="Buscar evento" aria-label="Buscar evento" autocomplete="off"></label>'
+   +'<div class="tcal-seg" role="tablist" aria-label="Visão">'+[['day','Dia'],['week','Semana'],['month','Mês'],['year','Ano'],['agenda','Agenda']].map(function(v){return '<button type="button" role="tab" data-act="view" data-v="'+v[0]+'">'+v[1]+'</button>';}).join('')+'</div>'
+   +'<button type="button" class="tcal-btn p tcal-novo" data-act="novo">+ Novo evento</button></div>'
+   +'<div class="tcal-alertas"></div><div class="tcal-chips"></div><div class="tcal-layout"><section class="tcal-card tcal-main"></section><aside class="tcal-side"></aside></div><button type="button" class="tcal-fab" data-act="novo" aria-label="Novo evento">+</button></div>';
+ }
+ var ligado=false;
+ function ligar(){
+  if(ligado)return;ligado=true;
+  document.addEventListener('click',onClick,false);
+  document.addEventListener('keydown',onKey,false);
+  document.addEventListener('dragstart',onDragStart,false);
+  document.addEventListener('dragover',onDragOver,false);
+  document.addEventListener('drop',onDrop,false);
+  document.addEventListener('input',onSearch,false);
+  window.addEventListener('resize',function(){if(S.host&&document.body.contains(S.host)){clearTimeout(S._rz);S._rz=setTimeout(function(){fecharPop();render();},150);}});
+ }
+ function mount(el){
+  ligar();
+  var pr=lsGet('tdb_cal_prefs',{});S.view=pr.view||S.view||'month';S.off=pr.off||{};S.vistos=lsGet('tdb_cal_vistos',{});
+  if(!S.cur)S.cur=hoje();if(isPhone()&&!S.sel)S.sel=hoje();
+  S.host=el;el.innerHTML=shell();render();
+  carregar().then(function(){lerFestas();render();return gaStatus();}).then(function(){render();return gaSincronizar();}).then(function(){syncPill();});
+  clearInterval(S.timer);S.timer=setInterval(function(){if(S.host&&document.body.contains(S.host)){renderAlertas();renderSide();badge();if(S.view==='week'||S.view==='day')renderMain();}else badge();},60000);
+  S.montado=true;
+  return function(){fecharPop();var m=document.getElementById('tcal-modal');if(m){m.className='';m.innerHTML='';}S.host=null;S.draft=null;};
+ }
+ function boot(){
+  ligar();
+  var tent=0;
+  (function esperar(){
+   if(window.__aberturaConcluida&&window.storage){
+    S.vistos=lsGet('tdb_cal_vistos',{});S.off=(lsGet('tdb_cal_prefs',{})).off||{};
+    carregar().then(function(){badge();var pend=Object.keys(S.data.eventos).some(function(k){return precisaSync(S.data.eventos[k]);})||Object.keys(S.data.del||{}).length;
+     if(pend&&lsGet('tdb_cal_ga_ok',false))gaStatus().then(function(){if(S.ga.estado==='ok')return gaSincronizar();});});
+    return;
+   }
+   if(++tent<120)setTimeout(esperar,1000);
+  })();
+  setInterval(function(){if(!S.host)badge();},60000);
+ }
+ window.TDBCalApp={mount:mount,boot:boot,_S:S,_ocorr:ocorr,_merge:merge,_avLabel:function(m,d){return avLabel(m,d);}};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else setTimeout(boot,0);
+})();
+
 </script>
 </body>
 </html>
