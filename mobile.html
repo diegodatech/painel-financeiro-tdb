@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 1</title>
+  <title>TDB 2</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb1-completo-20261002";
+    window.__TDB_BUILD = "tdb2-20261002";
   </script>
-  <script src="./config.js?build=tdb1-completo-20261002"></script>
+  <script src="./config.js?build=tdb2-20261002"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 1">
+  <meta name="apple-mobile-web-app-title" content="TDB 2">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1797,10 +1797,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb1-completo-20261002"></script>
+  <script src="./sync.js?build=tdb2-20261002"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb1-completo-20261002-mobile';
+window.__TDB_BUILD_EXATO = 'tdb2-20261002-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7274,7 +7274,7 @@ function Rematricula(_a) {
 
     return React.createElement("div", { className: "mobile-rematricula", 'data-ano': anoAlvo, style: { display: 'flex', flexDirection: 'column', gap: 14 } },
         React.createElement(Toast, { mensagem: toastMsg, tipo: "ok" }), React.createElement(AvisoReajusteAlto,{percentual:pctSugeridoCalculado}),
-        React.createElement('div',{className:'tdb-base-reajuste',style:{padding:14,border:'1px solid '+COLORS.line,borderRadius:12,background:COLORS.paperCard}},
+        false&&React.createElement('div',{className:'tdb-base-reajuste',style:{padding:14,border:'1px solid '+COLORS.line,borderRadius:12,background:COLORS.paperCard}},
           React.createElement('div',{style:{fontSize:13,marginBottom:9}},'Cenário: confirmados + aguardando com mensalidade informada (inclusive R$ 0), excluindo quem não renova. Linhas vazias não entram. Irmãos contam por criança. A régua posiciona os marcadores proporcionalmente aos valores exibidos; valores iguais coincidem. Confira a completude dos lançamentos.'),
           React.createElement('label',null,'Custo mensal previsto para '+anoAlvo+' (opcional)',React.createElement('input',{value:custoPrevistoInput,inputMode:'decimal',placeholder:baseDisponivel?formatBRL(despesasProjecao):'Sem histórico suficiente',onChange:function(e){setCustoPrevistoInput(e.target.value);},style:{display:'block',width:'100%',boxSizing:'border-box',padding:10,marginTop:6}})),
           React.createElement('div',{style:{fontSize:12,marginTop:7}},baseDisponivel?'Sem valor manual: custos fixos históricos + variáveis proporcionais às crianças previstas. Inclua aqui aumentos de salários e demais mudanças do próximo ano.':'Sem meses anteriores com movimento: a sugestão automática não está disponível.'),
@@ -16665,7 +16665,7 @@ html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-seg button.on {b
 #tdb-aurora-dialog .aurora-ic {width:48px;height:48px;border-radius:14px;background:#1767cf;color:#fff;display:grid;place-items:center;font-size:24px;flex:none;}
 #tdb-aurora-dialog .aurora-bigbtn strong {display:block;font-size:16px;}
 #tdb-aurora-dialog .aurora-bigbtn small {display:block;font-size:12.5px;color:#495263;margin-top:2px;line-height:1.35;}
-#tdb-aurora-dialog .aurora-load {margin:10px 0 0;padding:11px 13px 12px;border-radius:14px;background:#eef4fd;border:1px solid #c5d8f5;}
+#tdb-aurora-dialog .aurora-load {position:sticky;top:6px;z-index:6;margin:10px 0 0;padding:11px 13px 12px;border-radius:14px;background:#eef4fd;border:1px solid #c5d8f5;box-shadow:0 6px 18px rgba(23,103,207,.16);}
 #tdb-aurora-dialog .aurora-load[hidden] {display:none;}
 #tdb-aurora-dialog .aurora-load-top {display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;font-weight:600;color:#1767cf;line-height:1.35;}
 #tdb-aurora-dialog .aurora-load-pct {font-variant-numeric:tabular-nums;flex:none;}
