@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 4</title>
+  <title>TDB 5</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb4-20261001";
+    window.__TDB_BUILD = "tdb5-20261001";
   </script>
-  <script src="./config.js?build=tdb4-20261001"></script>
+  <script src="./config.js?build=tdb5-20261001"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 4">
+  <meta name="apple-mobile-web-app-title" content="TDB 5">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1528,7 +1528,7 @@ html.dark-mode {
   const fw=Math.max(60,Math.round(W*s)),fh=Math.max(60,Math.round(H*s));frame.style.width=fw+'px';frame.style.height=fh+'px';
   empty.hidden=!!photo;
   const bg=url?'url("'+url+'")':'none';layer.style.backgroundImage=bg;fill.style.backgroundImage=bg;
-  const m=cfg.photoBlur*2*s;layer.style.inset=(-m)+'px';fill.hidden=cfg.fit!=='contain';
+  const m=0;layer.style.inset='0px';fill.hidden=cfg.fit!=='contain';
   edGeom={lw:fw+2*m,lh:fh+2*m};
   if(cover&&imgRatio){const z=bgSize(edGeom.lw,edGeom.lh,f.z/100);layer.style.backgroundSize=(z[0]*100)+'% '+(z[1]*100)+'%';layer.style.backgroundPosition=f.x+'% '+f.y+'%';}
   else if(cfg.fit==='contain'){layer.style.backgroundSize='contain';layer.style.backgroundPosition='center';}
@@ -1763,10 +1763,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb4-20261001"></script>
+  <script src="./sync.js?build=tdb5-20261001"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb4-20261001-mobile';
+window.__TDB_BUILD_EXATO = 'tdb5-20261001-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -16535,9 +16535,9 @@ html[data-tdb-aurora] {
 }
 html[data-tdb-aurora] body { margin:0;background:#f0f2f5!important;color:var(--c-ink);isolation:isolate; }
 #tdb-aurora-wallpaper {position:fixed;inset:0;overflow:hidden;z-index:-2;pointer-events:none;background:radial-gradient(ellipse at 10% 10%,#fff 0,transparent 52%),radial-gradient(ellipse at 85% 85%,#d8dde5 0,transparent 55%),linear-gradient(135deg,#e0e5ec,#fafbfc 50%,#e6e9ee);}
-#tdb-aurora-wallpaper .aurora-photo {position:absolute;inset:calc(var(--aurora-photo-blur) * -2);background-size:cover;background-repeat:no-repeat;background-position:var(--aurora-x) var(--aurora-y);filter:blur(var(--aurora-photo-blur));}
-#tdb-aurora-wallpaper .aurora-fill {display:none;position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(28px) brightness(1.04);}
-html[data-aurora-fit="contain"] #tdb-aurora-wallpaper .aurora-fill {display:block;}
+#tdb-aurora-wallpaper .aurora-photo {position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;background-position:var(--aurora-x) var(--aurora-y);filter:blur(var(--aurora-photo-blur));}
+#tdb-aurora-wallpaper .aurora-fill {display:block;position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(28px) brightness(1.04);}
+html[data-aurora-fit="cover"] #tdb-aurora-wallpaper .aurora-fill {background-position:var(--aurora-x) var(--aurora-y);}
 html[data-aurora-fit="contain"] #tdb-aurora-wallpaper .aurora-photo {inset:0;background-size:contain;background-position:center;}
 html[data-aurora-fit="stretch"] #tdb-aurora-wallpaper .aurora-photo {background-size:100% 100%;background-position:center;}
 #tdb-aurora-wallpaper .aurora-wash {position:absolute;inset:0;background:rgba(255,255,255,var(--aurora-wash));}
@@ -16626,7 +16626,7 @@ html[data-tdb-aurora] body.dark-mode .painel-main :is(section,div)[style*="backg
 #tdb-aurora-dialog .aurora-cols {display:block;}
 #tdb-aurora-dialog .aurora-edit-note {font-size:12.5px;margin:0 0 4px;}
 #tdb-aurora-dialog .aurora-edit-hint {font-size:12px;margin:8px 0 0;line-height:1.4;}
-#tdb-aurora-dialog .aurora-frame-wrap {display:flex;justify-content:center;padding:8px 0 4px;}
+#tdb-aurora-dialog .aurora-frame-wrap {display:flex;justify-content:center;padding:8px 0 4px;width:100%;min-width:0;overflow:hidden;}
 #tdb-aurora-dialog #aurora-frame {position:relative;flex:none;overflow:hidden;box-sizing:content-box;border-radius:16px;border:3px solid #1c2430;background:#cfd6df;box-shadow:0 8px 24px #20304a33;touch-action:none;-webkit-user-select:none;user-select:none;outline-offset:4px;}
 #tdb-aurora-dialog #aurora-frame.pan {cursor:grab;}
 #tdb-aurora-dialog #aurora-frame.drag {cursor:grabbing;}
@@ -16639,7 +16639,8 @@ html[data-tdb-aurora] body.dark-mode .painel-main :is(section,div)[style*="backg
 #tdb-aurora-dialog #aurora-edit-controls .aurora-row {margin-top:10px;justify-content:flex-start;}
 @media(min-width:1000px){
  #tdb-aurora-dialog {width:min(1080px,calc(100vw - 64px));}
- #tdb-aurora-dialog .aurora-cols {display:grid;grid-template-columns:1fr 1fr;gap:0 30px;align-items:start;}
+ #tdb-aurora-dialog .aurora-cols {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 30px;align-items:start;}
+ #tdb-aurora-dialog .aurora-col {min-width:0;}
 }
 @media(max-width:600px){
  #tdb-aurora-dialog {padding:18px;border-radius:24px;max-height:94vh;max-height:94dvh;}
