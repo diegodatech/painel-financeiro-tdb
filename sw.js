@@ -1,7 +1,7 @@
 // TDB 02i — Service Worker
 // Objetivos: abrir o painel na hora (mesmo com internet ruim), nunca falhar a instalação por causa de UM arquivo,
 // e nunca interceptar as chamadas ao Google (Apps Script) — elas vão direto do navegador ao servidor.
-const BUILD='tdb3-20261001';
+const BUILD='tdb4-20261001';
 const CACHE='tdb-financeiro-github-'+BUILD;
 const CRITICOS=[
   './','./index.html','./desktop.html','./mobile.html','./config.js','./sync.js','./atualizar.js','./version.json','./manifest.webmanifest',

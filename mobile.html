@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 3</title>
+  <title>TDB 4</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb3-20261001";
+    window.__TDB_BUILD = "tdb4-20261001";
   </script>
-  <script src="./config.js?build=tdb3-20261001"></script>
+  <script src="./config.js?build=tdb4-20261001"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 3">
+  <meta name="apple-mobile-web-app-title" content="TDB 4">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1504,15 +1504,62 @@ html.dark-mode {
  const MEU_PADRAO={opacity:72,blur:18,sat:108,edge:92};
  const PRESETS={cristal:{opacity:55,blur:14,sat:160,edge:90},fosco:{opacity:84,blur:28,sat:110,edge:55},vivido:{opacity:42,blur:20,sat:210,edge:100}};
  const GLASS=['opacity','blur','sat','edge'];
- let cfg={...defaults,meu:{...MEU_PADRAO}},photo=null,url=null,dialog=null,lastFocus=null,generation=0;
- const limits={opacity:[30,98],blur:[0,40],sat:[100,220],edge:[10,100],photoBlur:[0,24],wash:[20,90],x:[0,100],y:[0,100]};
+ let cfg={...defaults,meu:{...MEU_PADRAO},frames:{}},photo=null,url=null,imgRatio=0,dialog=null,lastFocus=null,generation=0,downFora=false;
+ const limits={opacity:[30,98],blur:[0,40],sat:[100,220],edge:[10,100],photoBlur:[0,24],wash:[20,90],x:[0,100],y:[0,100],z:[100,300]};
  const clamp=(k,v)=>Math.max(limits[k][0],Math.min(limits[k][1],v));
- try{const p=JSON.parse(localStorage.getItem(KEY)||'{}');Object.keys(limits).forEach(k=>{if(Number.isFinite(p[k]))cfg[k]=clamp(k,p[k]);});if(['cover','contain','stretch'].indexOf(p.fit)>=0)cfg.fit=p.fit;if(['cristal','fosco','vivido','custom'].indexOf(p.preset)>=0)cfg.preset=p.preset;if(p.meu&&typeof p.meu==='object'){GLASS.forEach(k=>{if(Number.isFinite(p.meu[k]))cfg.meu[k]=clamp(k,p.meu[k]);});}else{GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});}}catch(e){}
+ try{const p=JSON.parse(localStorage.getItem(KEY)||'{}');Object.keys(limits).forEach(k=>{if(Number.isFinite(p[k]))cfg[k]=clamp(k,p[k]);});if(['cover','contain','stretch'].indexOf(p.fit)>=0)cfg.fit=p.fit;if(['cristal','fosco','vivido','custom'].indexOf(p.preset)>=0)cfg.preset=p.preset;if(p.meu&&typeof p.meu==='object'){GLASS.forEach(k=>{if(Number.isFinite(p.meu[k]))cfg.meu[k]=clamp(k,p.meu[k]);});}else{GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});}if(p.frames&&typeof p.frames==='object'){Object.keys(p.frames).forEach(k=>{const f=p.frames[k];if(/^(celular|tablet|computador)-[hv]$/.test(k)&&f&&Number.isFinite(f.x)&&Number.isFinite(f.y)&&Number.isFinite(f.z))cfg.frames[k]={x:clamp('x',f.x),y:clamp('y',f.y),z:clamp('z',f.z)};});}}catch(e){}
+  function frameKey(){const w=window.innerWidth,h=window.innerHeight;let c;if(w<600)c='celular';else if(w<=1100||(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches&&w<=1400))c='tablet';else c='computador';return c+'-'+(w>h?'h':'v');}
+ function frameName(){const k=frameKey().split('-');const n={celular:'Celular',tablet:'Tablet',computador:'Computador'}[k[0]];return n+(k[0]==='computador'?'':(k[1]==='h'?' deitado':' em pé'));}
+ function getFrame(){const f=cfg.frames[frameKey()];return f||{x:cfg.x,y:cfg.y,z:100};}
+ function bgSize(bw,bh,z){const r=imgRatio/(bw/bh);return [Math.max(1,r)*z,Math.max(1,1/r)*z];}
+ let edGeom={lw:1,lh:1},wheelTimer=0;
+ function setFrame(p,persist){const k=frameKey(),c=getFrame();cfg.frames[k]={x:clamp('x',p.x!==undefined?p.x:c.x),y:clamp('y',p.y!==undefined?p.y:c.y),z:clamp('z',p.z!==undefined?p.z:c.z)};if(persist)save();else apply();renderEditor();}
+ function renderEditor(){
+  if(!dialog)return;const ed=dialog.querySelector('#aurora-editor');if(!ed)return;
+  const frame=ed.querySelector('#aurora-frame'),wrap=ed.querySelector('.aurora-frame-wrap'),layer=frame.querySelector('.aurora-edit-photo'),fill=frame.querySelector('.aurora-edit-fill'),empty=frame.querySelector('.aurora-edit-empty');
+  const wp=document.getElementById('tdb-aurora-wallpaper');const W=(wp&&wp.clientWidth)||window.innerWidth,H=(wp&&wp.clientHeight)||window.innerHeight;
+  const f=getFrame(),cover=cfg.fit==='cover';
+  ed.querySelector('#aurora-edit-label').textContent=frameName()+' · tela de '+W+' × '+H+' pontos';
+  ed.querySelector('#aurora-zoom').value=f.z;ed.querySelector('#aurora-zoom-out').textContent=f.z+'%';
+  ed.querySelector('#aurora-edit-controls').hidden=!(cover&&photo);
+  ed.querySelector('#aurora-edit-hint').textContent=!photo?'':(cover?'Arraste a foto para posicionar. Para aproximar, use dois dedos, a roda do mouse ou o controle acima.':'Para posicionar e aproximar a foto, escolha “Tela cheia” acima.');
+  const aw=wrap.clientWidth||300;
+  const maxH=Math.max(170,Math.min(440,window.innerHeight*.46));const s=Math.min(1,aw/W,maxH/H);
+  const fw=Math.max(60,Math.round(W*s)),fh=Math.max(60,Math.round(H*s));frame.style.width=fw+'px';frame.style.height=fh+'px';
+  empty.hidden=!!photo;
+  const bg=url?'url("'+url+'")':'none';layer.style.backgroundImage=bg;fill.style.backgroundImage=bg;
+  const m=cfg.photoBlur*2*s;layer.style.inset=(-m)+'px';fill.hidden=cfg.fit!=='contain';
+  edGeom={lw:fw+2*m,lh:fh+2*m};
+  if(cover&&imgRatio){const z=bgSize(edGeom.lw,edGeom.lh,f.z/100);layer.style.backgroundSize=(z[0]*100)+'% '+(z[1]*100)+'%';layer.style.backgroundPosition=f.x+'% '+f.y+'%';}
+  else if(cfg.fit==='contain'){layer.style.backgroundSize='contain';layer.style.backgroundPosition='center';}
+  else if(cfg.fit==='stretch'){layer.style.backgroundSize='100% 100%';layer.style.backgroundPosition='center';}
+  else{layer.style.backgroundSize='cover';layer.style.backgroundPosition=f.x+'% '+f.y+'%';}
+  frame.classList.toggle('pan',cover&&!!photo);
+ }
+ function wireEditor(){
+  const frame=dialog.querySelector('#aurora-frame'),ptrs=new Map();let d0=1,z0=100;
+  const can=()=>!!photo&&cfg.fit==='cover';
+  frame.addEventListener('pointerdown',e=>{if(!can())return;e.preventDefault();try{frame.setPointerCapture(e.pointerId);}catch(_){}ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});if(ptrs.size===2){const v=[...ptrs.values()];d0=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y)||1;z0=getFrame().z;}frame.classList.add('drag');});
+  frame.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+   if(ptrs.size===1){const f=getFrame(),sz=bgSize(edGeom.lw,edGeom.lh,f.z/100);const ox=edGeom.lw*(sz[0]-1),oy=edGeom.lh*(sz[1]-1);setFrame({x:ox>.5?f.x-100*dx/ox:f.x,y:oy>.5?f.y-100*dy/oy:f.y},false);}
+   else if(ptrs.size===2){const v=[...ptrs.values()];const d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y);setFrame({z:Math.round(z0*d/d0)},false);}});
+  const fim=e=>{if(!ptrs.delete(e.pointerId))return;if(ptrs.size===0){frame.classList.remove('drag');save();}};
+  frame.addEventListener('pointerup',fim);frame.addEventListener('pointercancel',fim);
+  frame.addEventListener('wheel',e=>{if(!can())return;e.preventDefault();setFrame({z:Math.round(getFrame().z-e.deltaY*.25)},false);clearTimeout(wheelTimer);wheelTimer=setTimeout(save,400);},{passive:false});
+  frame.addEventListener('keydown',e=>{if(!can())return;const f=getFrame();const k=e.key;let p=null;if(k==='ArrowLeft')p={x:f.x+2};else if(k==='ArrowRight')p={x:f.x-2};else if(k==='ArrowUp')p={y:f.y+2};else if(k==='ArrowDown')p={y:f.y-2};else if(k==='+'||k==='=')p={z:f.z+10};else if(k==='-')p={z:f.z-10};if(p){e.preventDefault();setFrame(p,true);}});
+  dialog.querySelector('#aurora-zoom').oninput=e=>setFrame({z:Number(e.target.value)},true);
+  dialog.querySelector('#aurora-center').onclick=()=>setFrame({x:50,y:50,z:100},true);
+ }
+ function fora(e){const r=dialog.getBoundingClientRect();return e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom;}
+ window.addEventListener('resize',()=>{apply();if(dialog&&dialog.open)renderEditor();});
  function status(t){const e=document.getElementById('aurora-status');if(e)e.textContent=t;}
  function apply(){
-  [['opacity','--aurora-opacity',.01,''],['blur','--aurora-blur',1,'px'],['sat','--aurora-sat',.01,''],['photoBlur','--aurora-photo-blur',1,'px'],['wash','--aurora-wash',.01,''],['x','--aurora-x',1,'%'],['y','--aurora-y',1,'%']].forEach(([k,v,m,u])=>html.style.setProperty(v,(cfg[k]*m)+u));
+  [['opacity','--aurora-opacity',.01,''],['blur','--aurora-blur',1,'px'],['sat','--aurora-sat',.01,''],['photoBlur','--aurora-photo-blur',1,'px'],['wash','--aurora-wash',.01,'']].forEach(([k,v,m,u])=>html.style.setProperty(v,(cfg[k]*m)+u));
   html.style.setProperty('--aurora-edge','rgba(255,255,255,'+(cfg.edge*.01).toFixed(2)+')');
   html.setAttribute('data-aurora-fit',cfg.fit);
+  const f=getFrame();html.style.setProperty('--aurora-x',f.x+'%');html.style.setProperty('--aurora-y',f.y+'%');
+  const el=document.querySelector('#tdb-aurora-wallpaper .aurora-photo');
+  if(el){if(cfg.fit==='cover'&&imgRatio&&el.offsetWidth&&el.offsetHeight){const z=bgSize(el.offsetWidth,el.offsetHeight,f.z/100);el.style.backgroundSize=(z[0]*100).toFixed(3)+'% '+(z[1]*100).toFixed(3)+'%';}else el.style.backgroundSize='';}
  }
  function save(){apply();try{localStorage.setItem(KEY,JSON.stringify(cfg));status('Aparência salva neste navegador.');}catch(e){status('Aparência aplicada. Este navegador não permitiu guardar os ajustes.');}}
  function dbAntiga_(){return new Promise((resolve,reject)=>{const r=indexedDB.open('tdb_aurora_wallpaper_v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('photos');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
@@ -1538,32 +1585,33 @@ html.dark-mode {
   }
   if(action==='delete'){await storage.delete(FUNDO_KEY,false);return true;}
  }
- function display(blob){if(url)URL.revokeObjectURL(url);photo=blob||null;url=photo?URL.createObjectURL(photo):null;const bgi=url?'url("'+url+'")':'none';const el=document.querySelector('#tdb-aurora-wallpaper .aurora-photo');if(el)el.style.backgroundImage=bgi;const fl=document.querySelector('#tdb-aurora-wallpaper .aurora-fill');if(fl)fl.style.backgroundImage=bgi;const t=document.getElementById('aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
+ function display(blob){if(url)URL.revokeObjectURL(url);photo=blob||null;url=photo?URL.createObjectURL(photo):null;const bgi=url?'url("'+url+'")':'none';const el=document.querySelector('#tdb-aurora-wallpaper .aurora-photo');if(el)el.style.backgroundImage=bgi;const fl=document.querySelector('#tdb-aurora-wallpaper .aurora-fill');if(fl)fl.style.backgroundImage=bgi;const t=document.getElementById('aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';imgRatio=0;apply();if(url){const u=url,im=new Image();im.onload=()=>{if(u===url&&im.naturalWidth&&im.naturalHeight){imgRatio=im.naturalWidth/im.naturalHeight;apply();renderEditor();}};im.src=u;}renderEditor();}
  async function resize(file){
   if(!/^image\/(jpeg|png|webp)$/.test(file.type))throw new Error('Escolha uma foto JPG, PNG ou WebP.');
   if(file.size>20*1024*1024)throw new Error('Escolha uma foto com até 20 MB.');
   const tmp=URL.createObjectURL(file);
   try{const img=new Image();img.src=tmp;await img.decode();if(!img.naturalWidth)throw new Error('Não foi possível abrir a foto.');const scale=Math.min(1,1920/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);return await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível preparar a foto.')),'image/jpeg',.86));}finally{URL.revokeObjectURL(tmp);}
  }
- function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){inp.value=cfg[k];inp.nextElementSibling.value=cfg[k]+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});const pos=dialog.querySelector('#aurora-pos');if(pos)pos.hidden=cfg.fit!=='cover';const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
+ function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){inp.value=cfg[k];inp.nextElementSibling.value=cfg[k]+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});renderEditor();const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
  function open(){
   if(!dialog){
    dialog=document.createElement('dialog');dialog.id='tdb-aurora-dialog';dialog.setAttribute('aria-labelledby','aurora-title');dialog.setAttribute('data-export-ignore','true');
    dialog.innerHTML='<div class="aurora-row" style="margin-top:0"><h2 id="aurora-title">Aparência</h2><button type="button" id="aurora-close" aria-label="Fechar aparência">✕</button></div><p>Liquid Glass · escolha o fundo e a transparência dos quadros.</p>'
-    +'<span class="aurora-h">Foto de fundo</span><input id="aurora-upload" class="aurora-sr" type="file" accept="image/jpeg,image/png,image/webp"><label for="aurora-upload" class="aurora-bigbtn"><span class="aurora-ic" aria-hidden="true">📷</span><span><strong id="aurora-upload-title">Adicionar foto de fundo</strong><small>Toque para escolher uma foto (JPG, PNG ou WebP, até 20 MB)</small></span></label>'
+    +'<div class="aurora-cols"><div class="aurora-col"><span class="aurora-h">Foto de fundo</span><input id="aurora-upload" class="aurora-sr" type="file" accept="image/jpeg,image/png,image/webp"><label for="aurora-upload" class="aurora-bigbtn"><span class="aurora-ic" aria-hidden="true">📷</span><span><strong id="aurora-upload-title">Adicionar foto de fundo</strong><small>Toque para escolher uma foto (JPG, PNG ou WebP, até 20 MB)</small></span></label>'
     +'<p style="font-size:12px">A foto de fundo é salva no Google Drive e aparece nos outros aparelhos (computador, tablet e celular). Os ajustes de opacidade/desfoque ficam só neste navegador — nenhum dos dois entra nos backups financeiros ou nos PDFs.</p>'
     +'<span class="aurora-h">Como a foto ocupa a tela</span><div class="aurora-fit" id="aurora-fit">'
     +'<button type="button" class="aurora-opc" data-fit="cover"><span class="aurora-mini"><i style="inset:0"></i></span><b>Tela cheia</b><small>Preenche tudo; as bordas podem cortar</small></button>'
     +'<button type="button" class="aurora-opc" data-fit="contain"><span class="aurora-mini"><i style="left:14px;right:14px;top:0;bottom:0"></i></span><b>Foto inteira</b><small>Mostra a foto toda, sem cortar</small></button>'
     +'<button type="button" class="aurora-opc" data-fit="stretch"><span class="aurora-mini"><i style="inset:0;border-radius:0"></i></span><b>Esticar</b><small>Encaixa nos 4 lados (pode distorcer)</small></button></div>'
+    +'<span class="aurora-h">Posição da foto neste aparelho</span><div id="aurora-editor"><p class="aurora-edit-note" id="aurora-edit-label"></p><div class="aurora-frame-wrap"><div id="aurora-frame" tabindex="0" role="img" aria-label="Quadro com a posição da foto na tela"><div class="aurora-edit-fill"></div><div class="aurora-edit-photo"></div><div class="aurora-edit-grid"></div><div class="aurora-edit-empty">Adicione uma foto para posicionar</div></div></div><div id="aurora-edit-controls"><label for="aurora-zoom">Aproximar<output id="aurora-zoom-out"></output></label><input id="aurora-zoom" type="range" min="100" max="300" step="1"><div class="aurora-row"><button type="button" id="aurora-center">Centralizar foto</button></div></div><p class="aurora-edit-hint" id="aurora-edit-hint"></p><p class="aurora-edit-hint">Vale só para este aparelho, na posição atual (em pé ou deitado). Gire o aparelho para ajustar a outra posição.</p></div></div><div class="aurora-col">'
     +'<span class="aurora-h">Estilo do vidro</span><div class="aurora-presets" id="aurora-presets">'
     +'<button type="button" class="aurora-vb" data-preset="cristal" style="--amostra:linear-gradient(135deg,#bfe3ff,#fff)"><span class="nome">Cristal</span><span class="det">leve e claro</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="fosco" style="--amostra:linear-gradient(135deg,#e8e8ee,#fafafa)"><span class="nome">Fosco</span><span class="det">mais sólido</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="vivido" style="--amostra:linear-gradient(135deg,#ffc2dd,#c9d7ff)"><span class="nome">Vívido</span><span class="det">cores fortes</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="custom" style="--amostra:repeating-linear-gradient(45deg,#fff,#fff 6px,#e6ecf3 6px,#e6ecf3 12px)"><span class="nome">Meu estilo</span><span class="det">personalizar</span></button></div>'
-    +'<div class="aurora-box" id="aurora-glass"></div><span class="aurora-h">Ajustes da foto</span><div class="aurora-box" id="aurora-fotoajustes"><div id="aurora-pos"></div></div>';
-   const LINHAS={opacity:'Opacidade dos quadros',blur:'Desfoque do vidro',sat:'Cores atrás do vidro (saturação)',edge:'Brilho da borda',photoBlur:'Desfoque da foto',wash:'Clareamento do fundo',x:'Enquadramento horizontal',y:'Enquadramento vertical'};
-   const ONDE={opacity:'#aurora-glass',blur:'#aurora-glass',sat:'#aurora-glass',edge:'#aurora-glass',photoBlur:'#aurora-fotoajustes',wash:'#aurora-fotoajustes',x:'#aurora-pos',y:'#aurora-pos'};
+    +'<div class="aurora-box" id="aurora-glass"></div><span class="aurora-h">Ajustes da foto</span><div class="aurora-box" id="aurora-fotoajustes"></div></div></div>';
+   const LINHAS={opacity:'Opacidade dos quadros',blur:'Desfoque do vidro',sat:'Cores atrás do vidro (saturação)',edge:'Brilho da borda',photoBlur:'Desfoque da foto',wash:'Clareamento do fundo'};
+   const ONDE={opacity:'#aurora-glass',blur:'#aurora-glass',sat:'#aurora-glass',edge:'#aurora-glass',photoBlur:'#aurora-fotoajustes',wash:'#aurora-fotoajustes'};
    Object.keys(LINHAS).forEach(k=>{const row=document.createElement('label');row.htmlFor='aurora-'+k;row.textContent=LINHAS[k];const input=document.createElement('input');input.id='aurora-'+k;input.type='range';input.min=limits[k][0];input.max=limits[k][1];input.step=1;input.dataset.setting=k;const out=document.createElement('output');out.htmlFor=input.id;input.oninput=()=>{cfg[k]=Number(input.value);if(GLASS.indexOf(k)>=0){cfg.meu[k]=cfg[k];cfg.preset='custom';}syncControls();save();};row.append(input,out);dialog.querySelector(ONDE[k]).appendChild(row);});
    dialog.querySelectorAll('[data-fit]').forEach(b=>{b.onclick=()=>{cfg.fit=b.dataset.fit;syncControls();save();};});
    dialog.querySelectorAll('[data-preset]').forEach(b=>{b.onclick=()=>{const v=b.dataset.preset;cfg.preset=v;const src=v==='custom'?cfg.meu:PRESETS[v];GLASS.forEach(k=>{cfg[k]=src[k];});syncControls();save();};});
@@ -1572,9 +1620,12 @@ html.dark-mode {
    dialog.querySelector('#aurora-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{if(lastFocus&&lastFocus.isConnected)lastFocus.focus();});
    dialog.querySelector('#aurora-upload').onchange=async e=>{const f=e.target.files[0];if(!f)return;const token=++generation;status('Preparando foto…');try{const b=await resize(f);if(token!==generation)return;status('Enviando foto para o Google Drive…');await stored('put',b);if(token!==generation)return;display(b);status('Foto salva! Sincronizada com o Google Drive — aparece nos outros aparelhos em instantes.');}catch(err){status(err.message||'Não foi possível guardar a foto.');}finally{e.target.value='';}};
    dialog.querySelector('#aurora-remove').onclick=async()=>{++generation;status('Removendo…');try{await stored('delete');display(null);status('Foto removida de todos os aparelhos.');}catch(e){status('Não foi possível remover a foto salva. Tente novamente.');}};
-   dialog.querySelector('#aurora-reset').onclick=()=>{cfg={...defaults,meu:{...MEU_PADRAO}};syncControls();save();};
+   dialog.querySelector('#aurora-reset').onclick=()=>{cfg={...defaults,meu:{...MEU_PADRAO},frames:{}};syncControls();save();};
+   wireEditor();
+   dialog.addEventListener('pointerdown',e=>{downFora=e.target===dialog&&fora(e);});
+   dialog.addEventListener('click',e=>{if(e.target===dialog&&downFora&&fora(e))dialog.close();downFora=false;});
   }
-  lastFocus=document.activeElement;syncControls();if(!dialog.open)dialog.showModal();
+  lastFocus=document.activeElement;syncControls();if(!dialog.open)dialog.showModal();renderEditor();
  }
  function start(){
   const bg=document.createElement('div');bg.id='tdb-aurora-wallpaper';bg.setAttribute('aria-hidden','true');bg.setAttribute('data-export-ignore','true');bg.innerHTML='<div class="aurora-fill"></div><div class="aurora-photo"></div><div class="aurora-wash"></div>';document.body.prepend(bg);
@@ -1712,10 +1763,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb3-20261001"></script>
+  <script src="./sync.js?build=tdb4-20261001"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb3-20261001-mobile';
+window.__TDB_BUILD_EXATO = 'tdb4-20261001-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -16537,7 +16588,7 @@ html[data-tdb-aurora] body.dark-mode #tdb-aurora-wallpaper .aurora-wash {backgro
 html[data-tdb-aurora] body.dark-mode .aba-item {background:rgba(47,51,60,.9)!important;color:#f6f7f9!important;}
 html[data-tdb-aurora] body.dark-mode .painel-main th {background:#363b44!important;}
 html[data-tdb-aurora] body.dark-mode .painel-main :is(section,div)[style*="background: var(--c-paper)"]{background:rgba(35,39,47,.9)!important;}
-#tdb-aurora-dialog {width:min(510px,calc(100vw - 32px));max-height:88vh;overflow:auto;box-sizing:border-box;border:1px solid #fff;border-radius:28px;padding:26px;background:rgba(250,251,253,.97);color:#111318;box-shadow:0 25px 90px rgba(20,30,45,.24);font:14px/1.5 -apple-system,BlinkMacSystemFont,'Inter',sans-serif;}
+#tdb-aurora-dialog {width:min(760px,calc(100vw - 32px));max-height:92vh;max-height:92dvh;overflow:auto;box-sizing:border-box;border:1px solid #fff;border-radius:28px;padding:26px;background:rgba(250,251,253,.97);color:#111318;box-shadow:0 25px 90px rgba(20,30,45,.24);font:14px/1.5 -apple-system,BlinkMacSystemFont,'Inter',sans-serif;}
 #tdb-aurora-dialog::backdrop {background:rgba(35,45,65,.28);backdrop-filter:blur(5px);}
 #tdb-aurora-dialog h2 {margin:0;font-size:23px;color:#111;}
 #tdb-aurora-dialog p {color:#495263;}
@@ -16571,7 +16622,30 @@ html[data-tdb-aurora] body.dark-mode .painel-main :is(section,div)[style*="backg
 #tdb-aurora-dialog .aurora-vb.on {outline:2.5px solid #106E6B;outline-offset:1px;}
 #tdb-aurora-dialog .aurora-box {border:1px solid #dfe4ea;border-radius:16px;padding:2px 14px 12px;background:#fff;margin-top:10px;}
 #tdb-aurora-dialog .aurora-box label:first-child {margin-top:10px;}
-#tdb-aurora-dialog #aurora-pos[hidden] {display:none;}
+#tdb-aurora-dialog [hidden] {display:none!important;}
+#tdb-aurora-dialog .aurora-cols {display:block;}
+#tdb-aurora-dialog .aurora-edit-note {font-size:12.5px;margin:0 0 4px;}
+#tdb-aurora-dialog .aurora-edit-hint {font-size:12px;margin:8px 0 0;line-height:1.4;}
+#tdb-aurora-dialog .aurora-frame-wrap {display:flex;justify-content:center;padding:8px 0 4px;}
+#tdb-aurora-dialog #aurora-frame {position:relative;flex:none;overflow:hidden;box-sizing:content-box;border-radius:16px;border:3px solid #1c2430;background:#cfd6df;box-shadow:0 8px 24px #20304a33;touch-action:none;-webkit-user-select:none;user-select:none;outline-offset:4px;}
+#tdb-aurora-dialog #aurora-frame.pan {cursor:grab;}
+#tdb-aurora-dialog #aurora-frame.drag {cursor:grabbing;}
+#tdb-aurora-dialog .aurora-edit-fill,#tdb-aurora-dialog .aurora-edit-photo {position:absolute;background-repeat:no-repeat;}
+#tdb-aurora-dialog .aurora-edit-fill {inset:-20px;background-size:cover;background-position:center;filter:blur(10px);}
+#tdb-aurora-dialog .aurora-edit-photo {inset:0;}
+#tdb-aurora-dialog .aurora-edit-grid {position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;background:linear-gradient(90deg,transparent calc(33.33% - .5px),#ffffffa8 calc(33.33% - .5px),#ffffffa8 calc(33.33% + .5px),transparent calc(33.33% + .5px)),linear-gradient(90deg,transparent calc(66.66% - .5px),#ffffffa8 calc(66.66% - .5px),#ffffffa8 calc(66.66% + .5px),transparent calc(66.66% + .5px)),linear-gradient(transparent calc(33.33% - .5px),#ffffffa8 calc(33.33% - .5px),#ffffffa8 calc(33.33% + .5px),transparent calc(33.33% + .5px)),linear-gradient(transparent calc(66.66% - .5px),#ffffffa8 calc(66.66% - .5px),#ffffffa8 calc(66.66% + .5px),transparent calc(66.66% + .5px));}
+#tdb-aurora-dialog #aurora-frame.drag .aurora-edit-grid {opacity:1;}
+#tdb-aurora-dialog .aurora-edit-empty {position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:12px;font-size:12.5px;color:#495263;}
+#tdb-aurora-dialog #aurora-edit-controls .aurora-row {margin-top:10px;justify-content:flex-start;}
+@media(min-width:1000px){
+ #tdb-aurora-dialog {width:min(1080px,calc(100vw - 64px));}
+ #tdb-aurora-dialog .aurora-cols {display:grid;grid-template-columns:1fr 1fr;gap:0 30px;align-items:start;}
+}
+@media(max-width:600px){
+ #tdb-aurora-dialog {padding:18px;border-radius:24px;max-height:94vh;max-height:94dvh;}
+}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog #aurora-frame {border-color:#8b93a3;background:#20232a;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-edit-empty {color:#bcc0ca;}
 html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog :is(.aurora-h) {color:#f5f5f7;}
 html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-bigbtn {background:#2b2f37;border-color:#55707b;color:#8fe0d8;}
 html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-bigbtn small,html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-opc small,html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-vb .det {color:#bcc0ca;}
