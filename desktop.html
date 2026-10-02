@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDB 6</title>
+  <title>TDB 7</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb6-20261001";
+    window.__TDB_BUILD = "tdb7-20261001";
   </script>
-  <script src="./config.js?build=tdb6-20261001"></script>
+  <script src="./config.js?build=tdb7-20261001"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 6">
+  <meta name="apple-mobile-web-app-title" content="TDB 7">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -822,7 +822,7 @@ html.dark-mode {
   ed.querySelector('#aurora-zoom').value=f.z;ed.querySelector('#aurora-zoom-out').textContent=f.z+'%';
   ed.querySelector('#aurora-edit-controls').hidden=!(cover&&photo);
   ed.querySelector('#aurora-edit-hint').textContent=!photo?'':(cover?'Arraste a foto para posicionar. Para aproximar, use dois dedos, a roda do mouse ou o controle acima.':'Para posicionar e aproximar a foto, escolha “Tela cheia” acima.');
-  ['x','y'].forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){inp.value=f[k];inp.nextElementSibling.value=Math.round(f[k])+'%';inp.parentElement.hidden=!(cover&&photo);}});
+  ['x','y','z'].forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){inp.value=f[k];inp.nextElementSibling.value=Math.round(f[k])+'%';inp.parentElement.hidden=!(cover&&photo);}});
   const aw=(wrap.clientWidth||300)-10;
   const maxH=Math.max(170,Math.min(440,window.innerHeight*.46));const s=Math.min(1,aw/W,maxH/H);
   const fw=Math.max(60,Math.round(W*s)),fh=Math.max(60,Math.round(H*s));frame.style.width=fw+'px';frame.style.height=fh+'px';
@@ -892,7 +892,7 @@ html.dark-mode {
   const tmp=URL.createObjectURL(file);
   try{const img=new Image();img.src=tmp;await img.decode();if(!img.naturalWidth)throw new Error('Não foi possível abrir a foto.');const scale=Math.min(1,1920/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);return await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível preparar a foto.')),'image/jpeg',.86));}finally{URL.revokeObjectURL(tmp);}
  }
- function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){const vv=(k==='x'||k==='y')?getFrame()[k]:cfg[k];inp.value=vv;inp.nextElementSibling.value=Math.round(vv)+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});renderEditor();const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
+ function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){const vv=(k==='x'||k==='y'||k==='z')?getFrame()[k]:cfg[k];inp.value=vv;inp.nextElementSibling.value=Math.round(vv)+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});renderEditor();const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
  function open(){
   if(!dialog){
    dialog=document.createElement('dialog');dialog.id='tdb-aurora-dialog';dialog.setAttribute('aria-labelledby','aurora-title');dialog.setAttribute('data-export-ignore','true');
@@ -913,10 +913,10 @@ html.dark-mode {
     +'<button type="button" class="aurora-vb" data-preset="transparente" style="--amostra:linear-gradient(135deg,#d9f1ff,#ffe9f5)"><span class="nome">Transparente</span><span class="det">quase vidro puro</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="solido" style="--amostra:linear-gradient(135deg,#ffffff,#eceff3)"><span class="nome">Sólido</span><span class="det">sem transparência</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="custom" style="--amostra:repeating-linear-gradient(45deg,#fff,#fff 6px,#e6ecf3 6px,#e6ecf3 12px)"><span class="nome">Meu estilo</span><span class="det">personalizar</span></button></div>'
-    +'<div class="aurora-box" id="aurora-glass"></div><span class="aurora-h">Ajustes da foto</span><div class="aurora-box" id="aurora-fotoajustes"></div></div></div>';
-   const LINHAS={opacity:'Opacidade dos quadros',blur:'Desfoque do vidro',sat:'Cores atrás do vidro (saturação)',edge:'Brilho da borda',photoBlur:'Desfoque da foto',wash:'Clareamento do fundo',x:'Enquadramento horizontal',y:'Enquadramento vertical'};
-   const ONDE={opacity:'#aurora-glass',blur:'#aurora-glass',sat:'#aurora-glass',edge:'#aurora-glass',photoBlur:'#aurora-fotoajustes',wash:'#aurora-fotoajustes',x:'#aurora-fotoajustes',y:'#aurora-fotoajustes'};
-   Object.keys(LINHAS).forEach(k=>{const row=document.createElement('label');row.htmlFor='aurora-'+k;row.textContent=LINHAS[k];const input=document.createElement('input');input.id='aurora-'+k;input.type='range';input.min=limits[k][0];input.max=limits[k][1];input.step=1;input.dataset.setting=k;const out=document.createElement('output');out.htmlFor=input.id;input.oninput=()=>{if(k==='x'||k==='y'){setFrame({[k]:Number(input.value)},true);return;}cfg[k]=Number(input.value);if(GLASS.indexOf(k)>=0){cfg.meu[k]=cfg[k];cfg.preset='custom';}syncControls();save();};row.append(input,out);dialog.querySelector(ONDE[k]).appendChild(row);});
+    +'<span class="aurora-h">Meu estilo · ajustes manuais</span><p class="aurora-edit-hint" style="margin:0 0 4px">Todos os controles juntos, um abaixo do outro: monte o fundo do seu jeito.</p><div class="aurora-box" id="aurora-glass"></div></div></div>';
+   const LINHAS={opacity:'Opacidade dos quadros',blur:'Desfoque do vidro',sat:'Cores atrás do vidro (saturação)',edge:'Brilho da borda',photoBlur:'Desfoque da foto',wash:'Clareamento do fundo',x:'Enquadramento horizontal',y:'Enquadramento vertical',z:'Aproximar a foto'};
+   const ONDE={opacity:'#aurora-glass',blur:'#aurora-glass',sat:'#aurora-glass',edge:'#aurora-glass',photoBlur:'#aurora-glass',wash:'#aurora-glass',x:'#aurora-glass',y:'#aurora-glass',z:'#aurora-glass'};
+   Object.keys(LINHAS).forEach(k=>{const row=document.createElement('label');row.htmlFor='aurora-'+k;row.textContent=LINHAS[k];const input=document.createElement('input');input.id='aurora-'+k;input.type='range';input.min=limits[k][0];input.max=limits[k][1];input.step=1;input.dataset.setting=k;const out=document.createElement('output');out.htmlFor=input.id;input.oninput=()=>{if(k==='x'||k==='y'||k==='z'){setFrame({[k]:Number(input.value)},true);return;}cfg[k]=Number(input.value);if(GLASS.indexOf(k)>=0){cfg.meu[k]=cfg[k];cfg.preset='custom';}syncControls();save();};row.append(input,out);dialog.querySelector(ONDE[k]).appendChild(row);});
    dialog.querySelectorAll('[data-fit]').forEach(b=>{b.onclick=()=>{cfg.fit=b.dataset.fit;syncControls();save();};});
    dialog.querySelectorAll('[data-preset]').forEach(b=>{b.onclick=()=>{const v=b.dataset.preset;cfg.preset=v;const src=v==='custom'?cfg.meu:PRESETS[v];GLASS.forEach(k=>{cfg[k]=src[k];});syncControls();save();};});
       const footer=document.createElement('div');footer.className='aurora-row';footer.innerHTML='<button id="aurora-remove" type="button">Remover foto</button><button id="aurora-reset" type="button">Restaurar aparência</button>';dialog.appendChild(footer);
@@ -1179,10 +1179,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb6-20261001"></script>
+  <script src="./sync.js?build=tdb7-20261001"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb6-20261001-desktop';
+window.__TDB_BUILD_EXATO = 'tdb7-20261001-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -14508,6 +14508,8 @@ html[data-tdb-aurora] body.dark-mode .painel-main :is(section,div)[style*="backg
 #tdb-aurora-dialog .aurora-box label input[type=range],#tdb-aurora-dialog #aurora-edit-controls label input {grid-column:1 / -1;grid-row:2;}
 #tdb-aurora-dialog .aurora-box label output,#tdb-aurora-dialog #aurora-edit-controls label output {grid-column:2;grid-row:1;float:none;white-space:nowrap;}
 #tdb-aurora-dialog .aurora-box {padding-bottom:14px;}
+#tdb-aurora-dialog .aurora-box label[for=aurora-photoBlur] {margin-top:20px;padding-top:16px;border-top:1px solid #e3e8ee;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-box label[for=aurora-photoBlur] {border-top-color:#555b68;}
 #tdb-aurora-dialog .aurora-vb .nome,#tdb-aurora-dialog .aurora-vb .det,#tdb-aurora-dialog .aurora-opc b,#tdb-aurora-dialog .aurora-opc small {overflow-wrap:anywhere;hyphens:auto;}
 #tdb-aurora-dialog .aurora-vb .nome {font-size:12px;}
 #tdb-aurora-dialog .aurora-opc,#tdb-aurora-dialog .aurora-vb {min-width:0;}
