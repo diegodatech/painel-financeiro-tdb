@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 10</title>
+  <title>TDB 11</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb10-20261001";
+    window.__TDB_BUILD = "tdb11-20261001";
   </script>
-  <script src="./config.js?build=tdb10-20261001"></script>
+  <script src="./config.js?build=tdb11-20261001"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 10">
+  <meta name="apple-mobile-web-app-title" content="TDB 11">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1500,15 +1500,16 @@ html.dark-mode {
  const html=document.documentElement;html.setAttribute('data-tdb-aurora','1');
  const KEY='tdb_aurora_appearance_v1';
  const FUNDO_KEY='fundo_anexo_aurora';
- const defaults={opacity:72,blur:18,sat:108,edge:92,photoBlur:6,wash:52,x:50,y:50,fit:'cover',preset:'custom',vidro:''};
- const MEU_PADRAO={opacity:72,blur:18,sat:108,edge:92,vidro:''};
- const PRESETS={cristal:{opacity:55,blur:14,sat:160,edge:90,vidro:''},fosco:{opacity:84,blur:28,sat:110,edge:55,vidro:''},vivido:{opacity:42,blur:20,sat:210,edge:100,vidro:''},gelo:{opacity:48,blur:32,sat:130,edge:100,vidro:''},brilhante:{opacity:55,blur:14,sat:185,edge:95,vidro:'brilhante'},gota:{opacity:40,blur:9,sat:210,edge:75,vidro:'gota'},espelho:{opacity:46,blur:8,sat:170,edge:90,vidro:'espelho'},colorida:{opacity:42,blur:10,sat:170,edge:82,vidro:'colorida'}};
- const GLASS=['opacity','blur','sat','edge'];
- const VIDROS=['','brilhante','gota','espelho','colorida'];
+ const defaults={opacity:72,blur:18,sat:108,edge:92,photoBlur:6,wash:52,x:50,y:50,fit:'cover',preset:'custom',vidro:'',cor:100};
+ const MEU_PADRAO={opacity:72,blur:18,sat:108,edge:92,cor:100,vidro:''};
+ const PRESETS={cristal:{opacity:55,blur:14,sat:160,edge:90,cor:100,vidro:''},fosco:{opacity:84,blur:28,sat:110,edge:55,cor:100,vidro:''},vivido:{opacity:42,blur:20,sat:210,edge:100,cor:100,vidro:''},gelo:{opacity:48,blur:32,sat:130,edge:100,cor:100,vidro:''},brilhante:{opacity:55,blur:14,sat:185,edge:95,cor:100,vidro:'brilhante'},gota:{opacity:40,blur:9,sat:210,edge:75,cor:100,vidro:'gota'},espelho:{opacity:46,blur:8,sat:170,edge:90,cor:100,vidro:'espelho'},colorida:{opacity:42,blur:10,sat:170,edge:82,cor:100,vidro:'colorida'},agua:{opacity:42,blur:10,sat:165,edge:85,cor:100,vidro:'agua'},orquidea:{opacity:42,blur:10,sat:170,edge:85,cor:100,vidro:'orquidea'},rubi:{opacity:42,blur:10,sat:160,edge:85,cor:100,vidro:'rubi'}};
+ const GLASS=['opacity','blur','sat','edge','cor'];
+ const VIDROS=['','brilhante','gota','espelho','colorida','agua','orquidea','rubi'];
+ const CORES=['colorida','agua','orquidea','rubi'];
  let cfg={...defaults,meu:{...MEU_PADRAO},frames:{}},photo=null,url=null,imgRatio=0,dialog=null,lastFocus=null,generation=0,downFora=false;
- const limits={opacity:[30,98],blur:[0,40],sat:[100,220],edge:[10,100],photoBlur:[0,24],wash:[20,90],x:[0,100],y:[0,100],z:[100,300]};
+ const limits={opacity:[30,98],blur:[0,40],sat:[100,220],edge:[10,100],photoBlur:[0,24],wash:[20,90],x:[0,100],y:[0,100],z:[100,300],cor:[0,150]};
  const clamp=(k,v)=>Math.max(limits[k][0],Math.min(limits[k][1],v));
- try{const p=JSON.parse(localStorage.getItem(KEY)||'{}');Object.keys(limits).forEach(k=>{if(Number.isFinite(p[k]))cfg[k]=clamp(k,p[k]);});if(['cover','contain','stretch'].indexOf(p.fit)>=0)cfg.fit=p.fit;if(['cristal','fosco','vivido','gelo','brilhante','gota','espelho','colorida','custom'].indexOf(p.preset)>=0)cfg.preset=p.preset;if(VIDROS.indexOf(p.vidro)>=0)cfg.vidro=p.vidro;if(p.meu&&typeof p.meu==='object'){GLASS.forEach(k=>{if(Number.isFinite(p.meu[k]))cfg.meu[k]=clamp(k,p.meu[k]);});cfg.meu.vidro=VIDROS.indexOf(p.meu.vidro)>=0?p.meu.vidro:cfg.vidro;}else{GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});cfg.meu.vidro=cfg.vidro;}if(p.frames&&typeof p.frames==='object'){Object.keys(p.frames).forEach(k=>{const f=p.frames[k];if(/^(celular|tablet|computador)-[hv]$/.test(k)&&f&&Number.isFinite(f.x)&&Number.isFinite(f.y)&&Number.isFinite(f.z))cfg.frames[k]={x:clamp('x',f.x),y:clamp('y',f.y),z:clamp('z',f.z)};});}}catch(e){}
+ try{const p=JSON.parse(localStorage.getItem(KEY)||'{}');Object.keys(limits).forEach(k=>{if(Number.isFinite(p[k]))cfg[k]=clamp(k,p[k]);});if(['cover','contain','stretch'].indexOf(p.fit)>=0)cfg.fit=p.fit;if(['cristal','fosco','vivido','gelo','brilhante','gota','espelho','colorida','agua','orquidea','rubi','custom'].indexOf(p.preset)>=0)cfg.preset=p.preset;if(VIDROS.indexOf(p.vidro)>=0)cfg.vidro=p.vidro;if(p.meu&&typeof p.meu==='object'){GLASS.forEach(k=>{if(Number.isFinite(p.meu[k]))cfg.meu[k]=clamp(k,p.meu[k]);});cfg.meu.vidro=VIDROS.indexOf(p.meu.vidro)>=0?p.meu.vidro:cfg.vidro;}else{GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});cfg.meu.vidro=cfg.vidro;}if(p.frames&&typeof p.frames==='object'){Object.keys(p.frames).forEach(k=>{const f=p.frames[k];if(/^(celular|tablet|computador)-[hv]$/.test(k)&&f&&Number.isFinite(f.x)&&Number.isFinite(f.y)&&Number.isFinite(f.z))cfg.frames[k]={x:clamp('x',f.x),y:clamp('y',f.y),z:clamp('z',f.z)};});}}catch(e){}
   function frameKey(){const w=window.innerWidth,h=window.innerHeight;let c;if(w<600)c='celular';else if(w<=1100||(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches&&w<=1400))c='tablet';else c='computador';return c+'-'+(w>h?'h':'v');}
  function frameName(){const k=frameKey().split('-');const n={celular:'Celular',tablet:'Tablet',computador:'Computador'}[k[0]];return n+(k[0]==='computador'?'':(k[1]==='h'?' deitado':' em pé'));}
  function getFrame(){const f=cfg.frames[frameKey()];return f||{x:cfg.x,y:cfg.y,z:100};}
@@ -1557,7 +1558,7 @@ html.dark-mode {
  function marcarMeu(){GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});cfg.meu.vidro=cfg.vidro;cfg.preset='custom';}
  function status(t){const e=document.getElementById('aurora-status');if(e)e.textContent=t;}
  function apply(){
-  [['opacity','--aurora-opacity',.01,''],['blur','--aurora-blur',1,'px'],['sat','--aurora-sat',.01,''],['photoBlur','--aurora-photo-blur',1,'px'],['wash','--aurora-wash',.01,'']].forEach(([k,v,m,u])=>html.style.setProperty(v,(cfg[k]*m)+u));
+  [['opacity','--aurora-opacity',.01,''],['blur','--aurora-blur',1,'px'],['sat','--aurora-sat',.01,''],['photoBlur','--aurora-photo-blur',1,'px'],['wash','--aurora-wash',.01,''],['cor','--aurora-cor',.01,'']].forEach(([k,v,m,u])=>html.style.setProperty(v,(Math.round(cfg[k]*m*1000)/1000)+u));
   html.style.setProperty('--aurora-edge','rgba(255,255,255,'+(cfg.edge*.01).toFixed(2)+')');
   html.setAttribute('data-aurora-fit',cfg.fit);
   if(cfg.vidro)html.setAttribute('data-aurora-vidro',cfg.vidro);else html.removeAttribute('data-aurora-vidro');
@@ -1596,7 +1597,7 @@ html.dark-mode {
   const tmp=URL.createObjectURL(file);
   try{const img=new Image();img.src=tmp;await img.decode();if(!img.naturalWidth)throw new Error('Não foi possível abrir a foto.');const scale=Math.min(1,1920/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);return await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível preparar a foto.')),'image/jpeg',.86));}finally{URL.revokeObjectURL(tmp);}
  }
- function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){const vv=(k==='x'||k==='y'||k==='z')?getFrame()[k]:cfg[k];inp.value=vv;inp.nextElementSibling.value=Math.round(vv)+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-vidro]').forEach(b=>{const on=b.dataset.vidro===(cfg.vidro||'');b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});renderEditor();const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
+ function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){const vv=(k==='x'||k==='y'||k==='z')?getFrame()[k]:cfg[k];inp.value=vv;inp.nextElementSibling.value=Math.round(vv)+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});{const rc=dialog.querySelector('[data-setting="cor"]');if(rc)rc.parentElement.classList.toggle('aurora-off',CORES.indexOf(cfg.vidro)<0);}dialog.querySelectorAll('[data-vidro]').forEach(b=>{const on=b.dataset.vidro===(cfg.vidro||'');b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});renderEditor();const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
  function open(){
   if(!dialog){
    dialog=document.createElement('dialog');dialog.id='tdb-aurora-dialog';dialog.setAttribute('aria-labelledby','aurora-title');dialog.setAttribute('data-export-ignore','true');
@@ -1617,11 +1618,14 @@ html.dark-mode {
     +'<button type="button" class="aurora-vb" data-preset="gota" style="--amostra:linear-gradient(160deg,#ffffff,#cfe4ff 55%,#ffd9ee)"><span class="nome">Gota líquida</span><span class="det">luz na borda</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="espelho" style="--amostra:linear-gradient(115deg,#d9e8ff 30%,#fff 42%,#d9e8ff 55%)"><span class="nome">Espelho</span><span class="det">reflexo diagonal</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="colorida" style="--amostra:linear-gradient(135deg,#f2cfe8 0%,#ffffff 50%,#c2ebe8 100%)"><span class="nome">Gota colorida</span><span class="det">orquídea e água</span></button>'
+    +'<button type="button" class="aurora-vb" data-preset="agua" style="--amostra:linear-gradient(135deg,#d3f1ef,#ffffff 52%,#a9e3e0)"><span class="nome">Gota água</span><span class="det">verde-água da logo</span></button>'
+    +'<button type="button" class="aurora-vb" data-preset="orquidea" style="--amostra:linear-gradient(135deg,#f0c9e5,#ffffff 52%,#e5aad4)"><span class="nome">Gota orquídea</span><span class="det">rosa da logo</span></button>'
+    +'<button type="button" class="aurora-vb" data-preset="rubi" style="--amostra:linear-gradient(135deg,#f2c4cf,#ffffff 52%,#d98b9c)"><span class="nome">Gota rubi</span><span class="det">vermelho da logo</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="custom" style="--amostra:repeating-linear-gradient(45deg,#fff,#fff 6px,#e6ecf3 6px,#e6ecf3 12px)"><span class="nome">Meu estilo</span><span class="det">personalizar</span></button></div>'
-    +'<span class="aurora-h">Meu estilo · ajustes manuais</span><p class="aurora-edit-hint" style="margin:0 0 4px">Todos os controles juntos, um abaixo do outro: monte o fundo do seu jeito.</p><div class="aurora-box" id="aurora-glass"><div class="aurora-acab"><span class="aurora-subrotulo">Acabamento do vidro</span><div class="aurora-seg" id="aurora-vidro"><button type="button" data-vidro="">Liso</button><button type="button" data-vidro="brilhante">Brilhante</button><button type="button" data-vidro="gota">Gota</button><button type="button" data-vidro="espelho">Espelho</button><button type="button" data-vidro="colorida">Colorida</button></div></div></div></div></div>';
-   const LINHAS={opacity:'Opacidade dos quadros',blur:'Desfoque do vidro',sat:'Cores atrás do vidro (saturação)',edge:'Brilho da borda',photoBlur:'Desfoque da foto',wash:'Clareamento do fundo',x:'Enquadramento horizontal',y:'Enquadramento vertical',z:'Aproximar a foto'};
-   const ONDE={opacity:'#aurora-glass',blur:'#aurora-glass',sat:'#aurora-glass',edge:'#aurora-glass',photoBlur:'#aurora-glass',wash:'#aurora-glass',x:'#aurora-glass',y:'#aurora-glass',z:'#aurora-glass'};
-   Object.keys(LINHAS).forEach(k=>{const row=document.createElement('label');row.htmlFor='aurora-'+k;row.textContent=LINHAS[k];const input=document.createElement('input');input.id='aurora-'+k;input.type='range';input.min=limits[k][0];input.max=limits[k][1];input.step=1;input.dataset.setting=k;const out=document.createElement('output');out.htmlFor=input.id;input.oninput=()=>{if(k==='x'||k==='y'||k==='z'){setFrame({[k]:Number(input.value)},true);return;}cfg[k]=Number(input.value);if(GLASS.indexOf(k)>=0){marcarMeu();}syncControls();save();};row.append(input,out);dialog.querySelector(ONDE[k]).appendChild(row);});
+    +'<span class="aurora-h">Meu estilo · ajustes manuais</span><p class="aurora-edit-hint" style="margin:0 0 4px">Todos os controles juntos, um abaixo do outro: monte o fundo do seu jeito.</p><div class="aurora-box" id="aurora-glass"><div class="aurora-acab"><span class="aurora-subrotulo">Acabamento do vidro</span><div class="aurora-seg" id="aurora-vidro"><button type="button" data-vidro="">Liso</button><button type="button" data-vidro="brilhante">Brilhante</button><button type="button" data-vidro="gota">Gota</button><button type="button" data-vidro="espelho">Espelho</button><button type="button" data-vidro="colorida">Colorida</button><button type="button" data-vidro="agua">Água</button><button type="button" data-vidro="orquidea">Orquídea</button><button type="button" data-vidro="rubi">Rubi</button></div></div></div></div></div>';
+   const LINHAS={opacity:'Opacidade dos quadros',blur:'Desfoque do vidro',sat:'Cores atrás do vidro (saturação)',edge:'Brilho da borda',cor:'Intensidade da cor (acabamentos coloridos)',photoBlur:'Desfoque da foto',wash:'Clareamento do fundo',x:'Enquadramento horizontal',y:'Enquadramento vertical',z:'Aproximar a foto'};
+   const ONDE={opacity:'#aurora-glass',blur:'#aurora-glass',sat:'#aurora-glass',edge:'#aurora-glass',cor:'#aurora-glass',photoBlur:'#aurora-glass',wash:'#aurora-glass',x:'#aurora-glass',y:'#aurora-glass',z:'#aurora-glass'};
+   Object.keys(LINHAS).forEach(k=>{const row=document.createElement('label');row.htmlFor='aurora-'+k;row.textContent=LINHAS[k];const input=document.createElement('input');input.id='aurora-'+k;input.type='range';input.min=limits[k][0];input.max=limits[k][1];input.step=1;input.dataset.setting=k;const out=document.createElement('output');out.htmlFor=input.id;input.oninput=()=>{if(k==='x'||k==='y'||k==='z'){setFrame({[k]:Number(input.value)},true);return;}cfg[k]=Number(input.value);if(k==='cor'&&CORES.indexOf(cfg.vidro)<0)cfg.vidro='colorida';if(GLASS.indexOf(k)>=0){marcarMeu();}syncControls();save();};row.append(input,out);dialog.querySelector(ONDE[k]).appendChild(row);});
    dialog.querySelectorAll('[data-fit]').forEach(b=>{b.onclick=()=>{cfg.fit=b.dataset.fit;syncControls();save();};});
    dialog.querySelectorAll('[data-vidro]').forEach(b=>{b.onclick=()=>{cfg.vidro=b.dataset.vidro;marcarMeu();syncControls();save();};});
    dialog.querySelectorAll('[data-preset]').forEach(b=>{b.onclick=()=>{const v=b.dataset.preset;cfg.preset=v;const src=v==='custom'?cfg.meu:PRESETS[v];GLASS.forEach(k=>{cfg[k]=src[k];});cfg.vidro=src.vidro||'';syncControls();save();};});
@@ -1773,10 +1777,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb10-20261001"></script>
+  <script src="./sync.js?build=tdb11-20261001"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb10-20261001-mobile';
+window.__TDB_BUILD_EXATO = 'tdb11-20261001-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10347,7 +10351,7 @@ function salvarTudoAgora() {
             var pendAtual = Number(window.__pendenciasSync || 0);
             setPendenciasSync(pendAtual);
             setSyncEmAndamento(Number(window.__syncEmAndamento || 0));
-            // TDB 10: uma falha apenas de LEITURA na abertura já cai com segurança no
+            // TDB 11: uma falha apenas de LEITURA na abertura já cai com segurança no
             // modo local. Não mostrar o alerta grande como se uma gravação tivesse falhado.
             // O aviso grande fica reservado para alterações realmente pendentes no Drive.
             if (s === 'erro' && ultimoStatus !== 'erro' && pendAtual > 0)
@@ -12960,7 +12964,7 @@ function VisaoGeral(_a) {
             });
         });
     }
-    // TDB 10 — diagnóstico do Drive somente sob ação do usuário.
+    // TDB 11 — diagnóstico do Drive somente sob ação do usuário.
     // Evita competir com o bootstrap/leitura em segundo plano durante a abertura.
     // O botão “Testar conexão” continua disponível e usa a mesma rota de diagnóstico.
     return (React.createElement("div", { className: "export-pagina-visaogeral", style: { display: 'grid', gap: 18 } }, React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', justifyContent: 'flex-end' } }, React.createElement("button", { type: 'button', className: 'tdb-remat-exportar-tudo', onClick: function (e) { exportarPaginaVisualPDF(e.currentTarget.closest('.export-pagina-visaogeral'), 'Vis\u00E3o Geral', 'VisaoGeral-' + new Date().toISOString().slice(0,10), e.currentTarget); } }, 'Exportar p\u00E1gina em PDF')), true && (React.createElement("div", { style: {
@@ -16599,12 +16603,15 @@ html[data-tdb-aurora] body.dark-mode .aba-item {background:rgba(47,51,60,.9)!imp
 html[data-tdb-aurora] body.dark-mode .painel-main th {background:#363b44!important;}
 html[data-tdb-aurora] body.dark-mode .painel-main :is(section,div)[style*="background: var(--c-paper)"]{background:rgba(35,39,47,.9)!important;}
 /* Acabamento do vidro: brilhante / gota / espelho (só tema claro; o escuro continua igual) */
-html[data-tdb-aurora] {--aurora-layers:linear-gradient(145deg,rgba(255,255,255,.22),rgba(247,249,252,.10));}
+html[data-tdb-aurora] {--aurora-layers:linear-gradient(145deg,rgba(255,255,255,.22),rgba(247,249,252,.10));--aurora-cor:1;}
 html[data-tdb-aurora][data-aurora-vidro] {--c-paperCard:rgba(255,255,255,calc(var(--aurora-opacity) * .25));}
 html[data-tdb-aurora][data-aurora-vidro="brilhante"] {--aurora-layers:radial-gradient(min(120%,460px) min(75%,120px) at 10% -10%,rgba(255,255,255,.82),rgba(255,255,255,0) 58%),radial-gradient(min(70%,300px) min(55%,90px) at 100% 115%,rgba(255,255,255,.55),rgba(255,255,255,0) 65%),linear-gradient(145deg,rgba(255,255,255,.34),rgba(255,255,255,.08));--aurora-shadow:0 16px 36px rgba(25,45,100,.22),inset 0 2px 2px #fff,inset 2px 0 3px rgba(255,255,255,.7),inset 0 -3px 9px rgba(255,255,255,.45);}
 html[data-tdb-aurora][data-aurora-vidro="gota"] {--aurora-layers:linear-gradient(160deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.04) 42%,rgba(255,255,255,.20) 100%);--aurora-shadow:0 18px 38px rgba(40,70,150,.24),inset 0 0 0 1px rgba(255,255,255,.38),inset 0 14px 22px -10px rgba(255,255,255,.95),inset 0 -16px 24px -12px rgba(110,165,255,.65),inset 10px 0 18px -12px rgba(255,255,255,.7),inset -10px 0 18px -12px rgba(255,170,220,.5);}
 html[data-tdb-aurora][data-aurora-vidro="espelho"] {--aurora-layers:linear-gradient(115deg,rgba(255,255,255,0) 26%,rgba(255,255,255,.72) 37%,rgba(255,255,255,.12) 44%,rgba(255,255,255,0) 52%),linear-gradient(145deg,rgba(255,255,255,.38),rgba(255,255,255,.06));--aurora-shadow:0 14px 32px rgba(25,45,100,.20),inset 0 2px 2px #fff,inset 0 -2px 6px rgba(255,255,255,.4);}
-html[data-tdb-aurora][data-aurora-vidro="colorida"] {--aurora-layers:radial-gradient(min(90%,380px) min(80%,110px) at 0% 0%,rgba(215,129,194,.34),rgba(215,129,194,0) 70%),radial-gradient(min(90%,380px) min(80%,110px) at 100% 100%,rgba(128,214,211,.42),rgba(128,214,211,0) 70%),linear-gradient(160deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,.20) 100%);--aurora-shadow:0 18px 38px rgba(80,55,110,.20),inset 0 0 0 1px rgba(255,255,255,.40),inset 0 14px 22px -10px rgba(255,255,255,.95),inset 0 -16px 24px -12px rgba(128,214,211,.72),inset 10px 0 18px -12px rgba(255,255,255,.7),inset -10px 0 18px -12px rgba(215,129,194,.55);}
+html[data-tdb-aurora][data-aurora-vidro="colorida"] {--aurora-layers:radial-gradient(min(90%,380px) min(80%,110px) at 0% 0%,rgba(215,129,194,calc(var(--aurora-cor) * 0.34)),rgba(215,129,194,0) 70%),radial-gradient(min(90%,380px) min(80%,110px) at 100% 100%,rgba(128,214,211,calc(var(--aurora-cor) * 0.42)),rgba(128,214,211,0) 70%),linear-gradient(160deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,.20) 100%);--aurora-shadow:0 18px 38px rgba(80,55,110,.20),inset 0 0 0 1px rgba(255,255,255,.40),inset 0 14px 22px -10px rgba(255,255,255,.95),inset 0 -16px 24px -12px rgba(128,214,211,calc(var(--aurora-cor) * 0.72)),inset 10px 0 18px -12px rgba(255,255,255,.7),inset -10px 0 18px -12px rgba(215,129,194,calc(var(--aurora-cor) * 0.55));}
+html[data-tdb-aurora][data-aurora-vidro="agua"] {--aurora-layers:radial-gradient(min(90%,380px) min(80%,110px) at 0% 0%,rgba(128,214,211,calc(var(--aurora-cor) * 0.3)),rgba(128,214,211,0) 70%),radial-gradient(min(80%,320px) min(70%,90px) at 100% 100%,rgba(128,214,211,calc(var(--aurora-cor) * 0.4)),rgba(128,214,211,0) 70%),linear-gradient(160deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,.20) 100%);--aurora-shadow:0 18px 38px rgba(40,90,100,.20),inset 0 0 0 1px rgba(255,255,255,.40),inset 0 14px 22px -10px rgba(255,255,255,.95),inset 0 -16px 24px -12px rgba(100,205,202,calc(var(--aurora-cor) * 0.78)),inset 10px 0 18px -12px rgba(255,255,255,.7),inset -10px 0 18px -12px rgba(215,129,194,calc(var(--aurora-cor) * 0.28));}
+html[data-tdb-aurora][data-aurora-vidro="orquidea"] {--aurora-layers:radial-gradient(min(90%,380px) min(80%,110px) at 0% 0%,rgba(215,129,194,calc(var(--aurora-cor) * 0.4)),rgba(215,129,194,0) 70%),radial-gradient(min(80%,320px) min(70%,90px) at 100% 100%,rgba(215,129,194,calc(var(--aurora-cor) * 0.28)),rgba(215,129,194,0) 70%),radial-gradient(60px 40px at 100% 0%,rgba(167,21,48,calc(var(--aurora-cor) * 0.12)),rgba(167,21,48,0) 100%),linear-gradient(160deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,.20) 100%);--aurora-shadow:0 18px 38px rgba(100,45,95,.20),inset 0 0 0 1px rgba(255,255,255,.40),inset 0 14px 22px -10px rgba(255,255,255,.95),inset 0 -16px 24px -12px rgba(215,129,194,calc(var(--aurora-cor) * 0.62)),inset 10px 0 18px -12px rgba(255,255,255,.7),inset -10px 0 18px -12px rgba(128,214,211,calc(var(--aurora-cor) * 0.5));}
+html[data-tdb-aurora][data-aurora-vidro="rubi"] {--aurora-layers:radial-gradient(min(90%,380px) min(80%,110px) at 0% 0%,rgba(217,120,141,calc(var(--aurora-cor) * 0.34)),rgba(217,120,141,0) 70%),radial-gradient(min(80%,320px) min(70%,90px) at 100% 100%,rgba(167,21,48,calc(var(--aurora-cor) * 0.26)),rgba(167,21,48,0) 70%),linear-gradient(160deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,.20) 100%);--aurora-shadow:0 18px 38px rgba(110,25,45,.20),inset 0 0 0 1px rgba(255,255,255,.40),inset 0 14px 22px -10px rgba(255,255,255,.95),inset 0 -16px 24px -12px rgba(190,50,75,calc(var(--aurora-cor) * 0.55)),inset 10px 0 18px -12px rgba(255,255,255,.7),inset -10px 0 18px -12px rgba(217,120,141,calc(var(--aurora-cor) * 0.5));}
 html[data-tdb-aurora][data-aurora-vidro] body.dark-mode {--aurora-layers:none;}
 html[data-tdb-aurora][data-aurora-vidro] body:not(.dark-mode) :is(.busca-liquid-glass,.kpi-card,.aurora-card,.tdb-cat-card,.lancamentos-mes-card) {border-width:1.5px!important;}
 html[data-tdb-aurora][data-aurora-vidro] body:not(.dark-mode) .painel-main :is(section,div)[style*="background: var(--c-paperCard)"][style*="border-radius"] {background-image:var(--aurora-layers)!important;-webkit-backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));}
@@ -16615,8 +16622,7 @@ html[data-tdb-aurora][data-aurora-vidro] body:not(.dark-mode) .aba-item.aba-item
 #tdb-aurora-dialog .aurora-acab {padding-top:12px;}
 #tdb-aurora-dialog .aurora-off {opacity:.45;}
 #tdb-aurora-dialog .aurora-subrotulo {display:block;color:#111;}
-#tdb-aurora-dialog .aurora-seg {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:8px;}
-@media(max-width:480px){#tdb-aurora-dialog .aurora-seg {grid-template-columns:repeat(3,minmax(0,1fr));}}
+#tdb-aurora-dialog .aurora-seg {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px;}
 #tdb-aurora-dialog .aurora-seg button {min-height:38px;padding:6px 4px;font:inherit;font-size:12px;border-radius:12px;overflow-wrap:anywhere;}
 #tdb-aurora-dialog .aurora-seg button.on {border-color:#1767cf;background:#e8f1fd;color:#1767cf;font-weight:700;box-shadow:0 0 0 3px #1767cf22;}
 html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-subrotulo {color:#f5f5f7;}
