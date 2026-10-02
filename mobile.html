@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 7</title>
+  <title>TDB 8</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb7-20261001";
+    window.__TDB_BUILD = "tdb8-20261001";
   </script>
-  <script src="./config.js?build=tdb7-20261001"></script>
+  <script src="./config.js?build=tdb8-20261001"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 7">
+  <meta name="apple-mobile-web-app-title" content="TDB 8">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1500,14 +1500,15 @@ html.dark-mode {
  const html=document.documentElement;html.setAttribute('data-tdb-aurora','1');
  const KEY='tdb_aurora_appearance_v1';
  const FUNDO_KEY='fundo_anexo_aurora';
- const defaults={opacity:72,blur:18,sat:108,edge:92,photoBlur:6,wash:52,x:50,y:50,fit:'cover',preset:'custom'};
- const MEU_PADRAO={opacity:72,blur:18,sat:108,edge:92};
- const PRESETS={cristal:{opacity:55,blur:14,sat:160,edge:90},fosco:{opacity:84,blur:28,sat:110,edge:55},vivido:{opacity:42,blur:20,sat:210,edge:100},gelo:{opacity:48,blur:32,sat:130,edge:100},neblina:{opacity:66,blur:36,sat:100,edge:70},transparente:{opacity:32,blur:10,sat:150,edge:85},solido:{opacity:96,blur:0,sat:100,edge:30}};
+ const defaults={opacity:72,blur:18,sat:108,edge:92,photoBlur:6,wash:52,x:50,y:50,fit:'cover',preset:'custom',vidro:''};
+ const MEU_PADRAO={opacity:72,blur:18,sat:108,edge:92,vidro:''};
+ const PRESETS={cristal:{opacity:55,blur:14,sat:160,edge:90,vidro:''},fosco:{opacity:84,blur:28,sat:110,edge:55,vidro:''},vivido:{opacity:42,blur:20,sat:210,edge:100,vidro:''},gelo:{opacity:48,blur:32,sat:130,edge:100,vidro:''},brilhante:{opacity:55,blur:14,sat:185,edge:95,vidro:'brilhante'},gota:{opacity:40,blur:9,sat:210,edge:75,vidro:'gota'},espelho:{opacity:46,blur:8,sat:170,edge:90,vidro:'espelho'}};
  const GLASS=['opacity','blur','sat','edge'];
+ const VIDROS=['','brilhante','gota','espelho'];
  let cfg={...defaults,meu:{...MEU_PADRAO},frames:{}},photo=null,url=null,imgRatio=0,dialog=null,lastFocus=null,generation=0,downFora=false;
  const limits={opacity:[30,98],blur:[0,40],sat:[100,220],edge:[10,100],photoBlur:[0,24],wash:[20,90],x:[0,100],y:[0,100],z:[100,300]};
  const clamp=(k,v)=>Math.max(limits[k][0],Math.min(limits[k][1],v));
- try{const p=JSON.parse(localStorage.getItem(KEY)||'{}');Object.keys(limits).forEach(k=>{if(Number.isFinite(p[k]))cfg[k]=clamp(k,p[k]);});if(['cover','contain','stretch'].indexOf(p.fit)>=0)cfg.fit=p.fit;if(['cristal','fosco','vivido','gelo','neblina','transparente','solido','custom'].indexOf(p.preset)>=0)cfg.preset=p.preset;if(p.meu&&typeof p.meu==='object'){GLASS.forEach(k=>{if(Number.isFinite(p.meu[k]))cfg.meu[k]=clamp(k,p.meu[k]);});}else{GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});}if(p.frames&&typeof p.frames==='object'){Object.keys(p.frames).forEach(k=>{const f=p.frames[k];if(/^(celular|tablet|computador)-[hv]$/.test(k)&&f&&Number.isFinite(f.x)&&Number.isFinite(f.y)&&Number.isFinite(f.z))cfg.frames[k]={x:clamp('x',f.x),y:clamp('y',f.y),z:clamp('z',f.z)};});}}catch(e){}
+ try{const p=JSON.parse(localStorage.getItem(KEY)||'{}');Object.keys(limits).forEach(k=>{if(Number.isFinite(p[k]))cfg[k]=clamp(k,p[k]);});if(['cover','contain','stretch'].indexOf(p.fit)>=0)cfg.fit=p.fit;if(['cristal','fosco','vivido','gelo','brilhante','gota','espelho','custom'].indexOf(p.preset)>=0)cfg.preset=p.preset;if(VIDROS.indexOf(p.vidro)>=0)cfg.vidro=p.vidro;if(p.meu&&typeof p.meu==='object'){GLASS.forEach(k=>{if(Number.isFinite(p.meu[k]))cfg.meu[k]=clamp(k,p.meu[k]);});cfg.meu.vidro=VIDROS.indexOf(p.meu.vidro)>=0?p.meu.vidro:cfg.vidro;}else{GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});cfg.meu.vidro=cfg.vidro;}if(p.frames&&typeof p.frames==='object'){Object.keys(p.frames).forEach(k=>{const f=p.frames[k];if(/^(celular|tablet|computador)-[hv]$/.test(k)&&f&&Number.isFinite(f.x)&&Number.isFinite(f.y)&&Number.isFinite(f.z))cfg.frames[k]={x:clamp('x',f.x),y:clamp('y',f.y),z:clamp('z',f.z)};});}}catch(e){}
   function frameKey(){const w=window.innerWidth,h=window.innerHeight;let c;if(w<600)c='celular';else if(w<=1100||(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches&&w<=1400))c='tablet';else c='computador';return c+'-'+(w>h?'h':'v');}
  function frameName(){const k=frameKey().split('-');const n={celular:'Celular',tablet:'Tablet',computador:'Computador'}[k[0]];return n+(k[0]==='computador'?'':(k[1]==='h'?' deitado':' em pé'));}
  function getFrame(){const f=cfg.frames[frameKey()];return f||{x:cfg.x,y:cfg.y,z:100};}
@@ -1553,11 +1554,13 @@ html.dark-mode {
  }
  function fora(e){const r=dialog.getBoundingClientRect();return e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom;}
  window.addEventListener('resize',()=>{apply();if(dialog&&dialog.open)renderEditor();});
+ function marcarMeu(){GLASS.forEach(k=>{cfg.meu[k]=cfg[k];});cfg.meu.vidro=cfg.vidro;cfg.preset='custom';}
  function status(t){const e=document.getElementById('aurora-status');if(e)e.textContent=t;}
  function apply(){
   [['opacity','--aurora-opacity',.01,''],['blur','--aurora-blur',1,'px'],['sat','--aurora-sat',.01,''],['photoBlur','--aurora-photo-blur',1,'px'],['wash','--aurora-wash',.01,'']].forEach(([k,v,m,u])=>html.style.setProperty(v,(cfg[k]*m)+u));
   html.style.setProperty('--aurora-edge','rgba(255,255,255,'+(cfg.edge*.01).toFixed(2)+')');
   html.setAttribute('data-aurora-fit',cfg.fit);
+  if(cfg.vidro)html.setAttribute('data-aurora-vidro',cfg.vidro);else html.removeAttribute('data-aurora-vidro');
   const f=getFrame();html.style.setProperty('--aurora-x',f.x+'%');html.style.setProperty('--aurora-y',f.y+'%');
   const el=document.querySelector('#tdb-aurora-wallpaper .aurora-photo');
   if(el){if(cfg.fit==='cover'&&imgRatio&&el.offsetWidth&&el.offsetHeight){const z=bgSize(el.offsetWidth,el.offsetHeight,f.z/100);el.style.backgroundSize=(z[0]*100).toFixed(3)+'% '+(z[1]*100).toFixed(3)+'%';}else el.style.backgroundSize='';}
@@ -1593,7 +1596,7 @@ html.dark-mode {
   const tmp=URL.createObjectURL(file);
   try{const img=new Image();img.src=tmp;await img.decode();if(!img.naturalWidth)throw new Error('Não foi possível abrir a foto.');const scale=Math.min(1,1920/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);return await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível preparar a foto.')),'image/jpeg',.86));}finally{URL.revokeObjectURL(tmp);}
  }
- function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){const vv=(k==='x'||k==='y'||k==='z')?getFrame()[k]:cfg[k];inp.value=vv;inp.nextElementSibling.value=Math.round(vv)+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});renderEditor();const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
+ function syncControls(){if(!dialog)return;Object.keys(limits).forEach(k=>{const inp=dialog.querySelector('[data-setting="'+k+'"]');if(inp){const vv=(k==='x'||k==='y'||k==='z')?getFrame()[k]:cfg[k];inp.value=vv;inp.nextElementSibling.value=Math.round(vv)+(k==='blur'||k==='photoBlur'?' px':'%');}});dialog.querySelectorAll('[data-fit]').forEach(b=>{const on=b.dataset.fit===cfg.fit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-preset]').forEach(b=>{const on=b.dataset.preset===cfg.preset;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});dialog.querySelectorAll('[data-vidro]').forEach(b=>{const on=b.dataset.vidro===(cfg.vidro||'');b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});renderEditor();const t=dialog.querySelector('#aurora-upload-title');if(t)t.textContent=photo?'Trocar foto de fundo':'Adicionar foto de fundo';}
  function open(){
   if(!dialog){
    dialog=document.createElement('dialog');dialog.id='tdb-aurora-dialog';dialog.setAttribute('aria-labelledby','aurora-title');dialog.setAttribute('data-export-ignore','true');
@@ -1610,16 +1613,17 @@ html.dark-mode {
     +'<button type="button" class="aurora-vb" data-preset="fosco" style="--amostra:linear-gradient(135deg,#e8e8ee,#fafafa)"><span class="nome">Fosco</span><span class="det">mais sólido</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="vivido" style="--amostra:linear-gradient(135deg,#ffc2dd,#c9d7ff)"><span class="nome">Vívido</span><span class="det">cores fortes</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="gelo" style="--amostra:linear-gradient(135deg,#cfe9ff,#f4fbff)"><span class="nome">Gelo</span><span class="det">azulado e brilhante</span></button>'
-    +'<button type="button" class="aurora-vb" data-preset="neblina" style="--amostra:linear-gradient(135deg,#e4e7ec,#f6f7f9)"><span class="nome">Neblina</span><span class="det">bem suave</span></button>'
-    +'<button type="button" class="aurora-vb" data-preset="transparente" style="--amostra:linear-gradient(135deg,#d9f1ff,#ffe9f5)"><span class="nome">Transparente</span><span class="det">quase vidro puro</span></button>'
-    +'<button type="button" class="aurora-vb" data-preset="solido" style="--amostra:linear-gradient(135deg,#ffffff,#eceff3)"><span class="nome">Sólido</span><span class="det">sem transparência</span></button>'
+    +'<button type="button" class="aurora-vb" data-preset="brilhante" style="--amostra:radial-gradient(circle at 20% 10%,#fff,#bfe0ff 60%,#e7d3ff)"><span class="nome">Brilhante</span><span class="det">vidro polido</span></button>'
+    +'<button type="button" class="aurora-vb" data-preset="gota" style="--amostra:linear-gradient(160deg,#ffffff,#cfe4ff 55%,#ffd9ee)"><span class="nome">Gota líquida</span><span class="det">luz na borda</span></button>'
+    +'<button type="button" class="aurora-vb" data-preset="espelho" style="--amostra:linear-gradient(115deg,#d9e8ff 30%,#fff 42%,#d9e8ff 55%)"><span class="nome">Espelho</span><span class="det">reflexo diagonal</span></button>'
     +'<button type="button" class="aurora-vb" data-preset="custom" style="--amostra:repeating-linear-gradient(45deg,#fff,#fff 6px,#e6ecf3 6px,#e6ecf3 12px)"><span class="nome">Meu estilo</span><span class="det">personalizar</span></button></div>'
-    +'<span class="aurora-h">Meu estilo · ajustes manuais</span><p class="aurora-edit-hint" style="margin:0 0 4px">Todos os controles juntos, um abaixo do outro: monte o fundo do seu jeito.</p><div class="aurora-box" id="aurora-glass"></div></div></div>';
+    +'<span class="aurora-h">Meu estilo · ajustes manuais</span><p class="aurora-edit-hint" style="margin:0 0 4px">Todos os controles juntos, um abaixo do outro: monte o fundo do seu jeito.</p><div class="aurora-box" id="aurora-glass"><div class="aurora-acab"><span class="aurora-subrotulo">Acabamento do vidro</span><div class="aurora-seg" id="aurora-vidro"><button type="button" data-vidro="">Liso</button><button type="button" data-vidro="brilhante">Brilhante</button><button type="button" data-vidro="gota">Gota</button><button type="button" data-vidro="espelho">Espelho</button></div></div></div></div></div>';
    const LINHAS={opacity:'Opacidade dos quadros',blur:'Desfoque do vidro',sat:'Cores atrás do vidro (saturação)',edge:'Brilho da borda',photoBlur:'Desfoque da foto',wash:'Clareamento do fundo',x:'Enquadramento horizontal',y:'Enquadramento vertical',z:'Aproximar a foto'};
    const ONDE={opacity:'#aurora-glass',blur:'#aurora-glass',sat:'#aurora-glass',edge:'#aurora-glass',photoBlur:'#aurora-glass',wash:'#aurora-glass',x:'#aurora-glass',y:'#aurora-glass',z:'#aurora-glass'};
-   Object.keys(LINHAS).forEach(k=>{const row=document.createElement('label');row.htmlFor='aurora-'+k;row.textContent=LINHAS[k];const input=document.createElement('input');input.id='aurora-'+k;input.type='range';input.min=limits[k][0];input.max=limits[k][1];input.step=1;input.dataset.setting=k;const out=document.createElement('output');out.htmlFor=input.id;input.oninput=()=>{if(k==='x'||k==='y'||k==='z'){setFrame({[k]:Number(input.value)},true);return;}cfg[k]=Number(input.value);if(GLASS.indexOf(k)>=0){cfg.meu[k]=cfg[k];cfg.preset='custom';}syncControls();save();};row.append(input,out);dialog.querySelector(ONDE[k]).appendChild(row);});
+   Object.keys(LINHAS).forEach(k=>{const row=document.createElement('label');row.htmlFor='aurora-'+k;row.textContent=LINHAS[k];const input=document.createElement('input');input.id='aurora-'+k;input.type='range';input.min=limits[k][0];input.max=limits[k][1];input.step=1;input.dataset.setting=k;const out=document.createElement('output');out.htmlFor=input.id;input.oninput=()=>{if(k==='x'||k==='y'||k==='z'){setFrame({[k]:Number(input.value)},true);return;}cfg[k]=Number(input.value);if(GLASS.indexOf(k)>=0){marcarMeu();}syncControls();save();};row.append(input,out);dialog.querySelector(ONDE[k]).appendChild(row);});
    dialog.querySelectorAll('[data-fit]').forEach(b=>{b.onclick=()=>{cfg.fit=b.dataset.fit;syncControls();save();};});
-   dialog.querySelectorAll('[data-preset]').forEach(b=>{b.onclick=()=>{const v=b.dataset.preset;cfg.preset=v;const src=v==='custom'?cfg.meu:PRESETS[v];GLASS.forEach(k=>{cfg[k]=src[k];});syncControls();save();};});
+   dialog.querySelectorAll('[data-vidro]').forEach(b=>{b.onclick=()=>{cfg.vidro=b.dataset.vidro;marcarMeu();syncControls();save();};});
+   dialog.querySelectorAll('[data-preset]').forEach(b=>{b.onclick=()=>{const v=b.dataset.preset;cfg.preset=v;const src=v==='custom'?cfg.meu:PRESETS[v];GLASS.forEach(k=>{cfg[k]=src[k];});cfg.vidro=src.vidro||'';syncControls();save();};});
       const footer=document.createElement('div');footer.className='aurora-row';footer.innerHTML='<button id="aurora-remove" type="button">Remover foto</button><button id="aurora-reset" type="button">Restaurar aparência</button>';dialog.appendChild(footer);
    const message=document.createElement('p');message.id='aurora-status';message.setAttribute('role','status');dialog.appendChild(message);document.body.appendChild(dialog);
    dialog.querySelector('#aurora-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{if(lastFocus&&lastFocus.isConnected)lastFocus.focus();});
@@ -1768,10 +1772,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb7-20261001"></script>
+  <script src="./sync.js?build=tdb8-20261001"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb7-20261001-mobile';
+window.__TDB_BUILD_EXATO = 'tdb8-20261001-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -16552,7 +16556,7 @@ html[data-tdb-aurora] body .painel-raiz>header {margin:18px auto 0!important;wid
 html[data-tdb-aurora] body .painel-main {max-width:1560px!important;padding:26px 24px 80px!important;}
 html[data-tdb-aurora] body .painel-raiz,html[data-tdb-aurora] body .painel-raiz .serif {font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif!important;}
 html[data-tdb-aurora] body :is(.busca-liquid-glass,.kpi-card,.aurora-card,.tdb-cat-card,.lancamentos-mes-card) {
- background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(247,249,252,.10)),var(--c-paperCard)!important;
+ background:var(--aurora-layers),var(--c-paperCard)!important;
  border:1px solid var(--aurora-edge)!important;border-radius:24px!important;box-shadow:var(--aurora-shadow)!important;
  backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));-webkit-backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));
 }
@@ -16593,6 +16597,26 @@ html[data-tdb-aurora] body.dark-mode #tdb-aurora-wallpaper .aurora-wash {backgro
 html[data-tdb-aurora] body.dark-mode .aba-item {background:rgba(47,51,60,.9)!important;color:#f6f7f9!important;}
 html[data-tdb-aurora] body.dark-mode .painel-main th {background:#363b44!important;}
 html[data-tdb-aurora] body.dark-mode .painel-main :is(section,div)[style*="background: var(--c-paper)"]{background:rgba(35,39,47,.9)!important;}
+/* Acabamento do vidro: brilhante / gota / espelho (só tema claro; o escuro continua igual) */
+html[data-tdb-aurora] {--aurora-layers:linear-gradient(145deg,rgba(255,255,255,.22),rgba(247,249,252,.10));}
+html[data-tdb-aurora][data-aurora-vidro] {--c-paperCard:rgba(255,255,255,calc(var(--aurora-opacity) * .25));}
+html[data-tdb-aurora][data-aurora-vidro="brilhante"] {--aurora-layers:radial-gradient(min(120%,460px) min(75%,120px) at 10% -10%,rgba(255,255,255,.82),rgba(255,255,255,0) 58%),radial-gradient(min(70%,300px) min(55%,90px) at 100% 115%,rgba(255,255,255,.55),rgba(255,255,255,0) 65%),linear-gradient(145deg,rgba(255,255,255,.34),rgba(255,255,255,.08));--aurora-shadow:0 16px 36px rgba(25,45,100,.22),inset 0 2px 2px #fff,inset 2px 0 3px rgba(255,255,255,.7),inset 0 -3px 9px rgba(255,255,255,.45);}
+html[data-tdb-aurora][data-aurora-vidro="gota"] {--aurora-layers:linear-gradient(160deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.04) 42%,rgba(255,255,255,.20) 100%);--aurora-shadow:0 18px 38px rgba(40,70,150,.24),inset 0 0 0 1px rgba(255,255,255,.38),inset 0 14px 22px -10px rgba(255,255,255,.95),inset 0 -16px 24px -12px rgba(110,165,255,.65),inset 10px 0 18px -12px rgba(255,255,255,.7),inset -10px 0 18px -12px rgba(255,170,220,.5);}
+html[data-tdb-aurora][data-aurora-vidro="espelho"] {--aurora-layers:linear-gradient(115deg,rgba(255,255,255,0) 26%,rgba(255,255,255,.72) 37%,rgba(255,255,255,.12) 44%,rgba(255,255,255,0) 52%),linear-gradient(145deg,rgba(255,255,255,.38),rgba(255,255,255,.06));--aurora-shadow:0 14px 32px rgba(25,45,100,.20),inset 0 2px 2px #fff,inset 0 -2px 6px rgba(255,255,255,.4);}
+html[data-tdb-aurora][data-aurora-vidro] body.dark-mode {--aurora-layers:none;}
+html[data-tdb-aurora][data-aurora-vidro] body:not(.dark-mode) :is(.busca-liquid-glass,.kpi-card,.aurora-card,.tdb-cat-card,.lancamentos-mes-card) {border-width:1.5px!important;}
+html[data-tdb-aurora][data-aurora-vidro] body:not(.dark-mode) .painel-main :is(section,div)[style*="background: var(--c-paperCard)"][style*="border-radius"] {background-image:var(--aurora-layers)!important;-webkit-backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));}
+html[data-tdb-aurora][data-aurora-vidro] body:not(.dark-mode) .aba-item {background:var(--aurora-layers),var(--c-paperCard)!important;border:1.5px solid var(--aurora-edge)!important;box-shadow:var(--aurora-shadow)!important;-webkit-backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));}
+html[data-tdb-aurora][data-aurora-vidro] body:not(.dark-mode) .aba-item.aba-item-ativa {border-color:#4f93f0!important;box-shadow:0 0 0 2px rgba(39,119,225,.2),var(--aurora-shadow)!important;}
+@media(prefers-reduced-transparency:reduce){html[data-tdb-aurora][data-aurora-vidro]{--c-paperCard:rgba(255,255,255,.97);--aurora-layers:linear-gradient(145deg,rgba(255,255,255,.22),rgba(247,249,252,.10));}}
+@media print{html[data-tdb-aurora][data-aurora-vidro]{--c-paperCard:#fff!important;--aurora-layers:none!important;}}
+#tdb-aurora-dialog .aurora-acab {padding-top:12px;}
+#tdb-aurora-dialog .aurora-subrotulo {display:block;color:#111;}
+#tdb-aurora-dialog .aurora-seg {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px;}
+#tdb-aurora-dialog .aurora-seg button {min-height:38px;padding:6px 4px;font:inherit;font-size:12px;border-radius:12px;overflow-wrap:anywhere;}
+#tdb-aurora-dialog .aurora-seg button.on {border-color:#1767cf;background:#e8f1fd;color:#1767cf;font-weight:700;box-shadow:0 0 0 3px #1767cf22;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-subrotulo {color:#f5f5f7;}
+html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-seg button.on {background:#1f3558;border-color:#5b8fe0;color:#cfe0ff;}
 #tdb-aurora-dialog {width:min(760px,calc(100vw - 32px));max-height:92vh;max-height:92dvh;overflow:auto;box-sizing:border-box;border:1px solid #fff;border-radius:28px;padding:26px;background:rgba(250,251,253,.97);color:#111318;box-shadow:0 25px 90px rgba(20,30,45,.24);font:14px/1.5 -apple-system,BlinkMacSystemFont,'Inter',sans-serif;}
 #tdb-aurora-dialog::backdrop {background:rgba(35,45,65,.28);backdrop-filter:blur(5px);}
 #tdb-aurora-dialog h2 {margin:0;font-size:23px;color:#111;}
