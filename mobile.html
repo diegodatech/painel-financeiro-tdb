@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tempo2-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tempo4-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tempo2-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tempo4-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -844,7 +844,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 2";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 4";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1816,7 +1816,7 @@ html, body { overscroll-behavior-y: none; }
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 2</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 4</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1866,10 +1866,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tempo2-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tempo4-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo2-v1-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo4-v1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -19755,6 +19755,13 @@ body.dark-mode tr[style*="224, 174, 60"]:not(#tdb3x)>td:first-child,body.dark-mo
 /* TDB 3 — seta do select "Pago/Pendente" (Contas Pessoais) preta e menor, igual à seta da aba Mensalidades */
 html[data-tdb-aurora] body .contas-pessoais-raiz tr.tdb2-editing select.tdbm-cp-status:not(:disabled):not(#tdb3x):not([multiple]):not([size]){background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='5'><path d='M.8.8L4 4 7.2.8' fill='none' stroke='%23111318' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>")!important;background-size:8px 5px!important;background-position:right 9px center!important;padding-right:22px!important}
 html[data-tdb-aurora] body.dark-mode .contas-pessoais-raiz tr.tdb2-editing select.tdbm-cp-status:not(:disabled):not(#tdb3x):not([multiple]):not([size]){background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='5'><path d='M.8.8L4 4 7.2.8' fill='none' stroke='%23e8ecf3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>")!important}
+/* TEMPO 3 — Formulários de Compras (Adicionar item) e Valores (novo convênio / avulso / multivaga) eram <form>, e o vidro do projeto só pegava div/section. Agora têm o mesmo balão dos demais cartões. Só aparência. */
+html[data-tdb-aurora]:not(.tdb-aurora-pdf) .painel-main form[style*="background: var(--c-paperCard)"][style*="border-radius"]:not(#tdb3x){border-radius:24px!important;box-shadow:var(--aurora-shadow)!important;border-color:var(--aurora-edge)!important;backdrop-filter:blur(var(--aurora-blur));-webkit-backdrop-filter:blur(var(--aurora-blur));padding:16px 20px!important;gap:10px!important}
+html[data-tdb-aurora][data-aurora-vidro]:not(.tdb-aurora-pdf) body:not(.dark-mode) .painel-main form[style*="background: var(--c-paperCard)"][style*="border-radius"]:not(#tdb3x){background-image:var(--aurora-layers)!important;-webkit-backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat));backdrop-filter:blur(var(--aurora-blur)) saturate(var(--aurora-sat))}
+/* TEMPO 3 — Recibos: caixinhas de dentro do painel (criança aberta/fechada e caixa do total) no mesmo balão arredondado */
+html:not(.tdb-aurora-pdf) body .recibos-form div[style*="border-radius: 8px"][style*="overflow: hidden"]:not(#tdb3x){border-radius:16px!important;border-color:var(--aurora-edge)!important;box-shadow:0 4px 14px rgba(30,40,60,.07)!important}
+html:not(.tdb-aurora-pdf) body .recibos-form .recibo-valor-total[style*="border-radius: 10px"]:not(#tdb3x){border-radius:18px!important;padding:12px 14px!important;box-shadow:0 4px 14px rgba(30,40,60,.06)!important}
+html:not(.tdb-aurora-pdf) body.dark-mode .recibos-form div[style*="border-radius: 8px"][style*="overflow: hidden"]:not(#tdb3x),html:not(.tdb-aurora-pdf) body.dark-mode .recibos-form .recibo-valor-total[style*="border-radius: 10px"]:not(#tdb3x){box-shadow:0 4px 14px rgba(0,0,0,.28)!important}
 /* TDB 3 — Tablet: ao editar uma linha de Mensalidade os campos tinham pouco espaço (Banco "SIC…", Convênio cortado, data cortada). Só aparência. */
 @media (min-width:761px) and (max-width:1366px){
 html body .tabela-mensalidades.mensalidades-detalhes:has(tr.mensalidades-row-editando){min-width:1500px!important}
@@ -19813,6 +19820,14 @@ html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-ro
 html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x){overflow:visible!important;flex-wrap:nowrap!important;gap:5px!important;padding-left:0!important;padding-right:0!important}
 html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x)>.tdbl-cp-tab{flex:1 1 0!important;min-width:0!important;padding:9px 2px!important;font-size:13px!important;white-space:nowrap!important;text-align:center}
 html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x)>.tdbl-cp-tab.is-annual{flex:2.6 1 0!important;margin-left:0!important;padding-left:6px!important;padding-right:6px!important}
+}
+/* TEMPO 3 — Tablet, Calendário: os 3 cartões laterais (agendas, mini calendário, resumo) ficam lado a lado e os dias do mini calendário deixam de virar pílulas esticadas */
+@media (min-width:761px) and (max-width:1180px){
+html body .tcal .tcal-side:not(#tdb3x){display:grid!important;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))!important;gap:14px!important;align-items:start!important;align-self:start!important;height:auto!important}
+}
+@media (min-width:761px) and (max-width:1366px){
+html body .tcal .tcal-side-mini-grid:not(#tdb3x){gap:4px 2px!important}
+html body .tcal .tcal-side-mini-grid button:not(#tdb3x){width:100%!important;max-width:36px!important;justify-self:center!important;height:30px!important}
 }
 /* TDB 3 — Festas TDB no celular: cada participante vira um cartão, igual às Mensalidades. Só aparência. */
 @media(max-width:600px){
@@ -19900,6 +19915,123 @@ html body .tcal[data-phone="1"] .tcal-chips>.tcal-chip:not(#tdb3x){min-width:0!i
 }
 
 </style>
+<style id="tdb4-valores-v1">
+/* TEMPO 4 — Contratos e Rematrícula: caixas chatas (arquivos, simulador ①/②, sugerido, valor original, despesas, alunos) no mesmo balão arredondado. Só aparência. */
+html:not(.tdb-aurora-pdf) body .painel-main div[style*="background: var(--c-paper);"][style*="border: 1px solid var(--c-lineSoft)"][style*="border-radius: 7px"]:not(#tdb4x){border-radius:14px!important;box-shadow:0 3px 10px rgba(30,40,60,.06)!important}
+html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula div[style*="border-radius: 10px"][style*="background"]:not(#tdb4x),html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula div[style*="border-radius: 12px"][style*="background"]:not(#tdb4x){border-radius:16px!important;box-shadow:0 4px 14px rgba(30,40,60,.07)!important}
+html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula div[style*="border-radius: 8px"][style*="background"]:not(#tdb4x),html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula div[style*="border-radius: 7px"][style*="background"]:not(#tdb4x){border-radius:13px!important;box-shadow:0 3px 10px rgba(30,40,60,.06)!important}
+html:not(.tdb-aurora-pdf) body.dark-mode .tdb-pc-rematricula div[style*="border-radius"][style*="background"]:not(#tdb4x),html:not(.tdb-aurora-pdf) body.dark-mode .painel-main div[style*="background: var(--c-paper);"][style*="border-radius: 7px"]:not(#tdb4x){box-shadow:0 4px 14px rgba(0,0,0,.28)!important}
+
+/* TEMPO 4 — Valores em abas (Convênios | Irmãos e especiais | Avulsos | Escola). Só aparência: a barra de abas só mostra/esconde blocos que já existem; no PDF tudo aparece como antes. */
+#tdbv-tabs{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1}
+html.tdb-aurora-pdf #tdbv-tabs{display:none!important}
+#tdbv-tabs button{appearance:none;-webkit-appearance:none;border:1px solid var(--c-line);background:var(--c-paperCard);color:var(--c-ink);border-radius:999px;font:700 13px/1.2 inherit;font-family:inherit;padding:9px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 3px 10px rgba(30,40,60,.08);white-space:nowrap}
+#tdbv-tabs button.on{background:#1767cf;color:#fff;border-color:transparent}
+#tdbv-tabs .tdbv-n{font-size:11px;font-weight:800;background:rgba(120,130,150,.20);color:inherit;padding:1px 7px;border-radius:99px}
+#tdbv-tabs button.on .tdbv-n{background:rgba(255,255,255,.25)}
+body.dark-mode #tdbv-tabs button{box-shadow:0 3px 10px rgba(0,0,0,.3)}
+body.dark-mode #tdbv-tabs button.on{background:#4d8ef0}
+html:not(.tdb-aurora-pdf) body .export-pagina-valores[data-tdbv-tab]:not(#tdb4x){grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))!important;gap:16px!important;align-items:start}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>*{margin-top:0!important;min-width:0}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="head"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sub~="wide"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"]{grid-column:1/-1}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="conv"]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="conv"]>[data-tdbv-sec="avu"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="conv"]>[data-tdbv-sec="esc"]{display:none!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="irm"]>[data-tdbv-sec="conv"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="irm"]>[data-tdbv-sec="avu"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="irm"]>[data-tdbv-sec="esc"]{display:none!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="avu"]>[data-tdbv-sec="conv"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="avu"]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="avu"]>[data-tdbv-sec="esc"]{display:none!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="esc"]>[data-tdbv-sec="conv"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="esc"]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="esc"]>[data-tdbv-sec="avu"]{display:none!important}
+/* cartões de convênio: cada linha vira um quadro interno com os valores lado a lado */
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab] [data-tdbv-sub="card"]:not(.mobile-valores-grupo)>div:nth-child(2)>div{background:rgba(255,255,255,.55);border:1px solid var(--c-lineSoft);border-radius:16px;padding:10px 12px}
+html:not(.tdb-aurora-pdf) body.dark-mode .export-pagina-valores[data-tdbv-tab] [data-tdbv-sub="card"]:not(.mobile-valores-grupo)>div:nth-child(2)>div{background:rgba(255,255,255,.05)}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab] [data-tdbv-sub="card"]:not(.mobile-valores-grupo)>div:nth-child(2)>div>div[style*="flex-wrap"]{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:8px!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab] [data-tdbv-sub="card"]:not(.mobile-valores-grupo) .busca-liquid-glass{display:flex!important;justify-content:space-between;align-items:center;gap:8px;white-space:nowrap}
+/* irmãos: famílias lado a lado */
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab] [data-tdbv-sec="irm"]>div[style*="display: grid"]{grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr))!important;align-items:start}
+/* escola: cada bloco num balão de vidro */
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"]{background:var(--c-paperCard);border:1px solid var(--aurora-edge,var(--c-line));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));padding:18px 20px}
+html[data-tdb-aurora][data-aurora-vidro]:not(.tdb-aurora-pdf) body:not(.dark-mode) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"],html[data-tdb-aurora][data-aurora-vidro]:not(.tdb-aurora-pdf) body:not(.dark-mode) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"]{background-image:var(--aurora-layers)}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"] form,html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"] form{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@media(max-width:600px){
+ #tdbv-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #tdbv-tabs button{justify-content:center;white-space:normal;text-align:center;padding:10px 8px}
+ html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"]{padding:14px}
+}
+
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"][data-tdbv-sub~="wide"]{order:3}
+
+</style>
+<script id="tdb4-valores-abas">
+(function(){
+  var TABS=[['conv','Convênios'],['irm','Irmãos e especiais'],['avu','Avulsos'],['esc','Escola']];
+  var cur='conv',busy=false;
+  function txt(el){return (el.textContent||'').replace(/\s+/g,' ').trim().slice(0,70)}
+  function classify(el){
+    if(el.tagName==='STYLE'||el.id==='tdbv-tabs')return null;
+    var t=txt(el),cl=el.classList;
+    if(/^\W*Descontos de irm/i.test(t))return ['irm',''];
+    if(/^\W*Valores avulsos/i.test(t))return ['avu',''];
+    if(/^\W*(Capacidade M|Calend[aá]rio letivo|Conv[eê]nios com v[aá]rias|Categorias de Alimenta)/i.test(t))return ['esc',/Calend|Conv[eê]nios com/i.test(t)?'wide':''];
+    if(cl.contains('mobile-categorias-indicadores'))return ['esc',''];
+    if(/^\W*Exportar p[aá]gina|^\W*(Ocultar|Mostrar) valores/i.test(t))return ['head',''];
+    if(el.tagName==='FORM'||cl.contains('mobile-valores-form')||el.tagName==='BUTTON')return ['conv','novo wide'];
+    if(cl.contains('mobile-valores-reajuste')||/^\W*Aplicar reajuste/i.test(t))return ['conv','reaj wide'];
+    if(cl.contains('mobile-valores-grupo')||/paperCard/.test(el.getAttribute('style')||''))return ['conv','card'];
+    return ['head',''];
+  }
+  function count(root,sec){ if(sec==='esc')return 0;
+    var n=0;
+    [].forEach.call(root.children,function(c){
+      if(sec==='conv'){if(c.getAttribute('data-tdbv-sub')==='card')n++;}
+      else if(c.getAttribute('data-tdbv-sec')===sec){
+        var g=sec==='irm'?c.querySelector(':scope > div[style*="display: grid"]'):c.querySelector(':scope > div[style*="flex-wrap"]');
+        if(g)n=g.children.length;
+      }
+    });
+    return n;
+  }
+  function paint(root){
+    var bar=document.getElementById('tdbv-tabs');
+    if(!bar)return;
+    [].forEach.call(bar.children,function(b){
+      var t=b.getAttribute('data-t'),on=t===cur;
+      if(b.classList.contains('on')!==on)b.classList.toggle('on',on);
+      if(b.getAttribute('aria-selected')!==String(on))b.setAttribute('aria-selected',String(on));
+      var n=count(root,t),s=b.querySelector('.tdbv-n');
+      if(s){var v=n>0?String(n):'';if(s.textContent!==v)s.textContent=v;s.style.display=n>0?'':'none';}
+    });
+    if(root.getAttribute('data-tdbv-tab')!==cur)root.setAttribute('data-tdbv-tab',cur);
+  }
+  function run(){
+    busy=false;
+    var root=document.querySelector('.export-pagina-valores');
+    if(!root)return;
+    var first=null;
+    [].forEach.call(root.children,function(c){
+      var r=classify(c);if(!r)return;
+      if(c.getAttribute('data-tdbv-sec')!==r[0])c.setAttribute('data-tdbv-sec',r[0]);
+      var sub=r[1];
+      if((c.getAttribute('data-tdbv-sub')||'')!==sub){if(sub)c.setAttribute('data-tdbv-sub',sub);else c.removeAttribute('data-tdbv-sub');}
+      if(!first&&r[0]!=='head')first=c;
+    });
+    var bar=document.getElementById('tdbv-tabs');
+    if(bar&&bar.parentNode!==root){bar.parentNode&&bar.parentNode.removeChild(bar);bar=null;}
+    if(!bar&&first){
+      bar=document.createElement('div');bar.id='tdbv-tabs';bar.setAttribute('role','tablist');bar.setAttribute('data-export-ignore','true');
+      TABS.forEach(function(t){
+        var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('data-t',t[0]);
+        b.appendChild(document.createTextNode(t[1]));
+        var s=document.createElement('span');s.className='tdbv-n';b.appendChild(s);
+        b.addEventListener('click',function(){cur=t[0];var r=document.querySelector('.export-pagina-valores');if(r)paint(r);});
+        bar.appendChild(b);
+      });
+      root.insertBefore(bar,first);
+    }
+    paint(root);
+  }
+  function sched(){if(busy)return;busy=true;(window.requestAnimationFrame||setTimeout)(run)}
+  function start(){new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});sched();}
+  if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+})();
+
+</script>
 
 <script id="tdbm-contas-pessoais-pago-data-v1">
 (function(){
