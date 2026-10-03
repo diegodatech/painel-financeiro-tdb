@@ -474,9 +474,12 @@
             try { localStorage.setItem(CHAVE_VERSOES, JSON.stringify(versoes)); } catch (e) {}
           }
           if (!existe) {
-            // A ausência no Drive, sozinha, não autoriza descartar a única cópia local.
-            const remocaoConfirmada = cache && (cache.remocaoConfirmada || cache.confirmado || (cache.versao > 0 && versao > cache.versao));
-            if (local !== null && !remocaoConfirmada) return copiaOfflineAnexo_(key, local);
+            // Nunca apaga a única cópia local só porque o arquivo não apareceu numa leitura.
+            // Backends TDBa informam `deleted:true` quando há tombstone explícito. Para
+            // backends antigos mantemos a regra conservadora do TDB3 como fallback.
+            const exclusaoExplicita = corpo && corpo.deleted === true;
+            const remocaoLegadaConfirmada = cache && (cache.remocaoConfirmada || (cache.versao > 0 && versao > cache.versao));
+            if (local !== null && !exclusaoExplicita && !remocaoLegadaConfirmada) return copiaOfflineAnexo_(key, local);
             await idbAnexoDelete_(key);
             try { localStorage.removeItem(key); } catch (e) {}
             if (cachePlanilha) delete cachePlanilha[key];
@@ -581,19 +584,55 @@
         return corpo;
       };
 
-      // Backup manual disparado pelo card de Saúde do sistema.
-      window.__criarBackupDrive = async function() {
+      // Status leve: não lista a pasta do Drive. Serve como fallback quando o diagnóstico
+      // detalhado demora, evitando mostrar "Drive indisponível" sem necessidade.
+      window.__statusSaudeDrive = async function() {
         if (!APPS_SCRIPT_URL) return { ok: false, erro: 'Apps Script não configurado.' };
-        const corpo = await lerRespostaJSON(await timeoutFetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ acao: 'backup', clientId: clienteId() }),
-        }, 60000));
-        registrarSync_('gravacao');
+        const url = APPS_SCRIPT_URL + '?acao=statusSaude&_=' + Date.now();
+        const corpo = await lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 15000));
+        window.__driveDisponivel = true;
+        if (corpo.ultimoBackup !== undefined) window.__ultimoBackupDrive = String(corpo.ultimoBackup || '');
+        if (corpo.ultimoBackupEm !== undefined) window.__ultimoBackupDriveEm = corpo.ultimoBackupEm || null;
+        if (Number(corpo.ultimoSalvamentoEm)) window.__ultimoSalvamentoDrive = Number(corpo.ultimoSalvamentoEm);
+        registrarSync_('leitura');
         return corpo;
       };
 
-      // Restaura de dentro do painel o backup completo mais recente que já está salvo
+      // Backup manual disparado pelo card de Saúde do sistema.
+      window.__criarBackupDrive = async function() {
+        if (!APPS_SCRIPT_URL) return { ok: false, erro: 'Apps Script não configurado.' };
+        const opId = clienteId() + '-backup-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        let erroPost = null;
+        try {
+          const corpo = await lerRespostaJSON(await timeoutFetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ acao: 'backup', clientId: clienteId(), opId }),
+          }, 60000));
+          if (corpo && corpo.accepted === true) {
+            registrarSync_('gravacao');
+            return corpo;
+          }
+        } catch (e) { erroPost = e; }
+
+        // A gravação pode ter chegado ao Apps Script mesmo se o navegador não conseguiu
+        // ler a resposta final. Confirma pelo recibo persistido no servidor antes de falhar.
+        const pausasConfirmacao = [0, 1500, 3500];
+        for (let i = 0; i < pausasConfirmacao.length; i++) {
+          if (pausasConfirmacao[i]) await new Promise(r => setTimeout(r, pausasConfirmacao[i]));
+          try {
+            const url = APPS_SCRIPT_URL + '?acao=statusBackup&opId=' + encodeURIComponent(opId) + '&_=' + Date.now();
+            const st = await lerRespostaJSON(await timeoutFetch(url, { method: 'GET', cache: 'no-store' }, 20000));
+            if (st && st.confirmado) {
+              registrarSync_('gravacao');
+              return { ok: true, accepted: true, confirmado: true, opId, nome: st.nome, criadoEm: st.criadoEm };
+            }
+          } catch (e2) {}
+        }
+        throw erroPost || new Error('O Google Drive ainda não confirmou a criação do backup. Tente novamente; um backup já recebido pelo servidor não será duplicado pelo mesmo recibo.');
+      };
+
+      // Restaura de dentro do painel o backup de dados mais recente que já está salvo
       // no Drive (arquivo backup_dados_*.json criado por "Criar backup agora"). Antes,
       // esse backup não tinha como voltar: era preciso abrir o Drive manualmente e o
       // botão "Importar backup" só aceitava o formato parcial baixado pelo navegador.

@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDB 5</title>
+  <title>TDBa</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb5-20261002-rancho-pendencias";
+    window.__TDB_BUILD = "tdba-20261002-seguro-sync";
   </script>
-  <script src="./config.js?build=tdb5-20261002-rancho-pendencias"></script>
+  <script src="./config.js?build=tdba-20261002-seguro-sync"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDB 5">
+  <meta name="apple-mobile-web-app-title" content="TDBa">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1822,10 +1822,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb5-20261002-rancho-pendencias"></script>
+  <script src="./sync.js?build=tdba-20261002-seguro-sync"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb5-20261002-rancho-pendencias-mobile';
+window.__TDB_BUILD_EXATO = 'tdba-20261002-seguro-sync-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4598,7 +4598,8 @@ function Recibos(_a) {
 function Compras(_a) {
     var _this = this;
     var chamarIA = _a.chamarIA;
-    var _b = useState('frutas'), subTab = _b[0], setSubTab = _b[1];
+    var _b = useState(function () { return window.__tdbComprasSubTab || 'frutas'; }), subTab = _b[0], setSubTab = _b[1];
+    useEffect(function () { window.__tdbComprasSubTab = subTab; }, [subTab]);
     var _c = useState(null), dados = _c[0], setDados = _c[1];
     var _d = useState(''), busca = _d[0], setBusca = _d[1];
     var _e = useState({ nome: '', estoque: '', comprar: '', unidade: '', observacao: '', categoria: '' }), novoItem = _e[0], setNovoItem = _e[1];
@@ -4697,7 +4698,7 @@ function Compras(_a) {
     }
     useEffect(function () {
         (function () { return __awaiter(_this, void 0, void 0, function () {
-            var r, carregado, faltandoArraia_1, baseArraia_1, migrouArraia_1, mudouUnidade_1, dadosComUnidade, _i, _a, chave, lista, itensAjustados, e_7;
+            var r, carregado, nomesLimpezaSeed, nomesAtuais_1, faltando, proximoId_1, novosItens, faltandoArraia_1, baseArraia_1, migrouArraia_1, mudouUnidade_1, dadosComUnidade, _i, _a, chave, lista, itensAjustados, e_7;
             var _b;
             return __generator(this, function (_c) {
                 switch (_c.label) {
@@ -4714,8 +4715,16 @@ function Compras(_a) {
                         _c.sent();
                         return [3 /*break*/, 5];
                     case 3:
+                        nomesLimpezaSeed = SEED_COMPRAS.rancho.itens.filter(function (i) { return i.categoria === 'Limpeza'; });
+                        nomesAtuais_1 = new Set((((_b = carregado.rancho) === null || _b === void 0 ? void 0 : _b.itens) || []).map(function (i) { return i.nome.toUpperCase().trim(); }));
+                        faltando = nomesLimpezaSeed.filter(function (i) { return !nomesAtuais_1.has(i.nome.toUpperCase().trim()); });
+                        if (faltando.length > 0 && carregado.rancho) {
+                            proximoId_1 = Math.max.apply(Math, __spreadArray([0], carregado.rancho.itens.map(function (i) { return i.id; }), false)) + 1;
+                            novosItens = faltando.map(function (i, idx) { return (__assign(__assign({}, i), { id: proximoId_1 + idx })); });
+                            carregado = __assign(__assign({}, carregado), { rancho: __assign(__assign({}, carregado.rancho), { itens: __spreadArray(__spreadArray([], carregado.rancho.itens, true), novosItens, true) }) });
+                        }
                         faltandoArraia_1 = !carregado.arraiaTdb;
-                        migrouArraia_1 = faltandoArraia_1; // Uma lista já editada não é substituída por um modelo novo.
+                        migrouArraia_1 = faltandoArraia_1 || !carregado.arraiaTdb || carregado.arraiaTdb.versaoModelo !== SEED_ARRAIA_TDB.versaoModelo;
                         if (migrouArraia_1) {
                             baseArraia_1 = JSON.parse(JSON.stringify(SEED_ARRAIA_TDB));
                             carregado = __assign(__assign({}, carregado), { arraiaTdb: baseArraia_1 });
@@ -4738,7 +4747,7 @@ function Compras(_a) {
                             });
                             dadosComUnidade[chave] = __assign(__assign({}, lista), { itens: itensAjustados });
                         }
-                        if (!(mudouUnidade_1 || migrouArraia_1)) return [3 /*break*/, 5];
+                        if (!(mudouUnidade_1 || faltando.length > 0 || migrouArraia_1)) return [3 /*break*/, 5];
                         carregado = dadosComUnidade;
                         return [4 /*yield*/, window.storage.set('compras_listas', JSON.stringify(carregado), false)];
                     case 4:
@@ -5400,6 +5409,7 @@ function Compras(_a) {
                         a.click();
                         a.remove();
                         URL.revokeObjectURL(url);
+                        _mostrarToastExportPDF('Lista de ' + ((categoriaAtualCompra && categoriaAtualCompra.label) || 'compras') + ' exportada em PDF.');
                         return [2 /*return*/];
                 }
             });
@@ -7973,6 +7983,7 @@ function Anotacoes(_a) {
                         _pdfAnchor.click();
                         _pdfAnchor.remove();
                         URL.revokeObjectURL(_pdfUrl);
+                        _mostrarToastExportPDF('PDF exportado com sucesso!');
                         return [2 /*return*/];
                 }
             });
@@ -8527,7 +8538,7 @@ function ContasPessoais(_a) {
     }
     function interpretarComIA(textoOverride) {
         return __awaiter(this, void 0, void 0, function () {
-            var texto, lista, prompt, r, limpo, ini, fim, obj, next, aplicadas, invalidas, _loop_1, _i, _a, a, e_35;
+            var texto, lista, prompt, r, limpo, ini, fim, obj, next, aplicadas, _loop_1, _i, _a, a, e_35;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -8554,16 +8565,13 @@ function ContasPessoais(_a) {
                         obj = JSON.parse(limpo.slice(ini, fim + 1));
                         next = __spreadArray([], (contas || []), true);
                         aplicadas = 0;
-                        invalidas = 0;
                         _loop_1 = function (a) {
                             var _c;
                             var nomeN = normalizarTexto(a.conta);
                             var idx = next.findIndex(function (c) { return normalizarTexto(c.nome) === nomeN || normalizarTexto(c.nome).includes(nomeN) || nomeN.includes(normalizarTexto(c.nome)); });
                             var mes = MESES_CP.find(function (m) { return normalizarTexto(m) === normalizarTexto(a.mes); });
                             if (idx >= 0 && mes) {
-                                var valorValidado = TDBFinance.parse(a.valor);
-                                if (valorValidado == null || valorValidado < 0) { invalidas++; return; }
-                                next[idx] = __assign(__assign({}, next[idx]), { valores: __assign(__assign({}, next[idx].valores), (_c = {}, _c[mes] = valorValidado, _c)) });
+                                next[idx] = __assign(__assign({}, next[idx]), { valores: __assign(__assign({}, next[idx].valores), (_c = {}, _c[mes] = parseValor(a.valor), _c)) });
                                 aplicadas++;
                             }
                         };
@@ -8578,10 +8586,9 @@ function ContasPessoais(_a) {
                         setPerguntaIA('');
                         _b.label = 4;
                     case 4:
-                        setRespostaIA((aplicadas
-                            ? "\u2713 ".concat(aplicadas, " campo(s) atualizado(s) na tabela. ") + (invalidas ? '' : (obj.mensagem || ''))
-                            : (invalidas ? '' : '⚠ A IA respondeu, mas não encontrei uma conta/mês válido para alterar.'))
-                            + (invalidas ? '⚠ ' + invalidas + ' valor(es) inválido(s) ou negativo(s) ignorado(s); os valores anteriores foram mantidos.' : ''));
+                        setRespostaIA(aplicadas
+                            ? "\u2713 ".concat(aplicadas, " campo(s) atualizado(s) na tabela. ") + (obj.mensagem || '')
+                            : '⚠ A IA respondeu, mas não encontrei uma conta/mês válido para alterar.');
                         return [3 /*break*/, 6];
                     case 5:
                         e_35 = _b.sent();
@@ -9404,7 +9411,7 @@ function FestasTDB(_a) {
                 React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "PAGO"), React.createElement("select", { value: novo.pago, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { pago: e.target.value })); }, style: inputTop }, React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"), React.createElement("option", null, "Pago"))),
                 React.createElement("button", { type: "submit", className: "festas-add-btn", style: { height: 38, border: 'none', borderRadius: 10, background: COLORS.inkButton, color: '#fff', fontWeight: 800, padding: '0 14px', cursor: 'pointer' } }, "+ Adicionar"))),
         React.createElement("div", { className: "festas-tdb-resumo", style: { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 10 } },
-            React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Crianças: ", React.createElement("b", { style: { color: COLORS.ink, fontSize: 16 } }, _festasContarCriancas(rows, transacoes))),
+            React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Crian\u00E7as: ", React.createElement("b", { style: { color: COLORS.ink, fontSize: 16 } }, _festasContarCriancas(rows, transacoes))),
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Total de pessoas: ", React.createElement("b", { style: { color: COLORS.inkButton, fontSize: 16 } }, totalGeral.pessoas)),
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Total em valor: ", React.createElement("b", { className: "mono", style: { color: COLORS.green, fontSize: 16 } }, formatBRL(totalGeral.valor)))),
         React.createElement("div", { className: "busca-liquid-glass festas-tdb-busca", style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 14, padding: '9px 11px', minWidth: 0 } },
@@ -13217,7 +13224,20 @@ function VisaoGeral(_a) {
             return "".concat((n / 1024).toFixed(1), " KB");
         return "".concat((n / 1024 / 1024).toFixed(1), " MB");
     }
-    function atualizarSaudeGlobalLeve_() { return Promise.resolve(null); }
+    function atualizarSaudeGlobalLeve_() {
+        if (!window.__statusSaudeDrive) return Promise.resolve(null);
+        return window.__statusSaudeDrive().then(function (g) {
+            if (!g || g.ok === false) return g;
+            if (g.ultimoBackup !== undefined) setUltimoBackupGlobal(String(g.ultimoBackup || ''));
+            if (g.ultimoBackupEm !== undefined) setUltimoBackupGlobalEm(g.ultimoBackupEm || null);
+            setSaudeSistema(function (st) { return (__assign(__assign({}, st), {
+                status: 'ok', driveDisponivel: true,
+                ultimaSync: window.__ultimaSincronizacaoDrive || st.ultimaSync || Date.now(),
+                ultimoSalvamento: Number(g.ultimoSalvamentoEm) || window.__ultimoSalvamentoDrive || st.ultimoSalvamento || null
+            })); });
+            return g;
+        });
+    }
     function testarConexaoSistema_(silencioso) {
         if (!window.__testarConexaoDrive) return Promise.resolve();
         if (!silencioso) setTestandoDrive(true);
@@ -13359,7 +13379,7 @@ function VisaoGeral(_a) {
             border: "1.5px solid ".concat(inadimplencia.qtd > 0 ? COLORS.red : COLORS.green, "55"), borderRadius: 10,
             padding: '16px 20px', minHeight: 150, boxSizing: 'border-box',
             display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 10,
-        } }, React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } }, React.createElement(AlertTriangle, { size: 22, color: inadimplencia.qtd > 0 ? COLORS.red : COLORS.green, style: { flexShrink: 0 } }), React.createElement("div", null, React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: COLORS.ink } }, "Pend\u00EAncias de mensalidades"), React.createElement("div", { style: { fontSize: 12, color: COLORS.inkSoft } }, "Cobranças em aberto até o mês de referência, incluindo anteriores."))), React.createElement("div", null, React.createElement("div", { className: "mono", style: { fontSize: 22, fontWeight: 800, color: inadimplencia.qtd > 0 ? COLORS.red : COLORS.green } }, inadimplencia.qtd, " cobrança(s) em aberto"), React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft, marginTop: 3 } }, formatBRLPrivado(inadimplencia.valor, modoPrivado), " pendente", inadimplencia.mes ? " em ".concat(inadimplencia.mes.charAt(0) + inadimplencia.mes.slice(1).toLowerCase()) : '', inadimplencia.qtd > 0 ? " \u00B7 ".concat(inadimplencia.alunos, inadimplencia.alunos === 1 ? " aluno" : " alunos") : ''), inadimplencia.qtd > 0 && inadimplencia.nomes && inadimplencia.nomes.length > 0 && (React.createElement("div", { style: { fontSize: 11.3, color: COLORS.inkSoft, marginTop: 4 } }, inadimplencia.nomes.slice(0, 3).join(', '), inadimplencia.nomes.length > 3 ? " +".concat(inadimplencia.nomes.length - 3) : '')))))), React.createElement(QuadroProjecaoCaixa,{dados:projecaoCaixa,mesesDisponiveis:mesesFuturosDisponiveis,selecionados:mesesFuturosCaixa,onAlternar:alternarMesFuturoCaixa_,modoPrivado:modoPrivado}), React.createElement(SimuladorCenarios, { transacoes: transacoes, modoPrivado: modoPrivado }), React.createElement("div", { className: "grid-saude-alertas", style: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(340px, 0.85fr)', gap: 14, alignItems: 'stretch' } }, React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, padding: '14px 16px', height: '100%', boxSizing: 'border-box' } }, React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 11 } }, React.createElement("div", null, React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: COLORS.ink } }, "\uD83E\uDE7A Sa\u00FAde do sistema"), React.createElement("div", { style: { fontSize: 12, color: COLORS.inkSoft } }, "Sincroniza\u00E7\u00E3o, PDFs pendentes, tamanho dos dados e backup do Google Drive.")), React.createElement("div", { className: "mobile-saude-acoes", style: { display: 'flex', gap: 7, flexWrap: 'wrap' } }, React.createElement("button", { onClick: function () { return testarConexaoSistema_(false); }, disabled: testandoDrive, style: { background: COLORS.lineSoft, color: COLORS.ink, border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 10px', fontSize: 12, fontWeight: 700, cursor: testandoDrive ? 'default' : 'pointer' } }, testandoDrive ? 'Testando...' : 'Testar conexão'), React.createElement("button", { onClick: criarBackupSistema_, disabled: backupSistema && backupSistema.tipo === 'andamento', title: backupCriando ? 'Criando e confirmando o backup no Google Drive' : 'Criar um backup completo no Google Drive', style: { position: 'relative', overflow: 'hidden', isolation: 'isolate', background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '7px 10px', fontSize: 12, fontWeight: 700, cursor: backupSistema && backupSistema.tipo === 'andamento' ? 'default' : 'pointer', minWidth: 124 } }, backupCriando && React.createElement("span", { "aria-hidden": true, style: { position: 'absolute', zIndex: 0, left: 0, top: 0, bottom: 0, width: "".concat(backupProgresso, "%"), background: 'rgba(255,255,255,0.22)', transition: 'width 180ms ease', pointerEvents: 'none' } }), React.createElement("span", { style: { position: 'relative', zIndex: 1, whiteSpace: 'nowrap' } }, backupCriando ? "Backup ".concat(backupProgresso, "%") : "Criar backup agora")), React.createElement("button", { onClick: restaurarUltimoBackupSistema_, disabled: backupSistema && backupSistema.tipo === 'andamento', title: "Busca o backup mais recente j\u00E1 salvo no Drive e restaura tudo neste computador", style: { background: COLORS.paperCard, color: COLORS.red, border: "1px solid ".concat(COLORS.red, "55"), borderRadius: 7, padding: '7px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' } }, "Restaurar \u00FAltimo backup"))), React.createElement("div", { className: "mobile-saude-status", style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 } }, React.createElement("div", { style: {
+        } }, React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } }, React.createElement(AlertTriangle, { size: 22, color: inadimplencia.qtd > 0 ? COLORS.red : COLORS.green, style: { flexShrink: 0 } }), React.createElement("div", null, React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: COLORS.ink } }, "Pend\u00EAncias de mensalidades"), React.createElement("div", { style: { fontSize: 12, color: COLORS.inkSoft } }, "Cobranças em aberto até o mês de referência, incluindo anteriores."))), React.createElement("div", null, React.createElement("div", { className: "mono", style: { fontSize: 22, fontWeight: 800, color: inadimplencia.qtd > 0 ? COLORS.red : COLORS.green } }, inadimplencia.qtd, " cobrança(s) em aberto"), React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft, marginTop: 3 } }, formatBRLPrivado(inadimplencia.valor, modoPrivado), " pendente", inadimplencia.mes ? " em ".concat(inadimplencia.mes.charAt(0) + inadimplencia.mes.slice(1).toLowerCase()) : '', inadimplencia.qtd > 0 ? " \u00B7 ".concat(inadimplencia.alunos, inadimplencia.alunos === 1 ? " aluno" : " alunos") : ''), inadimplencia.qtd > 0 && inadimplencia.nomes && inadimplencia.nomes.length > 0 && (React.createElement("div", { style: { fontSize: 11.3, color: COLORS.inkSoft, marginTop: 4 } }, inadimplencia.nomes.slice(0, 3).join(', '), inadimplencia.nomes.length > 3 ? " +".concat(inadimplencia.nomes.length - 3) : '')))))), React.createElement(QuadroProjecaoCaixa,{dados:projecaoCaixa,mesesDisponiveis:mesesFuturosDisponiveis,selecionados:mesesFuturosCaixa,onAlternar:alternarMesFuturoCaixa_,modoPrivado:modoPrivado}), React.createElement(SimuladorCenarios, { transacoes: transacoes, modoPrivado: modoPrivado }), React.createElement("div", { className: "grid-saude-alertas", style: { display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(340px, 0.85fr)', gap: 14, alignItems: 'stretch' } }, React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, padding: '14px 16px', height: '100%', boxSizing: 'border-box' } }, React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 11 } }, React.createElement("div", null, React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: COLORS.ink } }, "\uD83E\uDE7A Sa\u00FAde do sistema"), React.createElement("div", { style: { fontSize: 12, color: COLORS.inkSoft } }, "Sincroniza\u00E7\u00E3o, PDFs pendentes, tamanho dos dados e backup dos dados no Google Drive.")), React.createElement("div", { className: "mobile-saude-acoes", style: { display: 'flex', gap: 7, flexWrap: 'wrap' } }, React.createElement("button", { onClick: function () { return testarConexaoSistema_(false); }, disabled: testandoDrive, style: { background: COLORS.lineSoft, color: COLORS.ink, border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 10px', fontSize: 12, fontWeight: 700, cursor: testandoDrive ? 'default' : 'pointer' } }, testandoDrive ? 'Testando...' : 'Testar conexão'), React.createElement("button", { onClick: criarBackupSistema_, disabled: backupSistema && backupSistema.tipo === 'andamento', title: backupCriando ? 'Criando e confirmando o backup no Google Drive' : 'Criar backup dos dados no Google Drive (PDFs/anexos permanecem em arquivos separados e não são apagados pelo backup)', style: { position: 'relative', overflow: 'hidden', isolation: 'isolate', background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '7px 10px', fontSize: 12, fontWeight: 700, cursor: backupSistema && backupSistema.tipo === 'andamento' ? 'default' : 'pointer', minWidth: 124 } }, backupCriando && React.createElement("span", { "aria-hidden": true, style: { position: 'absolute', zIndex: 0, left: 0, top: 0, bottom: 0, width: "".concat(backupProgresso, "%"), background: 'rgba(255,255,255,0.22)', transition: 'width 180ms ease', pointerEvents: 'none' } }), React.createElement("span", { style: { position: 'relative', zIndex: 1, whiteSpace: 'nowrap' } }, backupCriando ? "Backup ".concat(backupProgresso, "%") : "Criar backup agora")), React.createElement("button", { onClick: restaurarUltimoBackupSistema_, disabled: backupSistema && backupSistema.tipo === 'andamento', title: "Busca o backup mais recente j\u00E1 salvo no Drive e restaura tudo neste computador", style: { background: COLORS.paperCard, color: COLORS.red, border: "1px solid ".concat(COLORS.red, "55"), borderRadius: 7, padding: '7px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' } }, "Restaurar \u00FAltimo backup"))), React.createElement("div", { className: "mobile-saude-status", style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 } }, React.createElement("div", { style: {
             padding: '10px 11px', borderRadius: 8,
             background: saudeSistema.pendencias > 0
                 ? COLORS.redBg
@@ -15402,6 +15422,7 @@ function Contratos(_a) {
                         _pdfAnchor.click();
                         _pdfAnchor.remove();
                         URL.revokeObjectURL(_pdfUrl);
+                        _mostrarToastExportPDF('PDF exportado com sucesso!');
                         return [2 /*return*/];
                 }
             });
@@ -18193,7 +18214,7 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
 })();
 </script>
 <style id="tdb-calapp">
-/* TDB 5 — aba Calendário. Só aparência da aba nova + selo no botão da aba. */
+/* TDBa — aba Calendário. Só aparência da aba nova + selo no botão da aba. */
 .tcal,#tcal-pop,#tcal-modal,#tcal-toast{--t-ink:var(--c-ink,#111318);--t-soft:var(--c-inkSoft,#454c59);--t-line:var(--c-line,#d7dce5);--t-acc:var(--c-inkButton,#1767cf);--t-solid:#fff;--t-field:#fff;--t-chip:rgba(23,103,207,.12);--t-hover:rgba(23,103,207,.07);--t-aviso-bg:#fff4dc;--t-aviso-bd:#f0d28a;--t-aviso-tx:#6b5a2a;--t-red:#c62d36;--t-green:#1c9e8f;--t-amber:#d98a00}
 body.dark-mode .tcal,#tcal-pop.dk,#tcal-modal.dk,#tcal-toast.dk{--t-solid:#2a2c33;--t-field:#1f2127;--t-chip:rgba(106,168,245,.18);--t-hover:rgba(255,255,255,.06);--t-aviso-bg:#3b3320;--t-aviso-bd:#6e5a24;--t-aviso-tx:#e9d9a8;--t-acc:#6aa8f5;--t-red:#ff8a90;--t-line:#555b68;--t-ink:#f6f7f9;--t-soft:#d0d4dc}
 .tcal{color:var(--t-ink);font-family:inherit;position:relative;min-width:0}
@@ -18454,7 +18475,7 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
 .tp-f .tcal-btn{height:38px;min-width:96px}
 </style>
 <script id="tdb-calapp-js">
-/* TDB 5 — aba Calendário (agenda estilo Google Agenda). Dados na chave própria calendario_tdb_v1 via window.storage
+/* TDBa — aba Calendário (agenda estilo Google Agenda). Dados na chave própria calendario_tdb_v1 via window.storage
    (a mesma sincronização de sempre, sem alterá-la). Envio à Google Agenda: ação separada "agenda" no Apps Script. */
 (function(){
  'use strict';
@@ -18670,7 +18691,7 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
   return o;
  }
  function payload(ev){
-  return {id:ev.id,t:ev.t,d:ev.d,h:ev.dia?'':ev.h,df:ev.df||ev.d,hf:ev.dia?'':(ev.hf||''),dia:!!ev.dia,rep:ev.rep||'',loc:ev.loc||'',conv:ev.conv||[],av:(ev.av||[]).slice(0,5),cor:corEv(ev),desc:(ev.desc||'')+(ev.festa?'\n\n[Painel TDB · Festa: '+ev.festa+']':'')};
+  return {id:ev.id,t:ev.t,d:ev.d,h:ev.dia?'':ev.h,df:ev.df||ev.d,hf:ev.dia?'':(ev.hf||''),dia:!!ev.dia,rep:ev.rep||'',loc:ev.loc||'',conv:ev.conv||[],av:(ev.av||[]).slice(0,5).map(function(m){m=Number(m);return Number.isFinite(m)&&m>=5?m:5;}),cor:corEv(ev),desc:(ev.desc||'')+(ev.festa?'\n\n[Painel TDB · Festa: '+ev.festa+']':'')};
  }
  function syncPill(){
   var el=S.host&&S.host.querySelector('.tcal-sync');if(!el)return;
@@ -18704,10 +18725,10 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
   var dd=Math.round(m/1440);return dd+(dd===1?' dia antes':' dias antes');
  }
  function avOpcoes(dia){
-  return dia?[[-480,'No dia · 08:00'],[960,'1 dia antes · 08:00'],[2400,'2 dias antes · 08:00'],[9600,'1 semana antes · 08:00']]
+  return dia?[[5,'5 min antes do início'],[960,'1 dia antes · 08:00'],[2400,'2 dias antes · 08:00'],[9600,'1 semana antes · 08:00']]
             :[[0,'Na hora'],[10,'10 min antes'],[30,'30 min antes'],[60,'1 hora antes'],[120,'2 horas antes'],[1440,'1 dia antes'],[2880,'2 dias antes'],[10080,'1 semana antes']];
  }
- function avPadrao(ag,dia){var m=AV_PADRAO[ag]||60;if(dia){return m>=1440?(m>=10080?9600:(m>=2880?2400:960)):-480;}return m;}
+ function avPadrao(ag,dia){var m=AV_PADRAO[ag]||60;if(dia){return m>=1440?(m>=10080?9600:(m>=2880?2400:960)):5;}return m;}
  function avCurto(m,dia){var l=avLabel(m,dia);return dia?l.split(' · ')[0]:l;}
 
  /* ---------- títulos e navegação ---------- */
@@ -19109,7 +19130,7 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
    '<p class="pe">'+esc(S.ga.msg||'Ainda não verificada.')+'</p>';
   m.innerHTML='<div class="tcal-ov" data-act="nada"><div class="tcal-md"><div class="tcal-fh"><h3>Google Agenda</h3><button class="tcal-x" data-act="fechainfo">✕</button></div><div class="tcal-form">'+st
    +'<p>Seus eventos ficam sempre salvos aqui no painel. Para o <b>alarme tocar no celular</b>, o painel os envia para uma agenda chamada “Tempo de Brincar” na sua Google Agenda. Com ela ligada, o painel também mostra aqui os eventos que você já tem na sua Google Agenda principal (só para ver; para editar, use o Google Agenda). Para ligar (uma vez só):</p>'
-   +'<ol><li>Abra o Apps Script do painel e troque o código pelo arquivo <b>Codigo-COM-AGENDA-para-colar-no-Apps-Script.gs</b> (vem junto do TDB 5). Salve.</li><li>No editor, escolha a função <b>autorizarAgenda</b>, clique em Executar e aceite o acesso à Google Agenda.</li><li>Implantar → Gerenciar implantações → lápis → Versão: <b>Nova versão</b> → Implantar.</li><li>Volte aqui e toque em “Verificar de novo”.</li></ol>'
+   +'<ol><li>Abra o Apps Script do painel e troque o código pelo arquivo <b>GS_TDBa.txt</b> que foi entregue separado do ZIP. Salve.</li><li>No editor, escolha a função <b>autorizarAgenda</b>, clique em Executar e aceite o acesso à Google Agenda.</li><li>Implantar → Gerenciar implantações → lápis → Versão: <b>Nova versão</b> → Implantar.</li><li>Volte aqui e toque em “Verificar de novo”.</li></ol>'
    +'<div class="tcal-fb"><span class="grow"></span><button class="tcal-btn" data-act="fechainfo">Fechar</button><button class="tcal-btn p" data-act="gaverifica">Verificar de novo</button></div></div></div></div>';
  }
  function fechaInfo(){var m=document.getElementById('tcal-modal');if(m&&m.classList.contains('info')){m.className='';m.innerHTML='';}if(S.draft&&isNarrow())abrirModalForm();}
