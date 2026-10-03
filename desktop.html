@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDBe</title>
+  <title>TDBf</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbe-20261003-convenios-valor-align-v1";
+    window.__TDB_BUILD = "tdbf-20261003-convenios-grid-align-v1";
   </script>
-  <script src="./config.js?build=tdbe-20261003-convenios-valor-align-v1"></script>
+  <script src="./config.js?build=tdbf-20261003-convenios-grid-align-v1"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDBe">
+  <meta name="apple-mobile-web-app-title" content="TDBf">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1181,8 +1181,8 @@ html.dark-mode {
 })();
 </script>
 
-<style id="tdbe-mensalidades-original-organized">
-/* TDBe — Mensalidades: visual original organizado; sem divisões internas. Não altera dados nem sincronização. */
+<style id="tdbf-mensalidades-original-organized">
+/* TDBf — Mensalidades: visual original organizado; tabela inferior alinhada à mesma grade da tabela de alunos. Não altera dados nem sincronização. */
 .mensalidades-tabela-card { border-radius:14px!important; box-shadow:0 8px 26px rgba(16,110,107,.055); }
 .mensalidades-tabela-header { gap:12px!important; flex-wrap:wrap!important; min-height:50px; padding-top:11px!important; padding-bottom:11px!important; }
 .mensalidades-table-tip { display:inline-flex; align-items:center; max-width:100%; padding:6px 10px; border-radius:999px; border:1px solid color-mix(in srgb,var(--c-line) 72%,transparent); background:color-mix(in srgb,var(--c-paper) 72%,transparent); line-height:1.25; }
@@ -1191,21 +1191,29 @@ html.dark-mode {
 .tabela-mensalidades th,.tabela-mensalidades td { box-sizing:border-box; }
 .tabela-mensalidades thead th { border-bottom:1px solid var(--c-line); }
 .tabela-mensalidades.mensalidades-detalhes th:nth-child(3),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(3),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row-editando td:nth-child(2) { text-align:right; }
-/* TDBe: na tabela resumida (Empresas / Convênios), cabeçalho e números usam a mesma referência. */
+/* TDBf: Empresas / Convênios usa a mesma grade horizontal da tabela de alunos.
+   Nome ocupa o espaço de Nome+Nota; Valor e Status começam exatamente nas mesmas posições da tabela superior.
+   Banco absorve as colunas que não existem nesta tabela, mantendo Data e Ações também alinhadas. */
+.tabela-mensalidades.mensalidades-resumida col:nth-child(1){width:23%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(2){width:9%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(3){width:7%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(4){width:42%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(5){width:9%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(6){width:10%!important}
 .tabela-mensalidades.mensalidades-resumida th:nth-child(2),
 .tabela-mensalidades.mensalidades-resumida tbody tr.mensalidades-row td:nth-child(2),
 .tabela-mensalidades.mensalidades-resumida tbody tr.mensalidades-row-editando td:nth-child(2) { text-align:right!important; padding-right:16px!important; white-space:nowrap; }
 .tabela-mensalidades.mensalidades-detalhes th:nth-child(6),.tabela-mensalidades.mensalidades-detalhes th:nth-child(7),.tabela-mensalidades.mensalidades-detalhes td:nth-child(6),.tabela-mensalidades.mensalidades-detalhes td:nth-child(7) { line-height:1.25; }
-@media (min-width:1367px) { .tabela-mensalidades.mensalidades-detalhes{min-width:1180px!important}.tabela-mensalidades.mensalidades-resumida{min-width:760px!important} }
+@media (min-width:1367px) { .tabela-mensalidades.mensalidades-detalhes,.tabela-mensalidades.mensalidades-resumida{min-width:1180px!important} }
 @media (min-width:761px) and (max-width:1366px) {
   .mensalidades-tabela-header{align-items:flex-start!important}.mensalidades-table-tip{flex:1 1 360px;justify-content:flex-end}
-  .tabela-mensalidades.mensalidades-detalhes{min-width:1120px!important}.tabela-mensalidades.mensalidades-resumida{min-width:720px!important}
+  .tabela-mensalidades.mensalidades-detalhes,.tabela-mensalidades.mensalidades-resumida{min-width:1120px!important}
   .tabela-mensalidades th,.tabela-mensalidades td{padding-left:7px!important;padding-right:7px!important}
 }
 @media (max-width:760px) {
   .mensalidades-tabela-card{border-radius:12px!important}.mensalidades-tabela-header{padding:10px 11px!important;min-height:0;align-items:flex-start!important}
   .mensalidades-table-tip{flex:1 1 100%;padding:5px 8px;font-size:10.5px!important;border-radius:9px}
-  .tabela-mensalidades.mensalidades-detalhes{min-width:960px!important}.tabela-mensalidades.mensalidades-resumida{min-width:650px!important}
+  .tabela-mensalidades.mensalidades-detalhes,.tabela-mensalidades.mensalidades-resumida{min-width:960px!important}
   .tabela-mensalidades th{padding:8px 6px!important;font-size:10px!important}.tabela-mensalidades td{padding:8px 6px!important;font-size:11.5px!important}
   .tabela-mensalidades td button{min-height:30px}.mensalidades-table-scroll{scrollbar-width:thin;padding-bottom:3px}
 }
@@ -1264,10 +1272,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbe-20261003-convenios-valor-align-v1"></script>
+  <script src="./sync.js?build=tdbf-20261003-convenios-grid-align-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbe-20261003-convenios-valor-align-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbf-20261003-convenios-grid-align-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
