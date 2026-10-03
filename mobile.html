@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tempo1-v2";
+    window.__TDB_BUILD = "tdbn-20261003-tempo2-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tempo1-v2"></script>
+  <script src="./config.js?build=tdbn-20261003-tempo2-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -844,7 +844,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 1";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 2";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1816,7 +1816,7 @@ html, body { overscroll-behavior-y: none; }
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 1</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 2</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1866,10 +1866,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tempo1-v2"></script>
+  <script src="./sync.js?build=tdbn-20261003-tempo2-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo1-v2-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo2-v1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -19808,6 +19808,12 @@ html body .festas-tdb-export-raiz:not(#tdb3x) .festas-tdb-abas>button.festas-nov
 html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)){min-width:860px!important}
 }
 }
+/* TEMPO 2 — Tablet, Contas Pessoais: abas dos meses cabem na largura (sem rolar para o lado) */
+@media (min-width:761px) and (max-width:1366px){
+html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x){overflow:visible!important;flex-wrap:nowrap!important;gap:5px!important;padding-left:0!important;padding-right:0!important}
+html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x)>.tdbl-cp-tab{flex:1 1 0!important;min-width:0!important;padding:9px 2px!important;font-size:13px!important;white-space:nowrap!important;text-align:center}
+html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x)>.tdbl-cp-tab.is-annual{flex:2.6 1 0!important;margin-left:0!important;padding-left:6px!important;padding-right:6px!important}
+}
 /* TDB 3 — Festas TDB no celular: cada participante vira um cartão, igual às Mensalidades. Só aparência. */
 @media(max-width:600px){
 html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela){overflow-x:visible!important;padding-bottom:0!important;width:100%!important}
@@ -19878,6 +19884,19 @@ html body .festas-tdb-export-raiz .festas-tdb-abas:not(#tdb3x)>button.festas-nov
 html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x){display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;overflow:visible!important;padding:8px 0 4px!important}
 html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x)>.tdbl-cp-tab{min-width:0!important;width:100%!important;padding:8px 2px!important;min-height:42px!important}
 html body .contas-pessoais-raiz .tdbl-cp-tabs:not(#tdb3x)>.tdbl-cp-tab.is-annual{grid-column:1/-1;margin-left:0!important}
+/* TEMPO 2 — Recibos: abas das empresas em grade (sem rolagem lateral) + botões lado a lado */
+html body .painel-main .recibos-view>div:first-child:not(#tdb3x){display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+html body .painel-main .recibos-view>div:first-child>div:has(>.subtab-btn):not(#tdb3x){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;overflow:visible!important;padding-bottom:0!important;max-width:100%!important}
+html body .painel-main .recibos-view>div:first-child>div:has(>.subtab-btn)>.subtab-btn:not(#tdb3x){flex:none!important;min-width:0!important;width:100%!important;white-space:normal!important;line-height:1.2;padding:9px 8px!important;overflow-wrap:anywhere}
+html body .painel-main .recibos-view>div:first-child>div:has(>.subtab-btn)>.subtab-btn:last-child:nth-child(odd):not(#tdb3x){grid-column:1/-1}
+html body .painel-main .recibos-view .recibos-toolbar-acoes:not(#tdb3x){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;overflow:visible!important;width:100%!important}
+html body .painel-main .recibos-view .recibos-toolbar-acoes>button:not(#tdb3x){flex:none!important;min-width:0!important;width:100%!important;white-space:normal!important;line-height:1.2;justify-content:center;text-align:center;padding:10px 8px!important}
+/* TEMPO 2 — Calendário (Dia/Semana): coluna das horas mais larga para "02:00" não quebrar em 3 linhas */
+html body .tcal[data-phone="1"] .tcal-wk-h:not(#tdb3x),html body .tcal[data-phone="1"] .tcal-wk-ad:not(#tdb3x),html body .tcal[data-phone="1"] .tcal-wk-g:not(#tdb3x){grid-template-columns:42px repeat(var(--nd),minmax(0,1fr))!important}
+html body .tcal[data-phone="1"] .tcal-hrs div:not(#tdb3x){white-space:nowrap!important;padding:0 5px 0 0!important;font-size:9.5px!important;letter-spacing:0!important}
+/* TEMPO 2 — Calendário: filtros (Todas/Festas/…) em grade, sem rolar para o lado */
+html body .tcal[data-phone="1"] .tcal-chips:not(#tdb3x){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;overflow:visible!important;padding-bottom:10px}
+html body .tcal[data-phone="1"] .tcal-chips>.tcal-chip:not(#tdb3x){min-width:0!important;width:100%!important;white-space:normal;line-height:1.2;padding-left:6px!important;padding-right:6px!important;text-align:center;justify-content:center}
 }
 
 </style>
