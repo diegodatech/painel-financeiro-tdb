@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tdb1-contas-pessoais-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tdb2-edicao-lapis-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tdb1-contas-pessoais-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tdb2-edicao-lapis-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1862,10 +1862,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tdb1-contas-pessoais-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tdb2-edicao-lapis-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb1-contas-pessoais-v1-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb2-edicao-lapis-v1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9810,14 +9810,14 @@ function TDBMobileNavigation(props) {
         var field = document.querySelector('.mobile-header-search input');
         if (field) { field.scrollIntoView({block:'center', behavior:'auto'}); field.focus({preventScroll:true}); }
     }
-    var moreLabel = selectedOther ? React.Children.toArray(selectedOther.props.children)[1].props.children : 'Mais';
+    var currentLabel = selectedOther ? React.Children.toArray(selectedOther.props.children)[1].props.children : 'Mais'; var moreLabel = 'Mais';
     return ReactDOM.createPortal(h(React.Fragment, null,
         h('div', {className:'tdb-dock-wrap' + (keyboard ? ' tdb-keyboard-open' : ''), 'data-html2canvas-ignore':'true'},
             h('nav', {className:'abas-menu tdb-bottom-dock', 'aria-label':'Navegação principal'},
                 h('div', {className:'tdb-dock-rail', ref:railRef, 'aria-label':'Abas com rolagem horizontal'}, items.map(function(item) { return tabButton(item, true); })),
                 h('button', {type:'button', ref:moreRef, className:'aba-item tdb-more' + (selectedOther || open ? ' aba-item-ativa' : ''),
                     'aria-expanded':open, 'aria-controls':'tdb-mobile-more', 'aria-haspopup':'dialog',
-                    'aria-label':selectedOther ? 'Mais páginas. Atual: ' + moreLabel : 'Mais páginas', onClick:function(){setOpen(!open);}},
+                    'aria-label':selectedOther ? 'Mais páginas. Atual: ' + currentLabel : 'Mais páginas', onClick:function(){setOpen(!open);}},
                     h('span', {className:'aba-icon tdb-more-symbol', 'aria-hidden':'true'}, '•••'),
                     h('span', {className:'aba-label'}, moreLabel))),
             h('button', {type:'button', className:'tdb-dock-search', 'aria-label':'Buscar no painel', onClick:search}, h(Search, {size:23, color:'currentColor'}))),
@@ -19511,9 +19511,9 @@ body.dark-mode .contas-pessoais-raiz{
 /* ---------- Linha no desenho da Mensalidade ---------- */
 .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll table{border-spacing:0!important}
 .contas-pessoais-raiz .contas-pessoais-scroll tbody tr.busca-liquid-glass:not([style*="224, 174, 60"]){background:transparent!important;border-left:0!important;box-shadow:none!important;border-radius:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td{border-top:1px solid color-mix(in srgb,var(--c-line) 50%,transparent)!important;padding-top:9px!important;padding-bottom:9px!important;vertical-align:middle}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td{border-top:1px solid var(--tdb2-l50)!important;padding-top:9px!important;padding-bottom:9px!important;vertical-align:middle}
 /* círculo com iniciais (conteúdo do texto da célula não muda) */
-.contas-pessoais-raiz .contas-pessoais-scroll tbody td[data-ini]::before{content:attr(data-ini);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;margin-right:9px;vertical-align:middle;background:color-mix(in srgb,var(--c-line) 55%,transparent);color:var(--c-inkSoft);font-size:10px;font-weight:700;letter-spacing:0}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody td[data-ini]::before{content:attr(data-ini);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;margin-right:9px;vertical-align:middle;background:var(--tdb2-l55);color:var(--c-inkSoft);font-size:10px;font-weight:700;letter-spacing:0}
 /* valor: texto em destaque, borda só ao passar/editar */
 .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date):not(#tdb1x){border-color:transparent!important;background-color:transparent!important;box-shadow:none!important;text-align:left!important;font-weight:700!important;font-size:13px!important;padding-left:34px!important;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='20'><text x='4' y='14' font-family='monospace' font-size='12' font-weight='700' fill='%23808998'>R$</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 4px center!important}
 .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date):not(#tdb1x):is(:hover,:focus){border-color:var(--c-line)!important;background-color:rgba(255,255,255,.85)!important}
@@ -19549,8 +19549,8 @@ body.dark-mode .contas-pessoais-raiz .contas-pessoais-scroll tfoot tr:not([aria-
 .contas-pessoais-raiz .tdb1-cp-balloons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 10px}
 .contas-pessoais-raiz[data-tdbl-cp-view="annual"] .tdb1-cp-balloons{display:none}
 .contas-pessoais-raiz .tdb1-cp-bal{border-radius:10px;padding:14px 16px}
-.contas-pessoais-raiz .tdb1-cp-bal.p{background:var(--c-redBg);border:1px solid color-mix(in srgb,var(--c-red) 13%,transparent)}
-.contas-pessoais-raiz .tdb1-cp-bal.r{background:var(--c-greenBg);border:1px solid color-mix(in srgb,var(--c-green) 13%,transparent)}
+.contas-pessoais-raiz .tdb1-cp-bal.p{background:var(--c-redBg);border:1px solid var(--tdb2-r13)}
+.contas-pessoais-raiz .tdb1-cp-bal.r{background:var(--c-greenBg);border:1px solid var(--tdb2-g13)}
 .contas-pessoais-raiz .tdb1-cp-bal .l{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .contas-pessoais-raiz .tdb1-cp-bal .v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;margin-top:2px}
 .contas-pessoais-raiz .tdb1-cp-bal.p .l,.contas-pessoais-raiz .tdb1-cp-bal.p .v{color:var(--c-red)}
@@ -19598,6 +19598,133 @@ body.dark-mode .contas-pessoais-raiz .tdb1-bar.nil{background:rgba(255,255,255,.
 @media(max-width:900px){.contas-pessoais-raiz .tdb1-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.contas-pessoais-raiz .tdb1-ra-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.contas-pessoais-raiz .tdb1-ra{padding:14px}.contas-pessoais-raiz .tdb1-cols{gap:4px;height:240px}.contas-pessoais-raiz .tdb1-bar .v{display:none}.contas-pessoais-raiz .tdb1-col .m{font-size:10px}.contas-pessoais-raiz .tdb1-tile .n{font-size:15px;white-space:normal}.contas-pessoais-raiz .tdb1-tile svg{display:none}.contas-pessoais-raiz .tdb1-bar .tg{display:none}.contas-pessoais-raiz .tdb1-cols{padding-top:12px}.contas-pessoais-raiz .tdb1-cp-bal .v{font-size:14px}.contas-pessoais-raiz .tdb1-cp-bal .l{font-size:11px}.contas-pessoais-raiz .tdb1-cp-bal{padding:11px 12px}}
 </style>
+<style id="tdb2-edicao-lapis-v1">
+/* cores fixas (o gerador de PDF não lê color-mix) */
+.contas-pessoais-raiz{--tdb2-g13:rgba(23,103,207,.13);--tdb2-g28:rgba(23,103,207,.28);--tdb2-r13:rgba(198,45,54,.13);--tdb2-r11:rgba(198,45,54,.11);--tdb2-r26:rgba(198,45,54,.26);--tdb2-l50:rgba(215,220,229,.5);--tdb2-l55:rgba(215,220,229,.55)}
+body.dark-mode .contas-pessoais-raiz{--tdb2-g13:rgba(121,173,244,.18);--tdb2-g28:rgba(121,173,244,.34);--tdb2-r13:rgba(255,138,144,.16);--tdb2-r11:rgba(255,138,144,.14);--tdb2-r26:rgba(255,138,144,.32);--tdb2-l50:rgba(85,91,104,.55);--tdb2-l55:rgba(85,91,104,.6)}
+/* TDB 2 — Contas Pessoais: Status e Data só mudam depois de clicar no lápis (só aparência; os dados continuam no mesmo lugar). */
+.contas-pessoais-raiz select.tdbm-cp-status:disabled,.contas-pessoais-raiz input.tdbm-cp-date:disabled{pointer-events:none!important;opacity:1!important;-webkit-text-fill-color:currentColor}
+html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:disabled:not(#tdb1x):not([multiple]):not([size]){background-color:transparent!important;border-color:transparent!important;padding-left:2px!important;padding-right:2px!important;min-width:0;text-align:left;text-align-last:left}
+html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:disabled.is-paid:not(#tdb1x):not([multiple]):not([size]){background-color:var(--tdb2-g13)!important;border-color:var(--tdb2-g28)!important;padding-left:12px!important;padding-right:12px!important;text-align:center;text-align-last:center;min-width:84px}
+html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:disabled.is-pending:not(#tdb1x):not([multiple]):not([size]){background-color:var(--tdb2-r11)!important;border-color:var(--tdb2-r26)!important;padding-left:12px!important;padding-right:12px!important;text-align:center;text-align-last:center;min-width:84px}
+.contas-pessoais-raiz input.tdbm-cp-date:disabled:not(#tdb1x){background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:var(--c-ink)!important;font-weight:600;padding-left:2px!important;min-width:0;width:112px}
+.contas-pessoais-raiz input.tdbm-cp-date:disabled::-webkit-calendar-picker-indicator{display:none}
+.contas-pessoais-raiz input.tdbm-cp-date:disabled:not([value]):not(#tdb1x),.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled:not(#tdb1x){color:var(--c-inkSoft)!important;opacity:.55!important}
+/* linha em edição */
+html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr.tdb2-editing td:not([colspan]){background:rgba(23,103,207,.07)!important;border-top:1px solid rgba(23,103,207,.25)!important;border-bottom:1px solid rgba(23,103,207,.25)!important}
+html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr.tdb2-editing td:first-child:not([colspan]){border-left:1px solid rgba(23,103,207,.25)!important;border-radius:10px 0 0 10px;cursor:text}
+html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr.tdb2-editing td:last-child:not([colspan]){border-right:1px solid rgba(23,103,207,.25)!important;border-radius:0 10px 10px 0}
+html[data-tdb-aurora] body .contas-pessoais-raiz tr.tdb2-editing select.tdbm-cp-status:not(:disabled):not(#tdb1x):not([multiple]):not([size]){background-color:rgba(255,255,255,.95)!important;border-color:var(--tdb1-blue,#1767cf)!important;box-shadow:0 0 0 3px rgba(23,103,207,.16)!important;padding:4px 12px!important;min-width:96px;text-align:center;text-align-last:center;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' fill='none' stroke='%231767cf' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>")!important;background-repeat:no-repeat!important;background-position:right 8px center!important;padding-right:24px!important}
+.contas-pessoais-raiz tr.tdb2-editing input.tdbm-cp-date:not(:disabled):not(#tdb1x){background:rgba(255,255,255,.95)!important;border:1px solid var(--tdb1-blue,#1767cf)!important;box-shadow:0 0 0 3px rgba(23,103,207,.16)!important;cursor:pointer;min-width:132px}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button.tdb2-on:first-child{background:var(--tdb1-blue,#1767cf)!important;border-color:var(--tdb1-blue,#1767cf)!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button.tdb2-on:first-child::after{content:"Salvar";color:#fff}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button.tdb2-on:first-child svg{stroke:#fff!important;color:#fff!important}
+body.dark-mode .contas-pessoais-raiz tr.tdb2-editing input.tdbm-cp-date:not(:disabled):not(#tdb1x),html[data-tdb-aurora] body.dark-mode .contas-pessoais-raiz tr.tdb2-editing select.tdbm-cp-status:not(:disabled):not(#tdb1x):not([multiple]):not([size]){background-color:rgba(255,255,255,.12)!important;color:var(--c-ink)!important}
+/* data vazia em leitura: traço no lugar de "dd/mm/aaaa" */
+.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled:not(#tdb1x){color:transparent!important;-webkit-text-fill-color:transparent;opacity:1!important}
+.contas-pessoais-raiz td.tdbm-cp-extra-data:has(input.tdb2-vazio:disabled){position:relative}
+.contas-pessoais-raiz td.tdbm-cp-extra-data:has(input.tdb2-vazio:disabled)::after{content:"—";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--c-inkSoft);opacity:.6;pointer-events:none}
+/* calendário flutuante: mês e ano sem corte */
+html[data-tdb-aurora] body #tdb-cal select.cal-sel:not(#tdb1x):not([multiple]):not([size]){padding:0 22px 0 9px!important;background-position:right 6px center!important;background-size:11px 11px!important;text-overflow:clip!important;min-width:0}
+/* total do mês: "R$" na mesma linha do número */
+html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tfoot .aurora-total-currency:not(#tdb1x){display:inline!important;font-size:inherit!important;margin:0 5px 0 0!important;opacity:.65;letter-spacing:0}
+html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tfoot .aurora-total-number:not(#tdb1x){display:inline!important;font-size:inherit!important}
+/* Calendário (visão Ano): dias não se sobrepõem — 7 colunas iguais e botões sem largura mínima */
+html body .tcal .tcal-year .tcal-mg:not(#tdb1x){grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:2px 1px!important}
+html body .tcal .tcal-year .tcal-mg .tcal-mc:not(#tdb1x){min-width:0!important;min-height:0!important;width:100%!important;height:auto!important;padding:0!important;margin:0!important;aspect-ratio:1;line-height:1;font-size:10.5px}
+html body .tcal .tcal-year .tcal-mg .w:not(#tdb1x){min-width:0;text-align:center}
+html body .tcal .tcal-year .tcal-mini-t:not(#tdb1x){min-height:0!important;min-width:0!important;padding:2px 0 4px!important}
+/* TDB 2 — Contas Pessoais no celular: cada conta vira um cartão (nome + valor em cima; Status, Data e lápis embaixo). Só aparência. */
+@media(max-width:600px){
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll{overflow-x:visible!important;box-shadow:none!important;border-radius:0!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll::after{display:none!important;content:none!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll table,
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody,
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tfoot{display:block!important;min-width:0!important;width:100%!important;max-width:100%!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead{display:none!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:has(td[colspan]){display:block!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody td[colspan]{display:block!important;width:100%!important;padding:10px 0 4px!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])){display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"n n v" "s d a";gap:8px 10px;align-items:center;padding:11px 12px 10px!important;margin:0!important;border-top:1px solid var(--tdb2-l50)!important;width:100%;box-sizing:border-box}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td{border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;min-width:0;width:auto!important;text-align:left}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:first-child{grid-area:n;font-size:14px;white-space:normal!important;overflow:visible!important;line-height:1.25}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:not(.tdbm-cp-extra):not(:first-child):not(:last-child){grid-area:v;justify-self:end}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:not(.tdbm-cp-extra):not(:first-child):not(:last-child) input{width:118px!important;min-height:0!important;text-align:right!important;padding-left:34px!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdbm-cp-extra-pago{grid-area:s;text-align:left}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdbm-cp-extra-data{grid-area:d;text-align:left}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child{grid-area:a;justify-self:end;display:flex;align-items:center;gap:4px;white-space:nowrap}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll .tdbm-cp-status{width:auto!important;min-width:92px!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll input.tdbm-cp-date:not(#tdb1x){width:100%!important;max-width:150px!important;min-width:0!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button{min-height:38px!important;min-width:38px!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button:first-child{padding:4px 12px!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button:last-child{width:38px!important;height:38px!important;min-width:38px!important;margin-left:0!important}
+/* linha marcada / em edição: faixa no cartão inteiro */
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr[style*="224, 174, 60"]:not(:has(td[colspan])){background:rgba(23,103,207,.11)!important;border-radius:12px;box-shadow:inset 4px 0 0 #1767cf!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr.tdb2-editing:not(:has(td[colspan])){background:rgba(23,103,207,.08)!important;border-radius:12px;outline:1px solid rgba(23,103,207,.35);outline-offset:-1px}
+/* total do mês */
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tfoot tr:not([aria-hidden]){display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:12px 14px!important;margin-top:8px;border-radius:16px;background:linear-gradient(180deg,rgba(238,244,255,.92) 0%,rgba(226,237,255,.78) 55%,rgba(170,196,248,.88) 100%)!important;border:1px solid var(--tdb1-glass-edge)}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tfoot tr:not([aria-hidden]) td{background:transparent!important;border:0!important;padding:0!important;border-radius:0!important;text-align:left;width:auto!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tfoot tr:not([aria-hidden]) td:not(:first-child):not(.tdbl-cp-is-hidden):not(.tdbm-cp-extra){text-align:right;justify-self:end}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tfoot tr:not([aria-hidden]) td.tdbm-cp-extra,
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tfoot tr:not([aria-hidden]) td:last-child:empty{display:none!important}
+body.dark-mode.dark-mode .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tfoot tr:not([aria-hidden]){background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(120,160,255,.14))!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr.tdb2-editing:not(:has(td[colspan])){grid-template-areas:"n n v" "s d d" "a a a"}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr.tdb2-editing:not(:has(td[colspan])) td:last-child{margin-top:2px}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr.tdb2-editing:not(:has(td[colspan])) td.tdbm-cp-extra-data input.tdbm-cp-date:not(#tdb1x){max-width:none!important;width:100%!important}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr.tdb2-editing:not(:has(td[colspan])) td,html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr[style*="224, 174, 60"]:not(:has(td[colspan])) td{border:0!important;background:transparent!important;border-radius:0!important;box-shadow:none!important}
+}
+
+/* ---------- Mensalidades no celular: cada aluno vira um cartão ---------- */
+@media(max-width:600px){
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes){overflow-x:visible!important;padding-bottom:0!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes,html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody{display:block!important;min-width:0!important;width:100%!important;max-width:100%!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes thead,html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes colgroup{display:none!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;grid-template-areas:"n n v" "st no bk" "pai pai dt" "tn cv ac";gap:7px 8px;align-items:center;padding:12px 12px 10px!important;width:100%;box-sizing:border-box;border-bottom:1px solid var(--tdb2-l55)}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td{display:block;border:0!important;padding:0!important;width:auto!important;min-width:0;text-align:left!important;background:transparent!important;white-space:normal;font-size:12px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:empty{display:none}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(1){grid-area:n;font-size:14px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(2){grid-area:no}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(3){grid-area:v;justify-self:end;text-align:right!important;font-size:14px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(4){grid-area:st}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(5){grid-area:bk;justify-self:start}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(6){grid-area:pai;color:var(--c-inkSoft)}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(7){grid-area:tn;color:var(--c-inkSoft)}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(8){grid-area:cv}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(9){grid-area:dt;justify-self:end;color:var(--c-inkSoft);font-weight:600}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(10){grid-area:ac;justify-self:end}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td button{min-height:32px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(1){overflow:hidden}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(1) *:not(label):not(svg):not(img){white-space:normal!important;min-width:0!important;overflow-wrap:anywhere}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(6){padding-left:38px!important;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='34' height='14'><text x='0' y='11' font-family='Arial,Helvetica,sans-serif' font-size='9.5' font-weight='700' fill='%238a93a3' letter-spacing='.4'>RESP.</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 1px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(7){padding-left:34px!important;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='14'><text x='0' y='11' font-family='Arial,Helvetica,sans-serif' font-size='9.5' font-weight='700' fill='%238a93a3' letter-spacing='.4'>NOTA</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 1px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes) table.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(9){padding-left:34px!important;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='14'><text x='0' y='11' font-family='Arial,Helvetica,sans-serif' font-size='9.5' font-weight='700' fill='%238a93a3' letter-spacing='.4'>DATA</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 1px!important}
+html:not(.tdb-aurora-pdf) body .mobile-mens-filtros select{padding-left:10px!important;padding-right:28px!important;min-width:0}
+html:not(.tdb-aurora-pdf) body .mobile-mens-filtros select:nth-of-type(3),html:not(.tdb-aurora-pdf) body .mobile-mens-filtros select:nth-of-type(4){grid-column:1/-1!important}
+}
+/* ---------- Início no celular ---------- */
+@media(max-width:600px){
+html:not(.tdb-aurora-pdf) body .kpi-card .kpi-value{font-size:clamp(14px,4.6vw,22px)!important;white-space:nowrap!important;letter-spacing:-.02em;overflow-wrap:normal!important;word-break:keep-all!important;line-height:1.2}
+html:not(.tdb-aurora-pdf) body main div[style*="overflow-x: auto"]>table[style*="min-width"]:not(.tdb-tabela-reajuste){min-width:0!important;width:100%!important}
+html:not(.tdb-aurora-pdf) body main div[style*="overflow-x: auto"]>table[style*="min-width"]:not(.tdb-tabela-reajuste) th{white-space:normal!important;padding:7px 5px!important;font-size:10px!important;line-height:1.2}
+html:not(.tdb-aurora-pdf) body main div[style*="overflow-x: auto"]>table[style*="min-width"]:not(.tdb-tabela-reajuste) td{padding:7px 5px!important;font-size:11px!important;white-space:nowrap}
+}
+/* ---------- Detalhes de textos e caixas (celular) ---------- */
+@media(max-width:600px){
+/* barra inferior: esmaece a ponta que continua rolando (em vez de cortar a palavra) */
+html body .tdb-dock-rail.tdb2-fade-r:not(.tdb2-fade-l){-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 30px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 30px),transparent)}
+html body .tdb-dock-rail.tdb2-fade-l:not(.tdb2-fade-r){-webkit-mask-image:linear-gradient(90deg,transparent,#000 30px);mask-image:linear-gradient(90deg,transparent,#000 30px)}
+html body .tdb-dock-rail.tdb2-fade-l.tdb2-fade-r{-webkit-mask-image:linear-gradient(90deg,transparent,#000 30px,#000 calc(100% - 30px),transparent);mask-image:linear-gradient(90deg,transparent,#000 30px,#000 calc(100% - 30px),transparent)}
+/* títulos que apareciam cortados com "…" passam a quebrar linha */
+html:not(.tdb-aurora-pdf) body main div[style*="font-size: 15.5px"][style*="text-overflow: ellipsis"]{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere}
+html:not(.tdb-aurora-pdf) body main div[style*="font-size: 13px; color: var(--c-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"]{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere}
+/* Rematrícula: linhas de alunos com altura certa para os 3 botões */
+html:not(.tdb-aurora-pdf) body .tdb-remat-card div[style*="min-height: 26px"]{min-height:46px!important;height:auto!important;padding:5px 9px!important}
+html:not(.tdb-aurora-pdf) body .tdb-remat-card div[style*="min-height: 26px"] button{min-width:34px!important;min-height:34px!important;width:34px!important;height:34px!important;padding:0!important}
+html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-aluno-nome{white-space:normal!important;overflow:visible!important;line-height:1.2;min-width:0}
+/* Início: tabela de projeção sem estourar a caixa */
+html:not(.tdb-aurora-pdf) body main div[style*="overflow-x: auto"]>table[style*="min-width"]:not(.tdb-tabela-reajuste) td{padding:7px 3px!important;font-size:10.5px!important}
+html:not(.tdb-aurora-pdf) body main div[style*="overflow-x: auto"]>table[style*="min-width"]:not(.tdb-tabela-reajuste) th{padding:7px 3px!important}
+}
+</style>
 
 <script id="tdbm-contas-pessoais-pago-data-v1">
 (function(){
@@ -19628,7 +19755,7 @@ body.dark-mode .contas-pessoais-raiz .tdb1-bar.nil{background:rgba(255,255,255,.
     try{ if(window.storage&&window.storage.set) window.storage.set(metaKey,txt,false); }catch(e){}
   }
   function getM(conta,idx){ var k=norm(conta); if(!meta[k]) meta[k]={}; if(!meta[k][idx]) meta[k][idx]={}; return meta[k][idx]; }
-  function readTotals(table){var out=[]; var row=table&&table.tFoot&&table.tFoot.rows&&table.tFoot.rows[table.tFoot.rows.length-1]; if(row){for(var i=1;i<=12;i++) out.push(parseBRL(row.cells[i]&&row.cells[i].textContent));} while(out.length<12) out.push(0); return out;}
+  function readTotals(table){var out=[]; var row=table&&table.tFoot&&table.tFoot.rows&&table.tFoot.rows[table.tFoot.rows.length-1]; if(row){var rc=Array.prototype.filter.call(row.cells,function(c){return !c.classList.contains('tdbm-cp-extra');}); for(var i=1;i<=12;i++) out.push(parseBRL(rc[i]&&rc[i].textContent));} while(out.length<12) out.push(0); return out;}
   function readCategories(table){var arr=[]; var headers=table.querySelectorAll('tbody td[colspan]'); headers.forEach(function(td){var nome=(td.querySelector('span')&&td.querySelector('span').textContent||td.textContent||'').replace(/R\$.*/,'').trim(); var val=parseBRL(td.textContent); if(nome) arr.push({nome:nome,valor:val});}); return arr;}
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   function renderAnnual(root, table){
@@ -19665,40 +19792,57 @@ body.dark-mode .contas-pessoais-raiz .tdb1-bar.nil{background:rgba(255,255,255,.
   function removeDica(root){
     try{root.querySelectorAll('.busca-liquid-glass').forEach(function(el){var t=(el.textContent||'').trim(); if(t.indexOf('💡')===0 && t.indexOf('Dica:')>=0 && t.indexOf('Tabela para esconder')>=0) el.style.display='none';});}catch(e){}
   }
+  function realCells(row){return Array.prototype.filter.call(row.cells,function(c){return !c.classList.contains('tdbm-cp-extra');});}
+  var editing={};
+  function ekey(nome,idx){return norm(nome)+'|'+idx;}
   function inserirExtras(root,table,idx){
     loadMeta(function(){
       try{
+        var tb=table.tBodies[0]; var rows=tb?Array.prototype.slice.call(tb.rows):[]; var parts=[String(idx)];
+        rows.forEach(function(row){
+          if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')) return;
+          var cs=realCells(row); var vc=cs[idx+1]; if(!vc) return;
+          var nome=(cs[0]&&cs[0].textContent||'').trim(); var inp=vc.querySelector('input');
+          var k=ekey(nome,idx); parts.push(k+'='+(inp?(inp.value||inp.defaultValue):vc.textContent)+(editing[k]?'*':''));
+        });
+        var sig=parts.join('|'); var n=table.querySelectorAll('.tdbm-cp-extra').length;
+        if(table.getAttribute('data-tdb2sig')===sig && String(n)===table.getAttribute('data-tdb2n')) return;
+        cleanupExtras(table);
         var header=table.tHead&&table.tHead.rows[0];
-        if(header && header.cells[idx+1]){
+        if(header){ var hc=realCells(header); if(hc[idx+1]){
           var thPago=document.createElement('th'); thPago.className='tdbm-cp-extra tdbm-cp-extra-pago'; thPago.textContent='Status';
           var thData=document.createElement('th'); thData.className='tdbm-cp-extra tdbm-cp-extra-data'; thData.textContent='Data';
-          header.cells[idx+1].after(thPago,thData);
-        }
-        Array.from(table.tBodies[0]?table.tBodies[0].rows:[]).forEach(function(row){
-          if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){ row.cells[0].colSpan=5; return; }
-          var valueCell=row.cells[idx+1]; if(!valueCell) return;
-          var nome=(row.cells[0]&&row.cells[0].textContent||'').trim();
-          try{row.cells[0].setAttribute('data-ini',iniciais(nome));}catch(e){}
+          hc[idx+1].after(thPago,thData);
+        } }
+        rows.forEach(function(row){
+          if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){ if(row.cells[0].colSpan!==5) row.cells[0].colSpan=5; return; }
+          var cs=realCells(row); var valueCell=cs[idx+1]; if(!valueCell) return;
+          var nome=(cs[0]&&cs[0].textContent||'').trim();
+          try{var ini=iniciais(nome); if(cs[0].getAttribute('data-ini')!==ini) cs[0].setAttribute('data-ini',ini);}catch(e){}
           var valor=0; try{var inp=valueCell.querySelector('input'); valor=parseBRL(inp?(inp.value||inp.defaultValue):valueCell.textContent);}catch(e){}
           var m=getM(nome,idx); var st=m.pago || (valor>0?'PAGO':'PENDENTE'); var data=m.data || '';
+          var ed=!!editing[ekey(nome,idx)];
+          row.classList.toggle('tdb2-editing',ed);
+          var lapis=cs[cs.length-1]&&cs[cs.length-1].querySelector('button'); if(lapis){ lapis.classList.toggle('tdb2-on',ed); lapis.title=ed?'Salvar e fechar a edição':'Editar esta linha'; }
           var tdPago=document.createElement('td'); tdPago.className='tdbm-cp-extra tdbm-cp-extra-pago';
           var sel=document.createElement('select'); sel.className='tdbm-cp-status '+(st==='PAGO'?'is-paid':'is-pending');
-          sel.innerHTML='<option value="PENDENTE">Pendente</option><option value="PAGO">Pago</option>'; sel.value=st;
+          sel.innerHTML='<option value="PENDENTE">Pendente</option><option value="PAGO">Pago</option>'; sel.value=st; sel.disabled=!ed; if(!ed) sel.tabIndex=-1;
           sel.addEventListener('click',function(ev){ev.stopPropagation();}); sel.addEventListener('change',function(){var mm=getM(nome,idx); mm.pago=sel.value; sel.classList.toggle('is-paid',sel.value==='PAGO'); sel.classList.toggle('is-pending',sel.value!=='PAGO'); saveMeta(); renderBalloons(root,table,idx,false);});
           tdPago.appendChild(sel);
           var tdData=document.createElement('td'); tdData.className='tdbm-cp-extra tdbm-cp-extra-data';
-          var dt=document.createElement('input'); dt.type='date'; dt.className='tdbm-cp-date'; dt.value=data;
-          dt.addEventListener('click',function(ev){ev.stopPropagation();}); dt.addEventListener('change',function(){var mm=getM(nome,idx); mm.data=dt.value||''; saveMeta();});
+          var dt=document.createElement('input'); dt.type='date'; dt.className='tdbm-cp-date'+(data?'':' tdb2-vazio'); dt.value=data; dt.disabled=!ed; if(!ed) dt.tabIndex=-1;
+          dt.addEventListener('click',function(ev){ev.stopPropagation();}); dt.addEventListener('change',function(){var mm=getM(nome,idx); mm.data=dt.value||''; dt.classList.toggle('tdb2-vazio',!dt.value); saveMeta();});
           tdData.appendChild(dt);
           valueCell.after(tdPago,tdData);
         });
-        if(table.tFoot){Array.from(table.tFoot.rows).forEach(function(row){
-          if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){ row.cells[0].colSpan=5; return; }
-          var valueCell=row.cells[idx+1]; if(!valueCell) return;
+        if(table.tFoot){Array.prototype.forEach.call(table.tFoot.rows,function(row){
+          if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){ if(row.cells[0].colSpan!==5) row.cells[0].colSpan=5; return; }
+          var valueCell=realCells(row)[idx+1]; if(!valueCell) return;
           var td1=document.createElement('td'); td1.className='tdbm-cp-extra tdbm-cp-extra-empty'; td1.textContent='—';
           var td2=document.createElement('td'); td2.className='tdbm-cp-extra tdbm-cp-extra-empty'; td2.textContent='—';
           valueCell.after(td1,td2);
         });}
+        table.setAttribute('data-tdb2sig',sig); table.setAttribute('data-tdb2n',String(table.querySelectorAll('.tdbm-cp-extra').length));
       }catch(e){}
     });
   }
@@ -19728,24 +19872,56 @@ body.dark-mode .contas-pessoais-raiz .tdb1-bar.nil{background:rgba(255,255,255,.
     });
   }
   function apply(root){
-    var scroll=root.querySelector('.contas-pessoais-scroll'); var table=scroll&&scroll.querySelector('table'); if(!table) return; cleanupExtras(table); removeDica(root);
-    var active=sessionStorage.getItem(storageKey); if(active==null){active=String(new Date().getMonth()); sessionStorage.setItem(storageKey,active);} var annual=active==='annual'; root.dataset.tdblCpView=annual?'annual':'month'; renderAnnual(root,table);
+    var scroll=root.querySelector('.contas-pessoais-scroll'); var table=scroll&&scroll.querySelector('table'); if(!table) return; removeDica(root);
+    var active=sessionStorage.getItem(storageKey); if(active==null){active=String(new Date().getMonth()); sessionStorage.setItem(storageKey,active);} var annual=active==='annual';
+    if(root.dataset.tdblCpView!==(annual?'annual':'month')) root.dataset.tdblCpView=annual?'annual':'month';
+    if(annual && table.querySelector('.tdbm-cp-extra')){ cleanupExtras(table); table.removeAttribute('data-tdb2sig'); table.removeAttribute('data-tdb2n'); }
+    renderAnnual(root,table);
     root.querySelectorAll('.tdbl-cp-tab').forEach(function(b){b.classList.toggle('is-active',b.dataset.month===active);});
     var idx=annual?0:Math.max(0,Math.min(11,parseInt(active,10)||0));
-    var header=table.tHead&&table.tHead.rows[0]; if(header){for(var i=1;i<=12;i++){setCell(header.cells[i],annual?false:i!==idx+1); if(header.cells[i]){header.cells[i].classList.toggle('tdbl-cp-visible-month',i===idx+1&&!annual); header.cells[i].textContent=annual?meses[i-1]:nomes[idx];}} setCell(header.cells[13],!annual);}
-    Array.from(table.tBodies[0]?table.tBodies[0].rows:[]).forEach(function(row){ if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){row.cells[0].colSpan=annual?15:5; return;} for(var i=1;i<=12;i++) setCell(row.cells[i],annual?false:i!==idx+1); setCell(row.cells[13],!annual); });
-    if(table.tFoot){Array.from(table.tFoot.rows).forEach(function(row){ if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){row.cells[0].colSpan=annual?15:5; return;} if(row.cells[0]) row.cells[0].innerHTML=annual?'📊 Total por mês':'📅 Total do mês ('+nomes[idx]+')'; for(var i=1;i<=12;i++) setCell(row.cells[i],annual?false:i!==idx+1); setCell(row.cells[13],!annual); });}
+    var header=table.tHead&&table.tHead.rows[0]; if(header){var hc=realCells(header); for(var i=1;i<=12;i++){ if(!hc[i]) continue; setCell(hc[i],annual?false:i!==idx+1); hc[i].classList.toggle('tdbl-cp-visible-month',i===idx+1&&!annual); var tx=annual?meses[i-1]:nomes[idx]; if(hc[i].textContent!==tx) hc[i].textContent=tx;} setCell(hc[13],!annual);}
+    Array.prototype.forEach.call(table.tBodies[0]?table.tBodies[0].rows:[],function(row){ if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){var w=annual?15:5; if(row.cells[0].colSpan!==w) row.cells[0].colSpan=w; return;} var cs=realCells(row); for(var i=1;i<=12;i++) setCell(cs[i],annual?false:i!==idx+1); setCell(cs[13],!annual); });
+    if(table.tFoot){Array.prototype.forEach.call(table.tFoot.rows,function(row){ if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){var w=annual?15:5; if(row.cells[0].colSpan!==w) row.cells[0].colSpan=w; return;} var cs=realCells(row); if(cs[0]){var lb=annual?'📊 Total por mês':'📅 Total do mês ('+nomes[idx]+')'; if(cs[0].textContent!==lb) cs[0].textContent=lb;} for(var i=1;i<=12;i++) setCell(cs[i],annual?false:i!==idx+1); setCell(cs[13],!annual); });}
     if(!annual) inserirExtras(root,table,idx);
     renderBalloons(root,table,idx,annual);
   }
   function ensure(root){
+    if(!root.__tdb2Lapis){root.__tdb2Lapis=1;
+      root.addEventListener('click',function(ev){
+        if(window.__tdb2Pass||root.dataset.tdblCpView!=='month') return;
+        var t=ev.target; if(!t||!t.closest) return;
+        var btn=t.closest('.contas-pessoais-scroll tbody tr td:last-child button:first-child');
+        if(btn){
+          var row=btn.closest('tr'); if(!row||row.cells.length===1) return;
+          ev.stopPropagation(); ev.preventDefault();
+          var cs=realCells(row); var idx=Math.max(0,Math.min(11,parseInt(sessionStorage.getItem(storageKey),10)||0)); var k=ekey((cs[0]&&cs[0].textContent||'').trim(),idx);
+          if(editing[k]) delete editing[k]; else editing[k]=1;
+          apply(root); return;
+        }
+        var td=t.closest('.contas-pessoais-scroll tbody tr.tdb2-editing td:first-child');
+        if(td&&!t.closest('input,select,button')){
+          var b2=td.parentNode.querySelector('td:last-child button:first-child'); if(!b2) return;
+          ev.stopPropagation(); ev.preventDefault();
+          window.__tdb2Pass=true; try{b2.click();}finally{window.__tdb2Pass=false;}
+        }
+      },true);
+    }
     if(!root.__tdb1Voltar){root.__tdb1Voltar=1; root.addEventListener('click',function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('.tdb1-voltar'); if(!b) return; sessionStorage.setItem(storageKey,String(new Date().getMonth())); apply(root);});}
     var scroll=root.querySelector('.contas-pessoais-scroll'); var table=scroll&&scroll.querySelector('table'); if(!scroll||!table) return;
     if(!root.querySelector('.tdbl-cp-annual-panel')){var panel=document.createElement('div'); panel.className='tdbl-cp-annual-panel'; scroll.parentNode.insertBefore(panel,scroll);}
     if(!root.querySelector('.tdbl-cp-tabs')){var tabs=document.createElement('div'); tabs.className='tdbl-cp-tabs'; meses.forEach(function(m,i){var b=document.createElement('button'); b.type='button'; b.className='tdbl-cp-tab'; b.textContent=m; b.dataset.month=String(i); tabs.appendChild(b);}); var a=document.createElement('button'); a.type='button'; a.className='tdbl-cp-tab is-annual'; a.dataset.month='annual'; a.textContent='📊 Resumo anual'; tabs.appendChild(a); scroll.parentNode.insertBefore(tabs,scroll.nextSibling); tabs.addEventListener('click',function(ev){var btn=ev.target.closest('[data-month]'); if(!btn) return; sessionStorage.setItem(storageKey,btn.dataset.month); apply(root);});}
     apply(root);
   }
-  var scheduled=false; function scan(){ if(scheduled) return; scheduled=true; requestAnimationFrame(function(){scheduled=false; document.querySelectorAll('.contas-pessoais-raiz').forEach(ensure);}); }
-  document.addEventListener('DOMContentLoaded',scan); new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true}); setInterval(scan,1600); loadMeta(scan);
+  var scheduled=false, mo=null; function scan(){ if(scheduled) return; scheduled=true; requestAnimationFrame(function(){scheduled=false; document.querySelectorAll('.contas-pessoais-raiz').forEach(ensure); try{ if(mo) mo.takeRecords(); }catch(e){} }); }
+  document.addEventListener('DOMContentLoaded',scan); mo=new MutationObserver(scan); mo.observe(document.documentElement,{childList:true,subtree:true}); setInterval(scan,1600); loadMeta(scan);
 })();
 </script>
+<script id="tdb2-dock-fade">
+(function(){
+  function upd(r){var fim=r.scrollLeft+r.clientWidth>=r.scrollWidth-4,ini=r.scrollLeft<=4;r.classList.toggle('tdb2-fade-r',!fim);r.classList.toggle('tdb2-fade-l',!ini);}
+  function bind(){var r=document.querySelector('.tdb-dock-rail');if(!r||r.__tdb2)return;r.__tdb2=1;r.addEventListener('scroll',function(){upd(r);},{passive:true});upd(r);}
+  try{new MutationObserver(bind).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  setInterval(bind,1500);bind();
+})();
+</script>
+
