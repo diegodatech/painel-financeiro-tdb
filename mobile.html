@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tdb2-edicao-lapis-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tdb3-selecao-azul-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tdb2-edicao-lapis-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tdb3-selecao-azul-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1862,10 +1862,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tdb2-edicao-lapis-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tdb3-selecao-azul-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb2-edicao-lapis-v1-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb3-selecao-azul-v1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -19609,7 +19609,6 @@ html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:disabled.
 html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:disabled.is-pending:not(#tdb1x):not([multiple]):not([size]){background-color:var(--tdb2-r11)!important;border-color:var(--tdb2-r26)!important;padding-left:12px!important;padding-right:12px!important;text-align:center;text-align-last:center;min-width:84px}
 .contas-pessoais-raiz input.tdbm-cp-date:disabled:not(#tdb1x){background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:var(--c-ink)!important;font-weight:600;padding-left:2px!important;min-width:0;width:112px}
 .contas-pessoais-raiz input.tdbm-cp-date:disabled::-webkit-calendar-picker-indicator{display:none}
-.contas-pessoais-raiz input.tdbm-cp-date:disabled:not([value]):not(#tdb1x),.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled:not(#tdb1x){color:var(--c-inkSoft)!important;opacity:.55!important}
 /* linha em edição */
 html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr.tdb2-editing td:not([colspan]){background:rgba(23,103,207,.07)!important;border-top:1px solid rgba(23,103,207,.25)!important;border-bottom:1px solid rgba(23,103,207,.25)!important}
 html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr.tdb2-editing td:first-child:not([colspan]){border-left:1px solid rgba(23,103,207,.25)!important;border-radius:10px 0 0 10px;cursor:text}
@@ -19724,6 +19723,82 @@ html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-aluno-nome{white-space:norma
 html:not(.tdb-aurora-pdf) body main div[style*="overflow-x: auto"]>table[style*="min-width"]:not(.tdb-tabela-reajuste) td{padding:7px 3px!important;font-size:10.5px!important}
 html:not(.tdb-aurora-pdf) body main div[style*="overflow-x: auto"]>table[style*="min-width"]:not(.tdb-tabela-reajuste) th{padding:7px 3px!important}
 }
+</style>
+<style id="tdb3-ajustes-v1">
+/* TDB 3 — texto de Pessoais com a mesma fonte/cor da Mensalidade + seleção azul (1 clique marca, 2 cliques desmarca) em todas as abas. Só aparência. */
+.contas-pessoais-raiz select.tdbm-cp-status,.contas-pessoais-raiz input.tdbm-cp-date{font-family:inherit!important}
+html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:not(#tdb1x):not([multiple]):not([size]){font-family:inherit!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date){font-family:'IBM Plex Mono',monospace!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:first-child{font-size:13.5px!important;color:var(--c-ink)!important}
+/* data sempre escura e legível */
+.contas-pessoais-raiz input.tdbm-cp-date:disabled:not(#tdb1x),.contas-pessoais-raiz input.tdbm-cp-date:not(#tdb1x){color:var(--c-ink)!important;-webkit-text-fill-color:var(--c-ink)!important;opacity:1!important;font-weight:600!important;font-size:13px!important}
+.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-fields-wrapper,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-text,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-day-field,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-month-field,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-year-field{color:var(--c-ink)!important;-webkit-text-fill-color:var(--c-ink)!important;opacity:1!important}
+.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled:not(#tdb1x){color:transparent!important;-webkit-text-fill-color:transparent!important}
+.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-fields-wrapper,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-text,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-day-field,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-month-field,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-year-field{color:transparent!important;-webkit-text-fill-color:transparent!important}
+.contas-pessoais-raiz td.tdbm-cp-extra-data:has(input.tdb2-vazio:disabled)::after{color:var(--c-ink);opacity:.5}
+
+/* ---------- Seleção azul em todo o projeto (mesma de Contas Pessoais) ---------- */
+/* linhas em bloco (Compras, Lançamentos) */
+html body div[style*="224, 174, 60"]:not(#tdb3x){background:rgba(23,103,207,.11)!important;border-left-color:#1767cf!important;box-shadow:inset 0 0 0 1px rgba(23,103,207,.26),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:10px}
+/* linhas de tabela (Festas TDB, Mensalidades) */
+html body tr[style*="224, 174, 60"]:not(#tdb3x),html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x){background:transparent!important}
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td,html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td{background-color:rgba(23,103,207,.13)!important;border-top-color:rgba(23,103,207,.30)!important;border-bottom:1px solid rgba(23,103,207,.30)!important}
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td:first-child,html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:first-child{border-left-color:#1767cf!important;box-shadow:inset 4px 0 0 #1767cf!important;border-radius:10px 0 0 10px}
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td:last-child,html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:last-child{border-radius:0 10px 10px 0}
+body.dark-mode div[style*="224, 174, 60"]:not(#tdb3x){background:rgba(121,173,244,.18)!important;border-left-color:#79adf4!important;box-shadow:inset 0 0 0 1px rgba(121,173,244,.32)!important}
+body.dark-mode tr[style*="224, 174, 60"]:not(#tdb3x)>td,body.dark-mode tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td{background-color:rgba(121,173,244,.18)!important}
+body.dark-mode tr[style*="224, 174, 60"]:not(#tdb3x)>td:first-child,body.dark-mode tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:first-child{box-shadow:inset 4px 0 0 #79adf4!important;border-left-color:#79adf4!important}
+/* TDB 3 — Tablet: ao editar uma linha de Mensalidade os campos tinham pouco espaço (Banco "SIC…", Convênio cortado, data cortada). Só aparência. */
+@media (min-width:761px) and (max-width:1366px){
+html body .tabela-mensalidades.mensalidades-detalhes:has(tr.mensalidades-row-editando){min-width:1500px!important}
+html body .tabela-mensalidades.mensalidades-resumida:has(tr.mensalidades-row-editando){min-width:1280px!important}
+html body .tabela-mensalidades tr.mensalidades-row-editando td{padding-left:5px!important;padding-right:5px!important}
+html body .tabela-mensalidades tr.mensalidades-row-editando td input,html body .tabela-mensalidades tr.mensalidades-row-editando td select{min-width:0!important;max-width:100%!important;box-sizing:border-box;text-overflow:clip!important}
+html body .tabela-mensalidades tr.mensalidades-row-editando td select{padding-left:8px!important;padding-right:22px!important}
+html body .tabela-mensalidades tr.mensalidades-row-editando + tr > td > div{position:sticky;left:10px;box-sizing:border-box;width:min(760px,calc(100vw - 110px))!important;max-width:calc(100vw - 110px)}
+html body .tabela-mensalidades.mensalidades-detalhes:has(tr.mensalidades-row-editando) col:nth-child(3){width:12.5%!important}
+}
+/* TDB 3 — Festas TDB no celular: cada participante vira um cartão, igual às Mensalidades. Só aparência. */
+@media(max-width:600px){
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela){overflow-x:visible!important;padding-bottom:0!important;width:100%!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela,html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody,html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tfoot{display:block!important;min-width:0!important;width:100%!important;max-width:100%!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela thead,html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela colgroup{display:none!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;grid-template-areas:"n n v" "pg bk pe" "dt dt ac";gap:8px 8px;align-items:center;padding:12px 12px 10px!important;width:100%;box-sizing:border-box;border-bottom:1px solid var(--tdb2-l55)}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td{display:block;border:0!important;padding:0!important;width:auto!important;min-width:0;text-align:left!important;background:transparent!important;white-space:normal;font-size:12px!important;box-shadow:none!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(1){grid-area:n;font-size:14.5px!important;overflow:hidden;overflow-wrap:anywhere}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(2){grid-area:pe;justify-self:end;padding-left:42px!important;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='14'><text x='0' y='11' font-family='Arial,Helvetica,sans-serif' font-size='9.5' font-weight='700' fill='%238a93a3' letter-spacing='.4'>PESS.</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 1px!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(2) span{display:inline!important;text-align:right!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(3){grid-area:v;justify-self:end;text-align:right!important;font-size:14px!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(4){grid-area:bk;justify-self:start;min-width:0}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(4)>span{min-width:0!important;max-width:100%}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(5){grid-area:dt;padding-left:34px!important;color:var(--c-inkSoft);font-weight:600;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='14'><text x='0' y='11' font-family='Arial,Helvetica,sans-serif' font-size='9.5' font-weight='700' fill='%238a93a3' letter-spacing='.4'>DATA</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 1px!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(6){grid-area:pg}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td:nth-child(7){grid-area:ac;justify-self:end}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tbody tr td button{min-height:32px!important;min-width:32px!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tfoot,html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tfoot tr{display:block!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tfoot tr{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:10px 12px;box-sizing:border-box;width:100%;background:var(--c-paper)}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tfoot td{display:block;border:0!important;padding:0!important;width:auto!important;background:transparent!important;font-size:12px!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tfoot td:nth-child(4){display:none}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela) table.festas-tdb-tabela tfoot td:nth-child(2){padding-right:2px!important}
+/* seleção azul nos cartões: a linha inteira fica azul (não célula por célula) */
+html body tr[style*="224, 174, 60"]:not(#tdb3x),
+html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x){background:rgba(23,103,207,.11)!important;box-shadow:inset 4px 0 0 #1767cf,inset 0 0 0 1px rgba(23,103,207,.26)!important;border-radius:12px}
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td,
+html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td,
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td:first-child,
+html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:first-child,
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td:last-child,
+html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:last-child{background-color:transparent!important;border-top-color:transparent!important;border-bottom:0!important;box-shadow:none!important;border-radius:0!important;border-left-color:transparent!important}
+body.dark-mode tr[style*="224, 174, 60"]:not(#tdb3x),body.dark-mode tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x){background:rgba(121,173,244,.16)!important;box-shadow:inset 4px 0 0 #79adf4,inset 0 0 0 1px rgba(121,173,244,.30)!important}
+/* Rematrícula: Simulador de mensalidades cabe na tela, sem rolar de lado */
+html:not(.tdb-aurora-pdf) body .tdb-remat-card div:has(>table.tdb-tabela-reajuste){overflow-x:visible!important;padding:0 6px 6px!important}
+html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-tabela-reajuste{min-width:0!important;width:100%!important;table-layout:fixed!important;border-spacing:0 4px!important}
+html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-tabela-reajuste th,html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-tabela-reajuste td{padding-left:3px!important;padding-right:3px!important}
+html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-tabela-reajuste th:first-child,html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-tabela-reajuste td:first-child{width:25%!important;padding-left:6px!important;font-size:12px!important;line-height:1.2}
+html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-tabela-reajuste th:not(:first-child){width:25%!important;font-size:clamp(9px,2.4vw,11px)!important}
+html:not(.tdb-aurora-pdf) body .tdb-remat-card .tdb-tabela-reajuste td:not(:first-child){font-size:clamp(9px,2.7vw,11.5px)!important;text-align:right!important;padding-right:5px!important;letter-spacing:-.2px!important;overflow:hidden}
+}
+
 </style>
 
 <script id="tdbm-contas-pessoais-pago-data-v1">

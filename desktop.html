@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tdb2-edicao-lapis-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tdb3-selecao-azul-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tdb2-edicao-lapis-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tdb3-selecao-azul-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1273,10 +1273,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tdb2-edicao-lapis-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tdb3-selecao-azul-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb2-edicao-lapis-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb3-selecao-azul-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -17132,7 +17132,6 @@ html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:disabled.
 html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:disabled.is-pending:not(#tdb1x):not([multiple]):not([size]){background-color:var(--tdb2-r11)!important;border-color:var(--tdb2-r26)!important;padding-left:12px!important;padding-right:12px!important;text-align:center;text-align-last:center;min-width:84px}
 .contas-pessoais-raiz input.tdbm-cp-date:disabled:not(#tdb1x){background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:var(--c-ink)!important;font-weight:600;padding-left:2px!important;min-width:0;width:112px}
 .contas-pessoais-raiz input.tdbm-cp-date:disabled::-webkit-calendar-picker-indicator{display:none}
-.contas-pessoais-raiz input.tdbm-cp-date:disabled:not([value]):not(#tdb1x),.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled:not(#tdb1x){color:var(--c-inkSoft)!important;opacity:.55!important}
 /* linha em edição */
 html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr.tdb2-editing td:not([colspan]){background:rgba(23,103,207,.07)!important;border-top:1px solid rgba(23,103,207,.25)!important;border-bottom:1px solid rgba(23,103,207,.25)!important}
 html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr.tdb2-editing td:first-child:not([colspan]){border-left:1px solid rgba(23,103,207,.25)!important;border-radius:10px 0 0 10px;cursor:text}
@@ -17157,6 +17156,42 @@ html body .tcal .tcal-year .tcal-mg:not(#tdb1x){grid-template-columns:repeat(7,m
 html body .tcal .tcal-year .tcal-mg .tcal-mc:not(#tdb1x){min-width:0!important;min-height:0!important;width:100%!important;height:auto!important;padding:0!important;margin:0!important;aspect-ratio:1;line-height:1;font-size:10.5px}
 html body .tcal .tcal-year .tcal-mg .w:not(#tdb1x){min-width:0;text-align:center}
 html body .tcal .tcal-year .tcal-mini-t:not(#tdb1x){min-height:0!important;min-width:0!important;padding:2px 0 4px!important}
+</style>
+<style id="tdb3-ajustes-v1">
+/* TDB 3 — texto de Pessoais com a mesma fonte/cor da Mensalidade + seleção azul (1 clique marca, 2 cliques desmarca) em todas as abas. Só aparência. */
+.contas-pessoais-raiz select.tdbm-cp-status,.contas-pessoais-raiz input.tdbm-cp-date{font-family:inherit!important}
+html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:not(#tdb1x):not([multiple]):not([size]){font-family:inherit!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date){font-family:'IBM Plex Mono',monospace!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:first-child{font-size:13.5px!important;color:var(--c-ink)!important}
+/* data sempre escura e legível */
+.contas-pessoais-raiz input.tdbm-cp-date:disabled:not(#tdb1x),.contas-pessoais-raiz input.tdbm-cp-date:not(#tdb1x){color:var(--c-ink)!important;-webkit-text-fill-color:var(--c-ink)!important;opacity:1!important;font-weight:600!important;font-size:13px!important}
+.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-fields-wrapper,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-text,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-day-field,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-month-field,.contas-pessoais-raiz input.tdbm-cp-date::-webkit-datetime-edit-year-field{color:var(--c-ink)!important;-webkit-text-fill-color:var(--c-ink)!important;opacity:1!important}
+.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled:not(#tdb1x){color:transparent!important;-webkit-text-fill-color:transparent!important}
+.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-fields-wrapper,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-text,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-day-field,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-month-field,.contas-pessoais-raiz input.tdbm-cp-date.tdb2-vazio:disabled::-webkit-datetime-edit-year-field{color:transparent!important;-webkit-text-fill-color:transparent!important}
+.contas-pessoais-raiz td.tdbm-cp-extra-data:has(input.tdb2-vazio:disabled)::after{color:var(--c-ink);opacity:.5}
+
+/* ---------- Seleção azul em todo o projeto (mesma de Contas Pessoais) ---------- */
+/* linhas em bloco (Compras, Lançamentos) */
+html body div[style*="224, 174, 60"]:not(#tdb3x){background:rgba(23,103,207,.11)!important;border-left-color:#1767cf!important;box-shadow:inset 0 0 0 1px rgba(23,103,207,.26),inset 0 1px 0 rgba(255,255,255,.6)!important;border-radius:10px}
+/* linhas de tabela (Festas TDB, Mensalidades) */
+html body tr[style*="224, 174, 60"]:not(#tdb3x),html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x){background:transparent!important}
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td,html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td{background-color:rgba(23,103,207,.13)!important;border-top-color:rgba(23,103,207,.30)!important;border-bottom:1px solid rgba(23,103,207,.30)!important}
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td:first-child,html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:first-child{border-left-color:#1767cf!important;box-shadow:inset 4px 0 0 #1767cf!important;border-radius:10px 0 0 10px}
+html body tr[style*="224, 174, 60"]:not(#tdb3x)>td:last-child,html body tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:last-child{border-radius:0 10px 10px 0}
+body.dark-mode div[style*="224, 174, 60"]:not(#tdb3x){background:rgba(121,173,244,.18)!important;border-left-color:#79adf4!important;box-shadow:inset 0 0 0 1px rgba(121,173,244,.32)!important}
+body.dark-mode tr[style*="224, 174, 60"]:not(#tdb3x)>td,body.dark-mode tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td{background-color:rgba(121,173,244,.18)!important}
+body.dark-mode tr[style*="224, 174, 60"]:not(#tdb3x)>td:first-child,body.dark-mode tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:first-child{box-shadow:inset 4px 0 0 #79adf4!important;border-left-color:#79adf4!important}
+/* TDB 3 — Tablet: ao editar uma linha de Mensalidade os campos tinham pouco espaço (Banco "SIC…", Convênio cortado, data cortada). Só aparência. */
+@media (min-width:761px) and (max-width:1366px){
+html body .tabela-mensalidades.mensalidades-detalhes:has(tr.mensalidades-row-editando){min-width:1500px!important}
+html body .tabela-mensalidades.mensalidades-resumida:has(tr.mensalidades-row-editando){min-width:1280px!important}
+html body .tabela-mensalidades tr.mensalidades-row-editando td{padding-left:5px!important;padding-right:5px!important}
+html body .tabela-mensalidades tr.mensalidades-row-editando td input,html body .tabela-mensalidades tr.mensalidades-row-editando td select{min-width:0!important;max-width:100%!important;box-sizing:border-box;text-overflow:clip!important}
+html body .tabela-mensalidades tr.mensalidades-row-editando td select{padding-left:8px!important;padding-right:22px!important}
+html body .tabela-mensalidades tr.mensalidades-row-editando + tr > td > div{position:sticky;left:10px;box-sizing:border-box;width:min(760px,calc(100vw - 110px))!important;max-width:calc(100vw - 110px)}
+html body .tabela-mensalidades.mensalidades-detalhes:has(tr.mensalidades-row-editando) col:nth-child(3){width:12.5%!important}
+}
+
 </style>
 
 <script id="tdbm-contas-pessoais-pago-data-v1">
