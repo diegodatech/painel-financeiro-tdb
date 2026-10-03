@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.75, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-  <title>TDBi</title>
+  <title>TDBj</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbi-20261003-calendario-resumo-lateral-v1";
+    window.__TDB_BUILD = "tdbj-20261003-calendario-rematricula-ajuste-v1";
   </script>
-  <script src="./config.js?build=tdbi-20261003-calendario-resumo-lateral-v1"></script>
+  <script src="./config.js?build=tdbj-20261003-calendario-rematricula-ajuste-v1"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDBi">
+  <meta name="apple-mobile-web-app-title" content="TDBj">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1767,7 +1767,7 @@ html, body { overscroll-behavior-y: none; }
 </style>
 
 <style id="tdbg-mensalidades-original-organized">
-/* TDBi — Mensalidades: visual original organizado; tabela inferior alinhada à mesma grade da tabela de alunos. Não altera dados nem sincronização. */
+/* TDBj — Mensalidades: visual original organizado; tabela inferior alinhada à mesma grade da tabela de alunos. Não altera dados nem sincronização. */
 .mensalidades-tabela-card { border-radius:14px!important; box-shadow:0 8px 26px rgba(16,110,107,.055); }
 .mensalidades-tabela-header { gap:12px!important; flex-wrap:wrap!important; min-height:50px; padding-top:11px!important; padding-bottom:11px!important; }
 .mensalidades-table-tip { display:inline-flex; align-items:center; max-width:100%; padding:6px 10px; border-radius:999px; border:1px solid color-mix(in srgb,var(--c-line) 72%,transparent); background:color-mix(in srgb,var(--c-paper) 72%,transparent); line-height:1.25; }
@@ -1776,7 +1776,7 @@ html, body { overscroll-behavior-y: none; }
 .tabela-mensalidades th,.tabela-mensalidades td { box-sizing:border-box; }
 .tabela-mensalidades thead th { border-bottom:1px solid var(--c-line); }
 .tabela-mensalidades.mensalidades-detalhes th:nth-child(3),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(3),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row-editando td:nth-child(2) { text-align:right; }
-/* TDBi: Empresas / Convênios usa a mesma grade horizontal da tabela de alunos.
+/* TDBj: Empresas / Convênios usa a mesma grade horizontal da tabela de alunos.
    Nome ocupa o espaço de Nome+Nota; Valor e Status começam exatamente nas mesmas posições da tabela superior.
    Banco absorve as colunas que não existem nesta tabela, mantendo Data e Ações também alinhadas. */
 .tabela-mensalidades.mensalidades-resumida col:nth-child(1){width:23%!important}
@@ -1861,10 +1861,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbi-20261003-calendario-resumo-lateral-v1"></script>
+  <script src="./sync.js?build=tdbj-20261003-calendario-rematricula-ajuste-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbi-20261003-calendario-resumo-lateral-v1-mobile';
+window.__TDB_BUILD_EXATO = 'tdbj-20261003-calendario-rematricula-ajuste-v1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18460,7 +18460,7 @@ textarea.tcal-in{resize:vertical;min-height:70px;line-height:1.4}
 #tcal-toast.on{opacity:1;transform:translate(-50%,0)}
 #tcal-toast.aviso{background:#8a2a2f}
 
-/* TDBi — Calendário: proposta principal visual. Não altera dados, Google Agenda nem sincronização. */
+/* TDBj — Calendário: proposta principal visual. Não altera dados, Google Agenda nem sincronização. */
 .tcal{--t-glass:color-mix(in srgb,var(--t-solid) 76%,transparent);--t-glow:rgba(23,103,207,.10)}
 .tcal-head{position:relative;z-index:2;margin-bottom:12px}.tcal-nextbar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;overflow:hidden;padding:6px 4px 14px;margin:-2px 0 12px;scrollbar-width:none}.tcal-nextbar::-webkit-scrollbar{display:none}.tcal-nextbar:empty{display:none}
 .tcal-top-ev{border:1px solid color-mix(in srgb,var(--t-line) 72%,transparent);background:linear-gradient(135deg,color-mix(in srgb,var(--c) 13%,var(--t-solid)),var(--t-glass));border-radius:18px;min-width:0;max-width:none;width:100%;padding:12px 13px 12px 14px;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;text-align:left;box-shadow:0 10px 28px rgba(30,40,70,.08);scroll-snap-align:start;position:relative;overflow:hidden;transition:transform .14s,box-shadow .14s,border-color .14s}.tcal-top-ev:before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:999px;background:var(--c)}.tcal-top-ev:hover{border-color:color-mix(in srgb,var(--c) 46%,var(--t-line));transform:translateY(-1px);box-shadow:0 14px 34px rgba(30,40,70,.12)}
@@ -18472,6 +18472,17 @@ textarea.tcal-in{resize:vertical;min-height:70px;line-height:1.4}
 
 .tcal-side-summary .tcal-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tcal-sum-card{border:1px solid color-mix(in srgb,var(--t-line) 70%,transparent);background:linear-gradient(135deg,var(--t-glass),color-mix(in srgb,var(--c,#1767cf) 8%,var(--t-solid)));border-radius:15px;padding:10px 11px;display:grid;gap:3px;min-width:0}.tcal-sum-card i{width:32px;height:32px;border-radius:12px;background:color-mix(in srgb,var(--c,#1767cf) 16%,var(--t-field));display:grid;place-items:center;font-style:normal;font-size:15px;margin-bottom:1px}.tcal-sum-card b{font-size:18px;line-height:1;font-weight:900;color:var(--t-ink)}.tcal-sum-card small{font-size:10.5px;font-weight:800;color:var(--t-soft);line-height:1.2}.tcal-side-next .tcal-side-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}.tcal-side-next h3,.tcal-side-summary h3{margin:0 0 10px!important}.tcal-side-next .tcal-side-title h3{margin:0!important}.tcal-side-next .tcal-li{border-radius:12px;background:color-mix(in srgb,var(--t-solid) 76%,transparent);border:1px solid color-mix(in srgb,var(--t-line) 58%,transparent);margin-top:7px;padding:9px 9px 9px 12px}.tcal-side-next .tcal-li:first-of-type{margin-top:0}.tcal-side-next .tcal-li-t b{font-size:12.5px}.tcal-side-next .tcal-li-t small{font-size:11px}.tcal-side-next .tcal-bell{font-size:10px;white-space:nowrap}.tcal-side-next .tcal-vazio,.tcal-side-summary .tcal-vazio{font-size:12px;color:var(--t-soft);background:var(--t-hover);border-radius:13px;padding:12px;text-align:center}
 @media (max-width:1180px){.tcal-nextbar{grid-template-columns:repeat(3,minmax(0,1fr));}.tcal-layout{grid-template-columns:minmax(0,1fr)}}
+
+
+/* TDBj — Calendário: lateral alinhada ao calendário principal, sem quadro inferior de próximos eventos. */
+.tcal[data-narrow="0"] .tcal-layout{align-items:stretch;}
+.tcal[data-narrow="0"] .tcal-main{height:100%;}
+.tcal[data-narrow="0"] .tcal-side{display:flex;flex-direction:column;gap:14px;align-self:stretch;height:100%;}
+.tcal[data-narrow="0"] .tcal-side-summary{margin-top:auto;}
+.tcal[data-narrow="0"] .tcal-side-summary .tcal-summary-grid{gap:8px;}
+.tcal[data-narrow="0"] .tcal-side-summary .tcal-sum-card{padding:9px 10px;}
+.tcal[data-narrow="0"] .tcal-side-summary .tcal-sum-card i{width:30px;height:30px;}
+@media (max-width:1180px){.tcal[data-narrow="0"] .tcal-side-summary{margin-top:0;}}
 
 /* botão flutuante (celular) */
 .tcal-fab{display:none}
@@ -18971,7 +18982,6 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
     +'<div class="tcal-novaag"><button class="tcal-lnk" data-act="novaag">+ Nova agenda</button></div></div>';
    s+=miniLateral();
    s+=resumoMesLateral();
-   s+=proximosLateral();
   }
   el.innerHTML=s;
  }
