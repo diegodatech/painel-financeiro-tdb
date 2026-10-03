@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "TDBd",
-  "short_name": "TDBd",
+  "name": "TDBe",
+  "short_name": "TDBe",
   "description": "Painel financeiro da escola Tempo de Brincar.",
   "lang": "pt-BR",
   "start_url": "./index.html",
