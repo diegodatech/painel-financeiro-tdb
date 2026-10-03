@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tdb3-selecao-azul-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tdb3-selecao-azul-v2";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tdb3-selecao-azul-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tdb3-selecao-azul-v2"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1273,10 +1273,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tdb3-selecao-azul-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tdb3-selecao-azul-v2"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb3-selecao-azul-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb3-selecao-azul-v2-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -17190,6 +17190,49 @@ html body .tabela-mensalidades tr.mensalidades-row-editando td input,html body .
 html body .tabela-mensalidades tr.mensalidades-row-editando td select{padding-left:8px!important;padding-right:22px!important}
 html body .tabela-mensalidades tr.mensalidades-row-editando + tr > td > div{position:sticky;left:10px;box-sizing:border-box;width:min(760px,calc(100vw - 110px))!important;max-width:calc(100vw - 110px)}
 html body .tabela-mensalidades.mensalidades-detalhes:has(tr.mensalidades-row-editando) col:nth-child(3){width:12.5%!important}
+/* Tablet: Mensalidades inteira na tela, sem rolar de lado (chips e botões menores) */
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)){min-width:0!important;width:100%!important}
+html body .tabela-mensalidades.mensalidades-resumida:not(:has(tr.mensalidades-row-editando)){min-width:0!important;width:100%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(1){width:18%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(2){width:7.5%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(3){width:9.5%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(4){width:8%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(5){width:7%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(6){width:10.5%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(7){width:9.5%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(8){width:10%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(9){width:9%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) col:nth-child(10){width:11%!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) th,html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) td{padding-left:5px!important;padding-right:5px!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) th{font-size:9.5px!important;letter-spacing:.01em!important;white-space:normal!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td{font-size:11px!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:nth-child(1){font-size:11.5px!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:nth-child(3){font-size:10.5px!important;letter-spacing:-.2px}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:nth-child(9){font-size:10.5px!important;white-space:nowrap}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:not(:last-child) button.busca-liquid-glass,html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td span.busca-liquid-glass,html body .tabela-mensalidades.mensalidades-resumida:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:not(:last-child) button.busca-liquid-glass,html body .tabela-mensalidades.mensalidades-resumida:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td span.busca-liquid-glass{padding:3px 6px!important;font-size:9.5px!important;min-width:0!important;min-height:0!important;width:auto!important;max-width:100%;box-sizing:border-box}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:last-child,html body .tabela-mensalidades.mensalidades-resumida:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:last-child{padding-left:2px!important;padding-right:2px!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:last-child button,html body .tabela-mensalidades.mensalidades-resumida:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:last-child button{padding:4px 6px!important;font-size:10.5px!important;min-width:0!important;min-height:28px!important}
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:last-child>div,html body .tabela-mensalidades.mensalidades-resumida:not(:has(tr.mensalidades-row-editando)) tbody tr.mensalidades-row td:last-child>div{gap:3px!important}
+/* Festas TDB no tablet: cabe na página, sem rolar de lado */
+html body .festas-tdb-export-raiz:not(#tdb3x){overflow-x:visible!important}
+html body .festas-tdb-export-raiz:not(#tdb3x)>.busca-liquid-glass,html body .festas-tdb-export-raiz:not(#tdb3x)>.festas-tdb-resumo,html body .festas-tdb-export-raiz:not(#tdb3x)>.festas-grupo-card{min-width:0!important;width:100%!important;max-width:100%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) .festas-tdb-scroll{overflow-x:visible!important;padding-bottom:6px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela{width:100%!important;min-width:0!important;table-layout:fixed!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela th{font-size:9.5px!important;padding:8px 6px!important;line-height:1.15}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td{font-size:11.5px!important;padding:6px 6px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td .selection-chip{font-size:10.5px!important;padding:5px 4px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td>span.busca-liquid-glass{min-width:0!important;padding:4px 6px!important;font-size:10px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td button{min-width:0!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td input,html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td select{min-width:0!important;font-size:11.5px!important;padding:5px 5px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form{grid-template-columns:minmax(0,1.7fr) minmax(0,1.2fr) minmax(0,.7fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.5fr) minmax(0,1.15fr) auto!important;gap:6px!important;padding:10px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form>div{min-width:0!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form input,html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form select{min-width:0!important;font-size:11.5px!important;padding:7px 4px 7px 6px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form .festas-add-btn{padding:0 10px!important;font-size:12px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) .festas-tdb-abas>button{min-width:max-content!important;flex:1 1 auto!important;padding-left:12px!important;padding-right:12px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) .festas-tdb-abas>button.festas-nova-aba-btn{flex:0 0 auto!important}
+@media (max-width:899px){
+html body .tabela-mensalidades.mensalidades-detalhes:not(:has(tr.mensalidades-row-editando)){min-width:860px!important}
+}
 }
 
 </style>
