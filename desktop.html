@@ -17,24 +17,24 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDBm</title>
-  <!-- TDB GITHUB BUILD: TDB 02i -->
+  <title>TDBn</title>
+  <!-- TDB GITHUB BUILD: TDB 02n -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbm-20261003-contas-pessoais-pago-data-v1";
+    window.__TDB_BUILD = "tdbn-20261003-mensalidades-edicao-segura-v1";
   </script>
-  <script src="./config.js?build=tdbm-20261003-contas-pessoais-pago-data-v1"></script>
-  <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
+  <script src="./config.js?build=tdbn-20261003-mensalidades-edicao-segura-v1"></script>
+  <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDBm">
+  <meta name="apple-mobile-web-app-title" content="TDBn">
   <script>
-    // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
+    // TDB 02n — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
     // Enquanto a tela está visível e você está usando o painel, fazemos uma consulta mínima a cada 15 s
     // (statusAbertura: só lê uma propriedade, não toca no Drive) e uma logo que você começa a mexer.
@@ -79,12 +79,12 @@
   <meta name="theme-color" content="#106E6B">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- TDB 02i: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
+  <!-- TDB 02n: fontes sem bloquear a abertura (antes, se o Google Fonts demorasse, o painel inteiro esperava). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"></noscript>
   
   <!-- React & ReactDOM -->
-  <!-- TDB 02i: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
+  <!-- TDB 02n: bibliotecas servidas pelo proprio GitHub Pages (arquivos na mesma pasta). O unpkg fica so como reserva. -->
   <script src="./react.production.min.js"></script>
   <script>window.React||document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>')</script>
   <script src="./react-dom.production.min.js"></script>
@@ -114,7 +114,7 @@
       function carregarScriptUmaVez(chave, src, pronto) {
         if (pronto()) return Promise.resolve(true);
         if (promessas[chave]) return promessas[chave];
-        // TDB 02i: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
+        // TDB 02n: tenta primeiro a copia local (na mesma pasta) e so depois o unpkg.
         const fontes = Array.isArray(src) ? src : [src];
         const tentar = (i) => new Promise((resolve, reject) => {
           const s = document.createElement('script');
@@ -778,7 +778,8 @@ html.dark-mode {
       font-family: 'Inter', -apple-system, sans-serif;
       color: var(--c-ink);
     }
-  </style>
+  /* TDBn — Mensalidades: edição segura pelo lápis; Pago/Data pelo editor; seleção 1 clique/2 cliques preservada. */
+</style>
 
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
@@ -1182,7 +1183,7 @@ html.dark-mode {
 </script>
 
 <style id="tdbg-mensalidades-original-organized">
-/* TDBm — Mensalidades: visual original organizado; tabela inferior alinhada à mesma grade da tabela de alunos. Não altera dados nem sincronização. */
+/* TDBn — Mensalidades: visual original organizado; tabela inferior alinhada à mesma grade da tabela de alunos. Não altera dados nem sincronização. */
 .mensalidades-tabela-card { border-radius:14px!important; box-shadow:0 8px 26px rgba(16,110,107,.055); }
 .mensalidades-tabela-header { gap:12px!important; flex-wrap:wrap!important; min-height:50px; padding-top:11px!important; padding-bottom:11px!important; }
 .mensalidades-table-tip { display:inline-flex; align-items:center; max-width:100%; padding:6px 10px; border-radius:999px; border:1px solid color-mix(in srgb,var(--c-line) 72%,transparent); background:color-mix(in srgb,var(--c-paper) 72%,transparent); line-height:1.25; }
@@ -1191,7 +1192,7 @@ html.dark-mode {
 .tabela-mensalidades th,.tabela-mensalidades td { box-sizing:border-box; }
 .tabela-mensalidades thead th { border-bottom:1px solid var(--c-line); }
 .tabela-mensalidades.mensalidades-detalhes th:nth-child(3),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(3),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row-editando td:nth-child(2) { text-align:right; }
-/* TDBm: Empresas / Convênios usa a mesma grade horizontal da tabela de alunos.
+/* TDBn: Empresas / Convênios usa a mesma grade horizontal da tabela de alunos.
    Nome ocupa o espaço de Nome+Nota; Valor e Status começam exatamente nas mesmas posições da tabela superior.
    Banco absorve as colunas que não existem nesta tabela, mantendo Data e Ações também alinhadas. */
 .tabela-mensalidades.mensalidades-resumida col:nth-child(1){width:23%!important}
@@ -1272,10 +1273,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbm-20261003-contas-pessoais-pago-data-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-mensalidades-edicao-segura-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbm-20261003-contas-pessoais-pago-data-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-mensalidades-edicao-segura-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9581,7 +9582,7 @@ function PainelFinanceiro() {
         setBuscaGlobalAberta(false);
     }
 function salvarTudoAgora() {
-        // TDB 02i — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
+        // TDB 02n — usa window.storage.salvarTudo (flush + envio + conferência) e SEMPRE
         // mostra um resultado claro. Nunca fica preso: há um limite de 3 minutos.
         if (window.__salvandoAgoraFlag) return Promise.resolve();
         window.__salvandoAgoraFlag = true;
@@ -9623,7 +9624,7 @@ function salvarTudoAgora() {
         })();
     }
     function atualizarDoDriveAgora() {
-        // TDB 02i — botão "Atualizar": envia o que estiver pendente (como o Salvar), confere o Google Drive
+        // TDB 02n — botão "Atualizar": envia o que estiver pendente (como o Salvar), confere o Google Drive
         // e traz as alterações feitas em OUTRO aparelho, sem fechar nem recarregar a página.
         if (window.__atualizandoAgoraFlag || window.__salvandoAgoraFlag) return Promise.resolve();
         window.__atualizandoAgoraFlag = true;
@@ -13036,9 +13037,9 @@ function TabelaMensalidades(_a) {
                 var leitor = new FileReader();
                 leitor.onload = function () { return definirFoto(t.id, leitor.result); };
                 leitor.readAsDataURL(arquivo);
-            }, style: { position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' } })), React.createElement("span", null, nomeExibicao(t.categoria))))), mostrarDetalhes && !emEdicao && (React.createElement("td", { style: td }, t.nota !== undefined && (React.createElement("button", { onClick: function () { return darNota(t.id); }, title: "Clique para alternar Nota enviada/pendente", className: "busca-liquid-glass", style: {
+            }, style: { position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' } })), React.createElement("span", null, nomeExibicao(t.categoria))))), mostrarDetalhes && !emEdicao && (React.createElement("td", { style: td }, t.nota !== undefined && (React.createElement("button", { onClick: function (e) { e.stopPropagation(); }, title: "Edite a linha pelo lápis para alterar a nota", className: "busca-liquid-glass", style: {
                 borderRadius: 20, padding: '3px 8px',
-                fontSize: 10.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontSize: 10.5, fontWeight: 700, cursor: 'default', whiteSpace: 'nowrap',
                 color: t.nota === 'Enviada' ? COLORS.green : COLORS.gold,
             } }, t.nota === 'Enviada' ? 'ENVIADA' : 'PENDENTE')))), React.createElement("td", { style: td, className: "mono" }, emEdicao ? (React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("select", { defaultValue: "", onChange: function (e) {
                 if (e.target.value === '')
@@ -13074,8 +13075,8 @@ function TabelaMensalidades(_a) {
                     salvarEdicao(t.id);
                 if (e.key === 'Escape')
                     cancelarEdicao();
-            }, style: inputCell }, React.createElement("option", null, "Pago"), React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"))) : (React.createElement("button", { onClick: function () { return darBaixa(t.id); }, title: "Registrar quitação ou reabrir cobrança", className: "busca-liquid-glass", style: {
-                borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+            }, style: inputCell }, React.createElement("option", null, "Pago"), React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"))) : (React.createElement("button", { onClick: function (e) { e.stopPropagation(); }, title: "Edite a linha pelo lápis para alterar o status", className: "busca-liquid-glass", style: {
+                borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'default', whiteSpace: 'nowrap',
                 color: t.status === 'Pago' ? COLORS.green : COLORS.red,
             } }, t.status === 'Pago' ? 'PAGO' : t.status==='Parcial'?'PARCIAL':'PENDENTE'))), React.createElement("td", { style: td }, emEdicao ? (React.createElement("select", { value: bancoEdit, onChange: function (e) { return setBancoEdit(e.target.value); }, onKeyDown: function (e) {
                 if (e.key === 'Enter')
@@ -13108,7 +13109,8 @@ function TabelaMensalidades(_a) {
             } }, abrevConvenio(t.convenio))) : (React.createElement("span", { className: "busca-liquid-glass", style: {
                 fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft,
                 padding: '4px 8px', borderRadius: 20, whiteSpace: 'nowrap', display: 'inline-block',
-            } }, "PARTICULAR")))), React.createElement("td", { style: td }, emEdicao ? (React.createElement("input", { type: "date", value: dataEdit, onChange: function (e) { return setDataEdit(e.target.value); }, onClick: function (e) {
+            } }, "PARTICULAR")))), React.createElement("td", { style: td }, emEdicao ? (React.createElement("input", { type: "date", className: "tdb-native-date busca-liquid-glass", value: dataEdit, onChange: function (e) { return setDataEdit(e.target.value); }, onClick: function (e) {
+                e.stopPropagation();
                 try {
                     e.target.showPicker();
                 }
@@ -13118,7 +13120,7 @@ function TabelaMensalidades(_a) {
                     salvarEdicao(t.id);
                 if (e.key === 'Escape')
                     cancelarEdicao();
-            }, style: __assign(__assign({}, inputCell), { width: 95, cursor: 'pointer' }) })) : formatarData(t.data)), React.createElement("td", { style: __assign(__assign({}, td), { whiteSpace: 'nowrap', textAlign: 'center' }) }, emEdicao ? (React.createElement("div", { style: { display: 'flex', gap: 4, alignItems: 'center', justifyContent: 'center' } }, React.createElement("button", { onClick: function () { return salvarEdicao(t.id); }, title: "Salvar altera\u00E7\u00F5es (ou aperte Enter)", style: {
+            }, style: __assign(__assign({}, inputCell), { width: 95, cursor: 'pointer' }) })) : formatarData(t.data)), React.createElement("td", { style: __assign(__assign({}, td), { whiteSpace: 'nowrap', textAlign: 'center' }) }, emEdicao ? (React.createElement("div", { style: { display: 'flex', gap: 4, alignItems: 'center', justifyContent: 'center' } }, React.createElement("button", { onClick: function (e) { e.stopPropagation(); return salvarEdicao(t.id); }, title: "Salvar altera\u00E7\u00F5es (ou aperte Enter)", style: {
                 background: COLORS.green,
                 color: '#FFFFFF',
                 border: 'none',
@@ -13131,7 +13133,7 @@ function TabelaMensalidades(_a) {
                 alignItems: 'center',
                 gap: 4,
                 boxShadow: '0 1px 3px rgba(46,140,137,0.3)',
-            } }, React.createElement(Check, { size: 13, color: "#FFFFFF" }), " Salvar"), React.createElement("button", { onClick: cancelarEdicao, title: "Cancelar edi\u00E7\u00E3o (ou aperte Esc)", style: {
+            } }, React.createElement(Check, { size: 13, color: "#FFFFFF" }), " Salvar"), React.createElement("button", { onClick: function (e) { e.stopPropagation(); return cancelarEdicao(); }, title: "Cancelar edi\u00E7\u00E3o (ou aperte Esc)", style: {
                 background: COLORS.redBg,
                 color: COLORS.red,
                 border: "1px solid ".concat(COLORS.red, "44"),
@@ -13142,7 +13144,7 @@ function TabelaMensalidades(_a) {
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-            } }, React.createElement(X, { size: 13, color: COLORS.red })))) : (React.createElement("div", { style: { display: 'flex', gap: 4, alignItems: 'center', justifyContent: 'center' } }, React.createElement("button", { onClick: function () { return iniciarEdicao(t); }, title: "Editar lan\u00E7amento", style: {
+            } }, React.createElement(X, { size: 13, color: COLORS.red })))) : (React.createElement("div", { style: { display: 'flex', gap: 4, alignItems: 'center', justifyContent: 'center' } }, React.createElement("button", { onClick: function (e) { e.stopPropagation(); return iniciarEdicao(t); }, title: "Editar lan\u00E7amento", style: {
                 background: COLORS.paperCard,
                 border: "1px solid ".concat(COLORS.line),
                 borderRadius: 5,
@@ -13154,7 +13156,7 @@ function TabelaMensalidades(_a) {
                 gap: 3,
                 fontSize: 11.5,
                 fontWeight: 600,
-            } }, React.createElement(Pencil, { size: 11, color: COLORS.ink }), " Editar"), React.createElement("button", { onClick: function () { return removerLancamento(t.id); }, title: "Excluir lan\u00E7amento", style: {
+            } }, React.createElement(Pencil, { size: 11, color: COLORS.ink }), " Editar"), React.createElement("button", { onClick: function (e) { e.stopPropagation(); return removerLancamento(t.id); }, title: "Excluir lan\u00E7amento", style: {
                 background: COLORS.paperCard,
                 border: "1px solid ".concat(COLORS.line),
                 borderRadius: 5,
@@ -14653,7 +14655,7 @@ function AberturaSegura() {
                     timer = null;
                     var ativo = document.activeElement;
                     var editando = ativo && (ativo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName));
-                    // TDB 02i — não recarrega a tela com uma janela/modal aberta: isso apagava
+                    // TDB 02n — não recarrega a tela com uma janela/modal aberta: isso apagava
                     // o que a pessoa estava preenchendo. Tenta de novo em alguns segundos.
                     var haModal = false;
                     try {
@@ -14668,7 +14670,7 @@ function AberturaSegura() {
                     var interacaoRecente = Date.now() - Number(window.__tdbUltimaInteracaoUI || 0) < 3000;
                     if (!editando && !haModal && !interacaoRecente && Number(window.__pendenciasSync || 0) === 0) {
                         tentativasAtualizar = 0;
-                        // TDB 02i — mantém a aba e a rolagem em que você estava ao trazer dados novos do Drive.
+                        // TDB 02n — mantém a aba e a rolagem em que você estava ao trazer dados novos do Drive.
                         try {
                             window.__tdbAbaRestaurar = window.__tdbAbaAtual || null;
                             var yAntes = window.scrollY || 0;
@@ -15771,22 +15773,24 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
   if(volta&&el&&document.body.contains(el)&&!isExt(el)){try{el.focus({preventScroll:true});}catch(e){}}
  }
  // ligação com as caixas de data
- function marcar(el){if(el.type==='date'&&!el.readOnly){el.readOnly=true;el.setAttribute('autocomplete','off');}}
+ function tdbDataNativa(el){return !!(el&&el.classList&&el.classList.contains('tdb-native-date'));}
+ function marcar(el){if(tdbDataNativa(el))return;if(el.type==='date'&&!el.readOnly){el.readOnly=true;el.setAttribute('autocomplete','off');}}
  document.addEventListener('click',function(e){
   var el=e.target;
   if(!isDate(el))return;
   if(el.disabled)return;
+  if(tdbDataNativa(el))return;
   marcar(el);
   if(el.type==='date'){e.preventDefault();e.stopPropagation();}
   if(root&&root.classList.contains('on')&&st.el===el&&el.type==='date'){fechar(false);return;}
   abrir(el,false);
  },true);
  document.addEventListener('keydown',function(e){
-  var el=e.target;if(!isDate(el)||el.type!=='date')return;
+  var el=e.target;if(!isDate(el)||el.type!=='date'||tdbDataNativa(el))return;
   if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();abrir(el,true);}
   else if((e.key==='Backspace'||e.key==='Delete')&&el.value){e.preventDefault();setVal(el,'');}
  },true);
- document.addEventListener('focusin',function(e){if(e.target&&e.target.type==='date')marcar(e.target);},true);
+ document.addEventListener('focusin',function(e){if(e.target&&e.target.type==='date'&&!tdbDataNativa(e.target))marcar(e.target);},true);
  document.addEventListener('input',function(e){
   if(st.el&&e.target===st.el&&st.ext&&root.classList.contains('on')){var d=parseBR(st.el.value);st.sel=d;if(d){st.vy=d.getFullYear();st.vm=d.getMonth();st.foco=d;}render();}
  },true);
@@ -15998,7 +16002,7 @@ textarea.tcal-in{resize:vertical;min-height:70px;line-height:1.4}
 #tcal-toast.on{opacity:1;transform:translate(-50%,0)}
 #tcal-toast.aviso{background:#8a2a2f}
 
-/* TDBm — Calendário: proposta principal visual. Não altera dados, Google Agenda nem sincronização. */
+/* TDBn — Calendário: proposta principal visual. Não altera dados, Google Agenda nem sincronização. */
 .tcal{--t-glass:color-mix(in srgb,var(--t-solid) 76%,transparent);--t-glow:rgba(23,103,207,.10)}
 .tcal-head{position:relative;z-index:2;margin-bottom:12px}.tcal-nextbar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;overflow:hidden;padding:6px 4px 14px;margin:-2px 0 12px;scrollbar-width:none}.tcal-nextbar::-webkit-scrollbar{display:none}.tcal-nextbar:empty{display:none}
 .tcal-top-ev{border:1px solid color-mix(in srgb,var(--t-line) 72%,transparent);background:linear-gradient(135deg,color-mix(in srgb,var(--c) 13%,var(--t-solid)),var(--t-glass));border-radius:18px;min-width:0;max-width:none;width:100%;padding:12px 13px 12px 14px;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;text-align:left;box-shadow:0 10px 28px rgba(30,40,70,.08);scroll-snap-align:start;position:relative;overflow:hidden;transition:transform .14s,box-shadow .14s,border-color .14s}.tcal-top-ev:before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:999px;background:var(--c)}.tcal-top-ev:hover{border-color:color-mix(in srgb,var(--c) 46%,var(--t-line));transform:translateY(-1px);box-shadow:0 14px 34px rgba(30,40,70,.12)}
@@ -16012,7 +16016,7 @@ textarea.tcal-in{resize:vertical;min-height:70px;line-height:1.4}
 @media (max-width:1180px){.tcal-nextbar{grid-template-columns:repeat(3,minmax(0,1fr));}.tcal-layout{grid-template-columns:minmax(0,1fr)}}
 
 
-/* TDBm — Calendário: lateral alinhada ao calendário principal, sem quadro inferior de próximos eventos. */
+/* TDBn — Calendário: lateral alinhada ao calendário principal, sem quadro inferior de próximos eventos. */
 .tcal[data-narrow="0"] .tcal-layout{align-items:stretch;}
 .tcal[data-narrow="0"] .tcal-main{height:100%;}
 .tcal[data-narrow="0"] .tcal-side{display:flex;flex-direction:column;gap:14px;align-self:stretch;height:100%;}
@@ -16945,7 +16949,7 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
 </script>
 
 <style id="tdbl-contas-pessoais-meses-resumo-v1">
-/* TDBm — Rematrícula: a lista de alunos ocupa mais área vertical para mostrar mais nomes. Apenas layout. */
+/* TDBn — Rematrícula: a lista de alunos ocupa mais área vertical para mostrar mais nomes. Apenas layout. */
 .tdb-pc-rematricula [data-export-alunos]{scrollbar-width:thin;}
 @media (max-width: 900px){
   .tdb-pc-rematricula [data-export-alunos]{height:clamp(420px,58vh,620px)!important;min-height:420px!important;}
@@ -16956,7 +16960,7 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
 </style>
 
 <style id="tdbl-contas-pessoais-meses-resumo-v1">
-/* TDBm — Contas Pessoais: visual tipo Excel por mês + Resumo anual. Não altera dados, chaves, cálculos da escola ou sincronização. */
+/* TDBn — Contas Pessoais: visual tipo Excel por mês + Resumo anual. Não altera dados, chaves, cálculos da escola ou sincronização. */
 .contas-pessoais-raiz .tdbl-cp-tabs{display:flex;gap:8px;align-items:center;overflow-x:auto;padding:10px 2px 4px;margin:8px 0 4px;scrollbar-width:thin}
 .contas-pessoais-raiz .tdbl-cp-tab{border:1px solid color-mix(in srgb,var(--c-line) 75%,transparent);background:color-mix(in srgb,var(--c-paperCard) 76%,transparent);color:var(--c-ink);border-radius:13px;padding:10px 16px;font-weight:850;min-width:74px;cursor:pointer;box-shadow:0 8px 20px rgba(31,59,54,.06);white-space:nowrap;transition:transform .12s ease, background .12s ease, border-color .12s ease}
 .contas-pessoais-raiz .tdbl-cp-tab:hover{transform:translateY(-1px)}
@@ -16977,7 +16981,7 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
 .contas-pessoais-raiz .tdbl-cp-mini span{display:block;font-size:11.5px;color:var(--c-inkSoft);font-weight:800;text-transform:uppercase;letter-spacing:.02em}.contas-pessoais-raiz .tdbl-cp-mini strong{display:block;margin-top:4px;font-size:18px;color:var(--c-ink);font-family:monospace}.contas-pessoais-raiz .tdbl-cp-lista-cat{display:grid;gap:8px}.contas-pessoais-raiz .tdbl-cp-cat-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border-radius:13px;padding:10px 12px;background:color-mix(in srgb,var(--c-paperCard) 64%,transparent);border:1px solid color-mix(in srgb,var(--c-line) 55%,transparent)}.contas-pessoais-raiz .tdbl-cp-cat-line b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.contas-pessoais-raiz .tdbl-cp-cat-line strong{font-family:monospace;white-space:nowrap}.contas-pessoais-raiz .tdbl-cp-mes-label{font-size:12px;font-weight:900;color:var(--c-inkSoft);text-transform:uppercase;letter-spacing:.03em;margin:0 0 6px 2px}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll table{min-width:0!important}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll th,.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll td{transition:opacity .12s ease}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th:first-child{width:58%!important}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th.tdbl-cp-visible-month{width:24%!important}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th:last-child{width:12%!important}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:first-child{font-size:14.5px!important;padding-left:11px!important}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll input{height:34px;font-size:14px!important;border-radius:12px!important}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tfoot td:first-child{font-size:14px}.contas-pessoais-raiz .tdbl-cp-is-hidden{display:none!important}@media(max-width:980px){.contas-pessoais-raiz .tdbl-cp-annual-panel{grid-template-columns:1fr}.contas-pessoais-raiz .tdbl-cp-tab{min-width:64px;padding:9px 12px}.contas-pessoais-raiz .tdbl-cp-tab.is-annual{margin-left:0;min-width:134px}.contas-pessoais-raiz .tdbl-cp-balanco{grid-template-columns:1fr 1fr}.contas-pessoais-raiz .tdbl-cp-bar-line{grid-template-columns:34px minmax(0,1fr) 78px}}@media(max-width:560px){.contas-pessoais-raiz .tdbl-cp-balanco{grid-template-columns:1fr}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th:first-child{width:56%!important}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th.tdbl-cp-visible-month{width:28%!important}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th:last-child{width:16%!important}}
 </style>
 <style id="tdbm-contas-pessoais-pago-data-v1">
-/* TDBm — Contas Pessoais: Pago/Data por mês + visual mais compacto no padrão Liquid Glass. Apenas UI e chave própria de metadados pessoais. */
+/* TDBn — Contas Pessoais: Pago/Data por mês + visual mais compacto no padrão Liquid Glass. Apenas UI e chave própria de metadados pessoais. */
 .contas-pessoais-raiz{font-size:.94em;}
 .contas-pessoais-raiz .contas-pessoais-card{border-radius:22px!important;}
 .contas-pessoais-raiz .contas-pessoais-scroll{border-radius:18px!important;box-shadow:0 18px 42px rgba(31,59,54,.08)!important;}
