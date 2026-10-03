@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tdb3-selecao-azul-v2";
+    window.__TDB_BUILD = "tdbn-20261003-tempo1-v2";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tdb3-selecao-azul-v2"></script>
+  <script src="./config.js?build=tdbn-20261003-tempo1-v2"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -783,6 +783,9 @@ html.dark-mode {
 
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
+    #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 1";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
     #bootstrap-splash .bootstrap-conteudo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
@@ -1228,6 +1231,7 @@ html.dark-mode {
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 1</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1273,10 +1277,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tdb3-selecao-azul-v2"></script>
+  <script src="./sync.js?build=tdbn-20261003-tempo1-v2"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb3-selecao-azul-v2-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo1-v2-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -17181,6 +17185,9 @@ html body tr[style*="224, 174, 60"]:not(#tdb3x)>td:last-child,html body tr.mensa
 body.dark-mode div[style*="224, 174, 60"]:not(#tdb3x){background:rgba(121,173,244,.18)!important;border-left-color:#79adf4!important;box-shadow:inset 0 0 0 1px rgba(121,173,244,.32)!important}
 body.dark-mode tr[style*="224, 174, 60"]:not(#tdb3x)>td,body.dark-mode tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td{background-color:rgba(121,173,244,.18)!important}
 body.dark-mode tr[style*="224, 174, 60"]:not(#tdb3x)>td:first-child,body.dark-mode tr.mensalidades-row[style*="184, 92, 163"]:not(#tdb3x)>td:first-child{box-shadow:inset 4px 0 0 #79adf4!important;border-left-color:#79adf4!important}
+/* TDB 3 — seta do select "Pago/Pendente" (Contas Pessoais) preta e menor, igual à seta da aba Mensalidades */
+html[data-tdb-aurora] body .contas-pessoais-raiz tr.tdb2-editing select.tdbm-cp-status:not(:disabled):not(#tdb3x):not([multiple]):not([size]){background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='5'><path d='M.8.8L4 4 7.2.8' fill='none' stroke='%23111318' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>")!important;background-size:8px 5px!important;background-position:right 9px center!important;padding-right:22px!important}
+html[data-tdb-aurora] body.dark-mode .contas-pessoais-raiz tr.tdb2-editing select.tdbm-cp-status:not(:disabled):not(#tdb3x):not([multiple]):not([size]){background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='5'><path d='M.8.8L4 4 7.2.8' fill='none' stroke='%23e8ecf3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>")!important}
 /* TDB 3 — Tablet: ao editar uma linha de Mensalidade os campos tinham pouco espaço (Banco "SIC…", Convênio cortado, data cortada). Só aparência. */
 @media (min-width:761px) and (max-width:1366px){
 html body .tabela-mensalidades.mensalidades-detalhes:has(tr.mensalidades-row-editando){min-width:1500px!important}
