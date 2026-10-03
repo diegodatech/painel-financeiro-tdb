@@ -1,6 +1,5 @@
-window.TDB_CONFIG = Object.freeze({
-  build: "tdbk-20261003-rematricula-lista-alta-v1",
-  buildLabel: "TDBk",
-  appsScriptUrl: "https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec",
-  frontend: "github-pages"
-});
+window.TDB_CONFIG={
+  build: "tdbl-20261003-contas-pessoais-meses-resumo-v1",
+  buildLabel: "TDBl",
+  apiUrl: "https://script.google.com/macros/s/AKfycbx-sx_nM0DiE3EhxWr6Pr19VHHeJ59bLjGp8l5Kz6dCV8r9f2PszYw4acMrbaWbLAi5/exec"
+};
