@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-mensalidades-edicao-segura-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tdb1-contas-pessoais-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-mensalidades-edicao-segura-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tdb1-contas-pessoais-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1273,10 +1273,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-mensalidades-edicao-segura-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tdb1-contas-pessoais-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-mensalidades-edicao-segura-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tdb1-contas-pessoais-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -17001,6 +17001,127 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
 @media(max-width:980px){.contas-pessoais-raiz{font-size:.90em}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll table{min-width:720px!important}.contas-pessoais-raiz .tdbm-cp-date{min-width:104px}.contas-pessoais-raiz .tdbm-cp-status{min-width:78px}}
 @media(max-width:560px){.contas-pessoais-raiz{font-size:.88em}.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll table{min-width:690px!important}.contas-pessoais-raiz .tdbm-cp-date{min-width:96px}.contas-pessoais-raiz .tdbm-cp-status{min-width:74px;padding:6px 7px}}
 </style>
+<style id="tdb1-contas-pessoais-liquid-glass-v1">
+/* TDB 1 — Contas Pessoais no padrão visual da Mensalidade + Liquid Glass. Apenas apresentação (CSS): não altera dados, chaves, cálculos nem sincronização. */
+.contas-pessoais-raiz{
+  --tdb1-glass:radial-gradient(180px 40px at 6% -20%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%),linear-gradient(160deg,rgba(230,238,255,.70) 0%,rgba(255,255,255,.18) 50%,rgba(205,222,255,.55) 100%);
+  --tdb1-glass-sh:0 10px 24px rgba(30,50,100,.16),inset 0 2px 2px #fff,inset 0 -12px 18px -10px rgba(80,125,225,.55),inset 8px 0 14px -10px rgba(255,255,255,.8);
+  --tdb1-glass-edge:rgba(255,255,255,.95);
+  --tdb1-tile:linear-gradient(160deg,rgba(255,255,255,.80),rgba(255,255,255,.22) 55%,rgba(255,255,255,.55));
+  --tdb1-tile-sh:0 8px 20px rgba(30,50,100,.12),inset 0 2px 2px #fff,inset 0 -8px 14px -10px rgba(80,125,225,.35);
+  --tdb1-blue:#1767cf;
+}
+body.dark-mode .contas-pessoais-raiz{
+  --tdb1-glass:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 50%,rgba(120,160,255,.16));
+  --tdb1-glass-sh:0 10px 24px rgba(0,0,0,.35),inset 0 1px 1px rgba(255,255,255,.28),inset 0 -10px 16px -10px rgba(120,160,255,.35);
+  --tdb1-glass-edge:rgba(255,255,255,.20);
+  --tdb1-tile:linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.03) 55%,rgba(255,255,255,.07));
+  --tdb1-tile-sh:0 8px 20px rgba(0,0,0,.30),inset 0 1px 1px rgba(255,255,255,.22);
+  --tdb1-blue:#79adf4;
+}
+
+/* ---------- Cabeçalho da tabela (igual Mensalidade) ---------- */
+.contas-pessoais-raiz .contas-pessoais-scroll thead th{font-size:10.8px!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.03em}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th:last-child:empty::after{content:"Ações"}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th:last-child{text-align:center!important}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th.tdbl-cp-visible-month{text-align:left!important;padding-left:12px!important}
+
+/* ---------- Faixa de categoria: sem cor, Liquid Glass intenso ---------- */
+.contas-pessoais-raiz .contas-pessoais-scroll tbody td[colspan]{background:transparent!important;border:0!important;border-radius:0!important;padding:4px 2px!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody td[colspan]>div{border-radius:16px;padding:11px 16px;font-size:13.5px;background:var(--tdb1-glass);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);border:1px solid var(--tdb1-glass-edge);box-shadow:var(--tdb1-glass-sh)}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody td[colspan]>div span{color:var(--c-ink)!important}
+
+/* ---------- Linha no desenho da Mensalidade ---------- */
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll table{border-spacing:0!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr.busca-liquid-glass:not([style*="224, 174, 60"]){background:transparent!important;border-left:0!important;box-shadow:none!important;border-radius:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td{border-top:1px solid color-mix(in srgb,var(--c-line) 50%,transparent)!important;padding-top:9px!important;padding-bottom:9px!important;vertical-align:middle}
+/* círculo com iniciais (conteúdo do texto da célula não muda) */
+.contas-pessoais-raiz .contas-pessoais-scroll tbody td[data-ini]::before{content:attr(data-ini);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;margin-right:9px;vertical-align:middle;background:color-mix(in srgb,var(--c-line) 55%,transparent);color:var(--c-inkSoft);font-size:10px;font-weight:700;letter-spacing:0}
+/* valor: texto em destaque, borda só ao passar/editar */
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date):not(#tdb1x){border-color:transparent!important;background-color:transparent!important;box-shadow:none!important;text-align:left!important;font-weight:700!important;font-size:13px!important;padding-left:34px!important;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='20'><text x='4' y='14' font-family='monospace' font-size='12' font-weight='700' fill='%23808998'>R$</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 4px center!important}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date):not(#tdb1x):is(:hover,:focus){border-color:var(--c-line)!important;background-color:rgba(255,255,255,.85)!important}
+
+/* ---------- Pago: etiqueta arredondada (igual Mensalidade) ---------- */
+html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:not(#tdb1x):not([multiple]):not([size]){appearance:none!important;-webkit-appearance:none!important;-moz-appearance:none!important;background-image:none!important;background-color:rgba(255,255,255,.72)!important;opacity:1!important;border:1px solid #d7dce5!important;border-radius:20px!important;padding:4px 12px!important;min-width:84px;width:auto;max-width:140px;font-size:11px!important;font-weight:700!important;text-transform:uppercase;text-align:center;text-align-last:center;cursor:pointer;box-shadow:none!important;backdrop-filter:none}
+html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status.is-paid:not(#tdb1x):not([multiple]):not([size]){color:var(--c-green)!important}
+html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status.is-pending:not(#tdb1x):not([multiple]):not([size]){color:var(--c-red)!important}
+html[data-tdb-aurora] body.dark-mode .contas-pessoais-raiz select.tdbm-cp-status:not(#tdb1x):not([multiple]):not([size]){background-color:rgba(255,255,255,.10)!important;border-color:rgba(255,255,255,.22)!important}
+/* Data: campo de data com calendário, como na Mensalidade */
+.contas-pessoais-raiz input.tdbm-cp-date:not(#tdb1x){border-radius:7px!important;padding:5px 7px!important;font-size:12.5px!important;min-width:128px;max-width:158px;background:rgba(255,255,255,.83)!important}
+/* Ações: Editar + lixeira redonda */
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button:first-child{display:inline-flex!important;align-items:center;gap:5px;border:1px solid var(--c-line)!important;background:rgba(255,255,255,.85)!important;border-radius:9px!important;padding:4px 10px!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button:first-child::after{content:"Editar";font-size:12px;font-weight:600;color:var(--c-ink)}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button:last-child{display:inline-grid!important;place-items:center;width:26px;height:26px;padding:0!important;border-radius:50%!important;background:#fdeceb!important;margin-left:4px}
+body.dark-mode .contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:last-child button:first-child{background:rgba(255,255,255,.10)!important}
+
+/* ---------- Linha marcada (1 clique marca, 2 cliques desmarca): faixa bem visível ---------- */
+html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr[style*="224, 174, 60"] td:not([colspan]){background:rgba(23,103,207,.11)!important;border-top-color:rgba(23,103,207,.30)!important;border-bottom:1px solid rgba(23,103,207,.30)!important}
+html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr[style*="224, 174, 60"] td:first-child:not([colspan]){box-shadow:inset 4px 0 0 #1767cf!important;border-radius:10px 0 0 10px}
+html[data-tdb-aurora] body .contas-pessoais-raiz .contas-pessoais-scroll tbody tr[style*="224, 174, 60"] td:last-child:not([colspan]){border-radius:0 10px 10px 0}
+html[data-tdb-aurora] body.dark-mode .contas-pessoais-raiz .contas-pessoais-scroll tbody tr[style*="224, 174, 60"] td:not([colspan]){background:rgba(121,173,244,.18)!important}
+
+/* ---------- Total do mês: faixa de vidro ---------- */
+.contas-pessoais-raiz .tdbm-cp-extra-empty{opacity:1!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tfoot tr:not([aria-hidden]){background:transparent!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tfoot tr:not([aria-hidden]) td{background:linear-gradient(180deg,rgba(238,244,255,.92) 0%,rgba(226,237,255,.78) 55%,rgba(170,196,248,.88) 100%)!important;border-top:1px solid var(--tdb1-glass-edge)!important;border-bottom:1px solid var(--tdb1-glass-edge)!important;border-left:0!important;border-right:0!important;box-shadow:none!important}
+body.dark-mode .contas-pessoais-raiz .contas-pessoais-scroll tfoot tr:not([aria-hidden]) td{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(120,160,255,.14))!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tfoot tr:not([aria-hidden]) td:first-child{border-left:1px solid var(--tdb1-glass-edge)!important;border-radius:16px 0 0 16px!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tfoot tr:not([aria-hidden]) td:last-child{border-right:1px solid var(--tdb1-glass-edge)!important;border-radius:0 16px 16px 0!important}
+
+/* ---------- Balões Pendentes / Pagas (igual Mensalidade) ---------- */
+.contas-pessoais-raiz .tdb1-cp-balloons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 10px}
+.contas-pessoais-raiz[data-tdbl-cp-view="annual"] .tdb1-cp-balloons{display:none}
+.contas-pessoais-raiz .tdb1-cp-bal{border-radius:10px;padding:14px 16px}
+.contas-pessoais-raiz .tdb1-cp-bal.p{background:var(--c-redBg);border:1px solid color-mix(in srgb,var(--c-red) 13%,transparent)}
+.contas-pessoais-raiz .tdb1-cp-bal.r{background:var(--c-greenBg);border:1px solid color-mix(in srgb,var(--c-green) 13%,transparent)}
+.contas-pessoais-raiz .tdb1-cp-bal .l{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.contas-pessoais-raiz .tdb1-cp-bal .v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;margin-top:2px}
+.contas-pessoais-raiz .tdb1-cp-bal.p .l,.contas-pessoais-raiz .tdb1-cp-bal.p .v{color:var(--c-red)}
+.contas-pessoais-raiz .tdb1-cp-bal.r .l,.contas-pessoais-raiz .tdb1-cp-bal.r .v{color:var(--c-green)}
+body.dark-mode .contas-pessoais-raiz .tdb1-cp-bal.p{background:rgba(198,45,54,.16)}
+body.dark-mode .contas-pessoais-raiz .tdb1-cp-bal.r{background:rgba(23,103,207,.20)}
+
+/* ---------- Resumo anual moderno em Liquid Glass ---------- */
+.contas-pessoais-raiz[data-tdbl-cp-view="annual"] .tdbl-cp-annual-panel{display:block!important}
+.contas-pessoais-raiz .tdb1-ra{border-radius:24px;padding:20px;background:radial-gradient(260px 70px at 6% -10%,rgba(255,255,255,.9),rgba(255,255,255,0) 70%),var(--tdb1-glass);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--tdb1-glass-edge);box-shadow:0 14px 34px rgba(30,50,100,.16),inset 0 2px 2px #fff,inset 0 -14px 22px -14px rgba(80,125,225,.40)}
+body.dark-mode .contas-pessoais-raiz .tdb1-ra{background:var(--tdb1-glass);box-shadow:0 14px 34px rgba(0,0,0,.35),inset 0 1px 1px rgba(255,255,255,.25)}
+.contas-pessoais-raiz .tdb1-ra-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.contas-pessoais-raiz .tdb1-ra-top h3{margin:0;font-size:20px;letter-spacing:-.3px;color:var(--c-ink)}
+.contas-pessoais-raiz .tdb1-ra-top p{margin:4px 0 0;color:var(--c-inkSoft);font-size:12.5px;max-width:560px}
+.contas-pessoais-raiz .tdb1-voltar{display:inline-flex;gap:6px;align-items:center;border-radius:14px;padding:8px 14px;font-weight:700;font-size:12.5px;cursor:pointer;color:var(--c-ink);background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.35));border:1px solid var(--tdb1-glass-edge);box-shadow:0 6px 14px rgba(30,50,100,.12),inset 0 1px 2px #fff}
+body.dark-mode .contas-pessoais-raiz .tdb1-voltar{background:rgba(255,255,255,.10)}
+.contas-pessoais-raiz .tdb1-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.contas-pessoais-raiz .tdb1-tile{border-radius:18px;padding:14px 16px;position:relative;overflow:hidden;min-width:0;background:var(--tdb1-tile);border:1px solid var(--tdb1-glass-edge);box-shadow:var(--tdb1-tile-sh);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.contas-pessoais-raiz .tdb1-tile .k{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c-inkSoft)}
+.contas-pessoais-raiz .tdb1-tile .n{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:21px;margin-top:4px;letter-spacing:-.5px;color:var(--c-ink);white-space:nowrap}
+.contas-pessoais-raiz .tdb1-tile .s{font-size:11.5px;color:var(--c-inkSoft);margin-top:2px}
+.contas-pessoais-raiz .tdb1-tile svg{position:absolute;right:10px;bottom:8px;opacity:.9}
+.contas-pessoais-raiz .tdb1-ra-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px}
+.contas-pessoais-raiz .tdb1-ra-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.contas-pessoais-raiz .tdb1-ra-h b{font-size:14px;color:var(--c-ink)}.contas-pessoais-raiz .tdb1-ra-h span{font-size:11.5px;color:var(--c-inkSoft)}
+.contas-pessoais-raiz .tdb1-cols{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;height:300px;padding:34px 6px 0}
+.contas-pessoais-raiz .tdb1-col{display:flex;flex-direction:column;align-items:center;height:100%;min-width:0}
+.contas-pessoais-raiz .tdb1-colbar{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.contas-pessoais-raiz .tdb1-bar{position:relative;width:100%;max-width:38px;border-radius:12px 12px 8px 8px;background:linear-gradient(180deg,rgba(255,255,255,.95) 0,rgba(120,170,255,.55) 14%,rgba(23,103,207,.78) 100%);border:1px solid rgba(255,255,255,.9);box-shadow:0 8px 16px rgba(23,103,207,.22),inset 0 2px 2px rgba(255,255,255,.9),inset 0 -10px 12px -8px rgba(10,60,150,.45)}
+.contas-pessoais-raiz .tdb1-bar.mx{background:linear-gradient(180deg,rgba(255,255,255,.95) 0,rgba(90,150,255,.7) 12%,#1259c2 100%);box-shadow:0 10px 20px rgba(23,103,207,.38),inset 0 2px 2px #fff,inset 0 -10px 12px -8px rgba(5,40,120,.55)}
+.contas-pessoais-raiz .tdb1-bar.mn{opacity:.8}
+.contas-pessoais-raiz .tdb1-bar.nil{height:6px!important;background:rgba(255,255,255,.55);border:1px dashed #b9c3d6;box-shadow:none}
+body.dark-mode .contas-pessoais-raiz .tdb1-bar.nil{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.25)}
+.contas-pessoais-raiz .tdb1-bar .v{position:absolute;left:50%;transform:translateX(-50%);top:-17px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:var(--c-inkSoft);white-space:nowrap}
+.contas-pessoais-raiz .tdb1-bar .tg{position:absolute;left:50%;transform:translateX(-50%);top:-37px;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:rgba(255,255,255,.92);border:1px solid #cfe0fb;color:#1767cf;white-space:nowrap}
+.contas-pessoais-raiz .tdb1-col .m{font-size:11.5px;font-weight:700;margin-top:7px;color:var(--c-ink)}
+.contas-pessoais-raiz .tdb1-col.now .m{background:var(--c-ink);color:var(--c-paper,#fff);border-radius:99px;padding:1px 9px}
+.contas-pessoais-raiz .tdb1-cats{display:grid;gap:10px}
+.contas-pessoais-raiz .tdb1-crow{border-radius:16px;padding:11px 14px;background:var(--tdb1-tile);border:1px solid var(--tdb1-glass-edge);box-shadow:var(--tdb1-tile-sh);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.contas-pessoais-raiz .tdb1-crow .t{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:800;font-size:13.5px;color:var(--c-ink)}
+.contas-pessoais-raiz .tdb1-crow .t .p{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12.5px;white-space:nowrap}
+.contas-pessoais-raiz .tdb1-crow .t i{font-style:normal;font-weight:700;font-size:11px;color:var(--c-inkSoft);margin-left:8px}
+.contas-pessoais-raiz .tdb1-track{height:9px;border-radius:99px;margin-top:9px;background:rgba(60,90,150,.12);box-shadow:inset 0 1px 3px rgba(30,50,100,.18);overflow:hidden}
+.contas-pessoais-raiz .tdb1-track b{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,rgba(120,170,255,.9),#1767cf);box-shadow:inset 0 1px 1px rgba(255,255,255,.8)}
+@media(max-width:900px){.contas-pessoais-raiz .tdb1-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.contas-pessoais-raiz .tdb1-ra-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.contas-pessoais-raiz .tdb1-ra{padding:14px}.contas-pessoais-raiz .tdb1-cols{gap:4px;height:240px}.contas-pessoais-raiz .tdb1-bar .v{display:none}.contas-pessoais-raiz .tdb1-col .m{font-size:10px}.contas-pessoais-raiz .tdb1-tile .n{font-size:15px;white-space:normal}.contas-pessoais-raiz .tdb1-tile svg{display:none}.contas-pessoais-raiz .tdb1-bar .tg{display:none}.contas-pessoais-raiz .tdb1-cols{padding-top:12px}.contas-pessoais-raiz .tdb1-cp-bal .v{font-size:14px}.contas-pessoais-raiz .tdb1-cp-bal .l{font-size:11px}.contas-pessoais-raiz .tdb1-cp-bal{padding:11px 12px}}
+</style>
+
 <script id="tdbm-contas-pessoais-pago-data-v1">
 (function(){
   var meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -17032,7 +17153,35 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
   function getM(conta,idx){ var k=norm(conta); if(!meta[k]) meta[k]={}; if(!meta[k][idx]) meta[k][idx]={}; return meta[k][idx]; }
   function readTotals(table){var out=[]; var row=table&&table.tFoot&&table.tFoot.rows&&table.tFoot.rows[table.tFoot.rows.length-1]; if(row){for(var i=1;i<=12;i++) out.push(parseBRL(row.cells[i]&&row.cells[i].textContent));} while(out.length<12) out.push(0); return out;}
   function readCategories(table){var arr=[]; var headers=table.querySelectorAll('tbody td[colspan]'); headers.forEach(function(td){var nome=(td.querySelector('span')&&td.querySelector('span').textContent||td.textContent||'').replace(/R\$.*/,'').trim(); var val=parseBRL(td.textContent); if(nome) arr.push({nome:nome,valor:val});}); return arr;}
-  function renderAnnual(root, table){var panel=root.querySelector('.tdbl-cp-annual-panel'); if(!panel) return; var totals=readTotals(table); var cats=readCategories(table); var total=totals.reduce(function(a,b){return a+b},0); var media=total/12; var max=Math.max.apply(Math,[1].concat(totals)); var maiorIdx=totals.indexOf(max); var menorPos=totals.map(function(v,i){return {v:v,i:i}}).filter(function(x){return x.v>0}).sort(function(a,b){return a.v-b.v})[0]; var catHtml=cats.sort(function(a,b){return b.valor-a.valor}).slice(0,7).map(function(c){return '<div class="tdbl-cp-cat-line"><b>'+c.nome+'</b><strong>'+brl(c.valor)+'</strong></div>';}).join(''); var bars=totals.map(function(v,i){var pct=max?Math.max(2,Math.round(v/max*100)):0;return '<div class="tdbl-cp-bar-line"><b>'+meses[i]+'</b><div class="tdbl-cp-bar-track"><div class="tdbl-cp-bar-fill" style="width:'+pct+'%"></div></div><span>'+brl(v)+'</span></div>';}).join(''); panel.innerHTML='<div class="tdbl-cp-annual-card"><div class="tdbl-cp-annual-title">📊 Resumo anual das Contas Pessoais</div><div style="font-size:12.5px;color:var(--c-inkSoft);margin-bottom:8px">Controle pessoal separado da escola: estes valores não entram em mensalidades, alunos, ocupação nem resultado financeiro escolar.</div><div class="tdbl-cp-balanco"><div class="tdbl-cp-mini"><span>Total dos 12 meses</span><strong>'+brl(total)+'</strong></div><div class="tdbl-cp-mini"><span>Média mensal</span><strong>'+brl(media)+'</strong></div><div class="tdbl-cp-mini"><span>Maior mês</span><strong>'+(maiorIdx>=0?meses[maiorIdx]:'—')+' · '+brl(max)+'</strong></div><div class="tdbl-cp-mini"><span>Menor mês com valor</span><strong>'+(menorPos?meses[menorPos.i]+' · '+brl(menorPos.v):'—')+'</strong></div></div><div class="tdbl-cp-annual-title" style="margin-top:14px;font-size:15px">Evolução mensal</div><div class="tdbl-cp-bars">'+bars+'</div></div><div class="tdbl-cp-annual-card"><div class="tdbl-cp-annual-title">🥧 Balanço por categoria</div><div class="tdbl-cp-lista-cat">'+(catHtml||'<div style="color:var(--c-inkSoft)">Sem valores preenchidos.</div>')+'</div></div>';
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function renderAnnual(root, table){
+    var panel=root.querySelector('.tdbl-cp-annual-panel'); if(!panel) return;
+    var totals=readTotals(table); var cats=readCategories(table);
+    var total=totals.reduce(function(a,b){return a+b},0); var media=total/12;
+    var max=Math.max.apply(Math,[1].concat(totals)); var maiorIdx=totals.indexOf(max);
+    var menorPos=totals.map(function(v,i){return {v:v,i:i}}).filter(function(x){return x.v>0}).sort(function(a,b){return a.v-b.v})[0];
+    var hoje=new Date().getMonth();
+    var sw=64,sh=26; var pts=totals.map(function(v,i){return (i*(sw/11)).toFixed(1)+','+(sh-(v/max)*(sh-4)-2).toFixed(1);}).join(' ');
+    function spark(c){return '<svg width="'+sw+'" height="'+sh+'" viewBox="0 0 '+sw+' '+sh+'" aria-hidden="true"><polyline fill="none" stroke="'+c+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="'+pts+'"/></svg>';}
+    function tile(k,n,s,sv){return '<div class="tdb1-tile"><div class="k">'+k+'</div><div class="n">'+n+'</div><div class="s">'+s+'</div>'+(sv||'')+'</div>';}
+    var kpis=tile('Total dos 12 meses',brl(total),'Soma de jan a dez',spark('#1767cf'))
+      +tile('Média mensal',brl(media),'Total ÷ 12',spark('#6b7a90'))
+      +tile('Maior mês',(maiorIdx>=0&&max>1?meses[maiorIdx]:'—')+' · '+brl(max>1?max:0),'Mês de maior gasto','')
+      +tile('Menor mês com valor',menorPos?meses[menorPos.i]+' · '+brl(menorPos.v):'—','Menor gasto lançado','');
+    var menorIdx=menorPos?menorPos.i:-1;
+    var cols=totals.map(function(v,i){
+      var pct=v>0?Math.max(6,Math.round(v/max*100)):0; var cls=v>0?(i===maiorIdx?'mx':(i===menorIdx?'mn':'')):'nil';
+      var tag=v>0&&i===maiorIdx?'<span class="tg">Maior</span>':(v>0&&i===menorIdx&&menorIdx!==maiorIdx?'<span class="tg">Menor</span>':'');
+      var vl=v>0?(v/1000).toFixed(1).replace('.',',')+'k':'—';
+      return '<div class="tdb1-col'+(i===hoje?' now':'')+'"><div class="tdb1-colbar"><div class="tdb1-bar '+cls+'" style="'+(v>0?'height:'+pct+'%':'')+'">'+tag+'<span class="v">'+vl+'</span></div></div><span class="m">'+meses[i]+'</span></div>';
+    }).join('');
+    var lista=cats.slice().sort(function(a,b){return b.valor-a.valor}).slice(0,7);
+    var catHtml=lista.map(function(c){var p=total>0?c.valor/total*100:0; return '<div class="tdb1-crow"><div class="t"><span>'+esc(c.nome)+'<i>'+Math.round(p)+'%</i></span><span class="p">'+brl(c.valor)+'</span></div><div class="tdb1-track"><b style="width:'+p.toFixed(1)+'%"></b></div></div>';}).join('');
+    var html='<div class="tdb1-ra"><div class="tdb1-ra-top"><div><h3>📊 Resumo anual — Contas Pessoais</h3><p>Controle pessoal separado da escola: estes valores não entram em mensalidades, alunos, ocupação nem resultado financeiro escolar.</p></div><button type="button" class="tdb1-voltar">‹ Voltar ao mês</button></div>'
+      +'<div class="tdb1-kpis">'+kpis+'</div>'
+      +'<div class="tdb1-ra-grid"><div class="tdb1-tile" style="padding:16px 16px 12px"><div class="tdb1-ra-h"><b>Evolução mensal</b><span>valor total de cada mês</span></div><div class="tdb1-cols">'+cols+'</div></div>'
+      +'<div class="tdb1-tile" style="padding:16px"><div class="tdb1-ra-h"><b>Balanço por categoria</b><span>% do total do ano</span></div><div class="tdb1-cats">'+(catHtml||'<div style="color:var(--c-inkSoft)">Sem valores preenchidos.</div>')+'</div></div></div></div>';
+    if(panel.dataset.tdb1h!==html){ panel.innerHTML=html; panel.dataset.tdb1h=html; }
   }
   function cleanupExtras(table){ if(!table) return; table.querySelectorAll('.tdbm-cp-extra').forEach(function(n){n.remove();}); }
   function setCell(cell,hidden){ if(!cell) return; cell.classList.toggle('tdbl-cp-is-hidden',!!hidden); }
@@ -17044,7 +17193,7 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
       try{
         var header=table.tHead&&table.tHead.rows[0];
         if(header && header.cells[idx+1]){
-          var thPago=document.createElement('th'); thPago.className='tdbm-cp-extra tdbm-cp-extra-pago'; thPago.textContent='Pago';
+          var thPago=document.createElement('th'); thPago.className='tdbm-cp-extra tdbm-cp-extra-pago'; thPago.textContent='Status';
           var thData=document.createElement('th'); thData.className='tdbm-cp-extra tdbm-cp-extra-data'; thData.textContent='Data';
           header.cells[idx+1].after(thPago,thData);
         }
@@ -17052,12 +17201,13 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
           if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){ row.cells[0].colSpan=5; return; }
           var valueCell=row.cells[idx+1]; if(!valueCell) return;
           var nome=(row.cells[0]&&row.cells[0].textContent||'').trim();
+          try{row.cells[0].setAttribute('data-ini',iniciais(nome));}catch(e){}
           var valor=0; try{var inp=valueCell.querySelector('input'); valor=parseBRL(inp?(inp.value||inp.defaultValue):valueCell.textContent);}catch(e){}
           var m=getM(nome,idx); var st=m.pago || (valor>0?'PAGO':'PENDENTE'); var data=m.data || '';
           var tdPago=document.createElement('td'); tdPago.className='tdbm-cp-extra tdbm-cp-extra-pago';
           var sel=document.createElement('select'); sel.className='tdbm-cp-status '+(st==='PAGO'?'is-paid':'is-pending');
           sel.innerHTML='<option value="PENDENTE">Pendente</option><option value="PAGO">Pago</option>'; sel.value=st;
-          sel.addEventListener('click',function(ev){ev.stopPropagation();}); sel.addEventListener('change',function(){var mm=getM(nome,idx); mm.pago=sel.value; sel.classList.toggle('is-paid',sel.value==='PAGO'); sel.classList.toggle('is-pending',sel.value!=='PAGO'); saveMeta();});
+          sel.addEventListener('click',function(ev){ev.stopPropagation();}); sel.addEventListener('change',function(){var mm=getM(nome,idx); mm.pago=sel.value; sel.classList.toggle('is-paid',sel.value==='PAGO'); sel.classList.toggle('is-pending',sel.value!=='PAGO'); saveMeta(); renderBalloons(root,table,idx,false);});
           tdPago.appendChild(sel);
           var tdData=document.createElement('td'); tdData.className='tdbm-cp-extra tdbm-cp-extra-data';
           var dt=document.createElement('input'); dt.type='date'; dt.className='tdbm-cp-date'; dt.value=data;
@@ -17075,6 +17225,31 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
       }catch(e){}
     });
   }
+  function iniciais(n){var w=String(n||'').trim().split(/\s+/).filter(Boolean); var s=w.length>1?(w[0].charAt(0)+w[1].charAt(0)):String(n||'').trim().slice(0,2); return s.toUpperCase();}
+  function renderBalloons(root,table,idx,annual){
+    var scroll=root.querySelector('.contas-pessoais-scroll'); if(!scroll||!table) return;
+    var box=root.querySelector('.tdb1-cp-balloons');
+    if(!box){ box=document.createElement('div'); box.className='tdb1-cp-balloons'; var ref=root.querySelector('.tdbl-cp-annual-panel')||scroll; ref.parentNode.insertBefore(box,ref); }
+    if(annual) return;
+    loadMeta(function(){
+      try{
+        var pc=0,pv=0,rc=0,rv=0;
+        Array.from(table.tBodies[0]?table.tBodies[0].rows:[]).forEach(function(row){
+          if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')) return;
+          var vc=row.cells[idx+1]; if(!vc) return;
+          var inp=vc.querySelector('input'); var valor=parseBRL(inp?(inp.value||inp.defaultValue):vc.textContent);
+          if(!(valor>0)) return;
+          var nome=(row.cells[0]&&row.cells[0].textContent||'').trim();
+          var mm=(meta[norm(nome)]||{})[idx]||{}; var st=mm.pago||'PAGO';
+          if(st==='PAGO'){rc++;rv+=valor;}else{pc++;pv+=valor;}
+        });
+        var oculto=!!(table.tFoot&&table.tFoot.textContent.indexOf('••')>=0);
+        function f(n,v){return n+' · '+(oculto?'R$ ••••••':brl(v));}
+        var html='<div class="tdb1-cp-bal p"><div class="l">Pendentes</div><div class="v">'+f(pc,pv)+'</div></div><div class="tdb1-cp-bal r"><div class="l">Pagas</div><div class="v">'+f(rc,rv)+'</div></div>';
+        if(box.dataset.tdb1h!==html){ box.innerHTML=html; box.dataset.tdb1h=html; }
+      }catch(e){}
+    });
+  }
   function apply(root){
     var scroll=root.querySelector('.contas-pessoais-scroll'); var table=scroll&&scroll.querySelector('table'); if(!table) return; cleanupExtras(table); removeDica(root);
     var active=sessionStorage.getItem(storageKey); if(active==null){active=String(new Date().getMonth()); sessionStorage.setItem(storageKey,active);} var annual=active==='annual'; root.dataset.tdblCpView=annual?'annual':'month'; renderAnnual(root,table);
@@ -17084,8 +17259,10 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
     Array.from(table.tBodies[0]?table.tBodies[0].rows:[]).forEach(function(row){ if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){row.cells[0].colSpan=annual?15:5; return;} for(var i=1;i<=12;i++) setCell(row.cells[i],annual?false:i!==idx+1); setCell(row.cells[13],!annual); });
     if(table.tFoot){Array.from(table.tFoot.rows).forEach(function(row){ if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){row.cells[0].colSpan=annual?15:5; return;} if(row.cells[0]) row.cells[0].innerHTML=annual?'📊 Total por mês':'📅 Total do mês ('+nomes[idx]+')'; for(var i=1;i<=12;i++) setCell(row.cells[i],annual?false:i!==idx+1); setCell(row.cells[13],!annual); });}
     if(!annual) inserirExtras(root,table,idx);
+    renderBalloons(root,table,idx,annual);
   }
   function ensure(root){
+    if(!root.__tdb1Voltar){root.__tdb1Voltar=1; root.addEventListener('click',function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('.tdb1-voltar'); if(!b) return; sessionStorage.setItem(storageKey,String(new Date().getMonth())); apply(root);});}
     var scroll=root.querySelector('.contas-pessoais-scroll'); var table=scroll&&scroll.querySelector('table'); if(!scroll||!table) return;
     if(!root.querySelector('.tdbl-cp-annual-panel')){var panel=document.createElement('div'); panel.className='tdbl-cp-annual-panel'; scroll.parentNode.insertBefore(panel,scroll);}
     if(!root.querySelector('.tdbl-cp-tabs')){var tabs=document.createElement('div'); tabs.className='tdbl-cp-tabs'; meses.forEach(function(m,i){var b=document.createElement('button'); b.type='button'; b.className='tdbl-cp-tab'; b.textContent=m; b.dataset.month=String(i); tabs.appendChild(b);}); var a=document.createElement('button'); a.type='button'; a.className='tdbl-cp-tab is-annual'; a.dataset.month='annual'; a.textContent='📊 Resumo anual'; tabs.appendChild(a); scroll.parentNode.insertBefore(tabs,scroll.nextSibling); tabs.addEventListener('click',function(ev){var btn=ev.target.closest('[data-month]'); if(!btn) return; sessionStorage.setItem(storageKey,btn.dataset.month); apply(root);});}
