@@ -17,22 +17,22 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TDBa</title>
+  <title>TDBb</title>
   <!-- TDB GITHUB BUILD: TDB 02i -->
   <!-- v8.4 FINAL: revisão atual do servidor embutida na própria resposta HTML.
        O valor vem de ScriptProperties; não abre o Drive. -->
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdba-20261003-sync-ui-layout2";
+    window.__TDB_BUILD = "tdbb-20261003-bolha-cards";
   </script>
-  <script src="./config.js?build=tdba-20261003-sync-ui-layout2"></script>
+  <script src="./config.js?build=tdbb-20261003-bolha-cards"></script>
   <!-- TDB 02i: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TDBa">
+  <meta name="apple-mobile-web-app-title" content="TDBb">
   <script>
     // TDB 02i — "acordador" do Apps Script. Medido: depois de ~30 s sem receber pedidos o Apps Script "dorme" e a
     // próxima chamada demora de 12 a 40 s; com pedidos a cada poucos segundos ele responde em ~1-2 s.
@@ -1181,32 +1181,175 @@ html.dark-mode {
 })();
 </script>
 
-<style id="tdba-mensalidades-layout-v2">
-/* TDBa — Mensalidades: redistribuição visual; não altera dados nem sincronização. */
-.mensalidades-tabela-card { border-radius:14px!important; box-shadow:0 8px 26px rgba(16,110,107,.055); }
-.mensalidades-tabela-header { gap:12px!important; flex-wrap:wrap!important; min-height:50px; padding-top:11px!important; padding-bottom:11px!important; }
-.mensalidades-table-tip { display:inline-flex; align-items:center; max-width:100%; padding:6px 10px; border-radius:999px; border:1px solid color-mix(in srgb,var(--c-line) 72%,transparent); background:color-mix(in srgb,var(--c-paper) 72%,transparent); line-height:1.25; }
-.mensalidades-table-scroll { width:100%; max-width:100%; overflow-x:auto!important; overflow-y:hidden; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; scrollbar-gutter:stable; }
-.tabela-mensalidades { font-variant-numeric:tabular-nums; }
-.tabela-mensalidades th,.tabela-mensalidades td { box-sizing:border-box; }
-.tabela-mensalidades thead th { border-bottom:1px solid var(--c-line); }
-.tabela-mensalidades.mensalidades-detalhes th:nth-child(2),.tabela-mensalidades.mensalidades-detalhes th:nth-child(5),.tabela-mensalidades.mensalidades-detalhes th:nth-child(8),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(2),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(5),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(8) { border-right:1px solid color-mix(in srgb,var(--c-line) 72%,transparent); }
-.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row-editando td:nth-child(4),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row-editando td:nth-child(7) { border-right:1px solid color-mix(in srgb,var(--c-line) 72%,transparent); }
-.tabela-mensalidades.mensalidades-resumida th:nth-child(1),.tabela-mensalidades.mensalidades-resumida th:nth-child(4),.tabela-mensalidades.mensalidades-resumida tbody tr.mensalidades-row td:nth-child(1),.tabela-mensalidades.mensalidades-resumida tbody tr.mensalidades-row td:nth-child(4) { border-right:1px solid color-mix(in srgb,var(--c-line) 72%,transparent); }
-.tabela-mensalidades.mensalidades-detalhes th:nth-child(3),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row td:nth-child(3),.tabela-mensalidades.mensalidades-detalhes tbody tr.mensalidades-row-editando td:nth-child(2),.tabela-mensalidades.mensalidades-resumida th:nth-child(2),.tabela-mensalidades.mensalidades-resumida tbody tr.mensalidades-row td:nth-child(2) { text-align:right; }
-.tabela-mensalidades.mensalidades-detalhes th:nth-child(6),.tabela-mensalidades.mensalidades-detalhes th:nth-child(7),.tabela-mensalidades.mensalidades-detalhes td:nth-child(6),.tabela-mensalidades.mensalidades-detalhes td:nth-child(7) { line-height:1.25; }
-@media (min-width:1367px) { .tabela-mensalidades.mensalidades-detalhes{min-width:1180px!important}.tabela-mensalidades.mensalidades-resumida{min-width:760px!important} }
-@media (min-width:761px) and (max-width:1366px) {
-  .mensalidades-tabela-header{align-items:flex-start!important}.mensalidades-table-tip{flex:1 1 360px;justify-content:flex-end}
-  .tabela-mensalidades.mensalidades-detalhes{min-width:1120px!important}.tabela-mensalidades.mensalidades-resumida{min-width:720px!important}
-  .tabela-mensalidades th,.tabela-mensalidades td{padding-left:7px!important;padding-right:7px!important}
+<style id="tdbb-mensalidades-bolha-cards">
+/* TDBb — Mensalidades / Esboço 2: Bolha em Cards. Somente apresentação; dados e sincronização intactos. */
+.mensalidades-tabela-card{
+  background:transparent!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;overflow:visible!important;
 }
-@media (max-width:760px) {
-  .mensalidades-tabela-card{border-radius:12px!important}.mensalidades-tabela-header{padding:10px 11px!important;min-height:0;align-items:flex-start!important}
-  .mensalidades-table-tip{flex:1 1 100%;padding:5px 8px;font-size:10.5px!important;border-radius:9px}
-  .tabela-mensalidades.mensalidades-detalhes{min-width:960px!important}.tabela-mensalidades.mensalidades-resumida{min-width:650px!important}
-  .tabela-mensalidades th{padding:8px 6px!important;font-size:10px!important}.tabela-mensalidades td{padding:8px 6px!important;font-size:11.5px!important}
-  .tabela-mensalidades td button{min-height:30px}.mensalidades-table-scroll{scrollbar-width:thin;padding-bottom:3px}
+.mensalidades-tabela-header{
+  gap:12px!important;flex-wrap:wrap!important;min-height:52px;
+  padding:12px 16px!important;margin-bottom:10px;
+  border:1px solid var(--c-line)!important;border-radius:18px!important;
+  background:color-mix(in srgb,var(--c-paperCard) 90%,transparent)!important;
+  box-shadow:0 8px 26px rgba(16,110,107,.06);
+  backdrop-filter:blur(18px) saturate(135%);-webkit-backdrop-filter:blur(18px) saturate(135%);
+}
+.mensalidades-table-tip{
+  display:inline-flex;align-items:center;max-width:100%;padding:6px 10px;border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--c-line) 72%,transparent);
+  background:color-mix(in srgb,var(--c-paper) 72%,transparent);line-height:1.25;
+}
+.mensalidades-table-scroll{
+  width:100%;max-width:100%;overflow:visible!important;padding:2px 1px 8px;
+}
+.tabela-mensalidades{
+  display:block!important;width:100%!important;min-width:0!important;border-collapse:separate!important;
+  table-layout:auto!important;font-variant-numeric:tabular-nums;background:transparent!important;
+}
+.tabela-mensalidades colgroup,.tabela-mensalidades thead{display:none!important}
+.tabela-mensalidades tbody{display:grid!important;gap:9px;width:100%}
+.tabela-mensalidades tbody tr.mensalidades-row,
+.tabela-mensalidades tbody tr.mensalidades-row-editando{
+  position:relative;isolation:isolate;display:grid!important;align-items:center;width:100%;
+  min-width:0;margin:0;padding:9px 10px;border:0!important;border-radius:19px;
+  box-sizing:border-box;overflow:visible!important;
+}
+.tabela-mensalidades tbody tr.mensalidades-row::before,
+.tabela-mensalidades tbody tr.mensalidades-row-editando::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:19px;
+  border:1px solid color-mix(in srgb,var(--c-line) 82%,transparent);
+  background:color-mix(in srgb,var(--c-paperCard) 94%,transparent);
+  box-shadow:0 5px 18px rgba(24,55,73,.055),inset 0 1px 0 rgba(255,255,255,.24);
+  backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);
+}
+.tabela-mensalidades tbody tr.mensalidades-row:hover::before{
+  border-color:color-mix(in srgb,var(--c-gold) 30%,var(--c-line));
+  box-shadow:0 8px 24px rgba(24,55,73,.08),inset 0 1px 0 rgba(255,255,255,.28);
+}
+.tabela-mensalidades tbody tr.mensalidades-row td,
+.tabela-mensalidades tbody tr.mensalidades-row-editando td{
+  position:relative;z-index:1;display:flex!important;min-width:0!important;width:auto!important;
+  flex-direction:column;justify-content:center;gap:4px;padding:5px 10px!important;
+  border:0!important;overflow:visible!important;box-sizing:border-box;line-height:1.24!important;
+}
+.tabela-mensalidades tbody tr.mensalidades-row td::before,
+.tabela-mensalidades tbody tr.mensalidades-row-editando td::before{
+  display:block;font-size:9.5px;line-height:1;text-transform:uppercase;letter-spacing:.055em;
+  color:var(--c-inkSoft);font-weight:750;opacity:.78;white-space:nowrap;
+}
+/* Alunos — ordem visual do Esboço 2. */
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row{
+  grid-template-columns:minmax(210px,1.75fr) minmax(105px,.82fr) minmax(96px,.72fr) minmax(128px,1fr) minmax(120px,.94fr) minmax(82px,.62fr) minmax(104px,.78fr) minmax(92px,.7fr) minmax(86px,.66fr) minmax(94px,.7fr);
+  grid-template-areas:"nome valor status resp tirarnota banco convenio data nota acoes";
+}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(1){grid-area:nome;padding-left:8px!important}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(2){grid-area:nota}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(3){grid-area:valor}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(4){grid-area:status}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(5){grid-area:banco}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(6){grid-area:resp}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(7){grid-area:tirarnota}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(8){grid-area:convenio}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(9){grid-area:data}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(10){grid-area:acoes;align-items:flex-end}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(2)::before{content:"Nota"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(3)::before{content:"Valor"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(4)::before{content:"Status"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(5)::before{content:"Banco"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(6)::before{content:"Responsável"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(7)::before{content:"Tirar nota"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(8)::before{content:"Convênio"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row td:nth-child(9)::before{content:"Data"}
+/* Edição: Nota não vira célula enquanto edita; mantém o mesmo mapa sem tocar no editor. */
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando{
+  grid-template-columns:minmax(210px,1.7fr) minmax(130px,1fr) minmax(105px,.78fr) minmax(88px,.65fr) minmax(130px,1fr) minmax(125px,.98fr) minmax(110px,.84fr) minmax(105px,.78fr) minmax(130px,.95fr);
+  grid-template-areas:"nome valor status banco resp tirarnota convenio data acoes";
+}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(1){grid-area:nome}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(2){grid-area:valor}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(3){grid-area:status}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(4){grid-area:banco}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(5){grid-area:resp}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(6){grid-area:tirarnota}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(7){grid-area:convenio}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(8){grid-area:data}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(9){grid-area:acoes;align-items:flex-end}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(2)::before{content:"Valor"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(3)::before{content:"Status"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(4)::before{content:"Banco"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(5)::before{content:"Responsável"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(6)::before{content:"Tirar nota"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(7)::before{content:"Convênio"}
+.tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando td:nth-child(8)::before{content:"Data"}
+/* Empresas / Convênios e Outros também recebem bolha inteira. */
+.tabela-mensalidades.mensalidades-resumida tr.mensalidades-row,
+.tabela-mensalidades.mensalidades-resumida tr.mensalidades-row-editando{
+  grid-template-columns:minmax(250px,2fr) minmax(130px,1fr) minmax(110px,.85fr) minmax(100px,.76fr) minmax(110px,.82fr) minmax(110px,.82fr);
+  grid-template-areas:"nome valor status banco data acoes";
+}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(1){grid-area:nome}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(2){grid-area:valor}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(3){grid-area:status}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(4){grid-area:banco}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(5){grid-area:data}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(6){grid-area:acoes;align-items:flex-end}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(2)::before{content:"Valor"}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(3)::before{content:"Status"}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(4)::before{content:"Banco"}
+.tabela-mensalidades.mensalidades-resumida tr td:nth-child(5)::before{content:"Data"}
+/* Linha complementar aberta pelo editor. */
+.tabela-mensalidades tbody>tr:not(.mensalidades-row):not(.mensalidades-row-editando){display:block!important;margin:-3px 8px 4px;width:auto!important}
+.tabela-mensalidades tbody>tr:not(.mensalidades-row):not(.mensalidades-row-editando)>td{display:block!important;width:auto!important;padding:0!important;border:0!important;overflow:visible!important}
+.tabela-mensalidades tbody tr td:first-child label[title*="foto"]{width:34px!important;height:34px!important;font-size:11px!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--c-goldSoft) 65%,transparent)}
+.tabela-mensalidades tbody tr td:first-child>div{min-width:0}
+.tabela-mensalidades tbody tr td:first-child>div>span{line-height:1.2}
+.tabela-mensalidades tbody tr td:last-child>div{justify-content:flex-end!important;flex-wrap:wrap}
+/* Tablet: card em três faixas, ainda sem rolagem horizontal. */
+@media (min-width:761px) and (max-width:1180px){
+  .mensalidades-tabela-header{align-items:flex-start!important}.mensalidades-table-tip{flex:1 1 360px;justify-content:flex-end}
+  .tabela-mensalidades tbody{gap:10px}
+  .tabela-mensalidades tbody tr.mensalidades-row,.tabela-mensalidades tbody tr.mensalidades-row-editando{padding:10px 9px}
+  .tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row{
+    grid-template-columns:1.35fr 1.15fr .78fr .78fr;
+    grid-template-areas:"nome nome valor status" "resp tirarnota banco convenio" "nota data acoes acoes";
+  }
+  .tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando{
+    grid-template-columns:1.35fr 1.15fr .78fr .78fr;
+    grid-template-areas:"nome nome valor status" "resp tirarnota banco convenio" "data data acoes acoes";
+  }
+  .tabela-mensalidades.mensalidades-resumida tr.mensalidades-row,.tabela-mensalidades.mensalidades-resumida tr.mensalidades-row-editando{
+    grid-template-columns:1.6fr 1fr .8fr .8fr;grid-template-areas:"nome nome valor status" "banco data acoes acoes";
+  }
+  .tabela-mensalidades tbody tr td{padding:6px 9px!important}
+}
+/* Celular: duas colunas, leitura vertical e sem tabela larga. */
+@media (max-width:760px){
+  .mensalidades-tabela-header{padding:11px 12px!important;margin-bottom:9px;min-height:0;align-items:flex-start!important;border-radius:16px!important}
+  .mensalidades-table-tip{flex:1 1 100%;padding:5px 8px;font-size:10.5px!important;border-radius:10px}
+  .mensalidades-table-scroll{overflow:visible!important;padding:0 0 6px!important}
+  .tabela-mensalidades tbody{gap:10px}
+  .tabela-mensalidades tbody tr.mensalidades-row,.tabela-mensalidades tbody tr.mensalidades-row-editando{padding:10px 8px;border-radius:18px}
+  .tabela-mensalidades tbody tr.mensalidades-row::before,.tabela-mensalidades tbody tr.mensalidades-row-editando::before{border-radius:18px}
+  .tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    grid-template-areas:"nome nome" "valor status" "resp tirarnota" "banco convenio" "nota data" "acoes acoes";
+  }
+  .tabela-mensalidades.mensalidades-detalhes tr.mensalidades-row-editando{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    grid-template-areas:"nome nome" "valor status" "resp tirarnota" "banco convenio" "data data" "acoes acoes";
+  }
+  .tabela-mensalidades.mensalidades-resumida tr.mensalidades-row,.tabela-mensalidades.mensalidades-resumida tr.mensalidades-row-editando{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"nome nome" "valor status" "banco data" "acoes acoes";
+  }
+  .tabela-mensalidades tbody tr td{padding:6px 8px!important;font-size:12px!important;min-height:42px}
+  .tabela-mensalidades tbody tr td::before{font-size:9px!important}
+  .tabela-mensalidades tbody tr td:first-child{min-height:50px;padding-top:4px!important;padding-bottom:4px!important}
+  .tabela-mensalidades tbody tr td:first-child label[title*="foto"]{width:36px!important;height:36px!important}
+  .tabela-mensalidades tbody tr td:last-child{align-items:stretch!important}
+  .tabela-mensalidades tbody tr td:last-child>div{justify-content:flex-end!important}
+  .tabela-mensalidades tbody tr td:last-child button{min-height:34px}
+  .tabela-mensalidades tbody tr td:nth-child(6),.tabela-mensalidades tbody tr td:nth-child(7){word-break:normal!important;overflow-wrap:anywhere}
 }
 </style>
 
@@ -1263,10 +1406,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdba-20261003-sync-ui-layout2"></script>
+  <script src="./sync.js?build=tdbb-20261003-bolha-cards"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdba-20261003-sync-ui-layout2-desktop';
+window.__TDB_BUILD_EXATO = 'tdbb-20261003-bolha-cards-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
