@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo6-v1";
+    window.__TDB_BUILD = "tdbn-20261004-tempo7-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo6-v1"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo7-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -844,7 +844,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 6";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 7";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1816,7 +1816,7 @@ html, body { overscroll-behavior-y: none; }
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 6</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 7</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1866,10 +1866,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo6-v1"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo7-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo6-v1-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo7-v1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -21670,6 +21670,93 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
 })();
 
 </script>
+<style id="tdbm-baloes-v1">
+/* TEMPO 7 — Celular: Mensalidades e Festas TDB com um balão por aluno/participante (só aparência).
+   Organização interna: nome + valor, etiquetas, traço fino em relevo (como em Contas Pessoais) e responsável/nota/data com os botões. */
+@media(max-width:600px){
+:root{--tdbm-l1:rgba(215,220,229,.6);--tdbm-l2:rgba(255,255,255,.95);--tdbm-bar:#1767cf}
+body.dark-mode{--tdbm-l1:rgba(255,255,255,.08);--tdbm-l2:rgba(0,0,0,.35);--tdbm-bar:#79adf4}
+
+/* ===== moldura da lista: sai o cartão grande, ficam os balões ===== */
+html:not(.tdb-aurora-pdf) body .mensalidades-tabela-card:has(tr.mensalidades-row>td:nth-child(10)):not(#tdbm),
+html:not(.tdb-aurora-pdf) body .festas-grupo-card:has(tbody tr>td:nth-child(7)):not(#tdbm){background:transparent!important;background-image:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;overflow:visible!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-tabela-card:has(tr.mensalidades-row>td:nth-child(10)):not(#tdbm)>.mensalidades-tabela-header{background:transparent!important;border-bottom:0!important;padding:4px 8px 10px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-tabela-card:has(tr.mensalidades-row>td:nth-child(10)):not(#tdbm)>.mensalidades-table-scroll{overflow:visible!important}
+html:not(.tdb-aurora-pdf) body .festas-grupo-card:has(tbody tr>td:nth-child(7)):not(#tdbm)>div:first-child{background:transparent!important;border-bottom:0!important;padding-left:8px!important;padding-right:8px!important}
+
+html:not(.tdb-aurora-pdf) body:not(:has(.tdb-remat-exportar-tudo:disabled)) .mensalidades-tabela-card:has(tr.mensalidades-row>td:nth-child(10)):not(#tdbm)::before,html:not(.tdb-aurora-pdf) body:not(:has(.tdb-remat-exportar-tudo:disabled)) .mensalidades-tabela-card:has(tr.mensalidades-row>td:nth-child(10)):not(#tdbm)::after,html:not(.tdb-aurora-pdf) body:not(:has(.tdb-remat-exportar-tudo:disabled)) .festas-grupo-card:has(tbody tr>td:nth-child(7)):not(#tdbm)::before,html:not(.tdb-aurora-pdf) body:not(:has(.tdb-remat-exportar-tudo:disabled)) .festas-grupo-card:has(tbody tr>td:nth-child(7)):not(#tdbm)::after{display:none!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes tr.mensalidades-row>td:nth-child(10)):not(#tdbm) table.mensalidades-detalhes:not(#tdbm),html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela tbody tr>td:nth-child(7)):not(#tdbm) table.festas-tdb-tabela:not(#tdbm){background:transparent!important;background-color:transparent!important;border:0!important;box-shadow:none!important}
+/* ===== o balão ===== */
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll:has(table.mensalidades-detalhes):not(#tdbm) table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando):has(>td:nth-child(10)),
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela):not(#tdbm) table.festas-tdb-tabela tbody tr:has(>td:nth-child(7)){
+  display:flex!important;flex-wrap:wrap;align-items:center;gap:9px 6px;position:relative;
+  margin:0 0 10px!important;padding:13px 14px 12px 17px!important;width:100%;box-sizing:border-box;
+  border:1px solid var(--aurora-edge,rgba(255,255,255,.9))!important;border-bottom:1px solid var(--aurora-edge,rgba(255,255,255,.9))!important;border-radius:20px!important;
+  background-color:var(--c-paperCard)!important;box-shadow:var(--aurora-shadow,0 8px 24px rgba(30,40,70,.09))!important;overflow:hidden;
+  background-image:linear-gradient(var(--tdbm-bar),var(--tdbm-bar))!important;background-repeat:no-repeat!important;background-size:3.5px calc(100% - 28px)!important;background-position:0 50%!important}
+/* faixa de cor do status: azul = pago, vermelha = pendente, dourada = parcial */
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:has(>td:nth-child(4)>button[style*="c-red"]):not(#tdbm){--tdbm-bar:#c62d36}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:has(>td:nth-child(4)>button[style*="c-gold"]):not(#tdbm){--tdbm-bar:#d98a00}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(6) .selection-chip[style*="c-red"]):not(#tdbm){--tdbm-bar:#c62d36}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(6) .selection-chip[style*="c-gold"]):not(#tdbm){--tdbm-bar:#d98a00}
+html:not(.tdb-aurora-pdf) body.dark-mode .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:has(>td:nth-child(4)>button[style*="c-red"]):not(#tdbm),html:not(.tdb-aurora-pdf) body.dark-mode .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(6) .selection-chip[style*="c-red"]):not(#tdbm){--tdbm-bar:#ff8088}
+/* seleção azul continua valendo no balão */
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row[style*="224, 174, 60"]:not(#tdbm):not(#tdbm2),html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row[style*="184, 92, 163"]:not(#tdbm):not(#tdbm2),html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr[style*="224, 174, 60"]:not(#tdbm):not(#tdbm2){background-color:rgba(23,103,207,.12)!important;box-shadow:inset 0 0 0 1.5px rgba(23,103,207,.40)!important;border-radius:20px!important}
+html:not(.tdb-aurora-pdf) body.dark-mode .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row[style*="224, 174, 60"]:not(#tdbm):not(#tdbm2),html:not(.tdb-aurora-pdf) body.dark-mode .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row[style*="184, 92, 163"]:not(#tdbm):not(#tdbm2),html:not(.tdb-aurora-pdf) body.dark-mode .festas-tdb-scroll table.festas-tdb-tabela tbody tr[style*="224, 174, 60"]:not(#tdbm):not(#tdbm2){background-color:rgba(121,173,244,.18)!important;box-shadow:inset 0 0 0 1.5px rgba(121,173,244,.45)!important}
+
+/* ===== traço fino em relevo entre as etiquetas e os detalhes ===== */
+html:not(.tdb-aurora-pdf) body:not(:has(.tdb-remat-exportar-tudo:disabled)) .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando):has(>td:nth-child(10)):not(#tdbm)::before,
+html:not(.tdb-aurora-pdf) body:not(:has(.tdb-remat-exportar-tudo:disabled)) .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7)):not(#tdbm)::before{content:"";order:20;flex:0 0 calc(100% - 44px);margin-left:44px;height:0;border-top:1px solid var(--tdbm-l1);border-bottom:1px solid var(--tdbm-l2)}
+html:not(.tdb-aurora-pdf) body:not(:has(.tdb-remat-exportar-tudo:disabled)) .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7)):not(#tdbm)::before{flex-basis:100%;margin-left:0}
+
+/* ===== células soltas no balão ===== */
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:not(#tdbm),
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:not(#tdbm){display:block;flex:none;min-width:0;width:auto!important;margin:0!important;padding:0!important;border:0!important;background-color:transparent!important;box-shadow:none!important;font-size:12px!important;grid-area:auto}
+/* -- Mensalidades: nome e valor */
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(1):not(#tdbm){order:1;flex:1 1 calc(100% - 130px);font-size:14px!important;font-weight:800!important;text-transform:uppercase;line-height:1.2}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(1) label:not(#tdbm){width:34px!important;height:34px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(1)>div:not(#tdbm){gap:10px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(3):not(#tdbm){order:2;flex:0 0 auto;margin-left:auto!important;font-size:14.5px!important;text-align:right!important}
+/* -- Mensalidades: etiquetas (pago, nota, banco, convênio) */
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(4):not(#tdbm){order:10;margin-left:44px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(2):not(#tdbm){order:11}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(5):not(#tdbm){order:12}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(8):not(#tdbm){order:13}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(5)>span:not(#tdbm){width:auto!important;padding:4px 9px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(4)>button:not(#tdbm),html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(2)>button:not(#tdbm){min-height:0!important}
+/* -- Mensalidades: responsável, nota, data e botões */
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(6):not(#tdbm){order:21;margin-left:44px!important;padding-left:34px!important;flex:0 1 auto;max-width:calc(100% - 44px)}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(7):not(#tdbm){order:22;padding-left:30px!important;flex:0 1 auto;margin-left:6px!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(6):not(#tdbm),html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(7):not(#tdbm){padding-top:0!important;padding-bottom:0!important;line-height:1.5;color:var(--c-ink)!important;font-weight:700}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(9):not(#tdbm){order:24;flex:1 1 calc(100% - 44px - 84px);margin-left:44px!important;padding-left:30px!important;line-height:1.5;color:var(--c-ink)!important;font-weight:700;justify-self:auto}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(10):not(#tdbm){order:25;margin-left:auto!important}
+
+/* -- Festas: nome e valor, etiquetas, data e botões */
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(1):not(#tdbm){order:1;flex:1 1 calc(100% - 120px);font-size:15px!important;font-weight:800!important;line-height:1.2}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(3):not(#tdbm){order:2;flex:0 0 auto;margin-left:auto!important;font-size:14.5px!important;text-align:right!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(6):not(#tdbm){order:10}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(6) .selection-chip:not(#tdbm){width:auto!important;padding:4px 12px!important;border-radius:999px!important;font-size:11.5px!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(2):not(#tdbm){order:11;grid-area:auto;justify-self:auto;padding:4px 10px!important;border-radius:999px;background:var(--c-lineSoft)!important;background-image:none!important;font-weight:800;color:var(--c-inkSoft)}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(2) span:not(#tdbm)::after{content:" pessoas";font-weight:700}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(4):not(#tdbm){order:12}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(4):has(>span:not(.busca-liquid-glass)):not(#tdbm){display:none}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(5):not(#tdbm){order:24;flex:1 1 calc(100% - 90px);padding-left:34px!important;line-height:1.5;font-weight:700;color:var(--c-ink)!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(7):not(#tdbm){order:25;margin-left:auto!important}
+
+/* ===== botões só com ícone (editar / excluir) ===== */
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(10) button:not(#tdbm),
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(7) button:not(#tdbm){font-size:0!important;gap:0!important;width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;padding:0!important;justify-content:center;border-radius:12px!important;opacity:1!important}
+html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row:not(.mensalidades-row-editando)>td:nth-child(10) button svg:not(#tdbm),html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(7) button svg:not(#tdbm){width:16px!important;height:16px!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(7) button:not(#tdbm){border:1px solid var(--c-line)!important;background:var(--c-paperCard)!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(7) button[title*="Excluir"]:not(#tdbm),html:not(.tdb-aurora-pdf) body .mensalidades-table-scroll table.mensalidades-detalhes tbody tr.mensalidades-row>td:nth-child(10) button[title*="Excluir"]:not(#tdbm){background:rgba(198,45,54,.10)!important;border-color:transparent!important}
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody tr:has(>td:nth-child(7))>td:nth-child(7)>div:not(#tdbm){gap:6px!important}
+
+html:not(.tdb-aurora-pdf) body .festas-grupo-card:has(tbody tr>td:nth-child(7)):not(#tdbm) .festas-tdb-scroll:not(#tdbm){background:transparent!important;border:0!important;box-shadow:none!important}
+/* ===== Festas: total do grupo vira um balão ===== */
+html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela):not(#tdbm) table.festas-tdb-tabela tfoot tr:not(#tdbm){border:1px solid var(--aurora-edge,rgba(255,255,255,.9))!important;border-radius:18px;background:var(--c-paperCard)!important;box-shadow:var(--aurora-shadow,0 8px 24px rgba(30,40,70,.09))!important;padding:11px 14px!important}
+}
+
+</style>
 
 <script id="tdbm-contas-pessoais-pago-data-v1">
 (function(){
