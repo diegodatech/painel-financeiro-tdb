@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tempo6-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tempo7-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tempo6-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tempo7-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -784,7 +784,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 6";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 7";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1231,7 +1231,7 @@ html.dark-mode {
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 6</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 7</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1277,10 +1277,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tempo6-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tempo7-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo6-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo7-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -17493,6 +17493,235 @@ html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc][data-tdbv-open]
       var k=card.getAttribute('data-tdbv-key');if(opened[k])delete opened[k];else opened[k]=1;run();
     }
   });
+  function start(){new MutationObserver(sched).observe(document.body,{childList:true,subtree:true,characterData:true});sched()}
+  if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+})();
+
+</script>
+<style id="tdb7-rematricula-v1">
+/* TEMPO 7 — Rematrícula: mesmo padrão de Valores (cabeçalho de vidro, balões, faixas que abrem, linhas planas). Só aparência. No PDF tudo aparece como antes. */
+html.tdb-aurora-pdf #trm-bar,html.tdb-aurora-pdf #trm-pdf,html.tdb-aurora-pdf .trm-sm,html.tdb-aurora-pdf .trm-chev{display:none!important}
+.trm-sm,.trm-chev{display:none}
+#trm-pdf{display:none}
+
+/* blocos soltos: os grupos em grade viram uma coluna só */
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-wrap]{display:contents!important}
+html:not(.tdb-aurora-pdf) body [data-trm]:not(#trm7x){gap:16px!important}
+html:not(.tdb-aurora-pdf) body [data-trm] .tdb-remat-card[data-trm-vis="0"]:not(#trm7x){display:none!important}
+html:not(.tdb-aurora-pdf) body [data-trm] > .tdb-remat-exportar-tudo[data-trm-hide]:not(#trm7x){display:none!important}
+html:not(.tdb-aurora-pdf) [data-trm] .tdb-remat-card{margin-top:0!important}
+
+/* cabeçalho de vidro */
+html:not(.tdb-aurora-pdf) body [data-trm] [data-trm-k="hdr"]:not(#trm7x){display:grid!important;grid-template-columns:minmax(0,1fr);gap:14px;align-content:start;justify-content:normal}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-k="hdr"] [data-trm-title]{font-size:22px!important;font-weight:800!important;letter-spacing:-.01em}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-k="hdr"] [data-trm-field]{display:flex!important;flex-wrap:wrap;align-items:center;gap:10px!important;margin-top:0!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-k="hdr"] [data-trm-field] > button:not(#trm-pdf){margin-left:auto!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-k="hdr"] [data-trm-field] > #trm-pdf{display:inline-flex}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-k="hdr"] [data-trm-field] > input{background:var(--c-paperCard);box-shadow:0 3px 10px rgba(30,40,60,.07);border-radius:12px!important;padding:8px 10px!important}
+
+/* balões (mesmo desenho dos balões da Festas TDB e de Valores) */
+#trm-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+#trm-bar>button{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+#trm-bar .trm-sep{width:1px;background:var(--c-line);margin:4px 2px;flex:0 0 1px}
+
+/* botões de vidro: exportar quadro, exportar página, ocultar tudo */
+html:not(.tdb-aurora-pdf) body [data-trm] .tdb-remat-exportar button:not(#trm7x),html:not(.tdb-aurora-pdf) body [data-trm] .tdb-remat-exportar-tudo:not(#trm7x),html:not(.tdb-aurora-pdf) body [data-trm] [data-trm-field] > button:not(#trm7x),html:not(.tdb-aurora-pdf) body [data-trm] #trm-pdf:not(#trm7x){
+ background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard)!important;border:1px solid var(--aurora-edge,var(--c-line))!important;border-radius:12px!important;box-shadow:var(--aurora-shadow,0 3px 10px rgba(30,40,60,.08))!important;
+ backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));color:var(--c-inkButton,var(--c-ink))!important;font-weight:800!important;font-size:12.5px!important;padding:9px 12px!important;min-height:0!important}
+html:not(.tdb-aurora-pdf) body [data-trm] [data-trm-field] > button:not(#trm-pdf):not(#trm7x){color:var(--c-ink)!important}
+html:not(.tdb-aurora-pdf) [data-trm] .tdb-remat-exportar{border-top:1px solid var(--c-lineSoft)!important;margin-top:12px!important}
+
+/* faixas que abrem */
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]>:first-child{display:flex!important;flex-wrap:wrap;align-items:center!important;gap:8px 10px;cursor:pointer;margin-bottom:0!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]>:first-child>*{order:2}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]>:first-child>:first-child{order:0;flex:1 1 auto;min-width:0;font-size:15px!important;margin-bottom:0!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]>:first-child>.trm-sm{order:1;margin-left:auto}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]>:first-child>.trm-chev{order:3}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-open]>:first-child{padding-bottom:12px;border-bottom:1px solid var(--c-lineSoft);margin-bottom:10px!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]:not([data-trm-open])>:first-child{border-bottom:0!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]:not([data-trm-open])>:not(:first-child){display:none!important}
+/* Simulador de mensalidades: a faixa fechada fica do mesmo tamanho das outras */
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child{padding:14px 18px!important;background:transparent!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child>div:first-child{flex:1 1 auto;min-width:0}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child>div:first-child>div:first-child{flex:1 1 auto;min-width:0}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child>div:first-child>div:first-child>div:first-child{margin-bottom:0!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child>div:first-child>div:first-child>div:first-child>div:first-child{width:36px!important;height:36px!important;font-size:18px!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child>div:first-child>div:first-child>div:first-child>div:last-child{font-size:15px!important;line-height:1.2!important}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child>div:first-child>div:first-child>div:nth-child(2){display:none}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"][data-trm-open]>:first-child>div:first-child>div:first-child>div:nth-child(2){display:block;margin-top:6px}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]>:first-child>div:not(.trm-sm):not([data-trm-title]):first-child{flex:1 1 240px}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc] > :first-child > .trm-sm{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc] > :first-child > .trm-chev{display:block;flex:0 0 auto;width:8px;height:8px;border-right:2px solid var(--c-inkSoft);border-bottom:2px solid var(--c-inkSoft);transform:rotate(45deg) translateY(-2px);margin:0 6px 0 2px;transition:transform .2s}
+html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-open] > :first-child > .trm-chev{transform:rotate(-135deg) translateY(-2px)}
+.trm-sm span{background:var(--c-paperCard);border:1px solid var(--c-lineSoft);box-shadow:0 3px 10px rgba(30,40,60,.07);border-radius:20px;padding:5px 12px;font-size:12.5px;color:var(--c-inkSoft);white-space:nowrap;font-weight:600}
+.trm-sm b{font-family:'IBM Plex Mono',monospace;color:var(--c-ink);font-weight:700}
+
+/* linhas planas (sem caixinhas dentro do balão) */
+html:not(.tdb-aurora-pdf) body [data-trm] [data-trm-k="reaj"] div[style*="display: grid"][style*="gap: 8px"]>div:not(#trm7x):not(#tdb4x){background:transparent!important;border-radius:0!important;box-shadow:none!important;border-bottom:1px solid var(--c-lineSoft);padding:12px 4px!important}
+html:not(.tdb-aurora-pdf) body [data-trm] [data-trm-k="reaj"] div[style*="display: grid"][style*="gap: 8px"]>div:last-child:not(#trm7x):not(#tdb4x){border-bottom:0}
+html:not(.tdb-aurora-pdf) body [data-trm] [data-trm-k="stat"] div[style*="min-height: 26px"]:not(#trm7x):not(#tdb4x){background:transparent!important;border-radius:0!important;box-shadow:none!important;border-bottom:1px solid var(--c-lineSoft);padding-left:4px!important;padding-right:4px!important}
+html:not(.tdb-aurora-pdf) body [data-trm] [data-trm-k="stat"] div[style*="min-height: 26px"]:last-child:not(#trm7x):not(#tdb4x){border-bottom:0}
+
+@media(max-width:700px){
+ #trm-bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #trm-bar>button{white-space:normal}
+ #trm-bar>.trm-all{grid-column:1/-1}
+ #trm-bar .trm-sep{display:none}
+ html:not(.tdb-aurora-pdf) [data-trm] [data-trm-k="hdr"] [data-trm-title]{font-size:20px!important}
+ html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]>:first-child>.trm-sm{order:9;flex:1 0 100%;justify-content:flex-start;margin-left:0}
+ html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc]>:first-child>.trm-sm span{flex:1 1 auto;text-align:center}
+}
+
+/* computador/tablet: "Exportar este quadro" do cabeçalho vai para o canto de cima */
+html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula[data-trm] [data-trm-k="hdr"]:not(#trm7x){grid-template-columns:minmax(0,1fr) auto;align-items:start}
+html:not(.tdb-aurora-pdf) .tdb-pc-rematricula[data-trm] [data-trm-k="hdr"]>*{grid-column:1/-1}
+html:not(.tdb-aurora-pdf) .tdb-pc-rematricula[data-trm] [data-trm-k="hdr"]>:first-child{grid-column:1;grid-row:1}
+html:not(.tdb-aurora-pdf) .tdb-pc-rematricula[data-trm] [data-trm-k="hdr"]>.tdb-remat-exportar{grid-column:2;grid-row:1;margin:0!important;padding:0!important;border:0!important;align-self:start;flex:0 0 auto}
+html:not(.tdb-aurora-pdf) .mobile-rematricula[data-trm] [data-trm-k="hdr"]>.tdb-remat-exportar{margin-top:0!important;padding-top:10px}
+@media(max-width:700px){
+ #trm-bar>button:last-child{grid-column:1/-1}
+ html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child{padding:12px 14px!important}
+ html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child>div:first-child{flex-wrap:nowrap!important;flex:1 1 0}
+ html:not(.tdb-aurora-pdf) [data-trm] [data-trm-acc][data-trm-k="simu"]>:first-child>div:first-child>div:first-child{min-width:0!important}
+}
+
+</style>
+<script id="tdb7-rematricula-baloes">
+(function(){
+  /* TEMPO 7 — Rematrícula: balões + faixas. Só aparência: o script apenas marca/mostra/esconde blocos que já existem
+     e repassa cliques aos botões originais. Nada de dados, contas, sincronização ou lixeira. */
+  var sel='todos',inited=false,busy=false,opened={},lastSig='';
+  var RX=[['hdr',/Rematr[ií]cula\s*—/i],['ano',/Linha do ano/i],['stat',/Status da rematr/i],['ideal',/Onde a mensalidade/i],['prop',/Mensalidade proporcional/i],['reaj',/Reajuste ideal/i],['imp',/Impacto financeiro/i],['simu',/Simulador de mensalidades/i],['desc',/Simulador de desconto/i],['und',/Desconto\/acr[eé]scimo/i]];
+  var GROUPS=[
+    {k:'todos',n:'Todos',ids:['ano','stat','ideal','reaj','imp','simu','prop','desc','und']},
+    {k:'ano',e:'📅',n:'Linha do ano',ids:['ano']},
+    {k:'stat',e:'✅',n:'Status',ids:['stat']},
+    {k:'ideal',e:'🎯',n:'Mensalidade ideal',ids:['ideal']},
+    {k:'reaj',e:'🧮',n:'Reajuste',ids:['reaj','imp','simu']},
+    {k:'calc',e:'🧾',n:'Calculadoras',ids:['prop','desc','und']}
+  ];
+  var STY={
+    on:'min-height:40px;min-width:0;flex:1 1 auto;border:1px solid var(--c-gold);border-radius:12px;background:var(--c-goldSoft);color:var(--c-ink);font-size:12.5px;font-weight:800;cursor:pointer;--select-cor:var(--c-gold);padding:7px 14px',
+    off:'min-height:40px;min-width:0;flex:1 1 auto;border:1px solid var(--c-line);border-radius:12px;background:var(--c-paperCard);color:var(--c-ink);font-size:12.5px;font-weight:800;cursor:pointer;--select-cor:var(--c-gold);padding:7px 14px',
+    exp:'border-radius:12px;padding:9px 12px;font-weight:800;font-size:12.5px;cursor:pointer;color:var(--c-inkButton)'
+  };
+  function txt(el,n){return (el.textContent||'').replace(/[\s ]+/g,' ').trim().slice(0,n||4000)}
+  function txtS(el){
+    var w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null),n,o='';
+    while((n=w.nextNode())){if(n.parentElement&&n.parentElement.closest('.trm-sm'))continue;o+=n.nodeValue}
+    return o.replace(/[\s\u00a0]+/g,' ').trim();
+  }
+  function mk(tag,attrs,kids){
+    var e=document.createElement(tag);
+    for(var k in (attrs||{})){e.setAttribute(k,attrs[k])}
+    (kids||[]).forEach(function(c){e.appendChild(typeof c==='string'?document.createTextNode(c):c)});
+    return e;
+  }
+  function setA(e,n,v){if(v===null||v===false){if(e.hasAttribute(n))e.removeAttribute(n)}else if(e.getAttribute(n)!==v)e.setAttribute(n,v)}
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+  function keyOf(card){
+    var h=card.firstElementChild;if(!h)return null;var t=txt(h,160);
+    for(var i=0;i<RX.length;i++){if(RX[i][1].test(t))return RX[i][0]}
+    return null;
+  }
+  function m(re,s){var r=re.exec(s);return r?r[1]:null}
+  function chip(label,val){return val?'<span>'+label+' <b>'+esc(val)+'</b></span>':''}
+  function findChild(card,re){var f=null;[].forEach.call(card.children,function(c){if(!f&&re.test(txtS(c)))f=c});return f}
+  function summary(key,card){
+    var t=txtS(card),c;
+    if(key==='ano'){var mes=null;[].forEach.call(card.querySelectorAll('.tdb-remat-meses>div'),function(d){if(!mes&&/em curso/i.test(txtS(d))&&d.firstElementChild)mes=txtS(d.firstElementChild)});return chip('Mês em curso',mes)}
+    if(key==='stat'){c=findChild(card,/confirmados.*aguardando/i);var s=c?txtS(c):'';
+      return chip('Confirmados',m(/(\d+)\s*confirmados/i,s))+chip('Aguardando',m(/(\d+)\s*aguardando/i,s))+chip('Não renovam',m(/(\d+)\s*n[aã]o renovam/i,s))}
+    if(key==='ideal'){c=findChild(card,/(Custo m[ií]nimo|Piso).*(Ideal)/i);var s2=c?txtS(c):'';
+      return chip('Ideal',m(/Ideal[^R]*?(R\$\s*[\d.,]+)/i,s2))+chip('Margem',m(/M[eé]dia das margens mensais\s*([\d.,]+%)/i,t))}
+    if(key==='prop'){c=findChild(card,/=/);var s3=c?txtS(c):'';var all=s3.match(/R\$\s*[\d.,]+/g);return all&&all.length?chip('Proporcional',all[all.length-1]):''}
+    if(key==='reaj'){var inp=card.querySelector('input.tdb-remat-sugerido');var sug=inp?(inp.value||inp.placeholder||'0'):null;
+      return chip('Padrão',m(/Padr[aã]o(?: hist[oó]rico)?\s*([\d.,]+%)/i,t))+(sug!==null?chip('Sugerido',sug.replace(/%$/,'')+'%'):'')}
+    if(key==='imp'){c=findChild(card,/^(Aplicando|Sugerido vs)/i);var s4=c?txtS(c):'';return chip('Diferença',m(/([−\-+]?\s*R\$\s*[\d.,]+)/,s4.replace(/^[^−\-+R]*(?=[−\-+]?\s*R\$)/,'')))}
+    if(key==='simu'){return chip('Padrão',m(/([+−-]\s*\d+[.,]\d+%)/,txtS(card.querySelector('table.tdb-tabela-reajuste thead')||card)))}
+    if(key==='desc'){return (function(){var a=m(/([\d.,]+%)\s*de desconto/i,t);var b=m(/(R\$\s*[\d.,]+)\s*valor final/i,t);return (a?'<span><b>'+esc(a)+'</b> de desconto</span>':'')+chip('Final',b)})()}
+    if(key==='und'){c=findChild(card,/Desfazer/i);var s5=c?txtS(c):'';return chip('Original',m(/Original\s*(R\$\s*[\d.,]+)/i,s5))+chip('Atual',m(/Atual\s*(R\$\s*[\d.,]+)/i,s5))}
+    return '';
+  }
+  function run(){
+    busy=false;
+    var root=document.querySelector('.tdb-pc-rematricula,.mobile-rematricula');
+    if(!root)return;
+    var mobile=root.classList.contains('mobile-rematricula');
+    setA(root,'data-trm','1');
+    var cards=[].slice.call(root.querySelectorAll('.tdb-remat-card')),by={},hdr=null;
+    cards.forEach(function(c){
+      var k=keyOf(c);setA(c,'data-trm-k',k);
+      if(k){by[k]=c;if(k==='hdr')hdr=c}
+      var p=c.parentElement;while(p&&p!==root){setA(p,'data-trm-wrap','1');p=p.parentElement}
+    });
+    if(!inited&&by.ano){opened.ano=1;inited=true}
+    var g=GROUPS.filter(function(x){return x.k===sel})[0]||GROUPS[0];
+    var acc=g.ids.length>1;
+    setA(root,'data-trm-view',sel);
+    /* cabeçalho: título, campo, balões */
+    if(hdr){
+      var ttl=null,field=null;
+      [].forEach.call(hdr.querySelectorAll('div'),function(d){if(!ttl&&!d.children.length&&/^\W*Rematr[ií]cula\s*—/i.test(txt(d)))ttl=d});
+      [].forEach.call(hdr.children,function(d){if(!field&&d.tagName==='DIV'&&d.querySelector(':scope > input'))field=d});
+      if(ttl)setA(ttl,'data-trm-title','1');
+      if(field)setA(field,'data-trm-field','1');
+      var tudo=null;[].forEach.call(root.children,function(c){if(c.classList&&c.classList.contains('tdb-remat-exportar-tudo'))tudo=c});
+      setA(root,'data-trm-pcpdf',tudo?'1':null);
+      if(tudo)setA(tudo,'data-trm-hide','1');
+      var sig=[sel,!!tudo,!!field,GROUPS.map(function(x){return x.k}).join('|'),(txt(hdr.firstElementChild,160).match(/\b(20\d\d)\b/)||[''])[0]].join('§');
+      var bar=document.getElementById('trm-bar');
+      if(bar&&bar.parentNode!==hdr){bar.parentNode&&bar.parentNode.removeChild(bar);bar=null}
+      var px=document.getElementById('trm-pdf');
+      if(px&&(!field||px.parentNode!==field||!tudo)){px.parentNode&&px.parentNode.removeChild(px);px=null}
+      if(!bar||sig!==lastSig){
+        lastSig=sig;
+        var yr=(txt(hdr.firstElementChild,160).match(/\b(20\d\d)\b/)||[''])[0];
+        var nb=mk('div',{id:'trm-bar','data-export-ignore':'true'});
+        GROUPS.forEach(function(x,i){
+          if(i===1)nb.appendChild(mk('span',{'class':'trm-sep'}));
+          var on=sel===x.k,label=(x.e?x.e+' ':'')+x.n+(x.k==='reaj'&&yr?' '+yr:'');
+          nb.appendChild(mk('button',{type:'button','class':'selection-card'+(on?' selection-card-ativa':'')+(x.k==='todos'?' trm-all':''),'data-trm-sel':x.k,style:on?STY.on:STY.off},[label]));
+        });
+        var last=hdr.lastElementChild,ex=last&&last.classList&&last.classList.contains('tdb-remat-exportar')?last:null;
+        if(bar&&bar.parentNode===hdr)hdr.replaceChild(nb,bar);else if(ex)hdr.insertBefore(nb,ex);else hdr.appendChild(nb);
+      }
+      if(tudo&&field&&!px){field.appendChild(mk('button',{type:'button',id:'trm-pdf','class':'busca-liquid-glass','data-export-ignore':'true',style:STY.exp},['Exportar toda a página em PDF']))}
+    }
+    /* visibilidade, faixas e resumos */
+    cards.forEach(function(c){
+      var k=c.getAttribute('data-trm-k');if(!k||k==='hdr')return;
+      var vis=sel==='todos'||g.ids.indexOf(k)>=0;
+      setA(c,'data-trm-vis',vis?'1':'0');
+      setA(c,'data-trm-acc',acc?'1':null);
+      setA(c,'data-trm-open',(!acc||opened[k])?'1':null);
+      var h=c.firstElementChild;if(!h)return;
+      var sm=h.querySelector(':scope > .trm-sm');
+      if(!sm){sm=mk('span',{'class':'trm-sm','data-export-ignore':'true'});h.appendChild(sm)}
+      var html=summary(k,c);if(sm.innerHTML!==html)sm.innerHTML=html;
+      if(!h.querySelector(':scope > .trm-chev'))h.appendChild(mk('span',{'class':'trm-chev','data-export-ignore':'true'}));
+    });
+  }
+  function sched(){if(busy)return;busy=true;(window.requestAnimationFrame||setTimeout)(run)}
+  document.addEventListener('click',function(e){
+    var t=e.target;if(!t||!t.closest)return;
+    var root=document.querySelector('.tdb-pc-rematricula[data-trm],.mobile-rematricula[data-trm]');if(!root||!root.contains(t))return;
+    var b=t.closest('[data-trm-sel]');
+    if(b){
+      sel=b.getAttribute('data-trm-sel');
+      var g=GROUPS.filter(function(x){return x.k===sel})[0];
+      if(g&&g.ids.length>1&&!g.ids.some(function(i){return opened[i]}))opened[g.ids[0]]=1;
+      run();return;
+    }
+    b=t.closest('#trm-pdf');
+    if(b){var o=null;[].forEach.call(root.children,function(c){if(c.classList&&c.classList.contains('tdb-remat-exportar-tudo'))o=c});if(o)o.click();return}
+    var card=t.closest('[data-trm-acc]');
+    if(card&&root.contains(card)&&card.firstElementChild&&card.firstElementChild.contains(t)&&!t.closest('button,input,select,a,label')){
+      var k=card.getAttribute('data-trm-k');if(!k)return;
+      if(opened[k])delete opened[k];else opened[k]=1;run();
+    }
+  });
+  document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('[data-trm]'))sched()},true);
   function start(){new MutationObserver(sched).observe(document.body,{childList:true,subtree:true,characterData:true});sched()}
   if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 })();
