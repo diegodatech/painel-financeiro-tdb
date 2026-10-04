@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tempo4-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tempo5-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tempo4-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tempo5-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -844,7 +844,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 4";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 5";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1816,7 +1816,7 @@ html, body { overscroll-behavior-y: none; }
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 4</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 5</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1866,10 +1866,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tempo4-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tempo5-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo4-v1-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo5-v1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -19915,119 +19915,231 @@ html body .tcal[data-phone="1"] .tcal-chips>.tcal-chip:not(#tdb3x){min-width:0!i
 }
 
 </style>
-<style id="tdb4-valores-v1">
+<style id="tdb5-valores-v1">
 /* TEMPO 4 — Contratos e Rematrícula: caixas chatas (arquivos, simulador ①/②, sugerido, valor original, despesas, alunos) no mesmo balão arredondado. Só aparência. */
 html:not(.tdb-aurora-pdf) body .painel-main div[style*="background: var(--c-paper);"][style*="border: 1px solid var(--c-lineSoft)"][style*="border-radius: 7px"]:not(#tdb4x){border-radius:14px!important;box-shadow:0 3px 10px rgba(30,40,60,.06)!important}
 html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula div[style*="border-radius: 10px"][style*="background"]:not(#tdb4x),html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula div[style*="border-radius: 12px"][style*="background"]:not(#tdb4x){border-radius:16px!important;box-shadow:0 4px 14px rgba(30,40,60,.07)!important}
 html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula div[style*="border-radius: 8px"][style*="background"]:not(#tdb4x),html:not(.tdb-aurora-pdf) body .tdb-pc-rematricula div[style*="border-radius: 7px"][style*="background"]:not(#tdb4x){border-radius:13px!important;box-shadow:0 3px 10px rgba(30,40,60,.06)!important}
 html:not(.tdb-aurora-pdf) body.dark-mode .tdb-pc-rematricula div[style*="border-radius"][style*="background"]:not(#tdb4x),html:not(.tdb-aurora-pdf) body.dark-mode .painel-main div[style*="background: var(--c-paper);"][style*="border-radius: 7px"]:not(#tdb4x){box-shadow:0 4px 14px rgba(0,0,0,.28)!important}
 
-/* TEMPO 4 — Valores em abas (Convênios | Irmãos e especiais | Avulsos | Escola). Só aparência: a barra de abas só mostra/esconde blocos que já existem; no PDF tudo aparece como antes. */
-#tdbv-tabs{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1}
-html.tdb-aurora-pdf #tdbv-tabs{display:none!important}
-#tdbv-tabs button{appearance:none;-webkit-appearance:none;border:1px solid var(--c-line);background:var(--c-paperCard);color:var(--c-ink);border-radius:999px;font:700 13px/1.2 inherit;font-family:inherit;padding:9px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 3px 10px rgba(30,40,60,.08);white-space:nowrap}
-#tdbv-tabs button.on{background:#1767cf;color:#fff;border-color:transparent}
-#tdbv-tabs .tdbv-n{font-size:11px;font-weight:800;background:rgba(120,130,150,.20);color:inherit;padding:1px 7px;border-radius:99px}
-#tdbv-tabs button.on .tdbv-n{background:rgba(255,255,255,.25)}
-body.dark-mode #tdbv-tabs button{box-shadow:0 3px 10px rgba(0,0,0,.3)}
-body.dark-mode #tdbv-tabs button.on{background:#4d8ef0}
-html:not(.tdb-aurora-pdf) body .export-pagina-valores[data-tdbv-tab]:not(#tdb4x){grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))!important;gap:16px!important;align-items:start}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>*{margin-top:0!important;min-width:0}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="head"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sub~="wide"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"]{grid-column:1/-1}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="conv"]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="conv"]>[data-tdbv-sec="avu"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="conv"]>[data-tdbv-sec="esc"]{display:none!important}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="irm"]>[data-tdbv-sec="conv"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="irm"]>[data-tdbv-sec="avu"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="irm"]>[data-tdbv-sec="esc"]{display:none!important}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="avu"]>[data-tdbv-sec="conv"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="avu"]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="avu"]>[data-tdbv-sec="esc"]{display:none!important}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="esc"]>[data-tdbv-sec="conv"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="esc"]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab="esc"]>[data-tdbv-sec="avu"]{display:none!important}
-/* cartões de convênio: cada linha vira um quadro interno com os valores lado a lado */
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab] [data-tdbv-sub="card"]:not(.mobile-valores-grupo)>div:nth-child(2)>div{background:rgba(255,255,255,.55);border:1px solid var(--c-lineSoft);border-radius:16px;padding:10px 12px}
-html:not(.tdb-aurora-pdf) body.dark-mode .export-pagina-valores[data-tdbv-tab] [data-tdbv-sub="card"]:not(.mobile-valores-grupo)>div:nth-child(2)>div{background:rgba(255,255,255,.05)}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab] [data-tdbv-sub="card"]:not(.mobile-valores-grupo)>div:nth-child(2)>div>div[style*="flex-wrap"]{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:8px!important}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab] [data-tdbv-sub="card"]:not(.mobile-valores-grupo) .busca-liquid-glass{display:flex!important;justify-content:space-between;align-items:center;gap:8px;white-space:nowrap}
-/* irmãos: famílias lado a lado */
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab] [data-tdbv-sec="irm"]>div[style*="display: grid"]{grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr))!important;align-items:start}
-/* escola: cada bloco num balão de vidro */
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"]{background:var(--c-paperCard);border:1px solid var(--aurora-edge,var(--c-line));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));padding:18px 20px}
-html[data-tdb-aurora][data-aurora-vidro]:not(.tdb-aurora-pdf) body:not(.dark-mode) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"],html[data-tdb-aurora][data-aurora-vidro]:not(.tdb-aurora-pdf) body:not(.dark-mode) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"]{background-image:var(--aurora-layers)}
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"] form,html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"] form{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-@media(max-width:600px){
- #tdbv-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
- #tdbv-tabs button{justify-content:center;white-space:normal;text-align:center;padding:10px 8px}
- html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="avu"]{padding:14px}
+
+/* TEMPO 5 — Valores: todos os nomes em balões (mesmo desenho dos balões da Festas TDB). Só aparência; a barra só mostra/esconde blocos que já existem e repassa o clique para os botões originais. No PDF tudo aparece como antes. */
+html.tdb-aurora-pdf #tdbv-head,html.tdb-aurora-pdf .tdbv-sm,html.tdb-aurora-pdf .tdbv-chev{display:none!important}
+.tdbv-chev{display:none}
+#tdbv-head{order:-10;grid-column:1/-1;display:grid;gap:12px;min-width:0}
+#tdbv-head .tdbv-ht{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+#tdbv-head .tdbv-tt{font-size:22px;font-weight:800;letter-spacing:-.01em;color:var(--c-ink);display:flex;gap:10px;align-items:center}
+#tdbv-head .tdbv-ts{margin-top:3px;color:var(--c-inkSoft);font-size:13px}
+#tdbv-head .tdbv-ha,#tdbv-head .tdbv-fact{display:flex;gap:8px;flex-wrap:wrap}
+#tdbv-head .tdbv-fbar{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+#tdbv-head .tdbv-fbar>button{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+#tdbv-head .tdbv-sep{width:1px;background:var(--c-line);margin:4px 2px;flex:0 0 1px}
+html:not(.tdb-aurora-pdf) body .export-pagina-valores>[data-tdbv-vis="0"]:not(#tdbv5x){display:none!important}
+html:not(.tdb-aurora-pdf) body .export-pagina-valores[data-tdbv]:not(#tdbv5x){grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))!important;gap:16px!important;align-items:start}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>*{margin-top:0!important;min-width:0}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="card"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="reaj"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="novo"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="irm"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="avu"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sub~="wide"]{grid-column:1/-1}
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="esc"][data-tdbv-sub~="wide"]{order:3}
+
+/* Todos: cada convênio vira uma faixa que abre ao clicar */
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:first-child{display:flex!important;align-items:center;gap:10px;margin-bottom:0!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:first-child>div:first-child{flex:1 1 auto;font-size:16px!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:first-child>button{margin-left:0!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]:not([data-tdbv-acc])>div:first-child{padding-bottom:10px;border-bottom:1px solid var(--c-lineSoft);margin-bottom:6px!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc]>div:first-child{cursor:pointer}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc][data-tdbv-open]>div:first-child{padding-bottom:12px;border-bottom:1px solid var(--c-lineSoft);margin-bottom:6px!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc]:not([data-tdbv-open])>:not(:first-child){display:none!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:first-child>button{order:6}
+.tdbv-sm{display:none}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc]>div:first-child>.tdbv-sm{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;order:2}
+.tdbv-sm span{background:var(--c-paperCard);border:1px solid var(--c-lineSoft);box-shadow:0 3px 10px rgba(30,40,60,.07);border-radius:20px;padding:5px 12px;font-size:12.5px;color:var(--c-inkSoft);white-space:nowrap}
+.tdbv-sm b{font-family:'IBM Plex Mono',monospace;color:var(--c-ink);font-weight:700}
+.tdbv-hide .tdbv-sm b{filter:blur(7px)}
+
+/* linhas de valores soltas (sem caixinha): nome da linha | valores | lixeira */
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2){gap:0!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div,html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr) auto;column-gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--c-lineSoft)}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div:last-child,html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div:last-child{border-bottom:0}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div>div:first-child,html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div>div:first-child{display:contents!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div>div:first-child>:first-child,html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div>div:first-child>:first-child{grid-column:1;grid-row:1}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div>div:first-child>button,html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div>div:first-child>button{grid-column:3;grid-row:1;margin:0!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div>div:nth-child(2),html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div>button,html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div>div:nth-child(2){grid-column:2;grid-row:1;justify-self:start;margin:0!important}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"] .busca-liquid-glass{padding:8px 14px!important;font-size:13.5px!important}
+/* família (Irmãos): o grid vira um único balão de vidro com as linhas dentro */
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]{gap:0!important;background:var(--c-paperCard);border:1px solid var(--aurora-edge,var(--c-line));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));padding:8px 20px}
+html[data-tdb-aurora][data-aurora-vidro]:not(.tdb-aurora-pdf) body:not(.dark-mode) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]{background-image:var(--aurora-layers)}
+html:not(.tdb-aurora-pdf) body .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div[style*="background"]:not(#tdbv5x):not(#tdbv5y){background:transparent!important;border:0!important;border-bottom:1px solid var(--c-lineSoft)!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:12px 4px!important;margin:0!important}
+html:not(.tdb-aurora-pdf) body .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div[style*="background"]:last-child:not(#tdbv5x):not(#tdbv5y){border-bottom:0!important}
+
+/* escola / avulsos: cada bloco num balão de vidro */
+html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="esc"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="avu"]{background:var(--c-paperCard);border:1px solid var(--aurora-edge,var(--c-line));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));padding:18px 20px}
+html[data-tdb-aurora][data-aurora-vidro]:not(.tdb-aurora-pdf) body:not(.dark-mode) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="esc"],html[data-tdb-aurora][data-aurora-vidro]:not(.tdb-aurora-pdf) body:not(.dark-mode) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="avu"]{background-image:var(--aurora-layers)}
+html:not(.tdb-aurora-pdf) body .export-pagina-valores[data-tdbv]>[data-tdbv-sec="esc"] form:not(#tdbv5x):not(#tdbv5y),html:not(.tdb-aurora-pdf) body .export-pagina-valores[data-tdbv]>[data-tdbv-sec="avu"] form:not(#tdbv5x):not(#tdbv5y){background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+@media(max-width:700px){
+ html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div,html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div{grid-template-columns:minmax(0,1fr) auto;row-gap:8px}
+ html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div>div:nth-child(2),html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="card"]>div:nth-child(2)>div>button,html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-sec="irm"]>div[style*="display: grid"]>div>div:nth-child(2){grid-column:1/-1;grid-row:2}
+ html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc]>div:first-child{flex-wrap:wrap}
+ html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc]>div:first-child>.tdbv-sm{order:9;flex:1 0 100%;justify-content:flex-start}
+ html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc]>div:first-child>.tdbv-sm span{flex:1 1 auto;text-align:center}
+ #tdbv-head .tdbv-ha{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+ #tdbv-head .tdbv-ha>button{white-space:normal}
+ #tdbv-head .tdbv-fbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #tdbv-head .tdbv-fbar>button{white-space:normal}
+ #tdbv-head .tdbv-fbar>.tdbv-all,#tdbv-head .tdbv-fbar>.tdbv-add{grid-column:1/-1}
+ #tdbv-head .tdbv-sep{display:none}
+ #tdbv-head .tdbv-tt{font-size:20px}
+ html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="esc"],html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv]>[data-tdbv-sec="avu"]{padding:14px}
 }
 
-html:not(.tdb-aurora-pdf) .export-pagina-valores[data-tdbv-tab]>[data-tdbv-sec="esc"][data-tdbv-sub~="wide"]{order:3}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc]>div:first-child>.tdbv-chev{display:block;order:5;flex:0 0 auto;width:8px;height:8px;border-right:2px solid var(--c-inkSoft);border-bottom:2px solid var(--c-inkSoft);transform:rotate(45deg) translateY(-2px);margin:0 6px 0 2px;transition:transform .2s}
+html:not(.tdb-aurora-pdf) .export-pagina-valores [data-tdbv-acc][data-tdbv-open]>div:first-child>.tdbv-chev{transform:rotate(-135deg) translateY(-2px)}
 
 </style>
-<script id="tdb4-valores-abas">
+<script id="tdb5-valores-baloes">
 (function(){
-  var TABS=[['conv','Convênios'],['irm','Irmãos e especiais'],['avu','Avulsos'],['esc','Escola']];
-  var cur='conv',busy=false;
-  function txt(el){return (el.textContent||'').replace(/\s+/g,' ').trim().slice(0,70)}
+  var sel='todos',novoOpen=false,reajOpen=false,inited=false,busy=false,opened={},lastSig='';
+  var STY={
+    on:'min-height:40px;min-width:0;flex:1 1 auto;border:1px solid var(--c-gold);border-radius:12px;background:var(--c-goldSoft);color:var(--c-ink);font-size:12.5px;font-weight:800;cursor:pointer;--select-cor:var(--c-gold);padding:7px 14px',
+    off:'min-height:40px;min-width:0;flex:1 1 auto;border:1px solid var(--c-line);border-radius:12px;background:var(--c-paperCard);color:var(--c-ink);font-size:12.5px;font-weight:800;cursor:pointer;--select-cor:var(--c-gold);padding:7px 14px',
+    add:'min-height:40px;border-radius:12px;padding:7px 12px;border:1px dashed var(--c-gold);color:var(--c-gold);font-weight:900;font-size:12.5px;cursor:pointer',
+    exp:'border-radius:12px;padding:9px 12px;font-weight:800;font-size:12.5px;cursor:pointer;color:var(--c-inkButton)',
+    hid:'border-radius:12px;padding:9px 12px;font-weight:800;font-size:12.5px;cursor:pointer;color:var(--c-ink);display:inline-flex;align-items:center;gap:6px',
+    act:'border-radius:10px;padding:7px 10px;font-size:11.5px;font-weight:800;cursor:pointer;color:var(--c-inkButton)',
+    card:'background: var(--c-paperCard); border: 1px solid var(--c-line); border-radius: 10px; padding: 16px 20px;'
+  };
+  function txt(el,n){return (el.textContent||'').replace(/\s+/g,' ').trim().slice(0,n||70)}
+  function mk(tag,attrs,kids){
+    var e=document.createElement(tag);
+    for(var k in (attrs||{})){e.setAttribute(k,attrs[k])}
+    (kids||[]).forEach(function(c){e.appendChild(typeof c==='string'?document.createTextNode(c):c)});
+    return e;
+  }
   function classify(el){
-    if(el.tagName==='STYLE'||el.id==='tdbv-tabs')return null;
+    if(el.tagName==='STYLE'||el.id==='tdbv-head')return null;
     var t=txt(el),cl=el.classList;
     if(/^\W*Descontos de irm/i.test(t))return ['irm',''];
     if(/^\W*Valores avulsos/i.test(t))return ['avu',''];
     if(/^\W*(Capacidade M|Calend[aá]rio letivo|Conv[eê]nios com v[aá]rias|Categorias de Alimenta)/i.test(t))return ['esc',/Calend|Conv[eê]nios com/i.test(t)?'wide':''];
     if(cl.contains('mobile-categorias-indicadores'))return ['esc',''];
-    if(/^\W*Exportar p[aá]gina|^\W*(Ocultar|Mostrar) valores/i.test(t))return ['head',''];
-    if(el.tagName==='FORM'||cl.contains('mobile-valores-form')||el.tagName==='BUTTON')return ['conv','novo wide'];
-    if(cl.contains('mobile-valores-reajuste')||/^\W*Aplicar reajuste/i.test(t))return ['conv','reaj wide'];
-    if(cl.contains('mobile-valores-grupo')||/paperCard/.test(el.getAttribute('style')||''))return ['conv','card'];
-    return ['head',''];
+    if(/^\W*Exportar p[aá]gina|^\W*(Ocultar|Mostrar) valores|^\W*Valores ocultos/i.test(t)||cl.contains('mobile-bolha-exportar'))return ['hdr',''];
+    if(el.tagName==='BUTTON')return ['novoBtn',''];
+    if(el.tagName==='FORM')return ['novo',''];
+    if(cl.contains('mobile-valores-reajuste')||/^\W*Aplicar reajuste/i.test(t))return ['reaj',''];
+    if(cl.contains('mobile-valores-grupo')||/paperCard/.test(el.getAttribute('style')||''))return ['card',''];
+    return ['other',''];
   }
-  function count(root,sec){ if(sec==='esc')return 0;
-    var n=0;
+  function setA(e,n,v){if(v===null||v===false){if(e.hasAttribute(n))e.removeAttribute(n)}else if(e.getAttribute(n)!==v)e.setAttribute(n,v)}
+  function cap(s){s=s.toLowerCase();return s.charAt(0).toUpperCase()+s.slice(1)}
+  function summary(card){
+    var grid=card.children[1];if(!grid)return '';if(grid.querySelector('input'))return null;
+    var blocks=[].slice.call(grid.children),pick=blocks.slice(0,2),out=[];
+    blocks.forEach(function(b){var l=b.firstElementChild;if(l&&/^\s*nota\s*$/i.test(l.textContent||'')&&pick.indexOf(b)<0)pick.push(b)});
+    pick.forEach(function(b){
+      var l=b.firstElementChild,btn=b.querySelector('button.busca-liquid-glass');
+      if(!l||!btn)return;
+      var v=txt(btn,60).replace(/^[^:]*:\s*/,'');
+      out.push('<span>'+cap(txt(l,40))+' <b>'+v.replace(/</g,'&lt;')+'</b></span>');
+    });
+    return out.join('');
+  }
+  function origBtn(root,re){
+    var f=null;
     [].forEach.call(root.children,function(c){
-      if(sec==='conv'){if(c.getAttribute('data-tdbv-sub')==='card')n++;}
-      else if(c.getAttribute('data-tdbv-sec')===sec){
-        var g=sec==='irm'?c.querySelector(':scope > div[style*="display: grid"]'):c.querySelector(':scope > div[style*="flex-wrap"]');
-        if(g)n=g.children.length;
-      }
+      if(f||c.getAttribute('data-tdbv-sec')!=='hdr')return;
+      [].forEach.call(c.querySelectorAll('button'),function(b){if(!f&&re.test(b.textContent||''))f=b});
     });
-    return n;
-  }
-  function paint(root){
-    var bar=document.getElementById('tdbv-tabs');
-    if(!bar)return;
-    [].forEach.call(bar.children,function(b){
-      var t=b.getAttribute('data-t'),on=t===cur;
-      if(b.classList.contains('on')!==on)b.classList.toggle('on',on);
-      if(b.getAttribute('aria-selected')!==String(on))b.setAttribute('aria-selected',String(on));
-      var n=count(root,t),s=b.querySelector('.tdbv-n');
-      if(s){var v=n>0?String(n):'';if(s.textContent!==v)s.textContent=v;s.style.display=n>0?'':'none';}
-    });
-    if(root.getAttribute('data-tdbv-tab')!==cur)root.setAttribute('data-tdbv-tab',cur);
+    return f;
   }
   function run(){
     busy=false;
     var root=document.querySelector('.export-pagina-valores');
     if(!root)return;
-    var first=null;
+    setA(root,'data-tdbv','1');
+    var cards=[],reaj=null,novo=null,novoBtn=null,has={irm:0,avu:0,esc:0};
     [].forEach.call(root.children,function(c){
       var r=classify(c);if(!r)return;
-      if(c.getAttribute('data-tdbv-sec')!==r[0])c.setAttribute('data-tdbv-sec',r[0]);
-      var sub=r[1];
-      if((c.getAttribute('data-tdbv-sub')||'')!==sub){if(sub)c.setAttribute('data-tdbv-sub',sub);else c.removeAttribute('data-tdbv-sub');}
-      if(!first&&r[0]!=='head')first=c;
+      setA(c,'data-tdbv-sec',r[0]);setA(c,'data-tdbv-sub',r[1]||null);
+      if(r[0]==='card'){var h=c.firstElementChild&&c.firstElementChild.firstElementChild;var k=h?txt(h,60):('#'+cards.length);setA(c,'data-tdbv-key',k);cards.push({el:c,key:k})}
+      else if(r[0]==='reaj')reaj=c;else if(r[0]==='novo')novo=c;else if(r[0]==='novoBtn')novoBtn=c;
+      else if(has[r[0]]===0)has[r[0]]=1;
     });
-    var bar=document.getElementById('tdbv-tabs');
-    if(bar&&bar.parentNode!==root){bar.parentNode&&bar.parentNode.removeChild(bar);bar=null;}
-    if(!bar&&first){
-      bar=document.createElement('div');bar.id='tdbv-tabs';bar.setAttribute('role','tablist');bar.setAttribute('data-export-ignore','true');
-      TABS.forEach(function(t){
-        var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('data-t',t[0]);
-        b.appendChild(document.createTextNode(t[1]));
-        var s=document.createElement('span');s.className='tdbv-n';b.appendChild(s);
-        b.addEventListener('click',function(){cur=t[0];var r=document.querySelector('.export-pagina-valores');if(r)paint(r);});
-        bar.appendChild(b);
-      });
-      root.insertBefore(bar,first);
+    if(!inited&&cards.length){opened[cards[0].key]=1;inited=true}
+    if(sel.indexOf('k:')===0&&!cards.some(function(c){return 'k:'+c.key===sel}))sel='todos';
+    if((sel==='irm'||sel==='avu'||sel==='esc')&&!has[sel])sel='todos';
+    var expBtn=origBtn(root,/Exportar p/i),hidBtn=origBtn(root,/Ocultar|Mostrar|ocultos/i);
+    var hidHTML=hidBtn?hidBtn.innerHTML:'';
+    if(hidBtn&&/Mostrar|ocultos/i.test(hidBtn.textContent||''))root.classList.add('tdbv-hide');else root.classList.remove('tdbv-hide');
+    var sig=[sel,cards.map(function(c){return c.key}).join('|'),novoOpen,reajOpen,hidHTML,!!expBtn,!!novoBtn,!!novo,!!reaj,has.irm,has.avu,has.esc].join('§');
+    var head=document.getElementById('tdbv-head');
+    if(head&&head.parentNode!==root){head.parentNode&&head.parentNode.removeChild(head);head=null}
+    if(!head||sig!==lastSig){
+      lastSig=sig;
+      var nh=mk('div',{id:'tdbv-head','data-export-ignore':'true',style:STY.card});
+      var ha=mk('div',{'class':'tdbv-ha'});
+      if(hidBtn){var hb=mk('button',{type:'button','class':'busca-liquid-glass','data-px':'hide',style:STY.hid});hb.innerHTML=hidHTML;ha.appendChild(hb)}
+      if(expBtn)ha.appendChild(mk('button',{type:'button','class':'busca-liquid-glass','data-px':'pdf',style:STY.exp},['Exportar página em PDF']));
+      nh.appendChild(mk('div',{'class':'tdbv-ht'},[mk('div',{},[mk('div',{'class':'tdbv-tt'},['🏷️ Valores']),mk('div',{'class':'tdbv-ts'},['Tabela de mensalidades por convênio — com e sem desconto'])]),ha]));
+      var bar=mk('div',{'class':'tdbv-fbar'});
+      function bal(label,s,cls){var on=sel===s;var b=mk('button',{type:'button','class':'selection-card'+(on?' selection-card-ativa':'')+(cls?' '+cls:''),'data-tdbv-sel':s,style:on?STY.on:STY.off},[label]);bar.appendChild(b)}
+      bal('Todos','todos','tdbv-all');
+      cards.forEach(function(c){bal(c.key,'k:'+c.key)});
+      if(has.irm||has.avu||has.esc)bar.appendChild(mk('span',{'class':'tdbv-sep'}));
+      if(has.irm)bal('👨‍👩‍👧‍👦 Irmãos e especiais','irm');
+      if(has.avu)bal('🏷️ Avulsos','avu');
+      if(has.esc)bal('🏫 Escola','esc');
+      if(novo||novoBtn)bar.appendChild(mk('button',{type:'button','class':'busca-liquid-glass festas-nova-aba-btn tdbv-add','data-px':'novo',style:STY.add},['+ Novo convênio'+(novoOpen&&!novoBtn?' ▴':'')]));
+      nh.appendChild(bar);
+      if(reaj)nh.appendChild(mk('div',{'class':'tdbv-fact'},[mk('button',{type:'button','class':'busca-liquid-glass','data-px':'reaj',style:STY.act},['📈 Reajuste em massa'+(reajOpen?' ▴':'')])]));
+      if(head&&head.parentNode===root)root.replaceChild(nh,head);else root.insertBefore(nh,root.firstChild);
     }
-    paint(root);
+    var acc=sel==='todos';
+    [].forEach.call(root.children,function(c){
+      var s=c.getAttribute('data-tdbv-sec');if(!s||c.id==='tdbv-head')return;
+      var k=c.getAttribute('data-tdbv-key'),v=1;
+      if(s==='hdr'||s==='novoBtn')v=0;
+      else if(s==='card')v=(acc||sel==='k:'+k)?1:0;
+      else if(s==='reaj')v=((acc||sel.indexOf('k:')===0)&&reajOpen)?1:0;
+      else if(s==='novo')v=((acc||sel.indexOf('k:')===0)&&novoOpen)?1:0;
+      else if(s==='irm'||s==='avu'||s==='esc')v=(sel===s)?1:0;
+      setA(c,'data-tdbv-vis',v?'1':'0');
+      if(s==='card'){
+        setA(c,'data-tdbv-acc',acc?'1':null);
+        setA(c,'data-tdbv-open',(!acc||opened[k])?'1':null);
+        var h=c.firstElementChild,sm=h&&h.querySelector(':scope > .tdbv-sm');
+        if(h){
+          if(!sm){sm=mk('span',{'class':'tdbv-sm','data-export-ignore':'true'});var tb=h.querySelector(':scope > button');tb?h.insertBefore(sm,tb):h.appendChild(sm)}
+          var html=summary(c);if(html!==null&&sm.innerHTML!==html)sm.innerHTML=html;
+          if(!h.querySelector(':scope > .tdbv-chev')){var ch=mk('span',{'class':'tdbv-chev','data-export-ignore':'true'});var tb2=h.querySelector(':scope > button');tb2?h.insertBefore(ch,tb2):h.appendChild(ch)}
+        }
+      }
+    });
   }
   function sched(){if(busy)return;busy=true;(window.requestAnimationFrame||setTimeout)(run)}
-  function start(){new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});sched();}
+  document.addEventListener('click',function(e){
+    var t=e.target;if(!t||!t.closest)return;
+    var root=document.querySelector('.export-pagina-valores');if(!root)return;
+    var b=t.closest('[data-tdbv-sel]');
+    if(b&&root.contains(b)){sel=b.getAttribute('data-tdbv-sel');run();return}
+    b=t.closest('[data-px]');
+    if(b&&root.contains(b)){
+      var a=b.getAttribute('data-px');
+      if(a==='pdf'){var o=origBtn(root,/Exportar p/i);if(o)o.click()}
+      else if(a==='hide'){var o2=origBtn(root,/Ocultar|Mostrar|ocultos/i);if(o2)o2.click()}
+      else if(a==='novo'){
+        var nb=[].filter.call(root.children,function(c){return c.getAttribute('data-tdbv-sec')==='novoBtn'})[0];
+        if(nb)nb.click();else{novoOpen=!novoOpen;if(sel==='irm'||sel==='avu'||sel==='esc')sel='todos';run()}
+      }else if(a==='reaj'){
+        reajOpen=!reajOpen;if(sel==='irm'||sel==='avu'||sel==='esc')sel='todos';run();
+        if(reajOpen){var rj=[].filter.call(root.children,function(c){return c.getAttribute('data-tdbv-sec')==='reaj'})[0];if(rj&&rj.children.length<2){var bt=rj.querySelector('button');if(bt)bt.click()}}
+      }
+      return;
+    }
+    var card=t.closest('[data-tdbv-acc]');
+    if(card&&root.contains(card)&&card.firstElementChild&&card.firstElementChild.contains(t)&&!t.closest('button')){
+      var k=card.getAttribute('data-tdbv-key');if(opened[k])delete opened[k];else opened[k]=1;run();
+    }
+  });
+  function start(){new MutationObserver(sched).observe(document.body,{childList:true,subtree:true,characterData:true});sched()}
   if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 })();
 
