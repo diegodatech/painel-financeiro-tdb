@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo2-v1";
+    window.__TDB_BUILD = "tdbn-20261004-tempo3-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo2-v1"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo3-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -784,7 +784,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 2";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 3";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1231,7 +1231,7 @@ html.dark-mode {
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 2</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 3</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1277,10 +1277,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo2-v1"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo3-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo2-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo3-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18304,7 +18304,7 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgi.on:not(#tvgx){color:var(--tg-p);back
 .tgp .tgln{stroke:var(--tg-grid)}
 .tgp .tgcross{stroke:var(--tg-mute)}
 .tgp path.p{stroke:var(--tg-p)}.tgp path.s{stroke:var(--tg-s)}
-.tgp .tgdot{stroke:var(--tg-surf);stroke-width:2}.tgp .tgdot.p{fill:var(--tg-p)}.tgp .tgdot.s{fill:var(--tg-s)}
+.tgp .tgdot{stroke:var(--tg-surf);stroke-width:2}.tgp .tgdot.p{fill:var(--tg-p)}.tgp .tgdot.s{fill:var(--tg-s)}.tgp .tgdot.ok{fill:var(--c-green)}.tgp .tgdot.bad{fill:var(--tg-n)}
 /* colunas de vidro */
 .tgw{display:flex;height:250px}
 .tgs>.tgc:first-child .tgw{height:230px}
@@ -18371,6 +18371,10 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
 @container tvgx (max-width:979px){.tgc.c7,.tgc.c5{grid-column:span 12}.tgs{grid-column:span 12}.tgfvc{min-height:220px}.tgcats{grid-auto-rows:auto}}
 @container tvgx (max-width:620px){.tgc.c6{grid-column:span 12}.tgl .sp{margin-left:0}}
 @container tvgx (max-width:460px){html:not(.tdb-aurora-pdf) body .tvg-gx .tgsel:not(#tvgx){max-width:150px!important}.tgc{padding:16px 14px 12px}.tgh{flex-wrap:wrap}.tgcr1{font-size:12.5px}.tgw{height:220px}.tgs>.tgc:first-child .tgw{height:220px}}
+
+.tgl .tgnote{font-size:11px;font-weight:600;color:var(--c-inkSoft)}
+.tgempty{padding:24px 12px;text-align:center;color:var(--c-inkSoft);font-size:13px}
+.tgt{flex-wrap:wrap;justify-content:flex-end}
 
 </style>
 <script id="tdbvg-visao-geral">
@@ -18452,7 +18456,7 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
      Os gráficos originais continuam existindo, escondidos na tela; voltam a aparecer só na hora de exportar o PDF.
      Se qualquer dado não for encontrado, nada é escondido e a tela fica como antes. */
   var GXM=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  var gx={top:10,tbl:{},sig:'',w:0,tip:null,ro:null,tmr:0,lastTipKey:''};
+  var gx={tbl:{},w:0,full:true,tpMode:'ano',tpMes:null,tip:null,ro:null,tmr:0,lastTipKey:''};
   function gbrl(v){return 'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
   function gkf(v){var a=Math.abs(v),s=a>=1000?(a/1000).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'k':String(Math.round(a));return (v<0?'−':'')+s}
   function gpc(v){return v.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'}
@@ -18467,6 +18471,22 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
     }catch(e){}
     return null;
   }
+  function txsOf(card){
+    try{
+      var c=card.querySelector('.recharts-responsive-container'),f=c&&fibOf(c),n=0;
+      while(f&&n<80){var p=f.memoizedProps;if(p&&Array.isArray(p.transacoes))return p.transacoes;f=f.return;n++}
+    }catch(e){}
+    return null;
+  }
+  function gtop(tr,mes){
+    var F=window.TDBFinance;if(!tr||!F||typeof F.received!=='function')return null;
+    var por={};
+    try{
+      tr.filter(function(t){return t.tipo!=='Entrada'&&(t.status==='Pago'||t.status==='Parcial')&&(!mes||t.mes===mes)}).forEach(function(t){por[t.categoria]=(por[t.categoria]||0)+F.received(t)});
+    }catch(e){return null}
+    return Object.keys(por).map(function(c){return [c,por[c]]}).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
+  }
+  function gmes(n){n=String(n||'');return n.charAt(0)+n.slice(1).toLowerCase()}
   function gxRead(els){
     var cards={},d={};
     els.forEach(function(g){[].forEach.call(g.querySelectorAll('.aurora-card'),function(c){
@@ -18474,8 +18494,10 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
       if(/^Entradas/i.test(t))cards.es=c;else if(/^Resultado/i.test(t))cards.re=c;else if(/Saldo/i.test(t))cards.sa=c;
       else if(/^Alunos/i.test(t))cards.al=c;else if(/Raio-X/i.test(t))cards.rx=c;else if(/^Top/i.test(t))cards.tp=c;
     })});
-    var k;for(k in {es:1,re:1,sa:1,al:1,rx:1,tp:1}){if(!cards[k])return null;d[k]=chartData(cards[k]);if(!d[k])return null}
-    if(!d.es.length||!d.sa.length||!d.al.length)return null;
+    var k;for(k in {es:1,re:1,sa:1,rx:1,tp:1}){if(!cards[k])return null;d[k]=chartData(cards[k]);if(!d[k])return null}
+    d.al=cards.al?chartData(cards.al):null;if(cards.al&&!d.al)return null;
+    if(!d.es.length||!d.sa.length)return null;
+    d.tr=txsOf(cards.tp);
     var sel=cards.rx.querySelector('select');
     d.rxSel=sel;d.rxVal=sel?sel.value:'';
     d.rxOpts=sel?[].map.call(sel.options,function(o){return o.value}):[];
@@ -18566,11 +18588,11 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
       var tx=sv('text',{x:m.l-8,y:Y(t)+4,'text-anchor':'end'});tx.textContent=o.yfmt?o.yfmt(t):gkf(t);svg.appendChild(tx)});
     o.labels.forEach(function(lb,i){var tx=sv('text',{x:X(i),y:H-6,'text-anchor':'middle'});tx.textContent=lb;if(o.mute&&o.mute(i))tx.style.opacity=.5;if(i===o.now)tx.setAttribute('class','nowt');if(!(iw/n<28&&i%2===1))svg.appendChild(tx)});
     o.series.forEach(function(s){
-      var pts=[];s.vals.forEach(function(v,i){if(v!=null)pts.push([X(i),Y(v)])});if(!pts.length)return;
+      var pts=[],idx=[];s.vals.forEach(function(v,i){if(v!=null){pts.push([X(i),Y(v)]);idx.push(i)}});if(!pts.length)return;
       var d='M'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1)}).join('L');
       if(s.area)svg.appendChild(sv('path',{d:d+'L'+pts[pts.length-1][0]+','+Y(lo)+'L'+pts[0][0]+','+Y(lo)+'Z',fill:'url(#'+id+')'}));
       svg.appendChild(sv('path',{d:d,fill:'none','class':s.cls,'stroke-width':s.dash?2:2.6,'stroke-dasharray':s.dash||'none','stroke-linejoin':'round','stroke-linecap':'round'}));
-      if(!s.dash)pts.forEach(function(p,ix){svg.appendChild(sv('circle',{cx:p[0],cy:p[1],r:ix===pts.length-1?4.5:3,'class':'tgdot '+s.cls}))});
+      if(!s.dash)pts.forEach(function(p,ix){svg.appendChild(sv('circle',{cx:p[0],cy:p[1],r:ix===pts.length-1?4.5:(s.ptCls?4:3),'class':'tgdot '+(s.ptCls?s.ptCls(idx[ix]):s.cls)}))});
       var last=pts[pts.length-1];
       if(s.endLabel){var t=sv('text',{'class':'lbl',x:last[0]+10,y:last[1]+4});t.textContent=s.endLabel;svg.appendChild(t)}
     });
@@ -18593,16 +18615,22 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
   var C1='var(--tg-p)',C2='var(--tg-s)',CN='var(--tg-n)',CM='var(--tg-m)';
 
   function gcards(d){
-    var R=d.es.map(function(r){return {m:r.mesAbrev||'',e:gnum(r.entradas),s:gnum(r.saidas),f:gnum(r.fixas),v:gnum(r.variaveis),l:gnum(r.lucro)}});
+    var R=d.es.map(function(r){return {mes:r.mes||'',m:r.mesAbrev||'',e:gnum(r.entradas),s:gnum(r.saidas),f:gnum(r.fixas),v:gnum(r.variaveis),l:gnum(r.lucro)}});
     var NR=R.length,now=new Date().getMonth();
     function SUM(k){return R.reduce(function(a,r){return a+r[k]},0)}
     var RE=d.re.map(function(r){return gnum(r.lucro)});
-    var SA=d.sa.map(function(r){return {m:r.mes||'',v:gnum(r.total)}});
-    var AL=d.al.map(function(r){return {m:r.mesAbrev||'',eq:gnum(r.pontoEquilibrio),al:gnum(r.alunosMatriculados)}});
-    var RX=d.rx.map(function(r){return gnum(r.total)});
-    var TP=d.tp.map(function(r){return [r.categoria||'',gnum(r.total)]});
-    var rxn=[],i;for(i=0;i<RX.length;i++)rxn.push(GXM[i]);
-    var saldoLast=null;for(i=Math.min(NR,SA.length)-1;i>=0;i--){if(SA[i].v>0){saldoLast=SA[i];break}}
+    var SA=d.sa.map(function(r,i){return {m:r.mes||GXM[i]||'',v:(r.total==null?null:gnum(r.total))}});
+    var AL=(d.al||[]).map(function(r){return {m:r.mesAbrev||'',eq:gnum(r.pontoEquilibrio),al:gnum(r.alunosMatriculados)}});
+    var RXD=d.rx.map(function(r,i){return {m:r.mesAbrev||GXM[i]||'',v:gnum(r.total)}});
+    var RX=RXD.map(function(r){return r.v});
+    var tpMes=gx.tpMes&&R.some(function(r){return r.mes===gx.tpMes})?gx.tpMes:(R.length?R[R.length-1].mes:'');
+    var canMes=!!(d.tr&&window.TDBFinance&&R.length);
+    var mensal=gx.tpMode==='mes'&&canMes;
+    var TP=(mensal?gtop(d.tr,tpMes):null)||d.tp.map(function(r){return [r.categoria||'',gnum(r.total)]});
+    var tpRow=null;R.forEach(function(r){if(r.mes===tpMes)tpRow=r});
+    var tpDen=mensal?(tpRow?tpRow.s:0):SUM('s');
+    var saldoLast=null,i;for(i=SA.length-1;i>=0;i--){if(SA[i].v!=null&&SA[i].v>0){saldoLast=SA[i];break}}
+    var lastSaIdx=-1;SA.forEach(function(s,ix){if(s.v!=null)lastSaIdx=ix});
     var C={};
     C.es={cls:'c7',title:'Entradas × Saídas',sub:'Por mês, recebido e pago',
       legend:function(){return lgv(C1,'Entradas',gsh(SUM('e')))+lgv(C2,'Saídas',gsh(SUM('s')))},
@@ -18613,56 +18641,66 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
     C.re={cls:'c5',title:'Resultado mensal',sub:'Recebido − pago',
       legend:function(){return lgv(C1,'Sobrou','')+lgv(CN,'Faltou','')+'<span class="sp">No ano <b>'+esc(gsh(RE.reduce(function(a,b){return a+b},0)))+'</b></span>'},
       draw:function(h){var mi=0;RE.forEach(function(v,i){if(v>RE[mi])mi=i});
-        gcols(h,{key:'re',labels:R.map(function(r){return r.m}),series:[{cls:function(v){return v>=0?'p':'ng'},vals:RE}],marks:[{i:mi,text:'Maior'}],
-          tip:function(i){return {title:R[i]?R[i].m:'',rows:[{name:RE[i]>=0?'Sobrou':'Faltou',color:RE[i]>=0?C1:CN,val:gbrl(RE[i]),big:true},{name:'Entradas',val:gbrl(R[i]?R[i].e:0)},{name:'Saídas',val:gbrl(R[i]?R[i].s:0)}]}}})},
-      table:function(){return {cols:['Mês','Resultado'],rows:RE.map(function(v,i){return [R[i]?R[i].m:GXM[i],gbrl(v)]})}}};
-    C.sa={cls:'c6',lc:1,title:'Saldo em conta',sub:'Evolução mês a mês',
+        gcols(h,{key:'re',labels:d.re.map(function(r,i){return r.mesAbrev||(R[i]&&R[i].m)||GXM[i]}),series:[{cls:function(v){return v>=0?'p':'ng'},vals:RE}],marks:[{i:mi,text:'Maior'}],
+          tip:function(i){var q=R[i]||{e:0,s:0,m:''};return {title:d.re[i].mesAbrev||q.m,rows:[{name:RE[i]>=0?'Sobrou':'Faltou',color:RE[i]>=0?C1:CN,val:gbrl(RE[i]),big:true},{name:'Entradas',val:gbrl(q.e)},{name:'Saídas',val:gbrl(q.s)}]}}})},
+      table:function(){return {cols:['Mês','Resultado'],rows:RE.map(function(v,i){return [d.re[i].mesAbrev||GXM[i],gbrl(v)]})}}};
+    C.sa={cls:d.al?'c6':'',lc:1,title:'Saldo em conta',sub:'Evolução mês a mês',
       legend:function(){return '<span>'+sw(C1,'gl')+'Saldo no fim do mês</span>'+(saldoLast?'<span class="sp">Último <b>'+esc(gsh(saldoLast.v))+'</b> · '+esc(saldoLast.m)+'</span>':'')},
-      draw:function(h){var vals=SA.map(function(s,i){return i<NR?s.v:null});
-        glines(h,{key:'sa',labels:SA.map(function(s,i){return GXM[i]||s.m}),min:0,aria:'Saldo em conta por mês',mute:function(i){return i>=NR},now:now,
-          series:[{cls:'p',area:true,vals:vals,endLabel:vals[NR-1]!=null?gkf(vals[NR-1]):''}],
-          tip:function(i){return {title:GXM[i]||SA[i].m,rows:[{name:'Saldo',color:C1,val:i<NR?gbrl(SA[i].v):'—',big:true}]}}})},
-      table:function(){return {cols:['Mês','Saldo'],rows:SA.slice(0,NR).map(function(s,i){return [GXM[i]||s.m,gbrl(s.v)]})}}};
-    C.al={cls:'c6',lc:1,title:'Alunos × ponto de equilíbrio',sub:'Matriculados × mínimo para fechar',
-      legend:function(){var l=AL[AL.length-1],f=l.al-l.eq;return lgv(C1,'Matriculados',String(l.al),'gl')+lgv(C2,'Equilíbrio',String(l.eq),'gl gd')+'<span class="sp">'+(f>=0?'Folga':'Falta')+' <b>'+(f>=0?'+':'−')+Math.abs(f)+'</b></span>'},
+      draw:function(h){var vals=SA.map(function(s){return s.v});
+        glines(h,{key:'sa',labels:SA.map(function(s){return s.m}),min:0,aria:'Saldo em conta por mês',mute:function(i){return SA[i].v==null},now:SA.map(function(s){return s.m}).indexOf(GXM[now]),
+          series:[{cls:'p',area:true,vals:vals,endLabel:lastSaIdx>=0?gkf(vals[lastSaIdx]):'',endIdx:lastSaIdx}],
+          tip:function(i){return {title:SA[i].m,rows:[{name:'Saldo',color:C1,val:SA[i].v!=null?gbrl(SA[i].v):'—',big:true}]}}})},
+      table:function(){return {cols:['Mês','Saldo'],rows:SA.filter(function(s){return s.v!=null}).map(function(s){return [s.m,gbrl(s.v)]})}}};
+    if(AL.length>1)C.al={cls:'c6',lc:1,title:'Alunos × ponto de equilíbrio',sub:'Matriculados × mínimo para fechar',
+      legend:function(){var l=AL[AL.length-1];return '<span>'+sw(C1,'gl')+'Tem (individuais + convênios) <b>'+l.al+'</b></span><span>'+sw(C2,'gl gd')+'Precisa (ponto de equilíbrio) <b>'+l.eq+'</b></span>'+
+        '<span class="tgnote">'+sw('var(--tg-n)')+'abaixo do ponto de equilíbrio estimado</span><span class="tgnote">'+sw('var(--c-green)')+'atingiu ou superou o ponto de equilíbrio</span>'},
       draw:function(h){var l=AL[AL.length-1];
         glines(h,{key:'al',labels:AL.map(function(a){return a.m}),min:Math.max(0,Math.floor(Math.min.apply(null,AL.map(function(a){return Math.min(a.al,a.eq)}))/10)*10-10),aria:'Alunos matriculados e ponto de equilíbrio',yfmt:function(v){return String(v)},padR:34,
-          series:[{cls:'s',dash:'6 5',vals:AL.map(function(a){return a.eq}),endLabel:String(l.eq)},{cls:'p',vals:AL.map(function(a){return a.al}),endLabel:String(l.al)}],
-          tip:function(i){var a=AL[i],f=a.al-a.eq;return {title:a.m,rows:[{name:'Matriculados',color:C1,val:String(a.al)},{name:'Equilíbrio',color:C2,val:String(a.eq)},{name:f>=0?'Folga':'Falta',val:(f>=0?'+':'−')+Math.abs(f),big:true}]}}})},
-      table:function(){return {cols:['Mês','Matriculados','Equilíbrio'],rows:AL.map(function(a){return [a.m,String(a.al),String(a.eq)]})}}};
+          series:[{cls:'s',dash:'6 5',vals:AL.map(function(a){return a.eq}),endLabel:String(l.eq)},{cls:'p',vals:AL.map(function(a){return a.al}),endLabel:String(l.al),ptCls:function(i){return AL[i].al<AL[i].eq?'bad':'ok'}}],
+          tip:function(i){var a=AL[i];function u(n){return n+' aluno'+(n===1?'':'s')}return {title:a.m,rows:[{name:'Precisa (ponto de equilíbrio)',color:C2,val:u(a.eq)},{name:'Tem (individuais + convênios)',color:C1,val:u(a.al)}]}}})},
+      table:function(){return {cols:['Mês','Tem','Precisa'],rows:AL.map(function(a){return [a.m,String(a.al),String(a.eq)]})}}};
     C.rx={cls:'',title:'Raio-X de gastos por item',sub:'Quanto foi pago em cada mês',
       head:function(){return '<select class="tgsel" data-tg="rx" aria-label="Item">'+d.rxOpts.map(function(o){return '<option value="'+esc(o)+'"'+(o===d.rxVal?' selected':'')+'>'+esc(o)+'</option>'}).join('')+'</select>'},
-      legend:function(){var t=d.rxTxt;return lgv(C1,'Pico',(t.pico?t.pico+' · ':'')+(t.picoV||''))+lgv(CM,'Demais meses','')+(t.total?'<span class="sp">Total <b>'+esc(t.total)+'</b>'+(t.media?' · média/mês <b>'+esc(t.media)+'</b>':'')+'</span>':'')},
+      legend:function(){var t=d.rxTxt;return (t.total?'<span>Total no ano: <b>'+esc(t.total)+'</b></span>':'')+(t.media?'<span>Média/mês: <b>'+esc(t.media)+'</b></span>':'')+(t.pico&&t.picoV?lgv(C1,'Pico ('+t.pico+'):',t.picoV):'')},
       draw:function(h){var p=0;RX.forEach(function(v,i){if(v>RX[p])p=i});
-        gcols(h,{key:'rx',labels:rxn,now:now,mute:function(i){return i>=NR},nil:function(i){return !RX[i]},marks:RX[p]?[{i:p,text:'Pico'}]:[],
+        gcols(h,{key:'rx',labels:RXD.map(function(r){return r.m}),now:now,mute:function(i){return !RX[i]},nil:function(i){return !RX[i]},marks:RX[p]?[{i:p,text:'Pico'}]:[],
           series:[{cls:function(x,i){return i===p?'mx':'mut'},vals:RX}],
-          tip:function(i){return {title:GXM[i]+' · '+d.rxVal,rows:[{name:'Pago',color:i===p?C1:CM,val:RX[i]?gbrl(RX[i]):'—',big:true}]}}})},
-      table:function(){return {cols:['Mês','Pago'],rows:RX.map(function(v,i){return [GXM[i],gbrl(v)]})}}};
-    C.fv={cls:'',title:'Fixas × variáveis',sub:'Composição das saídas do ano',
-      legend:function(){var f=SUM('f'),v=SUM('v'),t=(f+v)||1;return lgv(C1,'Fixas',gsh(f)+' · '+gpc(f/t*100))+lgv(C2,'Variáveis',gsh(v)+' · '+gpc(v/t*100))},
+          tip:function(i){return {title:RXD[i].m,rows:[{name:d.rxVal||'Pago',color:i===p?C1:CM,val:RX[i]?gbrl(RX[i]):'—',big:true}]}}})},
+      table:function(){return {cols:['Mês','Pago'],rows:RXD.map(function(r){return [r.m,gbrl(r.v)]})}}};
+    C.fv={cls:'',title:'Fixas × variáveis',sub:'Composição das despesas',
+      legend:function(){var f=SUM('f'),v=SUM('v'),t=(f+v)||1;return lgv(C1,'Fixas',gsh(f)+' · '+Math.round(f/t*100)+'%')+lgv(C2,'Variáveis',gsh(v)+' · '+Math.round(v/t*100)+'%')},
       draw:function(h){var f=SUM('f'),v=SUM('v'),t=(f+v)||1;h.innerHTML='';h.classList.add('tgfvp');
         var st=dv('tgfvbar');[[f,'p','Fixas'],[v,'s','Variáveis']].forEach(function(a){var b=dv('tgbar '+a[1]);b.style.flex=a[0]+' 1 0';if(a[0]/t>.12)b.textContent=Math.round(a[0]/t*100)+'%';
-          b.addEventListener('pointermove',function(e){gshow(a[2],[{name:'Valor',color:a[1]==='p'?C1:C2,val:gbrl(a[0]),big:true},{name:'Das saídas',val:gpc(a[0]/t*100)}],e.clientX,e.clientY,'fvb'+a[2])});b.addEventListener('pointerleave',ghide);st.appendChild(b)});
+          b.addEventListener('pointermove',function(e){gshow(a[2],[{name:'Valor',color:a[1]==='p'?C1:C2,val:gbrl(a[0]),big:true},{name:'Das despesas',val:Math.round(a[0]/t*100)+'%'}],e.clientX,e.clientY,'fvb'+a[2])});b.addEventListener('pointerleave',ghide);st.appendChild(b)});
         var cap=dv('tgcap','Mês a mês'),sc=dv('tgfvc');h.appendChild(st);h.appendChild(cap);h.appendChild(sc);
         gcols(sc,{key:'fv',labels:R.map(function(r){return r.m}),stacked:true,series:[{cls:'p',vals:R.map(function(r){return r.f})},{cls:'s',vals:R.map(function(r){return r.v})}],
           tip:function(i){return {title:R[i].m,rows:[{name:'Fixas',color:C1,val:gbrl(R[i].f)},{name:'Variáveis',color:C2,val:gbrl(R[i].v)},{name:'Total',val:gbrl(R[i].f+R[i].v),big:true}]}}})},
       table:function(){var f=SUM('f'),v=SUM('v');return {cols:['Tipo','Valor'],rows:[['Fixas',gbrl(f)],['Variáveis',gbrl(v)]]}}};
-    C.tp={cls:'c5',title:'Maiores gastos do ano',sub:'Pago no ano, por categoria',
-      head:function(){return '<div class="tgseg"><button type="button" data-tgn="5" class="'+(gx.top===5?'on':'')+'">Top 5</button><button type="button" data-tgn="10" class="'+(gx.top===10?'on':'')+'">Top 10</button></div>'},
-      legend:function(){var rows=TP.slice(0,gx.top),t=rows.reduce(function(a,r){return a+r[1]},0),s=SUM('s');return '<span>Soma do Top '+gx.top+' <b>'+esc(gsh(t))+'</b>'+(s?' · '+gpc(t/s*100)+' das saídas':'')+'</span>'},
-      draw:function(h){var rows=TP.slice(0,gx.top),mx=rows.length?rows[0][1]:1,tot=SUM('s');h.innerHTML='';h.classList.add('tgcats');
+    C.tp={cls:'c5',title:mensal?'Maiores gastos de '+gmes(tpMes):'Top 10 maiores gastos do ano',sub:mensal?'Pago em '+gmes(tpMes)+', por categoria':'Pago no ano, por categoria',
+      head:function(){if(!canMes)return '';
+        return (mensal?'<select class="tgsel" data-tg="tpm" aria-label="Mês">'+R.map(function(r){return '<option value="'+esc(r.mes)+'"'+(r.mes===tpMes?' selected':'')+'>'+esc(gmes(r.mes))+'</option>'}).join('')+'</select>':'')+
+          '<div class="tgseg"><button type="button" data-tgmode="ano" class="'+(mensal?'':'on')+'">Ano</button><button type="button" data-tgmode="mes" class="'+(mensal?'on':'')+'">Mês</button></div>'},
+      legend:function(){var t=TP.reduce(function(a,r){return a+r[1]},0);return '<span>Soma do Top '+TP.length+' <b>'+esc(gsh(t))+'</b>'+(tpDen?' · '+gpc(t/tpDen*100)+' das saídas':'')+'</span>'},
+      draw:function(h){var rows=TP,mx=rows.length?rows[0][1]:1,tot=tpDen;h.innerHTML='';h.classList.add('tgcats');
+        if(!rows.length){h.appendChild(dv('tgempty','Sem gastos pagos neste período.'));return}
         rows.forEach(function(r,i){var row=dv('tgcrow');row.tabIndex=0;
           var t=dv('tgcr1'),l=document.createElement('span');l.textContent=(i+1)+'º  '+gtitle(r[0]);
           if(tot){var q=document.createElement('i');q.textContent=gpc(r[1]/tot*100);l.appendChild(q)}
           t.appendChild(l);t.appendChild(dv('tgcv',gsh(r[1])));var tr=dv('tgtrack'),b=document.createElement('b');b.style.width=(mx?r[1]/mx*100:0)+'%';tr.appendChild(b);row.appendChild(t);row.appendChild(tr);h.appendChild(row);
-          function show(x,y){var rr=[{name:'Pago no ano',color:C1,val:gbrl(r[1]),big:true}];if(tot)rr.push({name:'Das saídas',val:gpc(r[1]/tot*100)});rr.push({name:'Posição',val:(i+1)+'º'});gshow(gtitle(r[0]),rr,x,y,'tp'+i)}
+          function show(x,y){var rr=[{name:mensal?'Pago no mês':'Total acumulado',color:C1,val:gbrl(r[1]),big:true}];if(tot)rr.push({name:'Das saídas',val:gpc(r[1]/tot*100)});rr.push({name:'Posição',val:(i+1)+'º'});gshow(gtitle(r[0]),rr,x,y,'tp'+i+mensal+tpMes)}
           row.addEventListener('pointermove',function(e){show(e.clientX,e.clientY)});row.addEventListener('pointerleave',ghide);
           row.addEventListener('focus',function(){var bb=row.getBoundingClientRect();show(bb.left+bb.width/2,bb.top)});row.addEventListener('blur',ghide)})},
-      table:function(){return {cols:['#  Categoria','Valor'],rows:TP.slice(0,gx.top).map(function(r,i){return [(i+1)+'  '+gtitle(r[0]),gbrl(r[1])]})}}};
+      table:function(){return {cols:['#  Categoria','Valor'],rows:TP.map(function(r,i){return [(i+1)+'  '+gtitle(r[0]),gbrl(r[1])]})}}};
+    C.__sig={};
+    var base=JSON.stringify([d.es,d.re,d.sa,d.al]);
+    ['es','re','sa','al','rx','fv','tp'].forEach(function(id){
+      var x={es:d.es,re:d.re,sa:d.sa,al:d.al,rx:[d.rx,d.rxVal,d.rxTxt,d.rxOpts],fv:d.es,tp:[d.tp,gx.tpMode,tpMes,TP,canMes]}[id];
+      try{C.__sig[id]=JSON.stringify(x)+'|'+(gx.tbl[id]?1:0)}catch(e){C.__sig[id]=String(Math.random())}
+    });
     return C;
   }
   function gcard(C,id){
-    var c=C[id],el=dv('tgc '+(c.cls||'')),h=dv('tgh');
+    var c=C[id],el=dv('tgc '+(c.cls||'')),h=dv('tgh');el.setAttribute('data-tgid',id);
     var l=document.createElement('div'),t=dv('tgtitle',c.title);t.setAttribute('role','heading');t.setAttribute('aria-level','3');l.appendChild(t);l.appendChild(dv('tgsub',c.sub));h.appendChild(l);
     var tools=dv('tgt');if(c.head)tools.insertAdjacentHTML('beforeend',c.head());
     var tb=document.createElement('button');tb.type='button';tb.setAttribute('data-tgtbl',id);tb.className='tgi'+(gx.tbl[id]?' on':'');tb.title=gx.tbl[id]?'Ver gráfico':'Ver tabela';tb.setAttribute('aria-label',tb.title);
@@ -18672,51 +18710,70 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
     var plot=dv('tgp'+(c.lc?' tgln2':''));el.appendChild(h);el.appendChild(lg);el.appendChild(plot);
     return {el:el,plot:plot,c:c,id:id};
   }
-  function gbuild(blk,d){
+  function gfill(k){if(gx.tbl[k.id])k.plot.appendChild(gtable(k.c.table()));else k.c.draw(k.plot)}
+  function gscroll(){var a=[],e=document.querySelector('.tvg-gx');while(e){if(e.scrollTop)a.push([e,e.scrollTop]);e=e.parentElement}a.push([window,window.pageXOffset||0,window.pageYOffset||0]);return a}
+  function gback(a){a.forEach(function(x){try{if(x[0]===window){if(window.pageYOffset!==x[2]||window.pageXOffset!==x[1])window.scrollTo(x[1],x[2])}else if(x[0].scrollTop!==x[1])x[0].scrollTop=x[1]}catch(e){}})}
+  function gbuild(blk,d,full){
     ghide();
-    var C=gcards(d),g=blk.querySelector('.tgg');if(!g){g=dv('tgg');blk.appendChild(g)}g.innerHTML='';
-    var made=[];
-    ['es','re','sa','al',['rx','fv'],'tp'].forEach(function(it){
-      if(Array.isArray(it)){var s=dv('tgs');it.forEach(function(id){var k=gcard(C,id);s.appendChild(k.el);made.push(k)});g.appendChild(s)}
-      else{var k2=gcard(C,it);g.appendChild(k2.el);made.push(k2)}
-    });
-    made.forEach(function(k){if(gx.tbl[k.id])k.plot.appendChild(gtable(k.c.table()));else k.c.draw(k.plot)});
+    var C=gcards(d),g=blk.querySelector('.tgg'),layout=d.al?['es','re','sa','al',['rx','fv'],'tp']:['es','re','sa',['rx','fv'],'tp'];
+    var flat=[].concat.apply([],layout),key=flat.join(',')+(C.al?'':'-')+'|'+(C.tp.head()?'m':'');
+    if(!C.al)flat=flat.filter(function(x){return x!=='al'});
+    var keep=gscroll(),h0=blk.offsetHeight;
+    if(full||!g||blk.__key!==key){
+      blk.style.minHeight=h0+'px';
+      if(!g){g=dv('tgg');blk.appendChild(g)}g.innerHTML='';
+      var made=[];
+      layout.forEach(function(it){
+        if(Array.isArray(it)){var s=dv('tgs');it.forEach(function(id){var k=gcard(C,id);s.appendChild(k.el);made.push(k)});g.appendChild(s)}
+        else{var k2=gcard(C,it);g.appendChild(k2.el);made.push(k2)}
+      });
+      made.forEach(gfill);
+      blk.__key=key;blk.__sig=C.__sig;blk.style.minHeight='';
+    }else{
+      flat.forEach(function(id){
+        if(blk.__sig&&blk.__sig[id]===C.__sig[id])return;
+        var old=g.querySelector('[data-tgid="'+id+'"]');if(!old)return;
+        var k=gcard(C,id);old.style.minHeight=old.offsetHeight+'px';old.parentNode.replaceChild(k.el,old);k.el.style.minHeight=old.style.minHeight;gfill(k);k.el.style.minHeight='';
+      });
+      blk.__sig=C.__sig;
+    }
+    gback(keep);
     blk.__d=d;
   }
-  function gsig(d){try{return JSON.stringify([d.es,d.re,d.sa,d.al,d.rx,d.tp,d.rxVal,d.rxTxt,gx.top,gx.tbl])}catch(e){return String(Math.random())}}
   function gxSync(ex,els,vis,hide){
     var blk=ex.querySelector(':scope > .tvg-gx');
     var d=els.length?gxRead(els):null;
     if(!d){if(blk&&blk.parentNode)blk.parentNode.removeChild(blk);setA(ex,'data-vg-gx',null);return}
     var anchor=els[els.length-1];
     if(!blk){blk=mk('div',{'class':'tvg-gx','data-export-ignore':'true'});ex.insertBefore(blk,anchor.nextSibling);
-      gx.w=0;gx.sig='';
-      if(window.ResizeObserver){if(gx.ro)gx.ro.disconnect();gx.ro=new ResizeObserver(function(){var w=blk.clientWidth;if(!w||Math.abs(w-gx.w)<2)return;clearTimeout(gx.tmr);gx.tmr=setTimeout(function(){gx.sig='';sched()},120)});gx.ro.observe(blk)}
+      gx.w=0;gx.full=true;
+      if(window.ResizeObserver){if(gx.ro)gx.ro.disconnect();gx.ro=new ResizeObserver(function(){var w=blk.clientWidth;if(!w||Math.abs(w-gx.w)<2)return;clearTimeout(gx.tmr);gx.tmr=setTimeout(function(){gx.full=true;sched()},120)});gx.ro.observe(blk)}
     }else if(blk.previousElementSibling!==anchor){ex.insertBefore(blk,anchor.nextSibling)}
     setA(ex,'data-vg-gx','1');
     setA(blk,'data-vg-off',vis?null:'1');setA(blk,'inert',vis?null:'');setA(blk,'data-hide',hide?'1':null);
     if(vis){
-      var w=blk.clientWidth,sg=gsig(d);
-      if(w&&(sg!==gx.sig||Math.abs(w-gx.w)>=2||!blk.firstChild)){gx.sig=sg;gx.w=w;gbuild(blk,d)}
+      var w=blk.clientWidth;
+      if(w){var full=gx.full||Math.abs(w-gx.w)>=2||!blk.firstChild;gx.full=false;gx.w=w;gbuild(blk,d,full)}
     }
   }
   /* cliques do bloco novo (o seletor do Raio-X repassa a escolha ao seletor original) */
   document.addEventListener('click',function(e){
     var t=e.target;if(!t||!t.closest)return;var blk=t.closest('.tvg-gx');if(!blk)return;
     var b=t.closest('[data-tgtbl]');
-    if(b){var id=b.getAttribute('data-tgtbl');gx.tbl[id]=!gx.tbl[id];gx.sig='';run();return}
-    b=t.closest('[data-tgn]');
-    if(b){gx.top=+b.getAttribute('data-tgn')===5?5:10;gx.sig='';run()}
+    if(b){var id=b.getAttribute('data-tgtbl');gx.tbl[id]=!gx.tbl[id];run();return}
+    b=t.closest('[data-tgmode]');
+    if(b){gx.tpMode=b.getAttribute('data-tgmode')==='mes'?'mes':'ano';run()}
   });
   document.addEventListener('change',function(e){
     var t=e.target;if(!t||!t.closest||!t.closest('.tvg-gx'))return;
-    if(t.getAttribute('data-tg')==='rx'){
+    var w=t.getAttribute('data-tg');
+    if(w==='rx'){
       var o=document.querySelector('.export-pagina-visaogeral .tdb-raiox-fixas-wrap select');
       if(o&&o.value!==t.value){
         var set=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set;set.call(o,t.value);
         o.dispatchEvent(new Event('change',{bubbles:true}));
       }
-    }
+    }else if(w==='tpm'){gx.tpMes=t.value;run()}
   });
 
   function run(){
