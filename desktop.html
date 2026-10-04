@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo3-v1";
+    window.__TDB_BUILD = "tdbn-20261004-tempo4-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo3-v1"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo4-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -784,7 +784,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 3";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 4";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1231,7 +1231,7 @@ html.dark-mode {
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 3</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 4</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1277,10 +1277,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo3-v1"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo4-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo3-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo4-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18714,12 +18714,12 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
   function gscroll(){var a=[],e=document.querySelector('.tvg-gx');while(e){if(e.scrollTop)a.push([e,e.scrollTop]);e=e.parentElement}a.push([window,window.pageXOffset||0,window.pageYOffset||0]);return a}
   function gback(a){a.forEach(function(x){try{if(x[0]===window){if(window.pageYOffset!==x[2]||window.pageXOffset!==x[1])window.scrollTo(x[1],x[2])}else if(x[0].scrollTop!==x[1])x[0].scrollTop=x[1]}catch(e){}})}
   function gbuild(blk,d,full){
-    ghide();
     var C=gcards(d),g=blk.querySelector('.tgg'),layout=d.al?['es','re','sa','al',['rx','fv'],'tp']:['es','re','sa',['rx','fv'],'tp'];
     var flat=[].concat.apply([],layout),key=flat.join(',')+(C.al?'':'-')+'|'+(C.tp.head()?'m':'');
     if(!C.al)flat=flat.filter(function(x){return x!=='al'});
     var keep=gscroll(),h0=blk.offsetHeight;
     if(full||!g||blk.__key!==key){
+      ghide();
       blk.style.minHeight=h0+'px';
       if(!g){g=dv('tgg');blk.appendChild(g)}g.innerHTML='';
       var made=[];
@@ -18732,7 +18732,7 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
     }else{
       flat.forEach(function(id){
         if(blk.__sig&&blk.__sig[id]===C.__sig[id])return;
-        var old=g.querySelector('[data-tgid="'+id+'"]');if(!old)return;
+        var old=g.querySelector('[data-tgid="'+id+'"]');if(!old)return;ghide();
         var k=gcard(C,id);old.style.minHeight=old.offsetHeight+'px';old.parentNode.replaceChild(k.el,old);k.el.style.minHeight=old.style.minHeight;gfill(k);k.el.style.minHeight='';
       });
       blk.__sig=C.__sig;
@@ -18921,7 +18921,8 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
     if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('tvg-strip')){e.preventDefault();e.target.click()}
   });
   document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('[data-vg]'))sched()},true);
-  function start(){new MutationObserver(sched).observe(document.body,{childList:true,subtree:true,characterData:true});sched()}
+  function gtipNode(n){return n&&(n.nodeType===1?n:n.parentNode)&&((n.nodeType===1?n:n.parentNode).closest&&(n.nodeType===1?n:n.parentNode).closest('.tgtip'))}
+  function start(){new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){var m=ms[i];if(gtipNode(m.target))continue;if(m.type==='childList'&&m.target===document.body){var all=true,l=[].slice.call(m.addedNodes).concat([].slice.call(m.removedNodes));for(var j=0;j<l.length;j++)if(!(l[j].classList&&l[j].classList.contains('tgtip')))all=false;if(l.length&&all)continue}sched();return}}).observe(document.body,{childList:true,subtree:true,characterData:true});sched()}
   if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 })();
 
