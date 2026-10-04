@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo7-v1";
+    window.__TDB_BUILD = "tdbn-20261004-tempo9-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo7-v1"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo9-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -844,7 +844,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 7";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 9";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1816,7 +1816,7 @@ html, body { overscroll-behavior-y: none; }
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 7</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 9</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1866,10 +1866,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo7-v1"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo9-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo7-v1-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo9-v1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4742,7 +4742,7 @@ function Compras(_a) {
     }
     useEffect(function () {
         (function () { return __awaiter(_this, void 0, void 0, function () {
-            var r, carregado, nomesLimpezaSeed, nomesAtuais_1, faltando, proximoId_1, novosItens, faltandoArraia_1, baseArraia_1, migrouArraia_1, mudouUnidade_1, dadosComUnidade, _i, _a, chave, lista, itensAjustados, e_7;
+            var r, carregado, nomesLimpezaSeed, nomesAtuais_1, faltando, proximoId_1, novosItens, marcarLimpezaFeita_1, faltandoArraia_1, baseArraia_1, migrouArraia_1, mudouUnidade_1, dadosComUnidade, _i, _a, chave, lista, itensAjustados, e_7;
             var _b;
             return __generator(this, function (_c) {
                 switch (_c.label) {
@@ -4761,14 +4761,16 @@ function Compras(_a) {
                     case 3:
                         nomesLimpezaSeed = SEED_COMPRAS.rancho.itens.filter(function (i) { return i.categoria === 'Limpeza'; });
                         nomesAtuais_1 = new Set((((_b = carregado.rancho) === null || _b === void 0 ? void 0 : _b.itens) || []).map(function (i) { return i.nome.toUpperCase().trim(); }));
-                        faltando = nomesLimpezaSeed.filter(function (i) { return !nomesAtuais_1.has(i.nome.toUpperCase().trim()); });
+                        faltando = []; // Nenhum item de Limpeza é reposto: o que foi apagado continua apagado, inclusive na primeira abertura desta versão.
                         if (faltando.length > 0 && carregado.rancho) {
                             proximoId_1 = Math.max.apply(Math, __spreadArray([0], carregado.rancho.itens.map(function (i) { return i.id; }), false)) + 1;
                             novosItens = faltando.map(function (i, idx) { return (__assign(__assign({}, i), { id: proximoId_1 + idx })); });
                             carregado = __assign(__assign({}, carregado), { rancho: __assign(__assign({}, carregado.rancho), { itens: __spreadArray(__spreadArray([], carregado.rancho.itens, true), novosItens, true) }) });
                         }
+                        marcarLimpezaFeita_1 = !carregado.limpezaSeedV1;
+                        if (marcarLimpezaFeita_1) carregado = __assign(__assign({}, carregado), { limpezaSeedV1: true });
                         faltandoArraia_1 = !carregado.arraiaTdb;
-                        migrouArraia_1 = faltandoArraia_1 || !carregado.arraiaTdb || carregado.arraiaTdb.versaoModelo !== SEED_ARRAIA_TDB.versaoModelo;
+                        migrouArraia_1 = faltandoArraia_1; // Uma lista já editada não é substituída por um modelo novo.
                         if (migrouArraia_1) {
                             baseArraia_1 = JSON.parse(JSON.stringify(SEED_ARRAIA_TDB));
                             carregado = __assign(__assign({}, carregado), { arraiaTdb: baseArraia_1 });
@@ -4791,7 +4793,7 @@ function Compras(_a) {
                             });
                             dadosComUnidade[chave] = __assign(__assign({}, lista), { itens: itensAjustados });
                         }
-                        if (!(mudouUnidade_1 || faltando.length > 0 || migrouArraia_1)) return [3 /*break*/, 5];
+                        if (!(mudouUnidade_1 || faltando.length > 0 || marcarLimpezaFeita_1 || migrouArraia_1)) return [3 /*break*/, 5];
                         carregado = dadosComUnidade;
                         return [4 /*yield*/, window.storage.set('compras_listas', JSON.stringify(carregado), false)];
                     case 4:
@@ -8584,7 +8586,7 @@ function ContasPessoais(_a) {
     }
     function interpretarComIA(textoOverride) {
         return __awaiter(this, void 0, void 0, function () {
-            var texto, lista, prompt, r, limpo, ini, fim, obj, next, aplicadas, _loop_1, _i, _a, a, e_35;
+            var texto, lista, prompt, r, limpo, ini, fim, obj, next, aplicadas, invalidas, _loop_1, _i, _a, a, e_35;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -8611,13 +8613,16 @@ function ContasPessoais(_a) {
                         obj = JSON.parse(limpo.slice(ini, fim + 1));
                         next = __spreadArray([], (contas || []), true);
                         aplicadas = 0;
+                        invalidas = 0;
                         _loop_1 = function (a) {
                             var _c;
                             var nomeN = normalizarTexto(a.conta);
                             var idx = next.findIndex(function (c) { return normalizarTexto(c.nome) === nomeN || normalizarTexto(c.nome).includes(nomeN) || nomeN.includes(normalizarTexto(c.nome)); });
                             var mes = MESES_CP.find(function (m) { return normalizarTexto(m) === normalizarTexto(a.mes); });
                             if (idx >= 0 && mes) {
-                                next[idx] = __assign(__assign({}, next[idx]), { valores: __assign(__assign({}, next[idx].valores), (_c = {}, _c[mes] = parseValor(a.valor), _c)) });
+                                var valorValidado = TDBFinance.parse(a.valor);
+                                if (valorValidado == null || valorValidado < 0) { invalidas++; return; }
+                                next[idx] = __assign(__assign({}, next[idx]), { valores: __assign(__assign({}, next[idx].valores), (_c = {}, _c[mes] = valorValidado, _c)) });
                                 aplicadas++;
                             }
                         };
@@ -8632,9 +8637,10 @@ function ContasPessoais(_a) {
                         setPerguntaIA('');
                         _b.label = 4;
                     case 4:
-                        setRespostaIA(aplicadas
-                            ? "\u2713 ".concat(aplicadas, " campo(s) atualizado(s) na tabela. ") + (obj.mensagem || '')
-                            : '⚠ A IA respondeu, mas não encontrei uma conta/mês válido para alterar.');
+                        setRespostaIA((aplicadas
+                            ? "\u2713 ".concat(aplicadas, " campo(s) atualizado(s) na tabela. ") + (invalidas ? '' : (obj.mensagem || ''))
+                            : (invalidas ? '' : '⚠ A IA respondeu, mas não encontrei uma conta/mês válido para alterar.'))
+                            + (invalidas ? '⚠ ' + invalidas + ' valor(es) inválido(s) ou negativo(s) ignorado(s); os valores anteriores foram mantidos.' : ''));
                         return [3 /*break*/, 6];
                     case 5:
                         e_35 = _b.sent();
@@ -13985,9 +13991,9 @@ function TabelaMensalidades(_a) {
                 var leitor = new FileReader();
                 leitor.onload = function () { return definirFoto(t.id, leitor.result); };
                 leitor.readAsDataURL(arquivo);
-            }, style: { position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' } })), React.createElement("span", null, nomeExibicao(t.categoria))))), mostrarDetalhes && !emEdicao && (React.createElement("td", { style: td }, t.nota !== undefined && (React.createElement("button", { onClick: function (e) { e.stopPropagation(); }, title: "Edite a linha pelo lápis para alterar a nota", className: "busca-liquid-glass", style: {
+            }, style: { position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' } })), React.createElement("span", null, nomeExibicao(t.categoria))))), mostrarDetalhes && !emEdicao && (React.createElement("td", { style: td }, t.nota !== undefined && (React.createElement("button", { onClick: function (e) { e.stopPropagation(); return darNota(t.id); }, title: "Clique para alternar Nota enviada/pendente", className: "busca-liquid-glass", style: {
                 borderRadius: 20, padding: '3px 8px',
-                fontSize: 10.5, fontWeight: 700, cursor: 'default', whiteSpace: 'nowrap',
+                fontSize: 10.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
                 color: t.nota === 'Enviada' ? COLORS.green : COLORS.gold,
             } }, t.nota === 'Enviada' ? 'ENVIADA' : 'PENDENTE')))), React.createElement("td", { style: td, className: "mono" }, emEdicao ? (React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("select", { defaultValue: "", onChange: function (e) {
                 if (e.target.value === '')
@@ -21763,30 +21769,79 @@ html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela):n
   var meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   var nomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var storageKey='tdbl_contas_pessoais_mes_ativo_v1';
-  var metaKey='contas_pessoais_pago_data_v1';
+  var metaKeyBase='contas_pessoais_pago_data_v1';
+  var metaKey=metaKeyBase, metaYear=0;
   var metaLoaded=false, metaLoading=false, meta={};
+  var contasMap={}, contasLoadedAt=0;
+  function anoAtual(){ return Number(window.__exercicioAtual||2026)||2026; }
+  function chaveMeta(ano){ return ano===2026?metaKeyBase:metaKeyBase+'__'+ano; }
   function brl(v){try{return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0)}catch(e){return 'R$ '+(Number(v)||0).toFixed(2).replace('.',',')}}
   function parseBRL(txt){var s=String(txt||'').replace(/[^0-9,.-]/g,''); if(!s || s.indexOf('••')>=0) return 0; if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); var n=parseFloat(s); return isFinite(n)?n:0;}
   function norm(s){try{return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();}catch(e){return String(s||'').replace(/\s+/g,' ').trim().toUpperCase();}}
-  function loadMeta(cb){
-    if(metaLoaded){ cb&&cb(); return; }
-    if(metaLoading){ setTimeout(function(){loadMeta(cb)},120); return; }
-    metaLoading=true;
+  function loadContas(cb){
+    function fin(lista){
+      var m={}; (Array.isArray(lista)?lista:[]).forEach(function(c){ if(!c||c.id==null) return; var k=norm(c.nome); if(k&&!m[k]) m[k]=String(c.id); });
+      contasMap=m; contasLoadedAt=Date.now(); cb&&cb();
+    }
     try{
       if(window.storage&&window.storage.get){
-        window.storage.get(metaKey,false).then(function(r){
-          try{ meta = r&&r.value ? JSON.parse(r.value) : {}; }catch(e){ meta={}; }
-          metaLoaded=true; metaLoading=false; cb&&cb();
-        }).catch(function(){ try{meta=JSON.parse(localStorage.getItem(metaKey)||'{}')||{};}catch(e){meta={};} metaLoaded=true; metaLoading=false; cb&&cb(); });
-      }else{ try{meta=JSON.parse(localStorage.getItem(metaKey)||'{}')||{};}catch(e){meta={};} metaLoaded=true; metaLoading=false; cb&&cb(); }
-    }catch(e){meta={}; metaLoaded=true; metaLoading=false; cb&&cb();}
+        window.storage.get('contas_pessoais_v1',false).then(function(r){ var l=null; try{ l=r&&r.value?JSON.parse(r.value):null; }catch(e){} fin(l); }).catch(function(){ fin(null); });
+      }else fin(null);
+    }catch(e){ fin(null); }
+  }
+  function mesclar(base,sobre){ var o={}; var k; base=base||{}; sobre=sobre||{}; for(k in base) o[k]=base[k]; for(k in sobre) o[k]=sobre[k]; return o; }
+  // Marcas ficam por conta (id) e por exercício. Formato antigo (nome da conta) só é lido para 2026 e é migrado para o id.
+  function temMarca(e){ for(var i in (e||{})){ var x=e[i]; if(x&&(x.pago||x.data)) return true; } return false; }
+  function migrarMeta(){
+    var mudou=false;
+    Object.keys(contasMap).forEach(function(nk){
+      var id='id:'+contasMap[nk], kn='n:'+nk;
+      if(meta[kn]){ if(temMarca(meta[kn])){ meta[id]=mesclar(meta[id],meta[kn]); mudou=true; } delete meta[kn]; }
+      if(metaYear===2026 && meta[nk]){ if(temMarca(meta[nk])){ meta[id]=mesclar(meta[nk],meta[id]); mudou=true; } delete meta[nk]; }
+    });
+    if(mudou) saveMeta();
+  }
+  function loadMeta(cb){
+    var ano=anoAtual();
+    if(metaLoaded&&metaYear===ano){ cb&&cb(); return; }
+    if(metaLoading){ setTimeout(function(){loadMeta(cb)},120); return; }
+    metaLoading=true; metaLoaded=false; metaYear=ano; metaKey=chaveMeta(ano); editing={};
+    function fim(obj){
+      meta=(obj&&typeof obj==='object'&&!Array.isArray(obj))?obj:{};
+      metaLoaded=true; metaLoading=false;
+      loadContas(function(){ try{ migrarMeta(); }catch(e){} cb&&cb(); });
+    }
+    function viaLocal(){ var o={}; try{o=JSON.parse(localStorage.getItem(metaKey)||'{}')||{};}catch(e){} fim(o); }
+    try{
+      if(window.storage&&window.storage.get){
+        window.storage.get(metaKey,false).then(function(r){ var o={}; try{ o=r&&r.value?JSON.parse(r.value):{}; }catch(e){ o={}; } fim(o); }).catch(viaLocal);
+      }else viaLocal();
+    }catch(e){ fim({}); }
   }
   function saveMeta(){
-    var txt=JSON.stringify(meta||{});
-    try{localStorage.setItem(metaKey,txt);}catch(e){}
-    try{ if(window.storage&&window.storage.set) window.storage.set(metaKey,txt,false); }catch(e){}
+    var txt=JSON.stringify(meta||{}), chave=metaKey, enviou=false;
+    // O armazenamento do painel grava no aparelho e envia ao Drive; gravar antes no aparelho faria o envio ser ignorado.
+    try{ if(window.storage&&window.storage.set){ enviou=true; window.storage.set(chave,txt,false).catch(function(){ try{localStorage.setItem(chave,txt);}catch(e){} }); } }catch(e){ enviou=false; }
+    if(!enviou){ try{localStorage.setItem(chave,txt);}catch(e){} }
   }
-  function getM(conta,idx){ var k=norm(conta); if(!meta[k]) meta[k]={}; if(!meta[k][idx]) meta[k][idx]={}; return meta[k][idx]; }
+  function chaveConta(conta){
+    var nk=norm(conta);
+    if(contasMap[nk]) return 'id:'+contasMap[nk];
+    if(metaYear===2026 && meta[nk]) return nk;
+    return 'n:'+nk;
+  }
+  function getM(conta,idx){ var k=chaveConta(conta); if(!meta[k]) meta[k]={}; if(!meta[k][idx]) meta[k][idx]={}; return meta[k][idx]; }
+  function peekM(conta,idx){ var e=meta[chaveConta(conta)]; return (e&&e[idx])||{}; }
+  function refreshContas(){
+    if(!metaLoaded||metaYear!==anoAtual()||Date.now()-contasLoadedAt<1000) return;
+    var antes=JSON.stringify(contasMap);
+    loadContas(function(){
+      if(JSON.stringify(contasMap)===antes) return;
+      try{ migrarMeta(); }catch(e){}
+      document.querySelectorAll('.contas-pessoais-scroll table').forEach(function(t){ t.removeAttribute('data-tdb2sig'); });
+      scan();
+    });
+  }
   function readTotals(table){var out=[]; var row=table&&table.tFoot&&table.tFoot.rows&&table.tFoot.rows[table.tFoot.rows.length-1]; if(row){var rc=Array.prototype.filter.call(row.cells,function(c){return !c.classList.contains('tdbm-cp-extra');}); for(var i=1;i<=12;i++) out.push(parseBRL(rc[i]&&rc[i].textContent));} while(out.length<12) out.push(0); return out;}
   function readCategories(table){var arr=[]; var headers=table.querySelectorAll('tbody td[colspan]'); headers.forEach(function(td){var nome=(td.querySelector('span')&&td.querySelector('span').textContent||td.textContent||'').replace(/R\$.*/,'').trim(); var val=parseBRL(td.textContent); if(nome) arr.push({nome:nome,valor:val});}); return arr;}
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -21830,7 +21885,7 @@ html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela):n
   function inserirExtras(root,table,idx){
     loadMeta(function(){
       try{
-        var tb=table.tBodies[0]; var rows=tb?Array.prototype.slice.call(tb.rows):[]; var parts=[String(idx)];
+        var tb=table.tBodies[0]; var rows=tb?Array.prototype.slice.call(tb.rows):[]; var parts=[String(idx),'a'+metaYear];
         rows.forEach(function(row){
           if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')) return;
           var cs=realCells(row); var vc=cs[idx+1]; if(!vc) return;
@@ -21852,7 +21907,7 @@ html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela):n
           var nome=(cs[0]&&cs[0].textContent||'').trim();
           try{var ini=iniciais(nome); if(cs[0].getAttribute('data-ini')!==ini) cs[0].setAttribute('data-ini',ini);}catch(e){}
           var valor=0; try{var inp=valueCell.querySelector('input'); valor=parseBRL(inp?(inp.value||inp.defaultValue):valueCell.textContent);}catch(e){}
-          var m=getM(nome,idx); var st=m.pago || (valor>0?'PAGO':'PENDENTE'); var data=m.data || '';
+          var m=peekM(nome,idx); var st=m.pago || (valor>0?'PAGO':'PENDENTE'); var data=m.data || '';
           var ed=!!editing[ekey(nome,idx)];
           row.classList.toggle('tdb2-editing',ed);
           var lapis=cs[cs.length-1]&&cs[cs.length-1].querySelector('button'); if(lapis){ lapis.classList.toggle('tdb2-on',ed); lapis.title=ed?'Salvar e fechar a edição':'Editar esta linha'; }
@@ -21893,7 +21948,7 @@ html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela):n
           var inp=vc.querySelector('input'); var valor=parseBRL(inp?(inp.value||inp.defaultValue):vc.textContent);
           if(!(valor>0)) return;
           var nome=(row.cells[0]&&row.cells[0].textContent||'').trim();
-          var mm=(meta[norm(nome)]||{})[idx]||{}; var st=mm.pago||'PAGO';
+          var mm=peekM(nome,idx); var st=mm.pago||'PAGO';
           if(st==='PAGO'){rc++;rv+=valor;}else{pc++;pv+=valor;}
         });
         var oculto=!!(table.tFoot&&table.tFoot.textContent.indexOf('••')>=0);
@@ -21944,7 +21999,7 @@ html:not(.tdb-aurora-pdf) body .festas-tdb-scroll:has(table.festas-tdb-tabela):n
     if(!root.querySelector('.tdbl-cp-tabs')){var tabs=document.createElement('div'); tabs.className='tdbl-cp-tabs'; meses.forEach(function(m,i){var b=document.createElement('button'); b.type='button'; b.className='tdbl-cp-tab'; b.textContent=m; b.dataset.month=String(i); tabs.appendChild(b);}); var a=document.createElement('button'); a.type='button'; a.className='tdbl-cp-tab is-annual'; a.dataset.month='annual'; a.textContent='📊 Resumo anual'; tabs.appendChild(a); scroll.parentNode.insertBefore(tabs,scroll.nextSibling); tabs.addEventListener('click',function(ev){var btn=ev.target.closest('[data-month]'); if(!btn) return; sessionStorage.setItem(storageKey,btn.dataset.month); apply(root);});}
     apply(root);
   }
-  var scheduled=false, mo=null; function scan(){ if(scheduled) return; scheduled=true; requestAnimationFrame(function(){scheduled=false; document.querySelectorAll('.contas-pessoais-raiz').forEach(ensure); try{ if(mo) mo.takeRecords(); }catch(e){} }); }
+  var scheduled=false, mo=null; function scan(){ if(scheduled) return; scheduled=true; requestAnimationFrame(function(){scheduled=false; document.querySelectorAll('.contas-pessoais-raiz').forEach(ensure); refreshContas(); try{ if(mo) mo.takeRecords(); }catch(e){} }); }
   document.addEventListener('DOMContentLoaded',scan); mo=new MutationObserver(scan); mo.observe(document.documentElement,{childList:true,subtree:true}); setInterval(scan,1600); loadMeta(scan);
 })();
 </script>
