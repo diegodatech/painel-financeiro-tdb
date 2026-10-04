@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo5-v1";
+    window.__TDB_BUILD = "tdbn-20261004-tempo6-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo5-v1"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo6-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -784,7 +784,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 5";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 6";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1231,7 +1231,7 @@ html.dark-mode {
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 5</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 6</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1277,10 +1277,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo5-v1"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo6-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo5-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo6-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18926,6 +18926,95 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
   document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('[data-vg]'))sched()},true);
   function gtipNode(n){return n&&(n.nodeType===1?n:n.parentNode)&&((n.nodeType===1?n:n.parentNode).closest&&(n.nodeType===1?n:n.parentNode).closest('.tgtip'))}
   function start(){new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){var m=ms[i];if(gtipNode(m.target))continue;if(m.type==='childList'&&m.target===document.body){var all=true,l=[].slice.call(m.addedNodes).concat([].slice.call(m.removedNodes));for(var j=0;j<l.length;j++)if(!(l[j].classList&&l[j].classList.contains('tgtip')))all=false;if(l.length&&all)continue}sched();return}}).observe(document.body,{childList:true,subtree:true,characterData:true});sched()}
+  if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+})();
+
+</script>
+<style id="tdbx-ajustes-v1">
+/* Backup: ícone moderno no lugar do disquete */
+.tdbx-bk{flex:none;display:inline-grid;place-items:center;width:28px;height:28px;border-radius:10px;color:var(--c-inkButton,#1767cf);background:rgba(23,103,207,.10)}
+.dark-mode .tdbx-bk{background:rgba(10,132,255,.18)}
+/* Aviso das despesas fixas: só a notificação; os nomes ficam atrás de "Ver quais" */
+html:not(.tdb-aurora-pdf) [data-tdbx-fx]:not(#tdbxx){padding:10px 14px!important;gap:10px 12px!important;flex-wrap:wrap!important;align-items:center!important;border-radius:16px!important}
+html:not(.tdb-aurora-pdf) [data-tdbx-fx]>div:nth-child(2):not(#tdbxx){flex:1 1 0!important;min-width:0}
+html:not(.tdb-aurora-pdf) [data-tdbx-fx]>div:nth-child(2)>span:nth-child(2):not(#tdbxx){display:none!important}
+html:not(.tdb-aurora-pdf) [data-tdbx-fx]>div:nth-child(2)>span:first-child:not(#tdbxx){font-size:14px!important;line-height:1.35}
+.tdbx-fxbtn{flex:none;margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--c-line);background:var(--c-paperCard);color:var(--c-ink);font:800 12px/1 inherit;font-family:inherit;cursor:pointer}
+.tdbx-fxbtn svg{transition:transform .18s}
+[data-tdbx-open] .tdbx-fxbtn svg{transform:rotate(180deg)}
+.tdbx-fxl{display:none;flex:1 1 100%;flex-wrap:wrap;gap:6px;padding:2px 0 2px 32px}
+[data-tdbx-open] .tdbx-fxl{display:flex}
+.tdbx-fxl span{padding:4px 10px;border-radius:999px;border:1px solid var(--c-line);background:var(--c-paperCard);color:var(--c-inkSoft);font-size:11.5px;font-weight:700;letter-spacing:.02em}
+html.tdb-aurora-pdf .tdbx-fxbtn,html.tdb-aurora-pdf .tdbx-fxl,html[data-vg-pdf] .tdbx-fxbtn,html[data-vg-pdf] .tdbx-fxl{display:none!important}
+@media (max-width:560px){.tdbx-fxl{padding-left:0}.tdbx-fxbtn{padding:0 10px;min-height:30px;font-size:11.5px}html:not(.tdb-aurora-pdf) [data-tdbx-fx]>div:nth-child(2)>span:first-child:not(#tdbxx){font-size:13px!important}}
+/* Tablet, Calendário: os 3 cartões de baixo ficam com a mesma altura e o resumo preenche o cartão */
+@media (min-width:761px) and (max-width:1180px){
+html body .tcal .tcal-side:not(#tdb3x):not(#tdbxx){align-items:stretch!important}
+html body .tcal .tcal-side>.tcal-card:not(#tdb3x):not(#tdbxx){display:flex;flex-direction:column;min-width:0}
+html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){flex:1 1 auto;grid-auto-rows:1fr}
+html body .tcal .tcal-ags>.tcal-lnk:not(#tdb3x):not(#tdbxx),html body .tcal .tcal-ags>button:last-child:not(.tcal-agi):not(#tdb3x):not(#tdbxx){margin-top:auto}
+}
+@media (min-width:761px) and (max-width:860px){
+html body .tcal .tcal-side>.tcal-side-summary:not(#tdb3x):not(#tdbxx){grid-column:1/-1}
+html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){grid-template-columns:repeat(4,1fr);grid-auto-rows:auto}
+}
+
+</style>
+<script id="tdbx-ajustes">
+(function(){
+  /* Ajustes de aparência (só tela): ícone do aviso de Backup e aviso das despesas fixas.
+     Nada de dados, contas, sincronização, lixeira ou PDF é tocado. Elementos criados aqui levam data-export-ignore. */
+  var tmr=0;
+  var CLOUD='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 13v8"/><path d="m8 17 4 4 4-4"/><path d="M20 17.6A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.3"/></svg>';
+  var CHEV='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+  function sched(){if(tmr)return;tmr=setTimeout(function(){tmr=0;try{run()}catch(e){}},160)}
+  function run(){
+    /* 1) cartão "Backup": troca o disquete por um ícone moderno */
+    [].forEach.call(document.querySelectorAll('div[style*="font-weight: 800"]'),function(d){
+      var n=d.firstChild;
+      if(!n||n.nodeType!==3||n.nodeValue.indexOf('💾')!==0)return;
+      if(d.querySelector(':scope > .tdbx-bk'))return;
+      var ic=document.createElement('span');ic.className='tdbx-bk';ic.setAttribute('aria-hidden','true');ic.innerHTML=CLOUD;
+      d.insertBefore(ic,n);
+      n.nodeValue=n.nodeValue.replace(/^💾\s*/,'');
+    });
+    /* 2) aviso "N despesas fixas ainda não foram lançadas": só a notificação + "Ver quais" */
+    var ex=document.querySelector('.export-pagina-visaogeral');if(!ex)return;
+    [].forEach.call(ex.children,function(b){
+      if(b.nodeType!==1||b.hasAttribute('data-export-ignore'))return;
+      var tx=b.children[1];if(!tx||tx.tagName!=='DIV')return;
+      var sp=tx.querySelectorAll(':scope > span');
+      if(sp.length<2||!/fixas?\s+ainda\s+n/i.test(sp[0].textContent||''))return;
+      var names=(sp[1].textContent||'').replace(/^[\s—–-]+/,'').split(/\s*,\s*/).filter(Boolean);
+      if(!names.length)return;
+      var sig=names.join('|');
+      b.setAttribute('data-tdbx-fx','1');
+      var btn=b.querySelector(':scope > .tdbx-fxbtn'),lst=b.querySelector(':scope > .tdbx-fxl');
+      if(!btn){
+        btn=document.createElement('button');btn.type='button';btn.className='tdbx-fxbtn';btn.setAttribute('data-export-ignore','true');btn.setAttribute('aria-expanded','false');
+        b.appendChild(btn);
+      }
+      var open=b.hasAttribute('data-tdbx-open');
+      var lab=open?'Ocultar lista':'Ver quais';
+      if(btn.getAttribute('data-l')!==lab){btn.setAttribute('data-l',lab);btn.innerHTML='<span>'+lab+'</span>'+CHEV;btn.setAttribute('aria-expanded',open?'true':'false')}
+      if(!lst){lst=document.createElement('div');lst.className='tdbx-fxl';lst.setAttribute('data-export-ignore','true');b.appendChild(lst)}
+      if(lst.getAttribute('data-sig')!==sig){
+        lst.setAttribute('data-sig',sig);lst.innerHTML='';
+        names.forEach(function(n){var s=document.createElement('span');s.textContent=n;lst.appendChild(s)});
+      }
+    });
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target;if(!t||!t.closest)return;var btn=t.closest('.tdbx-fxbtn');if(!btn)return;
+    var b=btn.parentElement;if(!b)return;
+    if(b.hasAttribute('data-tdbx-open'))b.removeAttribute('data-tdbx-open');else b.setAttribute('data-tdbx-open','1');
+    run();
+  });
+  function start(){new MutationObserver(function(ms){
+    for(var i=0;i<ms.length;i++){var m=ms[i],tg=m.target;
+      if(tg&&tg.closest&&tg.closest('.tdbx-fxbtn,.tdbx-fxl,.tdbx-bk,.tgtip,.tvg-gx'))continue;
+      sched();return}
+  }).observe(document.body,{childList:true,subtree:true,characterData:true});sched()}
   if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 })();
 
