@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261003-tempo8-v1";
+    window.__TDB_BUILD = "tdbn-20261003-tempo9-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261003-tempo8-v1"></script>
+  <script src="./config.js?build=tdbn-20261003-tempo9-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -784,7 +784,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 8";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 9";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1231,7 +1231,7 @@ html.dark-mode {
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 8</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 9</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1277,10 +1277,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261003-tempo8-v1"></script>
+  <script src="./sync.js?build=tdbn-20261003-tempo9-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo8-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261003-tempo9-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7242,7 +7242,7 @@ function Anotacoes(_a) {
         });
     }
     function novoBloco() {
-        var bloco = { id: 'nota' + Date.now() + Math.random().toString(36).slice(2), titulo: 'Novo bloco', texto: '', categoria: 'Rascunho' };
+        var bloco = { id: 'nota' + Date.now() + Math.random().toString(36).slice(2), titulo: 'Novo bloco', texto: '', categoria: (filtroCategoria && filtroCategoria !== 'TODAS') ? filtroCategoria : 'Rascunho' };
         salvar(__spreadArray(__spreadArray([], ((blocosRef.current || blocos) || []), true), [bloco], false));
         setEditandoTitulo(bloco.id);
         setTituloEdit('Novo bloco');
@@ -7521,7 +7521,7 @@ function Anotacoes(_a) {
             fontWeight: 600, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
         } }, React.createElement(Plus, { size: 14 }), " Novo bloco")), blocos.length > 0 && (React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } }, React.createElement("label", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 600 } }, "Filtrar por categoria:"), React.createElement("select", { value: filtroCategoria, onChange: function (e) { return setFiltroCategoria(e.target.value); }, style: {
             border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '6px 9px', fontSize: 13, background: COLORS.paperCard, color: COLORS.ink,
-        } }, React.createElement("option", { value: "TODAS" }, "Todas"), CATEGORIAS_ANOTACAO.map(function (c) { return React.createElement("option", { key: c, value: c }, c); })))), blocos.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14 } }, "Nenhuma anota\u00E7\u00E3o ainda. Clique em \"Novo bloco\" pra come\u00E7ar.")) : (function () {
+        } }, React.createElement("option", { value: "TODAS" }, "Todas"), CATEGORIAS_ANOTACAO.filter(function (c) { return c === 'Rascunho' || c === 'Folha A4' || c === filtroCategoria; }).map(function (c) { return React.createElement("option", { key: c, value: c }, c); })))), blocos.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14 } }, "Nenhuma anota\u00E7\u00E3o ainda. Clique em \"Novo bloco\" pra come\u00E7ar.")) : (function () {
         var filtrados = blocos.filter(function (b) { return filtroCategoria === 'TODAS' || (b.categoria || 'Rascunho') === filtroCategoria; });
         var blocosA4 = filtrados.filter(function (b) { return TAMANHO_CATEGORIA[b.categoria] === 'a4'; });
         var blocosCompactos = filtrados.filter(function (b) { return TAMANHO_CATEGORIA[b.categoria] === 'compacto'; });
@@ -7545,7 +7545,7 @@ function Anotacoes(_a) {
             return (React.createElement(React.Fragment, null, React.createElement("select", { value: b.categoria || 'Rascunho', onChange: function (e) { return atualizarCategoria(b.id, e.target.value); }, style: {
                     alignSelf: 'flex-start', border: "1px solid ".concat(COLORS.lineSoft), borderRadius: 7, padding: '7px 10px',
                     fontSize: 13.5, fontWeight: 600, color: COLORS.gold, background: COLORS.goldSoft, cursor: 'pointer', minHeight: 34,
-                } }, CATEGORIAS_ANOTACAO.map(function (c) { return React.createElement("option", { key: c, value: c }, c); })), enviandoAnexo === b.id && (React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft } }, "\u23F3 Anexando...")), b.anexoNome && (React.createElement("div", { style: {
+                } }, CATEGORIAS_ANOTACAO.filter(function (c) { return c === 'Rascunho' || c === 'Folha A4' || c === b.categoria; }).map(function (c) { return React.createElement("option", { key: c, value: c }, c); })), enviandoAnexo === b.id && (React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft } }, "\u23F3 Anexando...")), b.anexoNome && (React.createElement("div", { style: {
                     display: 'flex', alignItems: 'center', gap: 8, background: COLORS.paper,
                     border: "1px solid ".concat(COLORS.lineSoft), borderRadius: 7, padding: previews[b.id] ? 5 : '7px 10px', fontSize: 13,
                 } }, previews[b.id] ? (React.createElement("img", { src: previews[b.id], alt: b.anexoNome, onClick: function () { return abrirAnexo(b.id); }, title: "Clique pra ampliar", style: { width: 40, height: 40, objectFit: 'cover', borderRadius: 5, cursor: 'pointer', flexShrink: 0 } })) : (React.createElement(Paperclip, { size: 14, color: COLORS.inkSoft, style: { flexShrink: 0 } })), React.createElement("span", { onClick: function () { return abrirAnexo(b.id); }, title: "Abrir arquivo", style: { color: COLORS.gold, fontWeight: 600, cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 auto' } }, abrindoAnexoId === b.id ? 'Abrindo...' : b.anexoNome), React.createElement("button", { onClick: function () { return removerAnexo(b.id); }, title: "Remover anexo", style: {
@@ -17811,7 +17811,7 @@ html:not(.tdb-aurora-pdf) [data-an-a4] [data-an-head]>input{grid-column:1/-1}
 html:not(.tdb-aurora-pdf) [data-an-a4][data-an-open]>[data-an-head]{margin:0}
 html:not(.tdb-aurora-pdf) [data-an-a4] [data-an-tools]{grid-column:2;margin-right:18px;justify-self:end}
 html:not(.tdb-aurora-pdf) [data-an-a4]>[data-an-cat]{grid-column:1;margin-right:0}
-html:not(.tdb-aurora-pdf) body [data-an-a4]>textarea:not(#tan8x){flex:none!important;width:calc(100% - 36px)!important;max-width:720px;margin:4px auto 0!important;aspect-ratio:210/297;height:auto!important;max-height:560px;min-height:0!important;padding:28px 32px!important;font-size:15px!important;border-radius:10px!important;
+html:not(.tdb-aurora-pdf) body [data-an-a4]>textarea:not(#tan8x){flex:none!important;width:calc(100% - 36px)!important;max-width:720px;margin:4px auto 0!important;aspect-ratio:210/297;height:auto!important;max-height:none;min-height:0!important;padding:28px 32px!important;font-size:15px!important;border-radius:10px!important;
  background:var(--c-paperCard)!important;box-shadow:0 8px 26px rgba(20,30,50,.12)}
 html:not(.tdb-aurora-pdf) [data-an-a4][data-an-open]>.tan-strip{border-bottom:1px solid var(--c-lineSoft)}
 .tan-strip{grid-template-columns:auto minmax(120px,1fr) auto auto;gap:6px 14px;align-items:center;padding:14px 18px;cursor:pointer;box-sizing:border-box}
@@ -17873,7 +17873,7 @@ html:not(.tdb-aurora-pdf) body [data-ar-empty]:not(#tan8x){padding:34px 16px!imp
  html:not(.tdb-aurora-pdf) [data-an-a4]>.tan-strip>.tan-sm{grid-column:1/-1;order:4;justify-content:flex-start}
  .tan-sm span{flex:1 1 auto;text-align:center;max-width:none}
  html:not(.tdb-aurora-pdf) [data-an-a4]>:not(.tan-strip){margin-left:14px;margin-right:14px}
- html:not(.tdb-aurora-pdf) body [data-an-a4]>textarea:not(#tan8x){aspect-ratio:auto;min-height:340px!important;max-height:none;padding:18px!important;width:calc(100% - 28px)!important}
+ html:not(.tdb-aurora-pdf) body [data-an-a4]>textarea:not(#tan8x){padding:18px!important;width:calc(100% - 28px)!important}
  html:not(.tdb-aurora-pdf) body [data-ar-hdr]:not(#tan8x){padding:16px!important}
  html:not(.tdb-aurora-pdf) body [data-ar-hdr]>button:not(#tan8x){width:100%;justify-content:center}
 }
@@ -17986,6 +17986,7 @@ html:not(.tdb-aurora-pdf) body [data-ar-empty]:not(#tan8x){padding:34px 16px!imp
       var strip=card.querySelector(':scope > .tan-strip');
       if(!a4){setA(card,'data-an-open',null);if(strip)card.removeChild(strip);return}
       if(seenA4&&!seenA4.has(card)){seenA4.add(card);if(sameCtx&&openA4)openA4.add(card)}
+      if(editing&&pend&&Date.now()-pend<4000&&openA4)openA4.add(card);
       var isOpen=!!(openA4&&openA4.has(card));
       setA(card,'data-an-open',(isOpen||editing)?'1':null);
       if(!strip){strip=mk('div',{'class':'tan-strip','data-export-ignore':'true'},'<span class="tan-em">📄</span><div class="tan-st"><b></b><small></small></div><span class="tan-sm"></span><span class="tan-chev"></span>');card.insertBefore(strip,card.firstChild)}
