@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo9-v1";
+    window.__TDB_BUILD = "tdbn-20261004-tempo11-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo9-v1"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo11-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -784,7 +784,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 9";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 11";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1223,6 +1223,55 @@ html.dark-mode {
 }
 </style>
 
+
+<style id="tdb-export-padrao">
+/* TEMPO 10 — um só desenho para todos os botões de exportar PDF (o mesmo do Visão geral / Valores / Anotações). */
+html:not(.tdb-aurora-pdf) body .tdb-xbtn.tdb-xbtn.tdb-xbtn:not(#tdb-x){
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;white-space:nowrap!important;
+ font-family:inherit!important;font-size:12.5px!important;font-weight:800!important;line-height:1.2!important;letter-spacing:0!important;
+ padding:10px 16px!important;min-height:0!important;height:auto!important;border-radius:14px!important;cursor:pointer!important;
+ color:var(--c-inkButton,var(--c-ink))!important;
+ background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard)!important;
+ border:1px solid var(--aurora-edge,var(--c-line))!important;
+ box-shadow:var(--aurora-shadow,0 3px 10px rgba(30,40,60,.08))!important;
+ backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));
+ text-transform:none!important;text-decoration:none!important;
+}
+html:not(.tdb-aurora-pdf) body .tdb-xbtn.tdb-xbtn.tdb-xbtn:not(#tdb-x):disabled{opacity:.6;cursor:default!important}
+html:not(.tdb-aurora-pdf) body .tdb-xbtn.tdb-xbtn.tdb-xbtn:not(#tdb-x) svg{display:none!important} /* texto sem ícone em todos, como na maioria das páginas */
+html:not(.tdb-aurora-pdf) body #trm-pdf.tdb-xbtn.tdb-xbtn:not(#tdb-x){border-radius:14px!important;padding:10px 16px!important}
+/* Calendário: onde o botão fica no cabeçalho */
+.tcal-head .tcal-xp{flex:none}
+.tcal[data-phone="1"] .tcal-head{grid-template-columns:minmax(0,1fr) auto}
+.tcal[data-phone="1"] .tcal-head > *{grid-column:1 / -1}
+.tcal[data-phone="1"] .tcal-head > .tcal-h{grid-column:1;grid-row:1}
+.tcal[data-phone="1"] .tcal-head > .tcal-xp{grid-column:2;grid-row:1;display:inline-flex}
+</style>
+
+<script id="tdb-export-padrao-js">
+(function(){
+  /* TEMPO 10 — só marca com a classe "tdb-xbtn" os botões de exportar PDF (o desenho vem do CSS acima). Não muda texto, clique nem lógica. */
+  var RE=/^(?:📄\s*)?(?:Exportar\s+\S|Gerar PDF)/i;
+  function dentroDeJanela(el){
+    try{ for(var n=el;n&&n!==document.body;n=n.parentElement){ var p=getComputedStyle(n).position; if(p==='fixed') return true; } }catch(e){}
+    return false;
+  }
+  function marcar(){
+    var bs=document.querySelectorAll('button');
+    for(var i=0;i<bs.length;i++){
+      var b=bs[i]; if(b.classList.contains('tdb-xbtn')) continue;
+      var tx=(b.textContent||'').replace(/\s+/g,' ').trim();
+      if(!(RE.test(tx)||tx==='PDF')) continue;
+      if(dentroDeJanela(b)) continue; /* menus e janelas por cima da tela ficam como estão */
+      b.classList.add('tdb-xbtn');
+    }
+  }
+  var agendado=false;
+  function agendar(){ if(agendado) return; agendado=true; requestAnimationFrame(function(){ agendado=false; try{ marcar(); }catch(e){} }); }
+  try{ new MutationObserver(agendar).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+  setInterval(agendar,1500); document.addEventListener('DOMContentLoaded',agendar);
+})();
+</script>
 </head>
 <body>
 
@@ -1231,7 +1280,7 @@ html.dark-mode {
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 9</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 11</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1277,10 +1326,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo9-v1"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo11-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo9-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo11-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4003,7 +4052,7 @@ function Recibos(_a) {
         }, style: {
             background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 8, padding: '10px 18px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-        } }, "\uD83D\uDCC4 Exportar recibo..."))), modalExportarAberto && (ReactDOM.createPortal(React.createElement("div", { onClick: function () { return setModalExportarAberto(false); }, style: {
+        } }, "Exportar recibo..."))), modalExportarAberto && (ReactDOM.createPortal(React.createElement("div", { onClick: function () { return setModalExportarAberto(false); }, style: {
             position: 'fixed', inset: 0, background: 'rgba(13,18,28,0.42)', zIndex: 2147483000,
             backdropFilter: 'blur(10px) saturate(1.15)', WebkitBackdropFilter: 'blur(10px) saturate(1.15)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box',
@@ -4057,7 +4106,7 @@ function Recibos(_a) {
     }))), tdbTotalRecibo(r, false, atualizarCampo), React.createElement("button", { onClick: function () { return exportarPDFRecibo([subTab]); }, style: {
             background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '10px 16px',
             fontWeight: 600, fontSize: 13.5, cursor: 'pointer',
-        } }, "\uD83D\uDCC4 Gerar PDF s\u00F3 desta empresa"), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.4 } }, "A assinatura da diretora j\u00E1 sai como imagem de verdade no PDF, em cima da linha.")), React.createElement("div", { className: "recibo-preview", style: {
+        } }, "Gerar PDF s\u00F3 desta empresa"), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.4 } }, "A assinatura da diretora j\u00E1 sai como imagem de verdade no PDF, em cima da linha.")), React.createElement("div", { className: "recibo-preview", style: {
             background: '#FFFFFF', borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
             border: '3px solid #1C9E8F', padding: 3,
         } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } }, React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain' } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), React.createElement("div", { style: { fontSize: 13.5, marginTop: 10, color: '#222' } }, "LISTA DE CRIAN\u00C7AS QUE RECEBEM AUX\u00CDLIO", React.createElement("br", null), r.valorPadrao ? "CRECHE NO VALOR DE R$ ".concat(r.valorPadrao) : 'CRECHE')), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, colsPrev.map(function (_a, i) {
@@ -4883,7 +4932,7 @@ function Compras(_a) {
     return (React.createElement("div", { style: { display: 'grid', gap: 20 } }, React.createElement(Toast, { mensagem: toastMsg }), menuListasCompras, React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'end' } }, React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "FORNECEDOR"), React.createElement("input", { value: listaAtual.fornecedor, onChange: function (e) { return atualizarFornecedor(e.target.value); }, placeholder: "Nome do fornecedor", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, width: 220, boxSizing: 'border-box' } })), React.createElement("button", { onClick: exportarPDFCompras, title: "Gera um PDF s\u00F3 com os itens que t\u00EAm quantidade a comprar, pronto pra enviar ao fornecedor", style: {
             background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px',
             fontWeight: 600, fontSize: 13.5, cursor: 'pointer', height: 37,
-        } }, "\uD83D\uDCC4 Exportar lista em PDF"), chamarIA && (React.createElement("button", { onClick: alternarDitadoCompras, disabled: interpretandoCompra, title: 'Clica e fala o que precisa mudar em qualquer lista de compras, ex: "muda o a\u00E7\u00FAcar pra 5 quilos" ou "tira a manga da lista"', style: {
+        } }, "Exportar lista em PDF"), chamarIA && (React.createElement("button", { onClick: alternarDitadoCompras, disabled: interpretandoCompra, title: 'Clica e fala o que precisa mudar em qualquer lista de compras, ex: "muda o a\u00E7\u00FAcar pra 5 quilos" ou "tira a manga da lista"', style: {
             display: 'flex', alignItems: 'center', gap: 6,
             background: gravandoCompra ? COLORS.red : (interpretandoCompra ? COLORS.inkSoft : COLORS.inkButton),
             color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px', height: 37,
@@ -6051,6 +6100,9 @@ function _perfilPadraoPDF(elemento, preferirHorizontal, paginaUnica) {
     if (elemento.matches('.export-pagina-lancamentos')) return { windowWidth: 1600, renderWidth: 1400, horizontal: true, paginaUnica: false, chave: 'lancamentos' };
     if (elemento.matches('.export-pagina-valores')) return { windowWidth: 1500, renderWidth: 1160, horizontal: false, paginaUnica: false, chave: 'valores' };
     if (elemento.matches('.export-pagina-visaogeral')) return { windowWidth: 1500, renderWidth: 1440, horizontal: false, paginaUnica: false, chave: 'visaogeral' };
+    if (elemento.matches('.tcal')) return elemento.getAttribute('data-phone') === '1'
+        ? { windowWidth: 700, renderWidth: 640, horizontal: false, paginaUnica: false, chave: 'calendario' }
+        : { windowWidth: 1500, renderWidth: 1400, horizontal: true, paginaUnica: !!paginaUnica, chave: 'calendario' };
     if (elemento.matches('.export-pagina-anotacoes')) return { windowWidth: 1500, renderWidth: 1180, horizontal: false, paginaUnica: !!paginaUnica, chave: 'anotacoes' };
     return perfil;
 }
@@ -6120,7 +6172,7 @@ function _aplicarMesaVirtualPDF(clonedDoc, alvoClonado, perfil) {
         '[data-pdf-render-mode], [data-pdf-render-mode] *{animation:none!important;transition:none!important;caret-color:transparent!important;text-rendering:geometricPrecision;-webkit-font-smoothing:antialiased;}' +
         '[data-pdf-render-mode] table{break-inside:auto;}' +
         '[data-pdf-render-mode] tr,[data-pdf-render-mode] .busca-liquid-glass{break-inside:avoid;}' +
-        '[data-pdf-render-mode] button{display:none!important;}';
+        '[data-pdf-render-mode]:not([data-pdf-render-mode="calendario"]) button{display:none!important;}';
     clonedDoc.head.appendChild(estilo);
 }
 function _cortesSemanticosPDF(alvoClonado, escala) {
@@ -6191,6 +6243,21 @@ async function _capturarElementoPadraoPDF(elemento, preferirHorizontal, paginaUn
                     '.contas-pessoais-card>div:last-child{margin-top:1px!important;font-size:10px!important;line-height:1.05!important}';
                 clonedDoc.head.appendChild(ec);
                 Array.from(alvoClonado.querySelectorAll('.contas-pessoais-scroll tbody td:not([colspan]) > span,.contas-pessoais-scroll tfoot td > span')).forEach(function(sp){sp.style.setProperty('width','auto','important');sp.style.setProperty('min-width','100%','important');sp.style.setProperty('overflow','visible','important');});
+            }
+            if (perfil.chave === 'calendario') {
+                // A limpeza geral esconde todo botão; no Calendário os botões do corpo (agendas, dias) devem aparecer.
+                Array.from(alvoClonado.querySelectorAll('button')).forEach(function (b) { b.style.removeProperty('display'); });
+                // html2canvas não entende color-mix(): troca por cores comuns só nesta cópia do PDF.
+                var ecal = clonedDoc.createElement('style');
+                ecal.textContent = '[data-pdf-render-mode="calendario"] .tcal-head button,[data-pdf-render-mode="calendario"] .tcal-nav button,[data-pdf-render-mode="calendario"] .tcal-fab,[data-pdf-render-mode="calendario"] [data-act="novaag"],[data-pdf-render-mode="calendario"] .tcal-nextbar{display:none!important}' +
+                    '.tcal-d{border:1px solid #d7dce5!important;background:#fff!important}.tcal-d.hoje{border:1.5px solid #1767cf!important;background:#eef4fd!important}' +
+                    '.tcal-wk{border:1px solid #d7dce5!important;background:#fff!important}.tcal-wk-d,.tcal-ad-c,.tcal-col{border-left:1px solid #d7dce5!important}.tcal-wk-ad,.tcal-wk-sc{border-top:1px solid #d7dce5!important}' +
+                    '.tcal-col{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,#e6e9ef 47px,#e6e9ef 48px)!important}' +
+                    '.tcal-li{border-top:1px solid #e6e9ef!important}.tcal-chip.on{background:#e3edfb!important}' +
+                    '.tcal-sum-card{border:1px solid #e2e6ed!important;background:#fff!important}.tcal-sum-card i{background:#eef3fb!important}' +
+                    '.tcal-side-next .tcal-li{background:#fff!important;border:1px solid #e2e6ed!important}' +
+                    '.tcal-card,.tcal-side>*{background:#fff!important;border:1px solid #e2e6ed!important}';
+                clonedDoc.head.appendChild(ecal);
             }
             if (perfil.chave === 'mensalidades') {
                 _pdfOcultarBlocoPorTexto(alvoClonado,'Novo registro de entrada'); _pdfOcultarBarraDeBusca(alvoClonado);
@@ -16808,6 +16875,14 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
  /* ---------- eventos da interface ---------- */
  function celRect(el){return el.getBoundingClientRect();}
  function minutosDoClique(col,e){var r=col.getBoundingClientRect(),y=e.clientY-r.top;return Math.max(0,Math.min(23*60+30,Math.round(y/HP*60/30)*30));}
+ function exportarCalendarioPDF(btn){
+  var raiz=S.host&&S.host.querySelector('.tcal');
+  if(!raiz||typeof exportarPaginaVisualPDF!=='function')return;
+  fecharPop();
+  var tit=titulo(), fone=raiz.getAttribute('data-phone')==='1';
+  var nome='Calendario-'+tit.replace(/[^A-Za-z0-9\u00C0-\u00FF]+/g,'-').replace(/^-+|-+$/g,'');
+  exportarPaginaVisualPDF(raiz,'Calend\u00E1rio \u2014 '+tit,nome,btn,!fone,S.view!=='agenda');
+ }
  function onClick(e){
   if(S.tp){var dentro=e.target.closest&&e.target.closest('#tcal-tp'),campo=e.target.closest&&e.target.closest('.tcal-time');if(!dentro&&!campo)fecharHora();}
   var raiz=e.target.closest&&e.target.closest('.tcal,#tcal-pop,#tcal-modal,#tcal-tp');
@@ -16830,6 +16905,7 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
   if(a==='slot'){var m=minutosDoClique(t,e);S.sel=pY(d);popRapido(d,hh(m),{left:e.clientX-4,right:e.clientX+4,top:e.clientY});return;}
   if(a==='dia'){irPara(pY(d),S.view==='year'||S.view==='month'?'day':S.view);return;}
   if(a==='irmes'){irPara(pY(d),'month');return;}
+  if(a==='pdf'){exportarCalendarioPDF(t);return;}
   if(a==='novo'){abrirForm(draftNovo(ymd(S.sel||hoje()),'09:00',null));return;}
   if(a==='novo-dia'){abrirForm(draftNovo(d,'09:00',null));return;}
   if(a==='prev'){mover(-1);return;}
@@ -16914,11 +16990,12 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
 
  /* ---------- montagem ---------- */
  function shell(){
-  return '<div class="tcal" data-narrow="0" data-phone="0"><div class="tcal-head"><h2 class="tcal-h">Calendário</h2><button type="button" class="tcal-sync pend" data-act="gainfo"><i></i><span>Verificando Google Agenda…</span></button>'
-   +'<label class="tcal-search"><span aria-hidden="true">🔍</span><input type="search" placeholder="Buscar evento" aria-label="Buscar evento" autocomplete="off"></label>'
-   +'<div class="tcal-seg" role="tablist" aria-label="Visão">'+[['day','Dia'],['week','Semana'],['month','Mês'],['year','Ano'],['agenda','Agenda']].map(function(v){return '<button type="button" role="tab" data-act="view" data-v="'+v[0]+'">'+v[1]+'</button>';}).join('')+'</div>'
-   +'<button type="button" class="tcal-btn p tcal-novo" data-act="novo">+ Novo evento</button></div>'
-   +'<div class="tcal-alertas"></div><div class="tcal-nextbar"></div><div class="tcal-chips"></div><div class="tcal-layout"><section class="tcal-card tcal-main"></section><aside class="tcal-side"></aside></div><button type="button" class="tcal-fab" data-act="novo" aria-label="Novo evento">+</button></div>';
+  return '<div class="tcal" data-narrow="0" data-phone="0"><div class="tcal-head"><h2 class="tcal-h">Calendário</h2><button type="button" class="tcal-sync pend" data-act="gainfo" data-export-ignore="1"><i></i><span>Verificando Google Agenda…</span></button>'
+   +'<label class="tcal-search" data-export-ignore="1"><span aria-hidden="true">🔍</span><input type="search" placeholder="Buscar evento" aria-label="Buscar evento" autocomplete="off"></label>'
+   +'<div class="tcal-seg" role="tablist" aria-label="Visão" data-export-ignore="1">'+[['day','Dia'],['week','Semana'],['month','Mês'],['year','Ano'],['agenda','Agenda']].map(function(v){return '<button type="button" role="tab" data-act="view" data-v="'+v[0]+'">'+v[1]+'</button>';}).join('')+'</div>'
+   +'<button type="button" class="tcal-xp" data-act="pdf" data-export-ignore="1">Exportar página em PDF</button>'
+   +'<button type="button" class="tcal-btn p tcal-novo" data-act="novo" data-export-ignore="1">+ Novo evento</button></div>'
+   +'<div class="tcal-alertas" data-export-ignore="1"></div><div class="tcal-nextbar" data-export-ignore="1"></div><div class="tcal-chips"></div><div class="tcal-layout"><section class="tcal-card tcal-main"></section><aside class="tcal-side"></aside></div><button type="button" class="tcal-fab" data-act="novo" aria-label="Novo evento" data-export-ignore="1">+</button></div>';
  }
  var ligado=false;
  function ligar(){
