@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo4-v1";
+    window.__TDB_BUILD = "tdbn-20261004-tempo5-v1";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo4-v1"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo5-v1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -784,7 +784,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 4";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 5";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1231,7 +1231,7 @@ html.dark-mode {
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 4</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 5</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1277,10 +1277,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo4-v1"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo5-v1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo4-v1-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo5-v1-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18193,7 +18193,7 @@ html:not(.tdb-aurora-pdf) body .kpi-card.kpi-card-destaque:not(#tvgx){border-lef
 
 /* ===== indicadores ===== */
 html:not(.tdb-aurora-pdf) body [data-vg-sec="ind"]:not(#tvgx){padding:18px 20px!important;gap:14px!important;border-radius:24px!important;box-sizing:border-box}
-html:not(.tdb-aurora-pdf) body [data-vg-sec="ind"]>div[style*="flex: 1 1 190px"]:not(#tvgx){flex:1 1 220px!important;min-width:0;box-sizing:border-box;padding:14px 16px;border-radius:18px;background:var(--c-lineSoft);box-shadow:0 3px 10px rgba(30,40,60,.06)}
+html:not(.tdb-aurora-pdf) body [data-vg-sec="ind"]>div[style*="flex: 1 1 190px"]:not(#tvgx),html:not(.tdb-aurora-pdf) body [data-vg-sec="ind"]>div[style*="flex: 1 1 250px"]:not(#tvgx){flex:1 1 220px!important;min-width:0;box-sizing:border-box;padding:14px 16px;border-radius:18px;background:var(--c-lineSoft);box-shadow:0 3px 10px rgba(30,40,60,.06)}
 html:not(.tdb-aurora-pdf) [data-vg-sec="ind"]>div[style*="flex: 1 1 190px"]>div:first-child{font-size:11px!important;font-weight:800!important;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
 html:not(.tdb-aurora-pdf) [data-vg-sec="ind"]>div[style*="flex: 1 1 190px"]>div:last-child{margin-top:4px;line-height:1.4}
 html:not(.tdb-aurora-pdf) body .export-pagina-visaogeral[data-vg-view="todos"] [data-vg-sec="ind"]>div:first-child>div:first-child{display:none}
@@ -18256,6 +18256,9 @@ html:not(.tdb-aurora-pdf) body .export-pagina-visaogeral[data-vg]>[data-vg-notic
  html:not(.tdb-aurora-pdf) body .tdb-projecao-caixa[data-vg-sec] tbody :is(th,td):first-child:not(#tvgx){display:block;grid-column:1/-1;font-weight:800;text-align:left!important;padding:2px 0 4px!important;border:0!important;background:transparent!important}
  html:not(.tdb-aurora-pdf) body .tdb-projecao-caixa[data-vg-sec] tbody td>.tvg-l:not(#tvgx){display:block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--c-inkSoft)}
 }
+
+html:not(.tdb-aurora-pdf) [data-vg-sec="ind"]>div[style*="flex: 1 1 250px"]>div:first-child{font-size:11px!important;font-weight:800!important;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px!important}
+html:not(.tdb-aurora-pdf) [data-vg-sec="ind"]>div[style*="flex: 1 1 250px"]>div:last-child{margin-top:8px!important;line-height:1.4}
 
 /* ===== Gráficos no estilo do Resumo anual (só na tela; no PDF volta tudo como antes) ===== */
 html.tdb-aurora-pdf .tvg-gx,html[data-vg-pdf] .tvg-gx,html.tdb-aurora-pdf .tgtip{display:none!important}
