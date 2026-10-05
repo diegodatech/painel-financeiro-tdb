@@ -107,6 +107,14 @@
           keys.forEach(function(k){ const b=Object.prototype.hasOwnProperty.call(base,k)?base[k]:AUSENTE; const l=Object.prototype.hasOwnProperty.call(local,k)?local[k]:AUSENTE; const sv=Object.prototype.hasOwnProperty.call(servidor,k)?servidor[k]:AUSENTE; const v=tdbMesclar3_(b,l,sv,(caminho?caminho+'.':'')+k,conflitos,preferirLocal); if(!ehAusente(v)) out[k]=v; });
           return out;
         }
+        if (typeof base === 'string' && typeof local === 'string' && typeof servidor === 'string') {
+          // Texto digitado em sequência (a gravação anterior deste mesmo aparelho ou de outro só acrescentou texto).
+          if (local.trim() === servidor.trim()) return local.length >= servidor.length ? local : servidor;
+          if (local.indexOf(base) === 0 && servidor.indexOf(base) === 0) {
+            if (local.indexOf(servidor) === 0) return local;
+            if (servidor.indexOf(local) === 0) return servidor;
+          }
+        }
         conflitos.push(caminho || 'valor');
         return preferirLocal ? local : servidor;
       }

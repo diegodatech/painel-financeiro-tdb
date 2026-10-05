@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo1-v11";
+    window.__TDB_BUILD = "tdbn-20261004-tempo1-v13";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo1-v11"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo1-v13"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo1-v11"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo1-v13"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v11-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v13-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -8201,6 +8201,24 @@ function Rematricula(_a) {
 
 var CATEGORIAS_ANOTACAO = ['Rascunho', 'Folha A4', 'Contato', 'Aluno', 'Textos prontos', 'Outro'];
 var TAMANHO_CATEGORIA = { 'Contato': 'compacto', 'Aluno': 'medio', 'Folha A4': 'a4' };
+var TDB_ANOT_ALT = 'painel_anotacoes_alturas_v1';
+function tdbAnotAlturas() { try { var o = JSON.parse(localStorage.getItem(TDB_ANOT_ALT) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+function tdbAnotAltura(id) { var h = Number(tdbAnotAlturas()[id]); return h > 0 ? h : undefined; }
+function tdbAnotRef(el, id) {
+    if (!el || el.__tdbAltObs || typeof ResizeObserver === 'undefined') return;
+    el.__tdbAltObs = true;
+    var primeira = true, tm = null;
+    new ResizeObserver(function () {
+        if (primeira) { primeira = false; return; }
+        clearTimeout(tm);
+        tm = setTimeout(function () {
+            if (!el.isConnected) return;
+            var h = el.offsetHeight; if (!(h > 0)) return;
+            var o = tdbAnotAlturas(); if (o[id] === h) return; o[id] = h;
+            try { localStorage.setItem(TDB_ANOT_ALT, JSON.stringify(o)); } catch (e) { }
+        }, 250);
+    }).observe(el);
+}
 function Anotacoes(_a) {
     var _this = this;
     var chamarIA = _a.chamarIA;
@@ -8618,8 +8636,8 @@ function Anotacoes(_a) {
                     width: '100%', minHeight: alturaMin, border: "1px solid ".concat(COLORS.line), borderRadius: 7,
                     padding: 10, fontSize: 13.5, color: COLORS.inkSoft, boxSizing: 'border-box', background: COLORS.lineSoft,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                } }, React.createElement(EyeOff, { size: 14 }), " conte\u00FAdo oculto")) : (React.createElement("textarea", { value: b.texto, onChange: function (e) { return atualizarTexto(b.id, e.target.value); }, placeholder: placeholder, spellCheck: "true", lang: "pt-BR", style: {
-                    width: '100%', minHeight: alturaMin, border: "1px solid ".concat(COLORS.line), borderRadius: 7,
+                } }, React.createElement(EyeOff, { size: 14 }), " conte\u00FAdo oculto")) : (React.createElement("textarea", { value: b.texto, onChange: function (e) { return atualizarTexto(b.id, e.target.value); }, placeholder: placeholder, spellCheck: "true", lang: "pt-BR", ref: function (el) { tdbAnotRef(el, b.id); }, style: {
+                    width: '100%', height: tdbAnotAltura(b.id), minHeight: alturaMin, border: "1px solid ".concat(COLORS.line), borderRadius: 7,
                     padding: 10, fontSize: 13.5, fontFamily: 'Inter, sans-serif', color: COLORS.ink,
                     resize: 'vertical', boxSizing: 'border-box', background: COLORS.paper,
                 } })))); })));
