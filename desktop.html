@@ -1291,6 +1291,138 @@ html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="1"][data-xp-fim][data-
   setInterval(agendar,1500); document.addEventListener('DOMContentLoaded',agendar);
 })();
 </script>
+
+<style id="tdb-nr-css">
+/* TEMPO 1 — Mensalidades · Novo registro de entrada (só aparência; os campos e as regras são os mesmos). */
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr{border-radius:24px!important;padding:14px 18px 10px!important;border:1px solid var(--aurora-edge,var(--c-line))!important;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075))!important;
+ background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard)!important;backdrop-filter:blur(var(--aurora-blur,18px));-webkit-backdrop-filter:blur(var(--aurora-blur,18px))}
+/* cabeçalho */
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr > .tdbnr-h{display:flex!important;align-items:center!important;gap:10px!important;margin-bottom:10px!important;flex-wrap:nowrap!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr > .tdbnr-h > svg{width:32px!important;height:32px!important;padding:7px!important;border-radius:11px!important;background:rgba(23,103,207,.10)!important;color:var(--c-inkButton,#1767cf)!important;stroke:currentColor!important;flex:none!important;box-sizing:border-box}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr > .tdbnr-h > h3{font-size:15.5px!important;font-weight:700!important;letter-spacing:-.01em;white-space:nowrap}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr > .tdbnr-h > span{font-size:12px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr > .tdbnr-h > button{margin-left:auto!important;flex:none!important;display:inline-flex!important;align-items:center!important;gap:7px!important;
+ background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard)!important;color:var(--c-inkButton,#1767cf)!important;border:1px solid var(--aurora-edge,var(--c-line))!important;border-radius:14px!important;
+ box-shadow:var(--aurora-shadow,0 3px 10px rgba(30,40,60,.08))!important;padding:8px 14px!important;font-size:12.5px!important;font-weight:800!important;min-height:0!important;height:auto!important;cursor:pointer}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr > .tdbnr-h > button svg,html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr > .tdbnr-h > button svg *{stroke:currentColor!important}
+/* linhas de campos */
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f{gap:10px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-r1,html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-r2{display:flex!important;flex-wrap:wrap!important;gap:10px!important;align-items:flex-end!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-r1 > div,html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-r2 > div{gap:3px!important;min-width:0!important;flex:1 1 110px}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="tipo"]{flex:1.9 1 210px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="nome"]{flex:2.2 1 190px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="pai"]{flex:1.7 1 150px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="conv"]{flex:1.5 1 140px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="nota"]{flex:1.4 1 120px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="mes"]{flex:1 1 80px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="valor"]{flex:2.4 1 200px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="pago"]{flex:1.3 1 100px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="banco"]{flex:1.3 1 100px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr [data-nr="status"]{flex:1.9 1 270px!important;min-width:250px!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f label{font-size:10px!important;font-weight:800!important;letter-spacing:.04em;text-transform:uppercase;color:var(--c-inkSoft)!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f :is(input,select){height:38px!important;min-height:0!important;box-sizing:border-box!important;border-radius:12px!important;padding:0 11px!important;font-size:13px!important;width:100%}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f select{padding-right:30px!important;appearance:none!important;-webkit-appearance:none!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a8494' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:14px!important}
+html.dark-mode:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f select,html:not(.tdb-aurora-pdf) body.dark-mode .tdbnr.tdbnr .tdbnr-f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398989D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f [data-nr="valor"] > select:not(#tdb-x){color:var(--c-inkButton,#1767cf)!important;font-weight:700!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f select:disabled,html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f input:disabled{opacity:.5}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-hide{display:none!important}
+/* Tipo / Status em pílula (repassam a escolha ao campo original) */
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pill{display:flex;height:38px;box-sizing:border-box;background:var(--c-paperCard);border:1px solid var(--c-line);border-radius:12px;padding:3px;gap:3px}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pill button{flex:1 1 0;min-width:0;min-height:0!important;height:auto!important;border:0!important;background:transparent!important;color:var(--c-inkSoft)!important;border-radius:9px!important;font:700 12.5px/1 inherit;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;overflow:hidden;padding:0 8px!important;box-shadow:none!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pill button svg{width:13px;height:13px;flex:none}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pill button.on{background:rgba(60,70,86,.10)!important;color:var(--c-ink)!important;box-shadow:inset 0 0 0 1px #3c4656!important}
+html:not(.tdb-aurora-pdf) body.dark-mode .tdbnr.tdbnr .tdbnr-pill button.on{background:rgba(121,173,244,.16)!important;box-shadow:inset 0 0 0 1px #79adf4!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pill button.on[data-v="Pago"]{background:var(--c-greenBg)!important;color:var(--c-green)!important;box-shadow:inset 0 0 0 1px var(--c-green)!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pill button.on[data-v="Pendente"]{background:var(--c-goldSoft)!important;color:var(--c-gold)!important;box-shadow:inset 0 0 0 1px var(--c-gold)!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pill button.on[data-v="Parcial"]{background:rgba(23,103,207,.12)!important;color:var(--c-inkButton,#1767cf)!important;box-shadow:inset 0 0 0 1px var(--c-inkButton,#1767cf)!important}
+/* Adicionar */
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-r2 > button{height:38px!important;min-height:0!important;padding:0 20px!important;border-radius:13px!important;font-size:13px!important;font-weight:700!important;box-shadow:0 6px 16px rgba(23,103,207,.28)!important;flex:none!important}
+/* Calcular mensalidade proporcional */
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pf{margin-top:0!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pf > button{color:var(--c-inkButton,#1767cf)!important;font-size:12.5px!important;font-weight:700!important;padding:6px 10px!important;border-radius:10px!important;min-height:0!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pf > button:hover{background:rgba(23,103,207,.10)!important}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pf > div{border-radius:16px!important;padding:12px 14px!important;margin-top:6px!important;box-shadow:0 3px 10px rgba(30,40,60,.08)}
+html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pf > div button{background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard)!important;color:var(--c-inkButton,#1767cf)!important;border:1px solid var(--aurora-edge,var(--c-line))!important;border-radius:14px!important;height:38px!important;min-height:0!important;padding:0 16px!important;font-size:12.5px!important;font-weight:800!important;box-shadow:var(--aurora-shadow,0 3px 10px rgba(30,40,60,.08))!important}
+@media (max-width:900px){html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr > .tdbnr-h > span{display:none}}
+@media (max-width:700px){html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-f :is(input,select){font-size:16px!important}}
+</style>
+
+<script id="tdb-nr-js">
+(function(){
+  /* TEMPO 1 — marca o quadro "Novo registro de entrada" (classes para o CSS) e cria as pílulas de Tipo/Status,
+     que só repassam a escolha ao campo original. Não muda dados, regras, cálculos nem sincronização. */
+  var MAP={'TIPO':'tipo','NOME':'nome','PAI/RESPONSÁVEL':'pai','CONVÊNIO':'conv','TIRAR NOTA':'nota','MÊS':'mes','SELECIONAR VALOR':'valor','VALOR PAGO':'pago','BANCO':'banco','STATUS':'status'};
+  var ICO={Pago:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
+           Pendente:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+           Parcial:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>'};
+  function add(el,c){ if(el&&!el.classList.contains(c)) el.classList.add(c); }
+  function setA(el,k,v){ if(el&&el.getAttribute(k)!==v) el.setAttribute(k,v); }
+  function achar(){
+    var fs=document.querySelectorAll('form');
+    for(var i=0;i<fs.length;i++){
+      var f=fs[i], r1=f.children[0], l=r1&&r1.querySelector('label');
+      if(!l||(l.textContent||'').trim()!=='TIPO') continue;
+      var card=f.parentElement, h=card&&card.querySelector(':scope > h3, :scope > div > h3');
+      if(card&&/Novo registro de entrada/.test(card.textContent||'')&&f.querySelector('select')) return f;
+    }
+    return null;
+  }
+  function pilula(campo,sel){
+    var p=campo.querySelector(':scope > .tdbnr-pill');
+    if(!p){
+      p=document.createElement('div'); p.className='tdbnr-pill'; p.setAttribute('data-export-ignore','true'); p.setAttribute('role','radiogroup');
+      [].forEach.call(sel.options,function(o){
+        var b=document.createElement('button'); b.type='button'; b.setAttribute('data-v',o.value||o.text); b.setAttribute('role','radio');
+        b.innerHTML=(ICO[o.text]||'')+'<span></span>'; b.lastChild.textContent=o.text;
+        b.addEventListener('click',function(e){
+          e.preventDefault();
+          if(sel.disabled||sel.value===b.getAttribute('data-v')) return;
+          var set=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set;
+          set.call(sel,b.getAttribute('data-v'));
+          sel.dispatchEvent(new Event('change',{bubbles:true}));
+          sinc();
+        });
+        p.appendChild(b);
+      });
+      sel.parentNode.insertBefore(p,sel.nextSibling);
+    }
+    add(sel,'tdbnr-hide');
+  }
+  function marcar(){
+    var f=achar(); if(!f) return;
+    var card=f.parentElement;
+    add(card,'tdbnr'); add(card.firstElementChild,'tdbnr-h'); add(f,'tdbnr-f');
+    add(f.children[0],'tdbnr-r1'); add(f.children[1],'tdbnr-r2'); if(f.children[2]) add(f.children[2],'tdbnr-pf');
+    [f.children[0],f.children[1]].forEach(function(row){
+      if(!row) return;
+      [].forEach.call(row.children,function(c){
+        var l=c.querySelector(':scope > label'); if(!l) return;
+        var k=MAP[(l.textContent||'').trim()]; if(!k) return;
+        setA(c,'data-nr',k);
+        if(k==='tipo'||k==='status'){ var s=c.querySelector(':scope > select'); if(s) pilula(c,s); }
+      });
+    });
+  }
+  function sinc(){
+    var ps=document.querySelectorAll('.tdbnr .tdbnr-pill');
+    for(var i=0;i<ps.length;i++){
+      var s=ps[i].parentNode.querySelector(':scope > select'); if(!s) continue;
+      var bs=ps[i].children;
+      for(var j=0;j<bs.length;j++){
+        var on=bs[j].getAttribute('data-v')===s.value;
+        if(bs[j].classList.contains('on')!==on) bs[j].classList.toggle('on',on);
+        var a=on?'true':'false'; if(bs[j].getAttribute('aria-checked')!==a) bs[j].setAttribute('aria-checked',a);
+        var d=s.disabled; if(bs[j].disabled!==d) bs[j].disabled=d;
+      }
+    }
+  }
+  var agendado=false;
+  function agendar(){ if(agendado) return; agendado=true; requestAnimationFrame(function(){ agendado=false; try{ marcar(); sinc(); }catch(e){} }); }
+  try{ new MutationObserver(agendar).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+  document.addEventListener('change',function(){ setTimeout(sinc,0); },true);
+  setInterval(agendar,800); document.addEventListener('DOMContentLoaded',agendar);
+})();
+</script>
 </head>
 <body>
 
