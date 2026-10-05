@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo1-v6";
+    window.__TDB_BUILD = "tdbn-20261004-tempo1-v9";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo1-v6"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo1-v9"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo1-v6"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo1-v9"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v6-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v9-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4248,6 +4248,28 @@ function Recibos(_a) {
         return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Carregando recibos...");
     }
     var r = dados[subTab] || SEED_RECIBOS[subTab];
+    // Recibos criados pelo botão "Adicionar" (chaves que não vêm do modelo original).
+    function rotuloRecibo(k) {
+        var d = dados[k];
+        if (SEED_RECIBOS[k]) return (d && d.label) || SEED_RECIBOS[k].label;
+        var t = String((d && d.titulo) || '').split('\n')[0].replace(/^\s*RECIBO\s+/i, '').trim();
+        return t || (d && d.label) || 'Novo recibo';
+    }
+    var categoriasRecibos = CATEGORIAS_RECIBOS.concat(Object.keys(dados).filter(function (k) { return !SEED_RECIBOS[k] && dados[k] && Array.isArray(dados[k].rows); }).map(function (k) { return { key: k, label: rotuloRecibo(k) }; }));
+    function adicionarRecibo() {
+        var _a;
+        var modelo = dados[subTab] || r;
+        var chave = 'novo_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+        var novo = __assign({}, modelo);
+        novo.label = '';
+        novo.titulo = '';
+        novo.banco = __spreadArray([], modelo.banco || [], true);
+        novo.rows = (modelo.rows || []).map(function (row) { var n = __assign({}, row); n.pai = ''; n.crianca = ''; n.nascimento = ''; return n; });
+        if (!novo.rows.length) novo.rows = [{ pai: '', crianca: '', nascimento: '', valor: modelo.valorPadrao || '', valor2: modelo.valorPadrao2 || '' }];
+        salvar(__assign(__assign({}, dados), (_a = {}, _a[chave] = novo, _a)));
+        setSubTab(chave);
+        mostrarToast('✓ Novo recibo criado. Escreva o título da empresa e as crianças.');
+    }
     if (!r) {
         return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Modelo de recibo n\u00E3o encontrado.");
     }
@@ -4577,7 +4599,7 @@ function Recibos(_a) {
         var _mesesRec = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         var nomePasta = 'Recibos ' + _mesesRec[_agoraRec.getMonth()] + ' de ' + _agoraRec.getFullYear();
         function nomeEmpresaArq(chave) {
-            var c = CATEGORIAS_RECIBOS.find(function (x) { return x.key === chave; });
+            var c = categoriasRecibos.find(function (x) { return x.key === chave; });
             var n = String((c && c.label) || (dados[chave] && dados[chave].label) || chave).replace(/[\\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
             return n || chave;
         }
@@ -4623,12 +4645,15 @@ function Recibos(_a) {
             ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$'], ['valor2', 'Valor R$']]
             : [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$']];
     var colsPrev = (r.temSegundaColuna && !tdbUsaSegundaColuna(r)) ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Auxílio R$']] : (r.temSegundaColuna ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Auxílio R$'], ['valor2', 'Compl. R$']] : cols);
-    return (React.createElement("div", { className: "recibos-view", style: { display: 'grid', gap: 20 } }, React.createElement(Toast, { mensagem: toastMsg }), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, CATEGORIAS_RECIBOS.map(function (c) { return (React.createElement("button", { key: c.key, className: "subtab-btn selection-card ".concat(subTab === c.key ? 'subtab-ativa selection-card-ativa' : ''), onClick: function () { return setSubTab(c.key); }, style: {
+    return (React.createElement("div", { className: "recibos-view", style: { display: 'grid', gap: 20 } }, React.createElement(Toast, { mensagem: toastMsg }), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, categoriasRecibos.map(function (c) { return (React.createElement("button", { key: c.key, className: "subtab-btn selection-card ".concat(subTab === c.key ? 'subtab-ativa selection-card-ativa' : ''), onClick: function () { return setSubTab(c.key); }, style: {
             padding: '9px 16px', borderRadius: 8, border: "1px solid ".concat(COLORS.line), cursor: 'pointer',
             fontWeight: 700, fontSize: 13.5,
             background: subTab === c.key ? COLORS.inkButton : COLORS.paperCard,
             color: subTab === c.key ? '#FFFFFF' : COLORS.ink,
-        } }, c.label)); })), React.createElement("div", { className: "recibos-toolbar-acoes", style: { display: 'flex', gap: 8 } }, React.createElement("button", { onClick: atualizarDataEmTodas, title: "Preenche a data de hoje nas 7 empresas de uma vez", style: {
+        } }, c.label)); })), React.createElement("div", { className: "recibos-toolbar-acoes", style: { display: 'flex', gap: 8 } }, React.createElement("button", { type: 'button', onClick: adicionarRecibo, title: "Cria um recibo igual aos outros, com o nome da empresa e das crianças em branco", style: {
+            background: COLORS.gold, color: '#FFF', border: 'none', borderRadius: 8, padding: '10px 16px',
+            fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+        } }, React.createElement(Plus, { size: 14 }), " Adicionar"), React.createElement("button", { onClick: atualizarDataEmTodas, title: "Preenche a data de hoje nas 7 empresas de uma vez", style: {
             background: 'none', color: COLORS.gold, border: "1px solid ".concat(COLORS.gold), borderRadius: 8, padding: '10px 16px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
         } }, "\uD83D\uDCC5 Atualizar data (todas)"), React.createElement("button", { onClick: function () {
@@ -4643,12 +4668,12 @@ function Recibos(_a) {
             backdropFilter: 'blur(10px) saturate(1.15)', WebkitBackdropFilter: 'blur(10px) saturate(1.15)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box',
         } }, React.createElement("div", { onClick: function (e) { return e.stopPropagation(); }, style: {
-            background: 'color-mix(in srgb, var(--c-paperCard) 88%, transparent)', border: '1px solid rgba(255,255,255,.78)',
+            background: 'linear-gradient(var(--c-paperCard), var(--c-paperCard)), var(--c-paper, #fff)', border: '1px solid rgba(255,255,255,.78)',
             boxShadow: '0 24px 70px rgba(12,24,42,.28), inset 0 1px 0 rgba(255,255,255,.75)',
             backdropFilter: 'blur(24px) saturate(1.35)', WebkitBackdropFilter: 'blur(24px) saturate(1.35)',
             borderRadius: 22, padding: 22, width: 420, maxWidth: 'calc(100vw - 32px)',
             maxHeight: 'min(80vh, 720px)', overflowY: 'auto', display: 'grid', gap: 14, boxSizing: 'border-box',
-        } }, React.createElement("div", { style: { fontSize: 16.5, fontWeight: 700, color: COLORS.ink } }, "Exportar recibos"), React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft } }, "Marque quais empresas voc\u00EA quer incluir. Se marcar mais de uma, baixa um arquivo .zip com a pasta Recibos e um PDF por empresa; se marcar s\u00F3 uma, baixa s\u00F3 o PDF."), React.createElement("div", { style: { display: 'flex', gap: 8 } }, React.createElement("button", { onClick: function () { return setEmpresasSelecionadas(Object.fromEntries(CATEGORIAS_RECIBOS.map(function (c) { return [c.key, true]; }))); }, style: { background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12.5, color: COLORS.inkSoft } }, "Marcar todas"), React.createElement("button", { onClick: function () { return setEmpresasSelecionadas({}); }, style: { background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12.5, color: COLORS.inkSoft } }, "Desmarcar todas")), React.createElement("div", { style: { display: 'grid', gap: 6 } }, CATEGORIAS_RECIBOS.map(function (c) { return (React.createElement("label", { key: c.key, style: {
+        } }, React.createElement("div", { style: { fontSize: 16.5, fontWeight: 700, color: COLORS.ink } }, "Exportar recibos"), React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft } }, "Marque quais empresas voc\u00EA quer incluir. Se marcar mais de uma, baixa um arquivo .zip com a pasta Recibos e um PDF por empresa; se marcar s\u00F3 uma, baixa s\u00F3 o PDF."), React.createElement("div", { style: { display: 'flex', gap: 8 } }, React.createElement("button", { onClick: function () { return setEmpresasSelecionadas(Object.fromEntries(categoriasRecibos.map(function (c) { return [c.key, true]; }))); }, style: { background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12.5, color: COLORS.inkSoft } }, "Marcar todas"), React.createElement("button", { onClick: function () { return setEmpresasSelecionadas({}); }, style: { background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12.5, color: COLORS.inkSoft } }, "Desmarcar todas")), React.createElement("div", { style: { display: 'grid', gap: 6 } }, categoriasRecibos.map(function (c) { return (React.createElement("label", { key: c.key, style: {
             display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, cursor: 'pointer',
             background: empresasSelecionadas[c.key] ? COLORS.goldSoft : COLORS.lineSoft,
         } }, React.createElement("input", { type: "checkbox", checked: !!empresasSelecionadas[c.key], onChange: function (e) { return setEmpresasSelecionadas(function (s) {
@@ -4658,7 +4683,7 @@ function Recibos(_a) {
             flex: 1, background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 8, padding: '11px 16px',
             fontWeight: 600, fontSize: 13.5, cursor: 'pointer', color: COLORS.inkSoft,
         } }, "Cancelar"), React.createElement("button", { disabled: Object.values(empresasSelecionadas).filter(Boolean).length === 0, onClick: function () {
-            var chaves = CATEGORIAS_RECIBOS.map(function (c) { return c.key; }).filter(function (k) { return empresasSelecionadas[k]; });
+            var chaves = categoriasRecibos.map(function (c) { return c.key; }).filter(function (k) { return empresasSelecionadas[k]; });
             exportarPDFRecibo(chaves);
             setModalExportarAberto(false);
         }, style: {
@@ -12863,11 +12888,14 @@ function salvarTudoAgora() {
         } }, React.createElement("span", { style: { fontSize: 17 } }, "\uD83D\uDD12"), React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 12.5 } }, "Exerc\u00EDcio ", exercicioAtual, " encerrado \u2014 somente leitura"), React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 2 } }, "Consulta, pesquisa, relat\u00F3rios e exporta\u00E7\u00F5es continuam liberados. Inclus\u00F5es, edi\u00E7\u00F5es e exclus\u00F5es est\u00E3o protegidas.")))), tab === 'visao' && (React.createElement("div", { className: "ledger-lines", style: { marginBottom: 24, padding: '4px 0' } }, React.createElement("div", { style: { display: 'flex', justifyContent: 'flex-end', marginBottom: 8 } }, React.createElement("button", { onClick: function () { return setModoPrivado(function (v) { return !v; }); }, title: modoPrivado ? 'Mostrar valores' : 'Esconder valores', style: {
             background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             color: COLORS.inkSoft, fontSize: 12, fontWeight: 600,
-        } }, modoPrivado ? React.createElement(EyeOff, { size: 15 }) : React.createElement(Eye, { size: 15 }), modoPrivado ? 'Valores ocultos' : 'Ocultar valores')), React.createElement(KPIStrip, { oculto: modoPrivado, items: [
+        } }, modoPrivado ? React.createElement(EyeOff, { size: 15 }) : React.createElement(Eye, { size: 15 }), modoPrivado ? 'Valores ocultos' : 'Ocultar valores'), React.createElement("button", { onClick: function () { return setPrivadoTotais(function (v) { return !v; }); }, 'data-tvg-tot': '1', title: privadoTotais ? 'Mostrar totais' : 'Esconder totais', style: {
+            background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, marginLeft: 14,
+            color: COLORS.inkSoft, fontSize: 12, fontWeight: 600,
+        } }, privadoTotais ? React.createElement(EyeOff, { size: 15 }) : React.createElement(Eye, { size: 15 }), privadoTotais ? 'Totais ocultos' : 'Ocultar totais')), React.createElement(KPIStrip, { oculto: modoPrivado || privadoTotais, items: [
             { label: 'Entradas (com dados)', valor: kpis.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
             { label: 'Saídas (com dados)', valor: kpis.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
             { label: 'Resultado', valor: kpis.resultado, icon: kpis.resultado >= 0 ? TrendingUp : TrendingDown, cor: '#4A5A58', bg: COLORS.lineSoft, destaque: true },
-            { label: 'A receber', valor: aReceber.valor, icon: Receipt, cor: '#2878de', bg: COLORS.paperCard, detalhe: aReceber.mes ? (MESES_ABREV[aReceber.mes] + ' · ' + (modoPrivado ? 'mensalidades em aberto' : aReceber.qtd + (aReceber.qtd === 1 ? ' mensalidade em aberto' : ' mensalidades em aberto'))) : 'Sem mensalidades cadastradas' },
+            { label: 'A receber', valor: aReceber.valor, icon: Receipt, cor: '#2878de', bg: COLORS.paperCard, detalhe: aReceber.mes ? (MESES_ABREV[aReceber.mes] + ' · ' + ((modoPrivado || privadoTotais) ? 'mensalidades em aberto' : aReceber.qtd + (aReceber.qtd === 1 ? ' mensalidade em aberto' : ' mensalidades em aberto'))) : 'Sem mensalidades cadastradas' },
         ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
 }
 function ModalExercicioEncerrado(_a) {
@@ -21093,6 +21121,10 @@ html:not(.tdb-aurora-pdf) body #tvg-hdr:not(#tvgx){display:grid;gap:14px;padding
  background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard);border:1px solid var(--aurora-edge,var(--c-line));box-shadow:var(--aurora-shadow,0 3px 10px rgba(30,40,60,.08));
  backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px))}
 .tvg-gb[hidden]{display:none}
+/* TEMPO 1 — olho separado dos totais (Visão geral) */
+.tvg-act{align-items:stretch}
+@media (max-width:760px){.tvg-act:has([data-tvg="tot"]:not([hidden])) .tvg-blue{grid-column:1/-1}}
+
 .tvg-gb.tvg-blue{color:var(--c-inkButton,var(--c-ink))}
 .tvg-gb svg{flex:none}
 #tvg-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
@@ -21722,11 +21754,11 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
     });
     if(!led||!ex)return;
     setA(ex,'data-vg','1');setA(ex,'data-vg-view',sel);setA(led,'data-vg-led','1');
-    var eyeOrig=null;
+    var eyeOrig=null,totOrig=null;
     kids(led).forEach(function(c){
       if(c.id==='tvg-hdr')return;
       var b=c.querySelector&&c.querySelector(':scope > button');
-      if(!eyeOrig&&b&&/valores/i.test(txt(b,60))&&!c.classList.contains('grid-kpi')){eyeOrig=b;setA(c,'data-vg-hide','1')}
+      if(!eyeOrig&&b&&/valores/i.test(txt(b,60))&&!c.classList.contains('grid-kpi')){eyeOrig=b;setA(c,'data-vg-hide','1');totOrig=c.querySelector(':scope > button[data-tvg-tot]')}
     });
     var all=kids(ex);
     /* linha original do botão de exportar (fica escondida: o atalho do cabeçalho chama o mesmo botão) */
@@ -21757,7 +21789,7 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
     if(!hdr){
       hdr=mk('div',{id:'tvg-hdr','data-export-ignore':'true'},
         '<div class="tvg-top"><div class="tvg-tt"><span class="tvg-ic">'+ICON_VG+'</span><div class="tvg-tx"><div class="tvg-h">Visão geral</div><div class="tvg-p"></div></div></div>'+
-        '<div class="tvg-act"><button type="button" class="tvg-gb" data-tvg="eye"></button><button type="button" class="tvg-gb tvg-blue" data-tvg="pdf">'+IC.pdf+' Exportar página em PDF</button></div></div>'+
+        '<div class="tvg-act"><button type="button" class="tvg-gb" data-tvg="eye"></button><button type="button" class="tvg-gb" data-tvg="tot" hidden></button><button type="button" class="tvg-gb tvg-blue" data-tvg="pdf">'+IC.pdf+' Exportar página em PDF</button></div></div>'+
         '<div id="tvg-bar"></div>');
       var bar=hdr.querySelector('#tvg-bar');
       bar.appendChild(mk('button',{type:'button','class':'selection-card tvg-all','data-tvg-sel':'todos'},'Todos'));
@@ -21766,13 +21798,16 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
       led.insertBefore(hdr,led.firstChild);
       sigHdr='';
     }
-    var sig=[sel,ano,hide,!!eyeOrig,!!exp].join('§');
+    var hideTot=totOrig?/ocultos/i.test(txt(totOrig,40)):false;
+    var sig=[sel,ano,hide,!!eyeOrig,!!exp,!!totOrig,hideTot].join('§');
     if(sig!==sigHdr){
       sigHdr=sig;
       hdr.querySelector('.tvg-p').textContent='Resumo financeiro do exercício'+(ano?' '+ano:'');
       var eb=hdr.querySelector('[data-tvg="eye"]');
       eb.innerHTML=(hide?IC.eyeoff:IC.eye)+' '+esc(hide?'Valores ocultos':'Ocultar valores');
       if(eyeOrig)eb.removeAttribute('hidden');else eb.setAttribute('hidden','');
+      var tb=hdr.querySelector('[data-tvg="tot"]');
+      if(tb){tb.innerHTML=(hideTot?IC.eyeoff:IC.eye)+' '+esc(hideTot?'Totais ocultos':'Ocultar totais');if(totOrig)tb.removeAttribute('hidden');else tb.setAttribute('hidden','')}
       [].forEach.call(hdr.querySelectorAll('[data-tvg-sel]'),function(b){
         var on=b.getAttribute('data-tvg-sel')===sel;
         setA(b,'class','selection-card'+(on?' selection-card-ativa':'')+(b.getAttribute('data-tvg-sel')==='todos'?' tvg-all':''));
@@ -21823,6 +21858,7 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
     if(b){
       var k=b.getAttribute('data-tvg');
       if(k==='eye'){var led=main.querySelector('.ledger-lines [data-vg-hide] > button');if(led)led.click()}
+      if(k==='tot'){var lt=main.querySelector('.ledger-lines [data-vg-hide] > button[data-tvg-tot]');if(lt)lt.click()}
       if(k==='pdf'){var o=main.querySelector('.export-pagina-visaogeral .tdb-remat-exportar-tudo');if(o)o.click()}
       return;
     }
