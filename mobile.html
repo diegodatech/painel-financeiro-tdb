@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261005-tempo1-v15";
+    window.__TDB_BUILD = "tdbn-20261005-tempo1-v17";
   </script>
-  <script src="./config.js?build=tdbn-20261005-tempo1-v15"></script>
+  <script src="./config.js?build=tdbn-20261005-tempo1-v17"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261005-tempo1-v15"></script>
+  <script src="./sync.js?build=tdbn-20261005-tempo1-v17"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v15-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v17-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2114,6 +2114,16 @@ function CalendarioTDB() {
         return function () { vivo = false; if (t) clearInterval(t); if (off) off(); };
     }, []);
     return React.createElement("div", { ref: ref, className: "tcal-raiz", style: { minWidth: 0 } });
+}
+function AbaNome(_a) {
+    var _s = useState(0), forcar = _s[1];
+    useEffect(function () {
+        var off = null, t = null;
+        function ir() { if (window.TDBNomesAbas) { off = window.TDBNomesAbas.sub(function () { forcar(function (n) { return n + 1; }); }); forcar(function (n) { return n + 1; }); return true; } return false; }
+        if (!ir()) t = setInterval(function () { if (ir()) { clearInterval(t); t = null; } }, 150);
+        return function () { if (t) clearInterval(t); if (off) off(); };
+    }, []);
+    return window.TDBNomesAbas ? window.TDBNomesAbas.nome(_a.k, _a.padrao) : _a.padrao;
 }
 var MunicipioCbIcon = function (_a) {
     var _b = _a.size, size = _b === void 0 ? 16 : _b, style = _a.style;
@@ -12946,7 +12956,7 @@ function salvarTudoAgora() {
             } }, React.createElement("span", { className: "aba-icon", style: {
                 width: 30, height: 30, borderRadius: 8, background: ativo ? COLORS.paperCard : corFundo,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            } }, React.createElement(Icone, { size: 17, strokeWidth: 2.4, color: "currentColor" })), React.createElement("span", { className: "aba-label", style: { fontSize: 11, fontWeight: 700, color: COLORS.ink, textAlign: 'center', lineHeight: 1.15, whiteSpace: 'nowrap' } }, label)));
+            } }, React.createElement(Icone, { size: 17, strokeWidth: 2.4, color: "currentColor" })), React.createElement("span", { className: "aba-label", style: { fontSize: 11, fontWeight: 700, color: COLORS.ink, textAlign: 'center', lineHeight: 1.15, whiteSpace: 'nowrap' } }, React.createElement(AbaNome, { k: key, padrao: label }))));
     })))), React.createElement("main", { className: "painel-main", style: { maxWidth: 1600, margin: '0 auto', padding: '24px 24px 60px' } }, exercicioEncerrado && (React.createElement("div", { style: {
             margin: '12px 16px 0',
             padding: '10px 14px',
@@ -18460,6 +18470,74 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
  html[data-tdb-aurora] body .painel-main .festas-tdb-edit-mobile:not(#tdb-x){position:sticky;left:0;box-sizing:border-box;width:calc(100vw - 72px);max-width:100%;}
 }
 </style>
+<style id="tdb-nomes-abas-css">
+.abas-menu .aba-item.tdb-ren-on .aba-label{display:none!important}
+.tdb-aba-ren{width:100%;min-width:0;box-sizing:border-box;border:1.5px solid #8db4f2;border-radius:7px;font:700 11px Inter,sans-serif;text-align:center;padding:3px 2px;background:#fff;color:#111318;outline:0}
+@media(pointer:coarse){.tdb-aba-ren{font-size:16px}}
+</style>
+<script id="tdb-nomes-abas">
+/* Nomes das abas do menu editáveis (duplo clique / duplo toque no cartão). Só aparência do texto. */
+(function(){
+ 'use strict';
+ if(window.TDBNomesAbas)return;
+ var KEY='nomes_abas_menu_v1',LS='tdb_nomes_abas_v1',map={},subs=[],pronto=null,remotoOk=false;
+ try{var j=JSON.parse(localStorage.getItem(LS)||'{}');if(j&&typeof j==='object')map=j;}catch(e){}
+ function notificar(){subs.slice().forEach(function(f){try{f();}catch(e){}});}
+ function nome(k,p){var v=map[k];return (typeof v==='string'&&v.trim())?v:p;}
+ function sub(f){subs.push(f);return function(){subs=subs.filter(function(x){return x!==f;});};}
+ function guardarLocal(){try{localStorage.setItem(LS,JSON.stringify(map));}catch(e){}}
+ function carregar(){
+  if(pronto)return pronto;
+  pronto=new Promise(function(res){
+   (function tenta(n){
+    if(!window.storage||!window.storage.get){if(n>60)return res();return setTimeout(function(){tenta(n+1);},500);}
+    Promise.resolve(window.storage.get(KEY,false)).then(function(r){
+     var v=null;if(r&&r.value){try{v=JSON.parse(r.value);}catch(e){}}
+     if(v&&typeof v==='object'){var m={};Object.keys(map).forEach(function(k){m[k]=map[k];});Object.keys(v).forEach(function(k){if(typeof v[k]==='string')m[k]=v[k];});map=m;guardarLocal();notificar();}
+     remotoOk=true;res();
+    }).catch(function(){res();});
+   })(0);
+  });
+  return pronto;
+ }
+ function set(k,v){
+  map[k]=String(v||'').trim();guardarLocal();notificar();
+  carregar().then(function(){
+   if(!remotoOk||!window.storage||!window.storage.set)return;
+   return window.storage.get(KEY,false).then(function(r){var base={};if(r&&r.value){try{base=JSON.parse(r.value)||{};}catch(e){}}base[k]=map[k];map[k]=map[k];return window.storage.set(KEY,JSON.stringify(base),false);}).catch(function(){});
+  });
+ }
+ window.TDBNomesAbas={nome:nome,sub:sub,set:set};
+ carregar();
+ var ult=null;
+ function editar(it,k){
+  if(it.querySelector('.tdb-aba-ren'))return;
+  var ls=it.querySelectorAll('.aba-label'),vis=null;Array.prototype.forEach.call(ls,function(l){if(!vis&&l.offsetParent!==null)vis=l;});
+  var atual=vis?vis.textContent.trim():'',feito=false;
+  it.classList.add('tdb-ren-on');
+  var inp=document.createElement('input');inp.className='tdb-aba-ren';inp.value=atual;inp.maxLength=24;inp.setAttribute('aria-label','Nome da aba');inp.setAttribute('data-export-ignore','true');
+  it.appendChild(inp);
+  function fim(salvar){if(feito)return;feito=true;var v=inp.value.trim();inp.remove();it.classList.remove('tdb-ren-on');if(salvar&&v!==atual)set(k,v);}
+  inp.addEventListener('keydown',function(e){e.stopPropagation();if(e.key==='Enter'){e.preventDefault();fim(true);}else if(e.key==='Escape'){e.preventDefault();fim(false);}});
+  inp.addEventListener('keyup',function(e){e.stopPropagation();});
+  inp.addEventListener('click',function(e){e.stopPropagation();});
+  inp.addEventListener('blur',function(){fim(true);});
+  setTimeout(function(){try{inp.focus();inp.select();}catch(e){}},30);
+ }
+ document.addEventListener('click',function(e){
+  var t=e.target;if(!t||!t.closest)return;
+  if(t.closest('.tdb-aba-ren'))return;
+  var it=t.closest('.abas-menu .aba-item[data-aurora-icon]'),agora=Date.now();
+  if(!it){ // durante a troca de aba o menu fica sem receber clique por um instante: confere pela posição do mouse/dedo
+   if(ult&&agora-ult.t<700&&ult.el&&document.body.contains(ult.el)){var r=ult.el.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){var el0=ult.el,k0=ult.k;ult=null;e.stopPropagation();e.preventDefault();editar(el0,k0);}}
+   return;
+  }
+  var k=it.getAttribute('data-aurora-icon');
+  if(ult&&ult.k===k&&agora-ult.t<700){ult=null;e.stopPropagation();e.preventDefault();editar(it,k);return;}
+  ult={k:k,t:agora,el:it};
+ },true);
+})();
+</script>
 <style id="tdb-municipio-cb-css">
 /* Município CB — aba nova (Lista das crianças + Frequência). Só aparência própria; não mexe nas outras abas. */
 .mcb-raiz{--mi:var(--c-ink,#111318);--ms:var(--c-inkSoft,#454c59);--ml:var(--c-line,#d7dce5);--mls:var(--c-lineSoft,#eef0f4);--mc:var(--c-paperCard,rgba(255,255,255,.72));--mr:var(--c-red,#c62d36);--mrb:var(--c-redBg,#fff0f1);--mb:#1767cf;--mbb:#edf4ff;--msl:#3c4656;--mf:#fff;--mono:'IBM Plex Mono',ui-monospace,monospace;min-width:0;color:var(--mi);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}
@@ -18999,7 +19077,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   if(S.erro)h+='<div class="mcb-aviso">Não consegui ler os dados do Município CB agora. Por segurança nada será gravado nesta tela até a leitura funcionar — atualize a página e tente de novo.</div>';
   h+='<div class="mcb-chips">'+lista.map(function(x){
    if(S.ren===x.id)return '<span class="mcb-chip on mcb-chip-ed"><input id="mcb-ren" class="mcb-ren" value="'+esc(x.nome)+'" data-id="'+esc(x.id)+'" maxlength="60"><button type="button" class="mcb-renb" data-act="renok" title="Salvar nome">✓</button><button type="button" class="mcb-renb" data-act="renno" title="Cancelar">✕</button></span>';
-   return '<button class="mcb-chip '+(x.id===S.cur?'on':'')+'" data-act="doc" data-id="'+esc(x.id)+'">'+esc(x.nome||'(sem nome)')+'<small>'+(x.tipo==='lista'?'A4 em pé':'A4 deitado')+'</small><span class="mcb-chipe" data-act="ren" data-id="'+esc(x.id)+'" role="button" title="Renomear" aria-label="Renomear">✎</span></button>';
+   return '<button class="mcb-chip '+(x.id===S.cur?'on':'')+'" data-act="doc" data-id="'+esc(x.id)+'">'+esc(x.nome||'(sem nome)')+'<small>'+(x.tipo==='lista'?'A4 em pé':'A4 deitado')+'</small></button>';
   }).join('')+'</div>';
   h+='<div class="mcb-bar"><button class="mcb-b dark" data-act="menuAdd">＋ Adicionar</button><button class="mcb-b red '+(d?'':'off')+'" data-act="delDoc">'+IC.trash+' Excluir</button><button class="mcb-b red '+(lista.length?'':'off')+'" data-act="delTodos">'+IC.trash+' Excluir todos</button><button class="mcb-b ol '+(d?'':'off')+'" data-act="copiar">Copiar do mês anterior</button><button class="mcb-b blue '+(d?'':'off')+'" data-act="exp">Exportar folhas…</button>';
   if(S.menu==='add')h+='<div class="mcb-menu"><button data-act="add" data-t="lista">Nova lista das crianças<small>Mesmo modelo, nomes em branco</small></button><button data-act="add" data-t="freq">Nova frequência<small>Mesmo modelo, turma e alunos em branco</small></button></div>';
