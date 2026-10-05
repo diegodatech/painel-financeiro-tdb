@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261005-tempo1-v14";
+    window.__TDB_BUILD = "tdbn-20261005-tempo1-v15";
   </script>
-  <script src="./config.js?build=tdbn-20261005-tempo1-v14"></script>
+  <script src="./config.js?build=tdbn-20261005-tempo1-v15"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261005-tempo1-v14"></script>
+  <script src="./sync.js?build=tdbn-20261005-tempo1-v15"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v14-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v15-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18644,6 +18644,12 @@ body.dark-mode .mcb-menu button:hover{background:rgba(255,255,255,.08)}
 }
 /* impressão não usa isto: o PDF é gerado direto pelo jsPDF */
 
+.mcb-chipe{display:inline-grid;place-items:center;width:22px;height:22px;margin:-4px -10px -4px 6px;border-radius:50%;font-size:13px;line-height:1;opacity:.75;cursor:pointer}
+.mcb-chipe:hover{background:rgba(127,127,127,.22);opacity:1}
+.mcb-chip-ed{display:inline-flex;align-items:center;gap:6px;padding:5px 8px 5px 14px;cursor:default}
+.mcb-ren{border:0;outline:0;background:rgba(255,255,255,.95);color:#111318;border-radius:99px;padding:5px 11px;font:600 16px Inter,sans-serif;min-width:180px;max-width:70vw}
+.mcb-renb{border:0;background:rgba(255,255,255,.25);color:inherit;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;padding:0}
+
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"]{--aurora-icon:#1C9E8F}
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] .aba-icon svg > :nth-child(1){stroke:#C15CA0!important;}
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] .aba-icon svg > :nth-child(2){stroke:#1C9E8F!important;}
@@ -18666,7 +18672,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
  var IC={
   trash:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg>'
  };
- var S={root:null,cur:null,mi:new Date().getMonth(),pv:'aba',abertas:{},menu:null,host:null,layer:null,ready:false,erro:false,dirty:false,saveT:null,inflight:0,toastT:null,montado:false,rz:null};
+ var S={root:null,cur:null,mi:new Date().getMonth(),pv:'aba',abertas:{},menu:null,host:null,layer:null,ready:false,erro:false,dirty:false,saveT:null,ren:null,inflight:0,toastT:null,montado:false,rz:null};
 
  /* ---------- utilidades ---------- */
  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -18991,7 +18997,10 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   var d=curDoc(),lista=docsArr();
   var h='<div class="mcb-raiz">';
   if(S.erro)h+='<div class="mcb-aviso">Não consegui ler os dados do Município CB agora. Por segurança nada será gravado nesta tela até a leitura funcionar — atualize a página e tente de novo.</div>';
-  h+='<div class="mcb-chips">'+lista.map(function(x){return '<button class="mcb-chip '+(x.id===S.cur?'on':'')+'" data-act="doc" data-id="'+esc(x.id)+'" title="Clique duas vezes para renomear">'+esc(x.nome||'(sem nome)')+'<small>'+(x.tipo==='lista'?'A4 em pé':'A4 deitado')+'</small></button>';}).join('')+'</div>';
+  h+='<div class="mcb-chips">'+lista.map(function(x){
+   if(S.ren===x.id)return '<span class="mcb-chip on mcb-chip-ed"><input id="mcb-ren" class="mcb-ren" value="'+esc(x.nome)+'" data-id="'+esc(x.id)+'" maxlength="60"><button type="button" class="mcb-renb" data-act="renok" title="Salvar nome">✓</button><button type="button" class="mcb-renb" data-act="renno" title="Cancelar">✕</button></span>';
+   return '<button class="mcb-chip '+(x.id===S.cur?'on':'')+'" data-act="doc" data-id="'+esc(x.id)+'">'+esc(x.nome||'(sem nome)')+'<small>'+(x.tipo==='lista'?'A4 em pé':'A4 deitado')+'</small><span class="mcb-chipe" data-act="ren" data-id="'+esc(x.id)+'" role="button" title="Renomear" aria-label="Renomear">✎</span></button>';
+  }).join('')+'</div>';
   h+='<div class="mcb-bar"><button class="mcb-b dark" data-act="menuAdd">＋ Adicionar</button><button class="mcb-b red '+(d?'':'off')+'" data-act="delDoc">'+IC.trash+' Excluir</button><button class="mcb-b red '+(lista.length?'':'off')+'" data-act="delTodos">'+IC.trash+' Excluir todos</button><button class="mcb-b ol '+(d?'':'off')+'" data-act="copiar">Copiar do mês anterior</button><button class="mcb-b blue '+(d?'':'off')+'" data-act="exp">Exportar folhas…</button>';
   if(S.menu==='add')h+='<div class="mcb-menu"><button data-act="add" data-t="lista">Nova lista das crianças<small>Mesmo modelo, nomes em branco</small></button><button data-act="add" data-t="freq">Nova frequência<small>Mesmo modelo, turma e alunos em branco</small></button></div>';
   h+='</div>';
@@ -18999,8 +19008,14 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   h+='<div class="mcb-meses">'+MESES.map(function(n,i){return '<button class="mcb-mes '+(i===S.mi?'on':'')+' '+(preenchido(d,i)?'ok':'')+'" data-act="mes" data-i="'+i+'">'+n.slice(0,3)+'</button>';}).join('')+'</div>';
   var m=mes(d,S.mi);
   h+='<div class="mcb-grid '+(d.tipo==='freq'?'fq':'')+'">'+(d.tipo==='lista'?formLista(d,m):formFreq(d,m))+'<div style="min-width:0"><div class="mcb-pvh"><div class="mcb-seg"><button class="'+(S.pv==='aba'?'on':'')+'" data-act="pv" data-v="aba">Prévia</button><button class="'+(S.pv==='pdf'?'on':'')+'" data-act="pv" data-v="pdf">Como fica o PDF</button></div><span class="mcb-nt">'+(S.pv==='pdf'?'Mesmo modelo do PDF dos recibos das empresas (A4 '+(d.tipo==='lista'?'em pé':'deitado')+').':'Prévia como na aba Recibos.')+'</span></div><div class="mcb-pvbox"><div class="mcb-pvin">'+pvHtml(d,m)+'</div></div></div></div></div>';
-  M.innerHTML=h;fitPv();
+  M.innerHTML=h;fitPv();focoRen();
   if(window.pageYOffset!==keepY)window.scrollTo(0,keepY);
+ }
+ function focoRen(){if(!S.ren||!S.host)return;var i=S.host.querySelector('#mcb-ren');if(i){try{i.focus();i.select();}catch(e){}}}
+ function confirmarRen(){
+  var id=S.ren;if(!id)return;var i=S.host&&S.host.querySelector('#mcb-ren'),d=anoObj().docs[id];S.ren=null;
+  if(i&&d&&!S.erro){var n=i.value.trim();if(n&&n!==d.nome){d.nome=n;touch();toast('✓ Nome alterado');}}
+  render();
  }
  function refreshDerived(){
   var d=curDoc();if(!d||!S.host)return;var m=mes(d,S.mi);
@@ -19122,10 +19137,18 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   var b=e.target.closest&&e.target.closest('[data-act]');
   if(!b){if(S.menu&&!(e.target.closest&&e.target.closest('.mcb-menu'))){S.menu=null;render();}return;}
   var a=b.getAttribute('data-act'),d=curDoc();
+  if(a==='ren'){e.stopPropagation();if(!S.erro){S.ren=b.getAttribute('data-id');render();}return;}
+  if(a==='renok'){confirmarRen();return;}
+  if(a==='renno'){S.ren=null;render();return;}
   if(a==='tog'){if(e.target.closest('[data-act="delrow"]'))return;var k=b.getAttribute('data-k');if(S.abertas[k])delete S.abertas[k];else S.abertas[k]=1;render();return;}
   if(a==='delrow'){excluirLinha(+b.getAttribute('data-i'));return;}
   if(a==='cell'){if(!d||S.erro)return;var m=mes(d,S.mi),r=m.rows[+b.getAttribute('data-r')],j=+b.getAttribute('data-c');if(!r)return;while(r.c.length<m.dias.length)r.c.push('');var ord=['.','F','FE',''];r.c[j]=ord[(ord.indexOf(r.c[j])+1)%4];touch();render();return;}
-  if(a==='doc'){S.cur=b.getAttribute('data-id');S.menu=null;S.abertas={};render();}
+  if(a==='doc'){
+   var cid=b.getAttribute('data-id'),agora=Date.now();
+   if(S.ultChip&&S.ultChip.id===cid&&agora-S.ultChip.t<600){S.ultChip=null;if(!S.erro){S.cur=cid;S.ren=cid;render();}return;}
+   S.ultChip={id:cid,t:agora};
+   if(cid===S.cur&&!S.menu)return;
+   S.cur=cid;S.menu=null;S.abertas={};render();}
   else if(a==='mes'){S.mi=+b.getAttribute('data-i');S.abertas={};render();}
   else if(a==='pv'){S.pv=b.getAttribute('data-v');render();}
   else if(a==='menuAdd'){S.menu=S.menu==='add'?null:'add';render();}
@@ -19148,10 +19171,17 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   else if(a==='addF'){if(!d||S.erro)return;var m5=mes(d,S.mi);m5.rows.push({nome:'',c:Array(m5.dias.length).fill(''),f:''});S.abertas[itemKey(d,m5.rows.length-1)]=1;touch();render();toast('✓ Aluno adicionado. Escreva o nome.');}
  }
  function onDbl(e){
-  var c=e.target.closest&&e.target.closest('.mcb-chip');if(!c||S.erro)return;
-  var D=anoObj().docs,d=D[c.getAttribute('data-id')];if(!d)return;
-  var n=window.prompt('Novo nome deste documento:',d.nome||'');if(n==null)return;n=n.trim();if(!n)return;
-  d.nome=n;touch();render();toast('✓ Nome alterado');
+  var c=e.target.closest&&e.target.closest('.mcb-chip');if(!c||S.erro||c.classList.contains('mcb-chip-ed'))return;
+  S.ren=c.getAttribute('data-id');render();
+ }
+ function onRenKey(e){
+  if(!e.target||e.target.id!=='mcb-ren')return;
+  if(e.key==='Enter'){e.preventDefault();confirmarRen();}
+  else if(e.key==='Escape'){e.preventDefault();S.ren=null;render();}
+ }
+ function onRenBlur(e){
+  if(!e.target||e.target.id!=='mcb-ren')return;
+  setTimeout(function(){if(S.ren&&S.host&&S.host.querySelector('#mcb-ren')&&document.activeElement!==S.host.querySelector('#mcb-ren'))confirmarRen();},220);
  }
  function onKey(e){if(e.key==='Escape'&&S.layer&&S.layer.firstChild)fecharJanela();}
  function onResize(){fitPv();}
@@ -19162,7 +19192,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
  function mount(el){
   S.host=el;
   var layer=document.createElement('div');layer.setAttribute('data-export-ignore','true');document.body.appendChild(layer);S.layer=layer;
-  el.addEventListener('click',onClick);el.addEventListener('dblclick',onDbl);el.addEventListener('input',onInput);el.addEventListener('change',onInput);el.addEventListener('focusout',onFocusOut);
+  el.addEventListener('click',onClick);el.addEventListener('dblclick',onDbl);el.addEventListener('keydown',onRenKey);el.addEventListener('focusout',onRenBlur);el.addEventListener('input',onInput);el.addEventListener('change',onInput);el.addEventListener('focusout',onFocusOut);
   layer.addEventListener('click',onLayer);layer.addEventListener('change',onLayer);
   window.addEventListener('resize',onResize);document.addEventListener('keydown',onKey);document.addEventListener('visibilitychange',onVis);window.addEventListener('pagehide',sair);
   var vivo=true;
@@ -19172,7 +19202,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   }else{S.ready=true;render();}
   return function(){
    vivo=false;sair();
-   el.removeEventListener('click',onClick);el.removeEventListener('dblclick',onDbl);el.removeEventListener('input',onInput);el.removeEventListener('change',onInput);el.removeEventListener('focusout',onFocusOut);
+   el.removeEventListener('click',onClick);el.removeEventListener('dblclick',onDbl);el.removeEventListener('keydown',onRenKey);el.removeEventListener('focusout',onRenBlur);el.removeEventListener('input',onInput);el.removeEventListener('change',onInput);el.removeEventListener('focusout',onFocusOut);
    layer.removeEventListener('click',onLayer);layer.removeEventListener('change',onLayer);
    window.removeEventListener('resize',onResize);document.removeEventListener('keydown',onKey);document.removeEventListener('visibilitychange',onVis);window.removeEventListener('pagehide',sair);
    layer.remove();S.layer=null;S.host=null;
