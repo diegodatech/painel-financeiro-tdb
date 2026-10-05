@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo1-v9";
+    window.__TDB_BUILD = "tdbn-20261004-tempo1-v11";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo1-v9"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo1-v11"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo1-v9"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo1-v11"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v9-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v11-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -3834,6 +3834,35 @@ function Recibos(_a) {
         setSubTab(chave);
         mostrarToast('✓ Novo recibo criado. Escreva o título da empresa e as crianças.');
     }
+    var chavesAdicionadas = Object.keys(dados).filter(function (k) { return !SEED_RECIBOS[k] && dados[k] && Array.isArray(dados[k].rows); });
+    var subTabAdicionado = chavesAdicionadas.indexOf(subTab) >= 0;
+    function excluirRecibosAdicionados(chaves) {
+        if (!chaves || !chaves.length) return;
+        var restore = chaves.map(function (k) { return { op: 'set', key: 'recibos_convenios', path: [k], value: dados[k] }; });
+        var rotulo = chaves.length === 1 ? ('Recibo · ' + rotuloRecibo(chaves[0])) : (chaves.length + ' recibos adicionados');
+        window.__tdbLixeiraAdicionar({ rotulo: rotulo, origem: 'Recibos · Recibo completo', restoreOps: restore }).catch(function () {});
+        var prox = __assign({}, dados);
+        chaves.forEach(function (k) { delete prox[k]; });
+        var lista = categoriasRecibos.map(function (c) { return c.key; });
+        var pos = lista.indexOf(subTab);
+        var restantes = lista.filter(function (k) { return chaves.indexOf(k) < 0; });
+        var destino = restantes[Math.min(Math.max(pos - 1, 0), restantes.length - 1)] || CATEGORIAS_RECIBOS[0].key;
+        if (chaves.indexOf(subTab) < 0) destino = subTab;
+        salvar(prox);
+        setSubTab(destino);
+        mostrarToast(chaves.length === 1 ? '✓ Recibo movido para a lixeira.' : '✓ ' + chaves.length + ' recibos movidos para a lixeira.');
+    }
+    function excluirReciboSelecionado() {
+        if (!subTabAdicionado) { mostrarToast('Este é um recibo original e não pode ser excluído. Só os recibos criados em Adicionar.'); return; }
+        if (!window.confirm('Mover o recibo "' + rotuloRecibo(subTab) + '" para a lixeira?\n\nVocê poderá restaurar depois.')) return;
+        excluirRecibosAdicionados([subTab]);
+    }
+    function excluirTodosRecibosAdicionados() {
+        if (!chavesAdicionadas.length) { mostrarToast('Não há recibos adicionados para excluir.'); return; }
+        var qtd = chavesAdicionadas.length;
+        if (!window.confirm((qtd === 1 ? 'Mover o recibo adicionado para a lixeira?' : 'Mover TODOS os ' + qtd + ' recibos adicionados para a lixeira?') + '\n\nOs recibos originais não são afetados. Você poderá restaurar depois.')) return;
+        excluirRecibosAdicionados(chavesAdicionadas.slice());
+    }
     if (!r) {
         return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Modelo de recibo n\u00E3o encontrado.");
     }
@@ -4217,7 +4246,13 @@ function Recibos(_a) {
         } }, c.label)); })), React.createElement("div", { style: { display: 'flex', gap: 8 } }, React.createElement("button", { type: 'button', onClick: adicionarRecibo, title: "Cria um recibo igual aos outros, com o nome da empresa e das crianças em branco", style: {
             background: COLORS.gold, color: '#FFF', border: 'none', borderRadius: 8, padding: '10px 16px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-        } }, React.createElement(Plus, { size: 14 }), " Adicionar"), React.createElement("button", { onClick: atualizarDataEmTodas, title: "Preenche a data de hoje nas 7 empresas de uma vez", style: {
+        } }, React.createElement(Plus, { size: 14 }), " Adicionar"), React.createElement("button", { type: 'button', onClick: excluirReciboSelecionado, title: "Move este recibo adicionado para a lixeira (pede confirmação). Os recibos originais não podem ser excluídos.", style: {
+            opacity: (subTabAdicionado ? 1 : .45), background: 'transparent', color: COLORS.red, border: '1.5px solid ' + COLORS.red, borderRadius: 8, padding: '9px 14px',
+            fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+        } }, React.createElement(Trash2, { size: 14 }), " Excluir"), React.createElement("button", { type: 'button', onClick: excluirTodosRecibosAdicionados, title: "Move todos os recibos adicionados para a lixeira (pede confirmação). Os originais não são afetados.", style: {
+            opacity: (chavesAdicionadas.length ? 1 : .45), background: 'transparent', color: COLORS.red, border: '1.5px solid ' + COLORS.red, borderRadius: 8, padding: '9px 14px',
+            fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+        } }, React.createElement(Trash2, { size: 14 }), " Excluir todos"), React.createElement("button", { onClick: atualizarDataEmTodas, title: "Preenche a data de hoje nas 7 empresas de uma vez", style: {
             background: 'none', color: COLORS.gold, border: "1px solid ".concat(COLORS.gold), borderRadius: 8, padding: '10px 16px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
         } }, "\uD83D\uDCC5 Atualizar data (todas)"), React.createElement("button", { onClick: function () {
