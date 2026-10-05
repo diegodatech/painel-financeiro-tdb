@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo11-v1";
+    window.__TDB_BUILD = "tdbn-20261004-tempo1-v3";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo11-v1"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo1-v3"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -844,7 +844,7 @@ html.dark-mode {
   <!-- v8.4 FINAL: splash HTML puro para cobrir o intervalo antes do React. -->
   <style id="bootstrap-splash-style">
     #bootstrap-splash .bootstrap-versao{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;font-weight:800;letter-spacing:.16em;color:#8a9a98;text-transform:uppercase;pointer-events:none}
-    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 11";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
+    :not(#tdbv):has(>img.logo-abertura)::after{content:"TEMPO 1";position:fixed;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom,0px));text-align:center;font:800 12px/1 Inter,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;color:#8a9a98;pointer-events:none}
 
     #bootstrap-splash{position:fixed;inset:0;z-index:2147483646;background:#fffdf8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;opacity:1;visibility:visible;transition:opacity .12s ease,visibility .12s ease}
     #bootstrap-splash.bootstrap-splash-oculto{opacity:0;visibility:hidden;pointer-events:none}
@@ -1833,6 +1833,25 @@ html:not(.tdb-aurora-pdf) body #trm-pdf.tdb-xbtn.tdb-xbtn:not(#tdb-x){border-rad
 .tcal[data-phone="1"] .tcal-head > .tcal-xp{grid-column:2;grid-row:1;display:inline-flex}
 </style>
 
+
+<style id="tdb-export-prog">
+/* TEMPO 12 — botão de exportar fica no lugar e mostra o progresso (%) dentro dele. Só aparência da tela. */
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x){overflow:hidden!important;color:transparent!important;text-shadow:none!important;opacity:1!important;cursor:progress!important;pointer-events:none!important}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-rel][data-xp][data-xp]:not(#tdb-x){position:relative!important}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x) *{opacity:0!important}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x)::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--xp,0%);background:var(--xp-ink,#1767cf);opacity:.18;border-radius:inherit;transition:width .3s ease;pointer-events:none}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x)::after{content:"Gerando PDF " attr(data-xp) "%";position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;color:var(--xp-ink,#1767cf);font-family:inherit;font-size:12.5px;font-weight:800;line-height:1.2;letter-spacing:0;pointer-events:none}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-fim][data-xp]:not(#tdb-x)::after{content:"PDF pronto \2713"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="2"][data-xp]:not(#tdb-x)::after{content:"Gerando " attr(data-xp) "%"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="2"][data-xp-fim][data-xp]:not(#tdb-x)::after{content:"PDF pronto \2713"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="1"][data-xp]:not(#tdb-x)::after{content:attr(data-xp) "%"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="1"][data-xp-fim][data-xp]:not(#tdb-x)::after{content:"\2713"}
+#tdb-xp-pill{position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2147483000;padding:10px 18px;border-radius:14px;overflow:hidden;white-space:nowrap;pointer-events:none;
+ font:800 12.5px/1.2 Inter,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--c-inkButton,#1767cf);
+ background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);border:1px solid var(--aurora-edge,var(--c-line,#d7dce5));box-shadow:var(--aurora-shadow,0 6px 18px rgba(30,40,60,.16));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px))}
+#tdb-xp-pill::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--xp,0%);background:currentColor;opacity:.14;transition:width .3s ease}
+@media print{#tdb-xp-pill{display:none!important}}
+</style>
 <script id="tdb-export-padrao-js">
 (function(){
   /* TEMPO 10 — só marca com a classe "tdb-xbtn" os botões de exportar PDF (o desenho vem do CSS acima). Não muda texto, clique nem lógica. */
@@ -1865,7 +1884,7 @@ html:not(.tdb-aurora-pdf) body #trm-pdf.tdb-xbtn.tdb-xbtn:not(#tdb-x){border-rad
       <img id="bootstrap-splash-logo" class="bootstrap-logo" alt="Escola Infantil Tempo de Brincar">
       <div class="bootstrap-status"><span class="bootstrap-spinner" aria-hidden="true"></span><span>Abrindo o painel…</span></div>
       <div id="bootstrap-splash-falha" class="bootstrap-falha">O painel está demorando mais que o normal para iniciar. Feche e abra novamente se esta mensagem permanecer.</div>
-      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 11</div>
+      <div class="bootstrap-versao" id="bootstrap-versao">TEMPO 1</div>
     </div>
   </div>
   <div id="root"></div>
@@ -1915,10 +1934,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo11-v1"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo1-v3"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo11-v1-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v3-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4318,7 +4337,8 @@ function Recibos(_a) {
         window.__tdbLixeiraAdicionar({ rotulo: removida.crianca || removida.pai || 'Registro de recibo', origem: 'Recibos', restoreOps: [{ op:'insert', key:'recibos_convenios', path:[subTab,'rows'], index:idx, item:removida }] }).catch(function(){});
         salvar(__assign(__assign({}, dados), (_a = {}, _a[subTab] = __assign(__assign({}, r), { rows: r.rows.filter(function (_, i) { return i !== idx; }) }), _a)));
     }
-    async function exportarPDFRecibo(chavesEmpresas) {
+    function exportarPDFRecibo(chavesEmpresas) { return window.__tdbProg.env(exportarPDFRecibo_, this, arguments); }
+    async function exportarPDFRecibo_(chavesEmpresas) {
         try {
             await window.__ensureJsPDF();
         } catch (e) {
@@ -6890,6 +6910,7 @@ function _pdfLimparControles(root) {
     });
 }
 function _aplicarMesaVirtualPDF(clonedDoc, alvoClonado, perfil) {
+    if (alvoClonado) _tdbEsconderIgnoradosClone(alvoClonado);
     _sanearCloneParaExportPDF(clonedDoc);
     if (!alvoClonado || !perfil) return;
     alvoClonado.setAttribute('data-pdf-render-mode', perfil.chave || 'generico');
@@ -6902,6 +6923,7 @@ function _aplicarMesaVirtualPDF(clonedDoc, alvoClonado, perfil) {
     var estilo = clonedDoc.createElement('style');
     estilo.textContent =
         '[data-pdf-render-mode], [data-pdf-render-mode] *{animation:none!important;transition:none!important;caret-color:transparent!important;text-rendering:geometricPrecision;-webkit-font-smoothing:antialiased;}' +
+        '[data-pdf-render-mode] [data-export-ignore]{display:none!important}' +
         '[data-pdf-render-mode] table{break-inside:auto;}' +
         '[data-pdf-render-mode] tr,[data-pdf-render-mode] .busca-liquid-glass{break-inside:avoid;}' +
         '[data-pdf-render-mode]:not([data-pdf-render-mode="calendario"]) button{display:none!important;}';
@@ -6925,8 +6947,9 @@ function _escalaAltaPDF(el, opts) {
     try { ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/i.test(navigator.userAgent) && (navigator.maxTouchPoints || 0) > 1); } catch (e) { }
     if (!ios) return 3;
     // iPhone/iPad limitam o canvas a ~16,7 milhões de pixels.
-    var w = Math.max((opts && opts.windowWidth) || 0, (el && el.offsetWidth) || 0, 600);
-    var h = Math.max((el && el.scrollHeight) || 0, (el && el.offsetHeight) || 0, 400) * 1.3;
+    var _m = _tdbMedirComoAntes(el);
+    var w = Math.max((opts && opts.windowWidth) || 0, _m.w, 600);
+    var h = Math.max(_m.h, 400) * 1.3;
     return Math.max(2, Math.floor(Math.min(3, Math.sqrt(15000000 / (w * h))) * 10) / 10);
 }
 function _canvasEmBranco(c) {
@@ -6935,7 +6958,140 @@ function _canvasEmBranco(c) {
         return pts.every(function (pt) { return ctx.getImageData(pt[0], pt[1], 1, 1).data[3] === 0; });
     } catch (e) { return false; }
 }
+// ===================== PROGRESSO FIXO NO BOTÃO EXPORTAR (só tela; não mexe no PDF) =====================
+window.__tdbProg = (function () {
+    var P = {}, prof = 0, btn = null, pill = null, pct = 0, teto = 92, tm = null, fimT = null,
+        ult = null, ultT = 0, capsTot = 0, capsOk = 0, baixou = false, falhou = false;
+    var RE = /export|pdf|gera|baixar/i;
+    try {
+        document.addEventListener('click', function (e) {
+            try { if (!e.isTrusted) return; var b = e.target && e.target.closest ? e.target.closest('button,[role="button"]') : null; if (b) { ult = b; ultT = Date.now(); } } catch (x) { }
+        }, true);
+        var alOrig = window.alert;
+        window.alert = function () { if (prof > 0) falhou = true; return alOrig.apply(this, arguments); };
+        var cuOrig = URL.createObjectURL;
+        URL.createObjectURL = function (o) { try { if (prof > 0 && o && o.type === 'application/pdf') baixou = true; } catch (x) { } return cuOrig.apply(this, arguments); };
+    } catch (e0) { }
+    function tirarMarcas(b) {
+        if (!b) return;
+        ['data-xp', 'data-xp-fim', 'data-xp-s', 'data-xp-rel', 'aria-busy'].forEach(function (a) { try { b.removeAttribute(a); } catch (x) { } });
+        try { b.style.removeProperty('--xp'); b.style.removeProperty('--xp-ink'); } catch (x) { }
+    }
+    function limpar() {
+        if (fimT) { clearTimeout(fimT); fimT = null; }
+        tirarMarcas(btn); btn = null;
+        if (pill && pill.parentNode) pill.parentNode.removeChild(pill);
+        pill = null;
+    }
+    function pintar(fim) {
+        var v = Math.max(0, Math.min(100, Math.round(pct)));
+        if (btn && !btn.isConnected) { btn = null; }
+        if (btn) {
+            if (btn.getAttribute('data-xp') == null) {
+                try {
+                    var cs = getComputedStyle(btn);
+                    btn.style.setProperty('--xp-ink', cs.color && cs.color !== 'rgba(0, 0, 0, 0)' ? cs.color : '#1767cf');
+                    if (cs.position === 'static') btn.setAttribute('data-xp-rel', '1');
+                    btn.setAttribute('data-xp-s', btn.offsetWidth < 95 ? '1' : (btn.offsetWidth < 150 ? '2' : '0'));
+                } catch (x) { }
+                btn.setAttribute('aria-busy', 'true');
+            }
+            btn.setAttribute('data-xp', String(v));
+            btn.style.setProperty('--xp', v + '%');
+            if (fim) btn.setAttribute('data-xp-fim', '1');
+            return;
+        }
+        if (!pill) {
+            pill = document.createElement('div');
+            pill.id = 'tdb-xp-pill'; pill.setAttribute('data-export-ignore', 'true'); pill.setAttribute('role', 'status');
+            document.body.appendChild(pill);
+        }
+        pill.style.setProperty('--xp', v + '%');
+        pill.setAttribute('data-xp', String(v));
+        pill.textContent = fim ? 'PDF pronto ✓' : 'Gerando PDF… ' + v + '%';
+    }
+    function passo() {
+        pct += (teto - pct) * 0.04;
+        if (pct > teto - 0.2) pct = Math.max(pct, teto - 0.2);
+        pintar(false);
+    }
+    function marco(p) { if (p > pct) pct = p; }
+    P.ativo = function () { return prof > 0 ? btn : null; };
+    P.ini = function (botao) {
+        prof++;
+        if (prof > 1) return;
+        limpar();
+        baixou = false; falhou = false; capsTot = 0; capsOk = 0; pct = 3; teto = 92;
+        // O botão que a pessoa realmente tocou (pode ser um atalho visual que repassa o clique ao botão original) mostra o progresso.
+        var b = null;
+        if (ult && ult.isConnected && Date.now() - ultT < 6000
+            && RE.test((ult.textContent || '') + ' ' + (ult.getAttribute('title') || '') + ' ' + (ult.getAttribute('aria-label') || ''))) b = ult;
+        else if (botao && botao.isConnected) b = botao;
+        btn = b;
+        pintar(false);
+        tm = setInterval(passo, 120);
+    };
+    P.caps = function (n) { if (prof > 0 && n > 0) { capsTot = n; } };
+    P.capIni = function () {
+        if (prof === 0) return;
+        if (!capsTot) capsTot = 1;
+        marco(8 + 82 * capsOk / capsTot);
+        teto = Math.min(90, 8 + 82 * (capsOk + 1) / capsTot) - 1;
+    };
+    P.capFim = function () {
+        if (prof === 0) return;
+        capsOk++;
+        marco(Math.min(90, 8 + 82 * capsOk / (capsTot || 1)));
+        teto = capsOk >= (capsTot || 1) ? 97 : Math.min(90, 8 + 82 * (capsOk + 1) / capsTot) - 1;
+    };
+    P.baixou = function () { if (prof > 0) baixou = true; };
+    P.fim = function () {
+        if (prof === 0) return;
+        prof--;
+        if (prof > 0) return;
+        if (tm) { clearInterval(tm); tm = null; }
+        window.__tdbMantidos = [];
+        if (baixou && !falhou) { pct = 100; pintar(true); fimT = setTimeout(limpar, 1000); }
+        else limpar();
+    };
+    P.env = function (fn, self, args) {
+        P.ini();
+        var r;
+        try { r = fn.apply(self, args); } catch (e) { P.fim(); throw e; }
+        if (r && typeof r.then === 'function') return r.then(function (v) { P.fim(); return v; }, function (e) { P.fim(); throw e; });
+        P.fim(); return r;
+    };
+    return P;
+})();
+// Esconde (na tela) os controles marcados como data-export-ignore, MENOS o botão que está exportando e o que o contém:
+// ele fica no lugar mostrando o progresso. Na cópia do PDF todos continuam escondidos (_tdbEsconderIgnoradosClone).
+function _tdbEsconderIgnorados(raiz, escondidos) {
+    var bt = window.__tdbProg && window.__tdbProg.ativo ? window.__tdbProg.ativo() : null, manter = [];
+    if (bt && !raiz.contains(bt)) bt = null;
+    for (var n = bt; n && n !== raiz; n = n.parentElement) { if (n.hasAttribute && n.hasAttribute('data-export-ignore')) manter.push(n); }
+    window.__tdbMantidos = manter;
+    Array.from(raiz.querySelectorAll('[data-export-ignore]')).forEach(function (el) {
+        for (var i = 0; i < manter.length; i++) { if (manter[i] === el || manter[i].contains(el)) return; }
+        escondidos.push([el, el.style.display]);
+        el.style.display = 'none';
+    });
+}
+// Medidas do elemento como se os controles mantidos na tela estivessem escondidos (igual a antes), só para escolher a escala da foto.
+function _tdbMedirComoAntes(el) {
+    var m = window.__tdbMantidos || [], salvos = [];
+    try {
+        m.forEach(function (x) { if (x.isConnected) { salvos.push([x, x.style.display]); x.style.display = 'none'; } });
+        return { w: (el && el.offsetWidth) || 0, h: Math.max((el && el.scrollHeight) || 0, (el && el.offsetHeight) || 0) };
+    } finally { salvos.forEach(function (p) { p[0].style.display = p[1]; }); }
+}
+function _tdbEsconderIgnoradosClone(alvo) {
+    try { Array.from(alvo.querySelectorAll('[data-export-ignore]')).forEach(function (el) { el.style.setProperty('display', 'none', 'important'); }); } catch (e) { }
+}
 window.__tdbH2C = async function (el, opts) {
+    var _P = window.__tdbProg; if (_P) _P.capIni();
+    try { return await window.__tdbH2C0(el, opts); } finally { if (_P) _P.capFim(); }
+};
+window.__tdbH2C0 = async function (el, opts) {
     var tentativas = [_escalaAltaPDF(el, opts), 2, 1.5], ultimo = null;
     for (var i = 0; i < tentativas.length; i++) {
         opts.scale = tentativas[i];
@@ -7055,6 +7211,7 @@ async function _capturarElementoPadraoPDF(elemento, preferirHorizontal, paginaUn
 }
 
 function _mostrarToastExportPDF(mensagem) {
+    try { if (window.__tdbProg && /exportado/i.test(String(mensagem))) window.__tdbProg.baixou(); } catch (e0) { }
     try {
         var antigo = document.getElementById('toast-export-pdf');
         if (antigo && antigo.parentNode) antigo.parentNode.removeChild(antigo);
@@ -7161,6 +7318,7 @@ async function _capturarRematriculaPDF(card) {
                     }
                 });
             }
+            _tdbEsconderIgnoradosClone(alvo);
             _sanearCloneParaExportPDF(doc);
             // Reduz respiros decorativos, mantendo fontes, valores e destaques.
             [alvo].concat(Array.from(alvo.querySelectorAll('*'))).forEach(function (el) {
@@ -7232,14 +7390,10 @@ async function exportarRematriculaPDF(alvo, botao) {
     var cards = alvo.matches('.tdb-remat-card') ? [alvo] : Array.from(alvo.querySelectorAll('.tdb-remat-card'));
     if (!cards.length) return;
     botao.disabled = true;
-    // Esconde botões/olhinhos marcados como 'data-export-ignore' só durante a foto de cada quadro.
+    window.__tdbProg.ini(botao); window.__tdbProg.caps(cards.length);
+    // Esconde botões/olhinhos marcados como 'data-export-ignore' só durante a foto de cada quadro (menos o botão que está exportando).
     var escondidos = [];
-    cards.forEach(function (c) {
-        Array.from(c.querySelectorAll('[data-export-ignore]')).forEach(function (el) {
-            escondidos.push([el, el.style.display]);
-            el.style.display = 'none';
-        });
-    });
+    cards.forEach(function (c) { _tdbEsconderIgnorados(c, escondidos); });
     try {
         await window.__ensureJsPDF();
         await window.__ensureHtml2Canvas();
@@ -7328,6 +7482,7 @@ async function exportarRematriculaPDF(alvo, botao) {
     finally {
         escondidos.forEach(function (par) { par[0].style.display = par[1]; });
         botao.disabled = false;
+        window.__tdbProg.fim();
     }
 }
 // ===================== EXPORTAR PÁGINA (GENÉRICO) EM PDF — mesma regra da Rematrícula =====================
@@ -7338,11 +7493,9 @@ async function exportarRematriculaPDF(alvo, botao) {
 async function exportarPaginaVisualPDF(elemento, tituloPagina, nomeArquivoBase, botao, preferirHorizontal, paginaUnica) {
     if (!elemento || (botao && botao.disabled)) return;
     if (botao) botao.disabled = true;
+    window.__tdbProg.ini(botao);
     var escondidos = [];
-    Array.from(elemento.querySelectorAll('[data-export-ignore]')).forEach(function (el) {
-        escondidos.push([el, el.style.display]);
-        el.style.display = 'none';
-    });
+    _tdbEsconderIgnorados(elemento, escondidos);
     try {
         await window.__ensureJsPDF();
         await window.__ensureHtml2Canvas();
@@ -7380,6 +7533,7 @@ async function exportarPaginaVisualPDF(elemento, tituloPagina, nomeArquivoBase, 
     finally {
         escondidos.forEach(function (par) { par[0].style.display = par[1]; });
         if (botao) botao.disabled = false;
+        window.__tdbProg.fim();
     }
 }
 
@@ -7390,6 +7544,7 @@ async function exportarPaginaVisualPDF(elemento, tituloPagina, nomeArquivoBase, 
 async function exportarTodosMesesPDF(seletorElemento, montarTitulo, nomeArquivoBase, aguardarMes, botao) {
     if (botao && botao.disabled) return;
     if (botao) botao.disabled = true;
+    window.__tdbProg.ini(botao); window.__tdbProg.caps(MESES.length);
     try {
         await window.__ensureJsPDF();
         await window.__ensureHtml2Canvas();
@@ -7400,10 +7555,7 @@ async function exportarTodosMesesPDF(seletorElemento, montarTitulo, nomeArquivoB
             var elemento = document.querySelector(seletorElemento);
             if (!elemento) continue;
             var escondidos = [];
-            Array.from(elemento.querySelectorAll('[data-export-ignore]')).forEach(function (el2) {
-                escondidos.push([el2, el2.style.display]);
-                el2.style.display = 'none';
-            });
+            _tdbEsconderIgnorados(elemento, escondidos);
             try {
                 // Usa EXATAMENTE a mesma captura do PDF individual. Não há mais uma rotina
                 // simplificada para "todos os meses", evitando diferenças de largura/quebra.
@@ -7446,7 +7598,7 @@ async function exportarTodosMesesPDF(seletorElemento, montarTitulo, nomeArquivoB
         setTimeout(function () { URL.revokeObjectURL(_pdfUrl); }, 1000);
         _mostrarToastExportPDF('PDF exportado com sucesso!');
     } catch (e) { window.alert('Não foi possível exportar o PDF. Tente novamente. ' + (e.message || '')); }
-    finally { if (botao) botao.disabled = false; }
+    finally { if (botao) botao.disabled = false; window.__tdbProg.fim(); }
 }
 
 function QuadroRematricula(props) {
@@ -8040,7 +8192,8 @@ function Anotacoes(_a) {
     function atualizarCategoria(id, categoria) {
         salvar((blocosRef.current || blocos).map(function (b) { return b.id === id ? __assign(__assign({}, b), { categoria: categoria }) : b; }));
     }
-    function exportarBlocoPDF(b) {
+    function exportarBlocoPDF(b) { return window.__tdbProg.env(exportarBlocoPDF_, this, arguments); }
+    function exportarBlocoPDF_(b) {
         return __awaiter(this, void 0, void 0, function () {
             var e_27, jsPDF, doc, roxo, margemX, larguraUtil, y, linhas;
             return __generator(this, function (_a) {
@@ -8997,7 +9150,8 @@ function _festasBaixarPDF(doc, nomeArquivo) {
         try { doc.save(nome); return true; } catch (e2) { throw e2; }
     }
 }
-async function _festasGerarPDF(dados, chaves, nomeArquivo, abasConfig) {
+function _festasGerarPDF(dados, chaves, nomeArquivo, abasConfig) { return window.__tdbProg.env(_festasGerarPDF_, this, arguments); }
+async function _festasGerarPDF_(dados, chaves, nomeArquivo, abasConfig) {
     await window.__ensureJsPDF();
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
     var W = 842, H = 595, margem = 28, topo = 66, margemRodape = 22, larguraUtil = W - margem * 2;
@@ -13727,6 +13881,7 @@ function Lancamentos(props) {
         _pdfExecutandoRef.current = true;
         var filtroAnterior = filtroMes;
         var abertosAntes = Object.assign({}, mesesAbertos);
+        window.__tdbProg.ini();
         setExportandoMesPdf(true);
         async function aguardarMes(mes) {
             // Atribuir sempre evita reutilizar o filtro capturado no início da exportação.
@@ -13752,6 +13907,7 @@ function Lancamentos(props) {
             setMesesAbertos(abertosAntes);
             setExportandoMesPdf(false);
             _pdfExecutandoRef.current = false;
+            window.__tdbProg.fim();
         }
     }
 
@@ -14234,6 +14390,7 @@ function Mensalidades(_a) {
         if (_pdfExecutandoRef.current) return;
         _pdfExecutandoRef.current = true;
         var filtroAnterior = filtroMes;
+        window.__tdbProg.ini();
         setExportandoMesPdf(true);
         async function aguardarMes(mes) {
             // Atribuir sempre evita reutilizar o filtro capturado no início da exportação.
@@ -14256,6 +14413,7 @@ function Mensalidades(_a) {
             setFiltroMes(filtroAnterior);
             setExportandoMesPdf(false);
             _pdfExecutandoRef.current = false;
+            window.__tdbProg.fim();
         }
     }
 
@@ -14960,7 +15118,8 @@ function VisualizadorPdfEditavel(_a) {
         window.addEventListener('touchmove', mover, { passive: false });
         window.addEventListener('touchend', soltar);
     }
-    function exportarPdfEditado() {
+    function exportarPdfEditado() { return window.__tdbProg.env(exportarPdfEditado_, this, arguments); }
+    function exportarPdfEditado_() {
         return __awaiter(this, void 0, void 0, function () {
             var _a, PDFDocument, StandardFonts, rgb_1, pdfDoc, form_1, fonte_1, paginasPdf_1, bytesFinal, blob, url_3, link, e_99;
             return __generator(this, function (_b) {
@@ -15486,7 +15645,8 @@ function Contratos(_a) {
         window.storage.delete('contrato_anexo_' + id, false).catch(function () { });
         salvar(contratos.map(function (c) { return c.id === id ? __assign(__assign({}, c), { anexoNome: undefined, anexoTipo: undefined }) : c; }));
     }
-    function exportarContratoPDF(c) {
+    function exportarContratoPDF(c) { return window.__tdbProg.env(exportarContratoPDF_, this, arguments); }
+    function exportarContratoPDF_(c) {
         return __awaiter(this, void 0, void 0, function () {
             var e_107, jsPDF, doc, teal, margemX, larguraUtil, y, linhaResumo, linhas;
             return __generator(this, function (_a) {
