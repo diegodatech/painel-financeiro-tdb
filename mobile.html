@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261005-tempo1-v17";
+    window.__TDB_BUILD = "tdbn-20261005-tempo1-v18";
   </script>
-  <script src="./config.js?build=tdbn-20261005-tempo1-v17"></script>
+  <script src="./config.js?build=tdbn-20261005-tempo1-v18"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261005-tempo1-v17"></script>
+  <script src="./sync.js?build=tdbn-20261005-tempo1-v18"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v17-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v18-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18471,6 +18471,7 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
 }
 </style>
 <style id="tdb-nomes-abas-css">
+.abas-menu .aba-item{touch-action:manipulation}
 .abas-menu .aba-item.tdb-ren-on .aba-label{display:none!important}
 .tdb-aba-ren{width:100%;min-width:0;box-sizing:border-box;border:1.5px solid #8db4f2;border-radius:7px;font:700 11px Inter,sans-serif;text-align:center;padding:3px 2px;background:#fff;color:#111318;outline:0}
 @media(pointer:coarse){.tdb-aba-ren{font-size:16px}}
@@ -18509,7 +18510,8 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
  }
  window.TDBNomesAbas={nome:nome,sub:sub,set:set};
  carregar();
- var ult=null;
+ var ult=null,SEL='.abas-menu .aba-item[data-aurora-icon]',bloq=0;
+ function visivel(k){var l=document.querySelectorAll(SEL),r=null;Array.prototype.forEach.call(l,function(e){if(!r&&e.getAttribute('data-aurora-icon')===k&&e.offsetParent!==null)r=e;});return r;}
  function editar(it,k){
   if(it.querySelector('.tdb-aba-ren'))return;
   var ls=it.querySelectorAll('.aba-label'),vis=null;Array.prototype.forEach.call(ls,function(l){if(!vis&&l.offsetParent!==null)vis=l;});
@@ -18521,20 +18523,36 @@ html[data-tdb-aurora] body td > select.busca-liquid-glass:not(#tdb-x){padding:6p
   inp.addEventListener('keydown',function(e){e.stopPropagation();if(e.key==='Enter'){e.preventDefault();fim(true);}else if(e.key==='Escape'){e.preventDefault();fim(false);}});
   inp.addEventListener('keyup',function(e){e.stopPropagation();});
   inp.addEventListener('click',function(e){e.stopPropagation();});
-  inp.addEventListener('blur',function(){fim(true);});
-  setTimeout(function(){try{inp.focus();inp.select();}catch(e){}},30);
+  inp.addEventListener('dblclick',function(e){e.stopPropagation();});
+  var nasc=performance.now();
+  inp.addEventListener('blur',function(){if(!feito&&performance.now()-nasc<400){setTimeout(function(){try{if(!feito){inp.focus();}}catch(e){}},0);return;}fim(true);});
+  try{inp.focus();inp.select();}catch(e){}
+  setTimeout(function(){try{if(document.activeElement!==inp&&!feito){inp.focus();inp.select();}}catch(e){}},40);
+  setTimeout(function(){try{if(document.activeElement!==inp&&!feito){inp.focus();inp.select();}}catch(e){}},220);
  }
- document.addEventListener('click',function(e){
-  var t=e.target;if(!t||!t.closest)return;
-  if(t.closest('.tdb-aba-ren'))return;
-  var it=t.closest('.abas-menu .aba-item[data-aurora-icon]'),agora=Date.now();
-  if(!it){ // durante a troca de aba o menu fica sem receber clique por um instante: confere pela posição do mouse/dedo
-   if(ult&&agora-ult.t<700&&ult.el&&document.body.contains(ult.el)){var r=ult.el.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){var el0=ult.el,k0=ult.k;ult=null;e.stopPropagation();e.preventDefault();editar(el0,k0);}}
-   return;
-  }
-  var k=it.getAttribute('data-aurora-icon');
-  if(ult&&ult.k===k&&agora-ult.t<700){ult=null;e.stopPropagation();e.preventDefault();editar(it,k);return;}
-  ult={k:k,t:agora,el:it};
+ /* acha o cartão tocado: pelo alvo; se o menu estava sem receber toque (troca de aba em andamento), confere pela posição do dedo/mouse */
+ function achar(e,ts){
+  var t=e.target,it=(t&&t.closest)?t.closest(SEL):null;
+  if(it)return {it:it,k:it.getAttribute('data-aurora-icon')};
+  if(ult&&ts-ult.t<900){var el=visivel(ult.k);if(el){var r=el.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom)return {it:el,k:ult.k};}}
+  return null;
+ }
+ /* toque/clique: dois seguidos no mesmo cartão (até 650 ms) abrem a edição. Usa a hora real do evento, então não falha se a tela demorar para trocar. */
+ function toque(e){
+  var t=e.target;if(t&&t.closest&&t.closest('.tdb-aba-ren'))return;
+  if(e.button&&e.button!==0)return;
+  var ts=e.timeStamp||performance.now(),h=achar(e,ts);if(!h)return;
+  if(ts<bloq)return;
+  if(ult&&ult.k===h.k&&ts-ult.t<650&&Math.abs(e.clientX-ult.x)<40&&Math.abs(e.clientY-ult.y)<40){ult=null;bloq=ts+450;editar(h.it,h.k);return;}
+  ult={k:h.k,t:ts,x:e.clientX,y:e.clientY};
+ }
+ document.addEventListener('click',toque,true); /* 'click' é o último evento do toque: nada mexe no foco depois dele */
+ /* garantia extra: o duplo clique nativo do navegador também abre a edição */
+ document.addEventListener('dblclick',function(e){
+  var t=e.target;if(t&&t.closest&&t.closest('.tdb-aba-ren'))return;
+  var ts=e.timeStamp||performance.now();if(ts<bloq)return;
+  var h=achar(e,ts);if(!h){var l=document.querySelectorAll(SEL);Array.prototype.forEach.call(l,function(el){if(h||el.offsetParent===null)return;var r=el.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom&&(t===document.body||t===document.documentElement||!t.closest))h={it:el,k:el.getAttribute('data-aurora-icon')};});}
+  if(!h)return;ult=null;bloq=ts+450;editar(h.it,h.k);
  },true);
 })();
 </script>
