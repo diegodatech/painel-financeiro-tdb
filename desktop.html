@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo1-v4";
+    window.__TDB_BUILD = "tdbn-20261004-tempo1-v5";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo1-v4"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo1-v5"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1479,10 +1479,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo1-v4"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo1-v5"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v4-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v5-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18841,7 +18841,7 @@ html:not(.tdb-aurora-pdf) body .tvg-gx .tgseg button.on:not(#tvgx){background:va
   function summary(k,els){
     var t=txt(els[0],6000),c;
     if(k==='ind'){
-      return chip('Equilíbrio',m(/(\d+)\s*alunos necess/i,t))+chip('Na base',m(/ALUNOS NA BASE[^\d]*(\d+)/i,t));
+      return chip('Equilíbrio',m(/(\d+)\s*alunos necess/i,t))+chip('Na base',m(/ALUNOS NA BASE FINANCEIRA\s*(\d+)\s*alunos/i,t));
     }
     if(k==='meta'){
       var meta=m(/Meta de lucro mensal\s*(.+?)\s*Resultado real/i,t);
