@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261004-tempo1-v3";
+    window.__TDB_BUILD = "tdbn-20261004-tempo1-v4";
   </script>
-  <script src="./config.js?build=tdbn-20261004-tempo1-v3"></script>
+  <script src="./config.js?build=tdbn-20261004-tempo1-v4"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1836,16 +1836,18 @@ html:not(.tdb-aurora-pdf) body #trm-pdf.tdb-xbtn.tdb-xbtn:not(#tdb-x){border-rad
 
 <style id="tdb-export-prog">
 /* TEMPO 12 — botão de exportar fica no lugar e mostra o progresso (%) dentro dele. Só aparência da tela. */
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x){overflow:hidden!important;color:transparent!important;text-shadow:none!important;opacity:1!important;cursor:progress!important;pointer-events:none!important}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-rel][data-xp][data-xp]:not(#tdb-x){position:relative!important}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x) *{opacity:0!important}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x)::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--xp,0%);background:var(--xp-ink,#1767cf);opacity:.18;border-radius:inherit;transition:width .3s ease;pointer-events:none}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x)::after{content:"Gerando PDF " attr(data-xp) "%";position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;color:var(--xp-ink,#1767cf);font-family:inherit;font-size:12.5px;font-weight:800;line-height:1.2;letter-spacing:0;pointer-events:none}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-fim][data-xp]:not(#tdb-x)::after{content:"PDF pronto \2713"}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="2"][data-xp]:not(#tdb-x)::after{content:"Gerando " attr(data-xp) "%"}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="2"][data-xp-fim][data-xp]:not(#tdb-x)::after{content:"PDF pronto \2713"}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="1"][data-xp]:not(#tdb-x)::after{content:attr(data-xp) "%"}
-html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="1"][data-xp-fim][data-xp]:not(#tdb-x)::after{content:"\2713"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x):not(#tdb-y){overflow:hidden!important;color:transparent!important;text-shadow:none!important;opacity:1!important;cursor:progress!important;pointer-events:none!important}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-w][data-xp]:not(#tdb-x):not(#tdb-y){min-width:var(--xp-w)!important;box-sizing:border-box!important}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-rel][data-xp][data-xp]:not(#tdb-x):not(#tdb-y){position:relative!important}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x):not(#tdb-y) *{opacity:0!important}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x):not(#tdb-y)::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--xp,0%);background:var(--xp-ink,#1767cf);opacity:.18;border-radius:inherit;transition:width .3s ease;pointer-events:none}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp][data-xp]:not(#tdb-x):not(#tdb-y)::after{content:"Gerando PDF " attr(data-xp) "%";position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;color:var(--xp-ink,#1767cf);font:inherit;text-transform:inherit;letter-spacing:inherit;line-height:1.2;pointer-events:none}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-fz][data-xp]:not(#tdb-x):not(#tdb-y)::after{font-size:var(--xp-fs)}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-fim][data-xp]:not(#tdb-x):not(#tdb-y)::after{content:"PDF pronto \2713"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="2"][data-xp]:not(#tdb-x):not(#tdb-y)::after{content:"Gerando " attr(data-xp) "%"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="2"][data-xp-fim][data-xp]:not(#tdb-x):not(#tdb-y)::after{content:"PDF pronto \2713"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="1"][data-xp]:not(#tdb-x):not(#tdb-y)::after{content:attr(data-xp) "%"}
+html:not(.tdb-aurora-pdf) body button[data-xp][data-xp-s="1"][data-xp-fim][data-xp]:not(#tdb-x):not(#tdb-y)::after{content:"\2713"}
 #tdb-xp-pill{position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2147483000;padding:10px 18px;border-radius:14px;overflow:hidden;white-space:nowrap;pointer-events:none;
  font:800 12.5px/1.2 Inter,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--c-inkButton,#1767cf);
  background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);border:1px solid var(--aurora-edge,var(--c-line,#d7dce5));box-shadow:var(--aurora-shadow,0 6px 18px rgba(30,40,60,.16));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px))}
@@ -1934,10 +1936,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261004-tempo1-v3"></script>
+  <script src="./sync.js?build=tdbn-20261004-tempo1-v4"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v3-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261004-tempo1-v4-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -6939,7 +6941,30 @@ function _cortesSemanticosPDF(alvoClonado, escala) {
     }
     Array.from(alvoClonado.children).forEach(function (el) { adicionar(el); Array.from(el.children || []).forEach(adicionar); });
     Array.from(alvoClonado.querySelectorAll('tr,[data-pdf-linha]')).forEach(adicionar);
-    return Array.from(new Set(candidatos)).sort(function (a,b) { return a-b; });
+    var res = Array.from(new Set(candidatos)).sort(function (a,b) { return a-b; });
+    // Blocos que devem ficar inteiros numa folha (se couberem): cada tabela de Mensalidades (Empresas / Convênios, Outros...).
+    var inteiros = [];
+    try {
+        Array.from(alvoClonado.querySelectorAll('.mensalidades-tabela-card,[data-pdf-bloco]')).forEach(function (el) {
+            if (el.offsetHeight <= 0) return;
+            var r = el.getBoundingClientRect();
+            inteiros.push([Math.round((r.top - base.top) * escala), Math.round((r.bottom - base.top) * escala), 1]);
+        });
+        // Cartões com borda arredondada (blocos com título) que cabem em até meia folha também não são partidos.
+        var jan = alvoClonado.ownerDocument.defaultView;
+        var cands = [];
+        Array.from(alvoClonado.children).forEach(function (el) { el.__n1 = true; cands.push(el); Array.from(el.children || []).forEach(function (f) { cands.push(f); }); });
+        cands.forEach(function (el) {
+            if (!el || el.offsetHeight <= 0 || el.hasAttribute('data-export-ignore') || el.tagName === 'TR' || el.matches('.mensalidades-tabela-card,[data-pdf-bloco]')) return;
+            var cs = jan.getComputedStyle(el);
+            // Seções do primeiro nível (com ou sem borda) e cartões com borda arredondada.
+            if (!el.__n1 && !(parseFloat(cs.borderTopWidth) > 0 && parseFloat(cs.borderTopLeftRadius) > 0)) return;
+            var r = el.getBoundingClientRect();
+            inteiros.push([Math.round((r.top - base.top) * escala), Math.round((r.bottom - base.top) * escala), 0.5]);
+        });
+    } catch (e) { }
+    res.inteiros = inteiros;
+    return res;
 }
 // Captura em ALTA QUALIDADE para os PDFs: escala 3, com recuo automático (3 -> 2 -> 1,5) se o aparelho não aguentar.
 function _escalaAltaPDF(el, opts) {
@@ -6974,8 +6999,8 @@ window.__tdbProg = (function () {
     } catch (e0) { }
     function tirarMarcas(b) {
         if (!b) return;
-        ['data-xp', 'data-xp-fim', 'data-xp-s', 'data-xp-rel', 'aria-busy'].forEach(function (a) { try { b.removeAttribute(a); } catch (x) { } });
-        try { b.style.removeProperty('--xp'); b.style.removeProperty('--xp-ink'); } catch (x) { }
+        ['data-xp', 'data-xp-fim', 'data-xp-s', 'data-xp-rel', 'data-xp-fz', 'data-xp-w', 'aria-busy'].forEach(function (a) { try { b.removeAttribute(a); } catch (x) { } });
+        try { b.style.removeProperty('--xp'); b.style.removeProperty('--xp-ink'); b.style.removeProperty('--xp-fs'); b.style.removeProperty('--xp-w'); } catch (x) { }
     }
     function limpar() {
         if (fimT) { clearTimeout(fimT); fimT = null; }
@@ -6992,7 +7017,18 @@ window.__tdbProg = (function () {
                     var cs = getComputedStyle(btn);
                     btn.style.setProperty('--xp-ink', cs.color && cs.color !== 'rgba(0, 0, 0, 0)' ? cs.color : '#1767cf');
                     if (cs.position === 'static') btn.setAttribute('data-xp-rel', '1');
-                    btn.setAttribute('data-xp-s', btn.offsetWidth < 95 ? '1' : (btn.offsetWidth < 150 ? '2' : '0'));
+                    // Escolhe o texto que CABE inteiro no botão, medido com a própria fonte dele (tamanho, peso, família).
+                    // Trava a largura que o botão tinha ao clicar: o texto dele muda (ex.: "Gerando...") e o botão não encolhe nem pula.
+                    var bw = btn.getBoundingClientRect().width;
+                    if (bw > 0) { btn.style.setProperty('--xp-w', Math.ceil(bw) + 'px'); btn.setAttribute('data-xp-w', '1'); }
+                    var larg = Math.max(0, btn.clientWidth - 10), fonte = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily,
+                        up = cs.textTransform === 'uppercase', ls = parseFloat(cs.letterSpacing) || 0, fsz = parseFloat(cs.fontSize) || 13, cx = null;
+                    try { cx = document.createElement('canvas').getContext('2d'); cx.font = fonte; } catch (x) { cx = null; }
+                    var medir = function (s) { if (up) s = s.toUpperCase(); return cx ? cx.measureText(s).width + ls * s.length : s.length * fsz * 0.62; };
+                    var pronto = medir('PDF pronto \u2713'), w0 = Math.max(medir('Gerando PDF 100%'), pronto), w2 = Math.max(medir('Gerando 100%'), pronto), w1 = Math.max(medir('100%'), medir('\u2713'));
+                    var tier = w0 <= larg ? '0' : (w2 <= larg ? '2' : '1'), wt = tier === '0' ? w0 : (tier === '2' ? w2 : w1);
+                    btn.setAttribute('data-xp-s', tier);
+                    if (wt > larg && larg > 0) { btn.style.setProperty('--xp-fs', Math.max(8, Math.floor(fsz * larg / wt * 10) / 10) + 'px'); btn.setAttribute('data-xp-fz', '1'); }
                 } catch (x) { }
                 btn.setAttribute('aria-busy', 'true');
             }
@@ -7270,8 +7306,15 @@ function _adicionarCanvasNoDocPDF(doc, canvas, tituloPagina, usarHorizontal, opt
     var pxPorPt=canvas.width/larguraUtil, alturaPaginaPx=alturaDisponivel*pxPorPt, offsetPx=0, primeira=true;
     while(offsetPx<canvas.height){
         if(!primeira){doc.addPage('a4',usarHorizontal?'landscape':'portrait');cabecalho();}
-        var fatiaAlturaPx=Math.min(alturaPaginaPx,canvas.height-offsetPx), fimNatural=offsetPx+fatiaAlturaPx;
-        if(opts&&opts.cortesPx&&opts.cortesPx.length&&fimNatural<canvas.height){
+        var fatiaAlturaPx=Math.min(alturaPaginaPx,canvas.height-offsetPx), fimNatural=offsetPx+fatiaAlturaPx, quebraBloco=null;
+        if(opts&&opts.cortesPx&&opts.cortesPx.inteiros&&fimNatural<canvas.height){
+            // Bloco que começa nesta folha, não cabe até o fim dela mas cabe numa folha inteira: vai todo para a próxima.
+            opts.cortesPx.inteiros.forEach(function(b){
+                if(b[0]>offsetPx+8&&b[0]<fimNatural&&b[1]>fimNatural&&(b[1]-b[0])<=alturaPaginaPx*b[2]&&(quebraBloco===null||b[0]<quebraBloco))quebraBloco=b[0];
+            });
+            if(quebraBloco!==null)fatiaAlturaPx=quebraBloco-offsetPx;
+        }
+        if(quebraBloco===null&&opts&&opts.cortesPx&&opts.cortesPx.length&&fimNatural<canvas.height){
             var melhor=null, minimoAceitavel=offsetPx+alturaPaginaPx*((chave==='valores')?0.82:0.70);
             for(var i=0;i<opts.cortesPx.length;i++){var c=opts.cortesPx[i];if(c>=minimoAceitavel&&c<=fimNatural)melhor=c;}
             if(melhor)fatiaAlturaPx=melhor-offsetPx;
