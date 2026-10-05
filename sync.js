@@ -23,9 +23,6 @@
       let salvamentoManual_ = null;
       let contadorVersao = 0;
       let cacheCarregadoComSucesso = false;
-      let anoDoCache_ = null;               // exercício a que pertence a leitura em memória
-      let falhaConferenciaEm_ = 0;
-      const chavesConferidas_ = new Set();   // chaves de outros exercícios já conferidas no servidor
       let ultimaFalhaLeituraEm = 0;
       window.__transacoesProntas = false;
       let usandoPlanilha = !!APPS_SCRIPT_URL;
@@ -106,14 +103,6 @@
           const keys=Array.from(new Set(Object.keys(base).concat(Object.keys(local),Object.keys(servidor)))); const out={};
           keys.forEach(function(k){ const b=Object.prototype.hasOwnProperty.call(base,k)?base[k]:AUSENTE; const l=Object.prototype.hasOwnProperty.call(local,k)?local[k]:AUSENTE; const sv=Object.prototype.hasOwnProperty.call(servidor,k)?servidor[k]:AUSENTE; const v=tdbMesclar3_(b,l,sv,(caminho?caminho+'.':'')+k,conflitos,preferirLocal); if(!ehAusente(v)) out[k]=v; });
           return out;
-        }
-        if (typeof base === 'string' && typeof local === 'string' && typeof servidor === 'string') {
-          // Texto digitado em sequência (a gravação anterior deste mesmo aparelho ou de outro só acrescentou texto).
-          if (local.trim() === servidor.trim()) return local.length >= servidor.length ? local : servidor;
-          if (local.indexOf(base) === 0 && servidor.indexOf(base) === 0) {
-            if (local.indexOf(servidor) === 0) return local;
-            if (servidor.indexOf(local) === 0) return servidor;
-          }
         }
         conflitos.push(caminho || 'valor');
         return preferirLocal ? local : servidor;
@@ -686,7 +675,6 @@
         if (!APPS_SCRIPT_URL) {
           cachePlanilha = {};
           cacheCarregadoComSucesso = false;
-          anoDoCache_ = null;
           return cachePlanilha;
         }
         if (carregamentoEmAndamento) return carregamentoEmAndamento;
@@ -724,10 +712,6 @@
               // são mais novas que este retorno: mantém o valor local e não regride a versão.
               const cacheAnterior_ = cachePlanilha;
               cachePlanilha = corpo.dados;
-              Object.keys(cachePlanilha).forEach(k => {
-                const yk = anoDaChaveAnualBase_(k);
-                if (yk !== null && yk !== anoBootstrap) delete cachePlanilha[k];
-              });
               seqPorChave_.forEach((seq, chaveLocal) => {
                 if (seq > seqInicioLeitura) {
                   if (cacheAnterior_ && Object.prototype.hasOwnProperty.call(cacheAnterior_, chaveLocal)) cachePlanilha[chaveLocal] = cacheAnterior_[chaveLocal];
@@ -744,8 +728,6 @@
                 const pendentesAgora = lerPendencias();
                 const anexosPendentesAgora = lerPendenciasAnexos();
                 Object.keys(corpo.versoes).forEach(key => {
-                  const ykv = anoDaChaveAnualBase_(key);
-                  if (ykv !== null && ykv !== anoBootstrap) return;
                   if (!pendentesAgora.has(key) && !anexosPendentesAgora.has(key) && !editouDepoisDaLeitura_(key)) {
                     versoesLocais[key] = Number(corpo.versoes[key]) || 0;
                     limparBaseVersao_(key);
@@ -754,7 +736,6 @@
                 try { localStorage.setItem(CHAVE_VERSOES, JSON.stringify(versoesLocais)); } catch (e) {}
               }
               cacheCarregadoComSucesso = true;
-              anoDoCache_ = anoBootstrap;
               ultimaFalhaLeituraEm = 0;
               window.__versaoBackend = corpo.versaoBackend || 'não informada';
               usandoPlanilha = true;
@@ -831,7 +812,6 @@
           }
 
           cacheCarregadoComSucesso = false;
-          anoDoCache_ = null;
           // MUITO IMPORTANTE: null significa "não consegui ler o Drive".
           // Nunca transformar isso em {}.
           cachePlanilha = null;
@@ -1409,51 +1389,6 @@
         return base;
       }
 
-      // Exercício a que uma chave anual pertence (bases anuais sem sufixo = 2026). null = chave global
-      // ou lançamentos (os lançamentos de todos os anos já vêm no bootstrap).
-      function anoDaChaveAnualBase_(key) {
-        const k = String(key || '');
-        const m = k.match(/^(.+)__(\d{4})$/);
-        if (m && CHAVES_ANUAIS_BASE_.has(m[1])) return Number(m[2]);
-        if (CHAVES_ANUAIS_BASE_.has(k)) return 2026;
-        return null;
-      }
-
-      // Confere no servidor uma chave anual de um exercício que ainda não foi carregado.
-      // Nunca devolve "vazio" por falta de leitura: se não conseguir conferir, lança erro e nada é gravado.
-      async function conferirChaveNoServidor_(key) {
-        const ano = anoDaChaveAnualBase_(key);
-        const naoConferiu = () => new Error('Não consegui conferir os dados de ' + (ano || 'este exercício') + ' no Google Drive. Nada foi alterado; tente de novo quando a conexão voltar.');
-        if (ano !== null && ano === Number(window.__exercicioAtual || 2026) && anoDoCache_ !== ano) {
-          const lido = await carregarDaPlanilha();
-          if (cacheCarregadoComSucesso && lido && anoDoCache_ === ano) {
-            chavesConferidas_.add(key);
-            if (Object.prototype.hasOwnProperty.call(cachePlanilha, key)) return { existe: true, valor: cachePlanilha[key] };
-            return { existe: false };
-          }
-          // A leitura geral falhou: ainda dá para conferir só esta chave (abaixo). Se também falhar, lança erro.
-        }
-        if (Date.now() - falhaConferenciaEm_ < 8000) throw naoConferiu();
-        let corpo;
-        try {
-          corpo = await lerRespostaJSON(await timeoutFetch(
-            APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key) + '&_=' + Date.now(),
-            { method: 'GET', cache: 'no-store' }, 30000));
-        } catch (e) { falhaConferenciaEm_ = Date.now(); throw naoConferiu(); }
-        if (!corpo || corpo.ok === false || !corpo.dados || typeof corpo.dados !== 'object') { falhaConferenciaEm_ = Date.now(); throw naoConferiu(); }
-        chavesConferidas_.add(key);
-        if (Object.prototype.hasOwnProperty.call(corpo.dados, key) && corpo.dados[key] !== null && corpo.dados[key] !== undefined) {
-          const valor = String(corpo.dados[key]);
-          if (!cachePlanilha) cachePlanilha = {};
-          cachePlanilha[key] = valor;
-          try { localStorage.setItem(key, valor); } catch (e) {}
-          const sv = Number(corpo.serverUpdatedAt) || 0;
-          if (sv > 0) { const vs = lerVersoes(); vs[key] = sv; try { localStorage.setItem(CHAVE_VERSOES, JSON.stringify(vs)); } catch (e) {} }
-          return { existe: true, valor };
-        }
-        return { existe: false };
-      }
-
       function resolverChaveAnual_(key) {
         const k = String(key || '');
         if (k.startsWith('@@raw:')) return k.slice(6);
@@ -1595,16 +1530,6 @@
             return { value: valor };
           }
 
-          // Troca de exercício: a cópia em memória é de outro ano. Antes de dizer "não existe",
-          // confere no servidor (assim o painel nunca abre vazio nem cria dados modelo por cima).
-          if (APPS_SCRIPT_URL && key.indexOf('anexo_') === -1) {
-            const ykg = anoDaChaveAnualBase_(key);
-            if (ykg !== null && ykg !== anoDoCache_ && !chavesConferidas_.has(key)) {
-              const conf = await conferirChaveNoServidor_(key);
-              if (conf.existe) return { value: conf.valor };
-            }
-          }
-
           // Se não existe cópia local e a leitura central falhou, isso NÃO significa
           // banco vazio. Propagamos a falha para impedir a criação automática dos dados
           // modelo por cima de um banco real temporariamente indisponível.
@@ -1625,12 +1550,6 @@
             throw new Error('Gravação bloqueada: carregue lançamentos válidos antes de editar.');
           }
           const eAnexo = key.indexOf('anexo_') !== -1;
-          if (!eAnexo && APPS_SCRIPT_URL) {
-            const yks = anoDaChaveAnualBase_(key);
-            if (yks !== null && yks !== anoDoCache_ && !chavesConferidas_.has(key) && !(Number(lerVersoes()[key]) > 0)) {
-              await conferirChaveNoServidor_(key); // lança erro se não conseguir conferir: a gravação é bloqueada
-            }
-          }
           if (!eAnexo && localStorage.getItem(key) === String(val)) {
             if (!exigirConfirmacao) return true;
             await filaEscrita;
