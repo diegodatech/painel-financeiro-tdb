@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261005-tempo1-v22";
+    window.__TDB_BUILD = "tdbn-20261006-tempo1-v23";
   </script>
-  <script src="./config.js?build=tdbn-20261005-tempo1-v22"></script>
+  <script src="./config.js?build=tdbn-20261006-tempo1-v23"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261005-tempo1-v22"></script>
+  <script src="./sync.js?build=tdbn-20261006-tempo1-v23"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v22-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261006-tempo1-v23-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7161,7 +7161,7 @@ function CampoDinheiroTDB(p) {
     var v = String(p.value == null ? '' : p.value);
     var n = v.trim() === '' ? null : parseBRLInput(v);
     var exibido = (!foco && n !== null && !isNaN(n)) ? formatBRL(n) : v;
-    return React.createElement("input", Object.assign({}, p.extra, { value: exibido, onChange: function (e) { p.onChange(e.target.value); }, onFocus: function (e) { setFoco(true); var el = e.target; var sel_ = function () { try { el.select(); if (el.setSelectionRange) el.setSelectionRange(0, String(el.value || '').length); } catch (_) { } }; sel_(); setTimeout(sel_, 0); setTimeout(sel_, 60); }, onBlur: function () { setFoco(false); } }));
+    return React.createElement("input", Object.assign({}, p.extra, { value: exibido, onChange: function (e) { p.onChange(e.target.value); }, onFocus: function (e) { setFoco(true); var el = e.target; var sel_ = function () { try { if (document.activeElement !== el) return; el.select(); if (el.setSelectionRange) el.setSelectionRange(0, String(el.value || '').length); } catch (_) { } }; sel_(); setTimeout(sel_, 0); setTimeout(sel_, 60); }, onBlur: function () { setFoco(false); } }));
 }
 function DiasProporcionaisCalc(_a) {
     var modoPrivado = (_a || {}).modoPrivado;
@@ -8551,6 +8551,14 @@ var FESTAS_TDB_ABAS = [
     { key: 'formatura', label: 'Formatura', emoji: '🎓' },
     { key: 'natal', label: 'Natal', emoji: '🎄' }
 ];
+// Ícones dos balões de filtro de Festas (só desenho).
+function FestasIconeBalaoTDB(p) {
+    var k = p.k;
+    var kids = k === 'banco' ? [React.createElement("path", { key: 1, d: "M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18" })]
+        : k === 'pago' ? [React.createElement("circle", { key: 1, cx: 12, cy: 12, r: 9 }), React.createElement("path", { key: 2, d: "m8 12 3 3 5-6" })]
+        : [React.createElement("rect", { key: 1, x: 4, y: 5, width: 16, height: 16, rx: 3 }), React.createElement("path", { key: 2, d: "M8 3v4M16 3v4M4 10h16" })];
+    return React.createElement("svg", { viewBox: "0 0 24 24", width: 17, height: 17, fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", style: { flex: '0 0 auto', color: p.color } }, kids);
+}
 function _festasChaveUltimaAba(ano) {
     return 'tdb_festas_ultima_aba__' + String(ano || window.__exercicioAtual || 2026);
 }
@@ -8849,6 +8857,9 @@ function FestasTDB(_a) {
     var _p = useState(''), nomeAbaEdit = _p[0], setNomeAbaEdit = _p[1];
     var _q = useState('🎉'), emojiAbaEdit = _q[0], setEmojiAbaEdit = _q[1];
     var _buscaFestas = useState(''), buscaFestas = _buscaFestas[0], setBuscaFestas = _buscaFestas[1];
+    var _fbFestas = useState(''), filtroBancoFestas = _fbFestas[0], setFiltroBancoFestas = _fbFestas[1];
+    var _fpFestas = useState(''), filtroPagoFestas = _fpFestas[0], setFiltroPagoFestas = _fpFestas[1];
+    var _fdFestas = useState(''), filtroDataFestas = _fdFestas[0], setFiltroDataFestas = _fdFestas[1];
     useEffect(function () {
         (async function () {
             try {
@@ -8946,7 +8957,19 @@ function FestasTDB(_a) {
             .map(normalizarBuscaFestas).join(' ');
         return textoBusca.indexOf(termoBuscaFestas) !== -1;
     }
-    var rowsFiltradosFestas = termoBuscaFestas ? rows.filter(linhaCombinaBuscaFestas) : rows;
+    var filtrosFestasAtivos = !!(termoBuscaFestas || filtroBancoFestas || filtroPagoFestas || filtroDataFestas);
+    function linhaCombinaFiltrosFestas(r) {
+        if (filtroBancoFestas) {
+            if (filtroBancoFestas === '__SEM__') { if (r.banco) return false; }
+            else if (String(r.banco || '') !== filtroBancoFestas) return false;
+        }
+        if (filtroPagoFestas && _festasStatus(r) !== filtroPagoFestas) return false;
+        if (filtroDataFestas && String(r.data || '') !== filtroDataFestas) return false;
+        return true;
+    }
+    var rowsFiltradosFestas = filtrosFestasAtivos ? rows.filter(function (r) { return linhaCombinaBuscaFestas(r) && linhaCombinaFiltrosFestas(r); }) : rows;
+    var bancosFiltroFestas = (function () { var l = BANCOS.filter(function (b) { return b !== 'Outro'; }); rows.forEach(function (r) { if (r.banco && l.indexOf(r.banco) === -1) l.push(r.banco); }); return l; })();
+    function limparFiltrosFestas() { setBuscaFestas(''); setFiltroBancoFestas(''); setFiltroPagoFestas(''); setFiltroDataFestas(''); }
     function atualizarRow(id, campo, valor) {
         var nextRows = rows.map(function (r) { var _a; return r.id === id ? __assign(__assign({}, r), (_a = {}, _a[campo] = valor, _a)) : r; });
         var next = __assign({}, dados); next[subTab] = nextRows; salvar(next);
@@ -9075,11 +9098,11 @@ function FestasTDB(_a) {
     }
     function blocoGrupo(tipo, titulo) {
         var lista = rowsFiltradosFestas.filter(function (r) { return r.tipo === tipo; });
-        if (termoBuscaFestas && lista.length === 0) return null;
+        if (filtrosFestasAtivos && lista.length === 0) return null;
         var soma = totais(lista);
-        var th = { padding: '9px 8px', fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '.025em', textAlign: 'left', whiteSpace: 'normal', lineHeight: 1.15, background: COLORS.paper };
-        var td = { padding: '7px 8px', fontSize: 12, color: COLORS.ink, borderTop: '1px solid ' + COLORS.lineSoft, verticalAlign: 'middle' };
-        var inp = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 7, padding: '6px 7px', fontSize: 12, background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
+        var th = { padding: '9px 8px', fontSize: 10.8, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '.025em', textAlign: 'left', whiteSpace: 'normal', lineHeight: 1.15, background: COLORS.paper };
+        var td = { padding: '7px 8px', fontSize: 12.5, color: COLORS.ink, borderTop: '1px solid ' + COLORS.lineSoft, verticalAlign: 'middle' };
+        var inp = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 7, padding: '6px 7px', fontSize: 12.5, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
         var isMobileView = typeof window !== 'undefined' && window.innerWidth <= 760;
         var conteudo;
         if (lista.length === 0) {
@@ -9114,7 +9137,7 @@ function FestasTDB(_a) {
                                     React.createElement("div", { style: { display: 'grid', gap: 4, gridColumn: '1 / -1' } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, 'NOME'), React.createElement("input", { value: editRow.nome || '', onChange: function (e) { return alterarEdit('nome', e.target.value); }, spellCheck: "true", lang: "pt-BR", style: inp })),
                                     React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, 'GRUPO'), React.createElement("select", { value: editRow.tipo || 'PARTICULAR', onChange: function (e) { return alterarEdit('tipo', e.target.value); }, style: __assign(__assign({}, inp), { fontSize: 10.5, fontWeight: 700 }) }, React.createElement("option", { value: "PARTICULAR" }, "Particular"), React.createElement("option", { value: "PREFEITURA" }, "Prefeitura"))),
                                     React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, 'PESSOAS'), React.createElement("input", { type: "number", min: "0", step: "1", inputMode: "numeric", value: editRow.pessoas || '', onChange: function (e) { return alterarEdit('pessoas', e.target.value.replace(/[^0-9]/g, '')); }, style: __assign(__assign({}, inp), { textAlign: 'center' }) })),
-                                    React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, 'VALOR'), React.createElement("input", { value: editRow.valor || '', inputMode: "decimal", onChange: function (e) { return alterarEdit('valor', e.target.value); }, placeholder: "0,00", className: "mono", style: inp })),
+                                    React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, 'VALOR'), React.createElement(CampoDinheiroTDB, { value: editRow.valor || '', onChange: function (v) { return alterarEdit('valor', v); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", style: inp } })),
                                     React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, 'BANCO'), React.createElement("select", { value: editRow.banco || '', onChange: function (e) { return alterarEdit('banco', e.target.value); }, className: "busca-liquid-glass", style: bancoStyle }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))),
                                     React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, 'DATA'), React.createElement("input", { type: "date", value: editRow.data || '', onChange: function (e) { return alterarEdit('data', e.target.value); }, onClick: function (e) { e.stopPropagation(); try { e.target.showPicker(); } catch (err) { } }, style: __assign(__assign({}, inp), { cursor: 'pointer' }) })),
                                     React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, 'PAGO'), React.createElement("select", { value: editRow.pago || 'Pendente', onChange: function (e) { return alterarEdit('pago', e.target.value); }, style: inp }, React.createElement("option", { value: "Pendente" }, "Pendente"), React.createElement("option", { value: "Parcial" }, "Parcial"), React.createElement("option", { value: "Pago" }, "Pago"))),
@@ -9136,7 +9159,7 @@ function FestasTDB(_a) {
                         React.createElement("select", { value: editRow.tipo || 'PARTICULAR', onChange: function (e) { return alterarEdit('tipo', e.target.value); }, style: __assign(__assign({}, inp), { fontSize: 10.5, fontWeight: 700 }) }, React.createElement("option", { value: "PARTICULAR" }, "Particular"), React.createElement("option", { value: "PREFEITURA" }, "Prefeitura"))
                     ) : React.createElement("span", null, r.nome || '—')),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { type: "number", min: "0", step: "1", inputMode: "numeric", value: editRow.pessoas || '', onChange: function (e) { return alterarEdit('pessoas', e.target.value.replace(/[^0-9]/g, '')); }, style: __assign(__assign({}, inp), { textAlign: 'center' }) }) : React.createElement("span", { className: "mono", style: { display: 'block', textAlign: 'center', fontWeight: 700 } }, r.pessoas || '—')),
-                    React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { value: editRow.valor || '', inputMode: "decimal", onChange: function (e) { return alterarEdit('valor', e.target.value); }, placeholder: "0,00", className: "mono", style: inp }) : React.createElement("span", { className: "mono", style: { fontWeight: 700, color: _festasNumero(r.valor) > 0 ? COLORS.green : COLORS.inkSoft } }, _festasNumero(r.valor) > 0 ? formatBRL(_festasNumero(r.valor)) : '—')),
+                    React.createElement("td", { style: td }, emEdicao ? React.createElement(CampoDinheiroTDB, { value: editRow.valor || '', onChange: function (v) { return alterarEdit('valor', v); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", style: inp } }) : React.createElement("span", { className: "mono", style: { fontWeight: 700, color: _festasNumero(r.valor) > 0 ? COLORS.green : COLORS.inkSoft } }, _festasNumero(r.valor) > 0 ? formatBRL(_festasNumero(r.valor)) : '—')),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.banco || '', onChange: function (e) { return alterarEdit('banco', e.target.value); }, className: "busca-liquid-glass", style: bancoStyle }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })) : (r.banco ? React.createElement("span", { className: "busca-liquid-glass", style: { display: 'inline-flex', minWidth: 74, justifyContent: 'center', borderRadius: 20, padding: '5px 8px', fontSize: 10.5, fontWeight: 800, color: corBanco(r.banco), border: '1px solid ' + corBanco(r.banco) + '55' } }, r.banco) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—'))),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { type: "date", value: editRow.data || '', onChange: function (e) { return alterarEdit('data', e.target.value); }, onClick: function (e) { e.stopPropagation(); try { e.target.showPicker(); } catch (err) { } }, style: __assign(__assign({}, inp), { cursor: 'pointer' }) }) : React.createElement("span", { className: "mono", style: { whiteSpace: 'nowrap', color: r.data ? COLORS.ink : COLORS.inkSoft } }, r.data ? formatarData(r.data) : '—')),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.pago || 'Pendente', onChange: function (e) { return alterarEdit('pago', e.target.value); }, style: inp }, React.createElement("option", { value: "Pendente" }, "Pendente"), React.createElement("option", { value: "Parcial" }, "Parcial"), React.createElement("option", { value: "Pago" }, "Pago")) : React.createElement("span", { className: "selection-chip", style: { display: 'inline-flex', width: '100%', boxSizing: 'border-box', justifyContent: 'center', border: '1px solid ' + (_festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red)), borderRadius: 7, padding: '6px 5px', fontWeight: 800, fontSize: 11.5, color: _festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red), background: _festasCorStatus(r, COLORS.greenBg, COLORS.goldSoft, COLORS.redBg) } }, _festasStatus(r))),
@@ -9171,7 +9194,7 @@ function FestasTDB(_a) {
         );
     }
     var totalGeral = totais(rows);
-    var inputTop = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 9, padding: '8px 9px', fontSize: 13, background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
+    var inputTop = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 9, padding: '0 11px', height: 38, fontSize: 13, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
     var bancoTop = __assign(__assign({}, inputTop), { color: novo.banco ? corBanco(novo.banco) : COLORS.ink, fontWeight: novo.banco ? 800 : 500 });
     return React.createElement("div", { className: "festas-tdb-export-raiz", 'data-festa-chave': subTab, style: { display: 'grid', gap: 14, minWidth: 0, paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' } },
         React.createElement("style", null, "@media(min-width:761px) and (max-width:1366px){.festas-tdb-export-raiz{min-width:0!important;max-width:100%!important;width:100%!important;overflow-x:auto!important;overflow-y:visible!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;touch-action:pan-x pan-y!important;scrollbar-gutter:stable!important;padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))!important}.festas-tdb-export-raiz>.busca-liquid-glass,.festas-tdb-export-raiz>.festas-tdb-resumo,.festas-tdb-export-raiz>.festas-grupo-card{min-width:1280px!important;width:1280px!important;box-sizing:border-box!important}.festas-grupo-card{overflow:hidden!important}.festas-tdb-scroll{display:block!important;width:100%!important;max-width:100%!important;overflow:visible!important;touch-action:pan-x pan-y!important;padding-bottom:10px!important}.festas-tdb-tabela{width:1280px!important;min-width:1280px!important;table-layout:fixed!important}.festas-tdb-scroll::-webkit-scrollbar,.festas-tdb-export-raiz::-webkit-scrollbar{height:11px!important}.festas-tdb-scroll::-webkit-scrollbar-thumb,.festas-tdb-export-raiz::-webkit-scrollbar-thumb{border-radius:999px!important;background:rgba(72,83,96,.35)!important}}@media(max-width:760px){.festas-tdb-abas{display:flex!important;overflow-x:auto!important;flex-wrap:nowrap!important;gap:7px!important;padding-bottom:4px!important;scroll-snap-type:x proximity}.festas-tdb-abas>button{flex:0 0 auto!important;min-width:112px!important;scroll-snap-align:start}.festas-tdb-menu-wrap form{grid-template-columns:1fr!important}.festas-tdb-menu-wrap form>*{min-width:0!important}.festas-tdb-form{grid-template-columns:1fr 1fr!important}.festas-tdb-form .festas-campo-nome{grid-column:1/-1}.festas-tdb-form .festas-add-btn{grid-column:1/-1;width:100%!important}.festas-tdb-resumo{grid-template-columns:1fr 1fr!important}.festas-tdb-exportes{width:100%!important;justify-content:stretch!important}.festas-tdb-exportes button{flex:1 1 0!important}.festas-tdb-scroll{overflow-x:auto!important}.festas-tdb-tabela{min-width:980px!important}.festas-tdb-edit-mobile{grid-template-columns:1fr 1fr!important}.festas-tdb-edit-mobile>div{min-width:0!important}}@media(max-width:420px){.festas-tdb-form{grid-template-columns:1fr!important}.festas-tdb-form>*{grid-column:auto!important}.festas-tdb-form .festas-campo-nome,.festas-tdb-form .festas-add-btn{grid-column:1!important}.festas-tdb-resumo{grid-template-columns:1fr!important}.festas-tdb-edit-mobile{grid-template-columns:1fr!important}}"),
@@ -9208,7 +9231,7 @@ function FestasTDB(_a) {
                 React.createElement("div", { className: "festas-campo-nome", style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "NOME"), React.createElement("input", { value: novo.nome, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { nome: e.target.value })); }, placeholder: "Nome da criança", style: inputTop })),
                 React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "GRUPO"), React.createElement("select", { value: novo.tipo, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { tipo: e.target.value })); }, style: inputTop }, React.createElement("option", { value: "PARTICULAR" }, "Particular"), React.createElement("option", { value: "PREFEITURA" }, "Prefeitura"))),
                 React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "PESSOAS"), React.createElement("input", { type: "number", min: "0", step: "1", inputMode: "numeric", value: novo.pessoas, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { pessoas: e.target.value.replace(/[^0-9]/g, '') })); }, placeholder: "0", style: inputTop })),
-                React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "VALOR"), React.createElement("input", { value: novo.valor, inputMode: "decimal", onChange: function (e) { return setNovo(__assign(__assign({}, novo), { valor: e.target.value })); }, placeholder: "0,00", className: "mono", style: inputTop })),
+                React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "VALOR"), React.createElement(CampoDinheiroTDB, { value: novo.valor, onChange: function (v) { return setNovo(__assign(__assign({}, novo), { valor: v })); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", style: inputTop } })),
                 React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "BANCO"), React.createElement("select", { value: novo.banco, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { banco: e.target.value })); }, style: bancoTop }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))),
                 React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "DATA"), React.createElement("input", { type: "date", value: novo.data, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { data: e.target.value })); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, style: __assign(__assign({}, inputTop), { cursor: 'pointer' }) })),
                 React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 } }, "PAGO"), React.createElement("select", { value: novo.pago, onChange: function (e) { return setNovo(__assign(__assign({}, novo), { pago: e.target.value })); }, style: inputTop }, React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"), React.createElement("option", null, "Pago"))),
@@ -9217,12 +9240,16 @@ function FestasTDB(_a) {
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Crian\u00E7as: ", React.createElement("b", { style: { color: COLORS.ink, fontSize: 16 } }, _festasContarCriancas(rows, transacoes))),
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Total de pessoas: ", React.createElement("b", { style: { color: COLORS.inkButton, fontSize: 16 } }, totalGeral.pessoas)),
             React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '11px 13px', fontSize: 12.5, color: COLORS.inkSoft } }, "Total em valor: ", React.createElement("b", { className: "mono", style: { color: COLORS.green, fontSize: 16 } }, formatBRL(totalGeral.valor)))),
+        React.createElement("div", { className: "festas-tdb-filtros", 'data-export-ignore': true, style: { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 10, minWidth: 0 } },
+            React.createElement("label", { className: "busca-liquid-glass festas-balao festas-balao-banco", style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 14, padding: '0 12px', minHeight: 48, minWidth: 0, cursor: 'pointer', boxShadow: !!filtroBancoFestas ? 'inset 0 0 0 2px ' + COLORS.inkButton : undefined } }, React.createElement(FestasIconeBalaoTDB, { k: "banco", color: COLORS.inkSoft }), React.createElement("select", { value: filtroBancoFestas, onChange: function (e) { return setFiltroBancoFestas(e.target.value); }, 'aria-label': "Filtrar por banco", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 14, fontFamily: 'Inter, sans-serif', fontWeight: 600, padding: '12px 18px 12px 2px', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none' } }, React.createElement("option", { value: "" }, "Bancos"), React.createElement("option", { value: "__SEM__" }, "Sem banco"), bancosFiltroFestas.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))),
+            React.createElement("label", { className: "busca-liquid-glass festas-balao festas-balao-pago", style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 14, padding: '0 12px', minHeight: 48, minWidth: 0, cursor: 'pointer', boxShadow: !!filtroPagoFestas ? 'inset 0 0 0 2px ' + COLORS.inkButton : undefined } }, React.createElement(FestasIconeBalaoTDB, { k: "pago", color: COLORS.inkSoft }), React.createElement("select", { value: filtroPagoFestas, onChange: function (e) { return setFiltroPagoFestas(e.target.value); }, 'aria-label': "Filtrar por pagamento", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 14, fontFamily: 'Inter, sans-serif', fontWeight: 600, padding: '12px 18px 12px 2px', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none' } }, React.createElement("option", { value: "" }, "Pagos"), React.createElement("option", { value: "Pago" }, "Só pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais"))),
+            React.createElement("label", { className: "busca-liquid-glass festas-balao festas-balao-data", style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 14, padding: '0 12px', minHeight: 48, minWidth: 0, cursor: 'pointer', boxShadow: !!filtroDataFestas ? 'inset 0 0 0 2px ' + COLORS.inkButton : undefined } }, React.createElement(FestasIconeBalaoTDB, { k: "data", color: COLORS.inkSoft }), React.createElement("input", { type: "date", value: filtroDataFestas, onChange: function (e) { return setFiltroDataFestas(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, 'aria-label': "Filtrar por data", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 14, fontFamily: 'Inter, sans-serif', fontWeight: 600, padding: '12px 2px', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none' } }), filtroDataFestas ? React.createElement("button", { type: "button", onClick: function (e) { e.preventDefault(); setFiltroDataFestas(''); }, title: "Limpar data", 'aria-label': "Limpar data", style: { width: 28, height: 28, flex: '0 0 28px', border: 'none', borderRadius: 10, background: 'transparent', color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 14 })) : null)),
         React.createElement("div", { className: "busca-liquid-glass festas-tdb-busca", style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 14, padding: '9px 11px', minWidth: 0 } },
             React.createElement(Search, { size: 17, color: COLORS.inkSoft, style: { flex: '0 0 auto' } }),
-            React.createElement("input", { type: "search", value: buscaFestas, onChange: function (e) { return setBuscaFestas(e.target.value); }, placeholder: "Pesquisar nome, valor, data, banco, pago ou não pago...", autoComplete: "off", spellCheck: "false", 'aria-label': "Pesquisar participantes da festa", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 13.5, padding: '7px 4px' } }),
-            termoBuscaFestas ? React.createElement("button", { type: "button", onClick: function () { return setBuscaFestas(''); }, title: "Limpar pesquisa", 'aria-label': "Limpar pesquisa", style: { width: 36, height: 36, flex: '0 0 36px', border: '1px solid ' + COLORS.line, borderRadius: 12, background: COLORS.paperCard, color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 15 })) : null,
-            termoBuscaFestas ? React.createElement("span", { className: "mono", style: { flex: '0 0 auto', fontSize: 11.5, fontWeight: 800, color: COLORS.inkButton, whiteSpace: 'nowrap' } }, rowsFiltradosFestas.length + " de " + rows.length) : null),
-        termoBuscaFestas && rowsFiltradosFestas.length === 0 ? React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '16px 14px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13 } }, "Nenhum participante encontrado para ‘" + buscaFestas + "’.") : null,
+            React.createElement("input", { type: "search", value: buscaFestas, onChange: function (e) { return setBuscaFestas(e.target.value); }, placeholder: "Pesquisar nome, valor, data, banco, pago ou não pago...", autoComplete: "off", spellCheck: "false", 'aria-label': "Pesquisar participantes da festa", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 14, fontFamily: 'Inter, sans-serif', padding: '7px 4px' } }),
+            filtrosFestasAtivos ? React.createElement("button", { type: "button", onClick: limparFiltrosFestas, title: "Limpar pesquisa e filtros", 'aria-label': "Limpar pesquisa e filtros", style: { width: 36, height: 36, flex: '0 0 36px', border: '1px solid ' + COLORS.line, borderRadius: 12, background: COLORS.paperCard, color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 15 })) : null,
+            filtrosFestasAtivos ? React.createElement("span", { className: "mono", style: { flex: '0 0 auto', fontSize: 11.5, fontWeight: 800, color: COLORS.inkButton, whiteSpace: 'nowrap' } }, rowsFiltradosFestas.length + " de " + rows.length) : null),
+        filtrosFestasAtivos && rowsFiltradosFestas.length === 0 ? React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '16px 14px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13 } }, termoBuscaFestas ? "Nenhum participante encontrado para ‘" + buscaFestas + "’." : "Nenhum participante encontrado com esses filtros.") : null,
         blocoGrupo('PARTICULAR', 'Particulares'),
         blocoGrupo('PREFEITURA', 'Prefeitura'));
 }
@@ -13710,28 +13737,127 @@ function TabelaMensalidades(_a) {
                 color: COLORS.red,
                 display: 'flex',
                 alignItems: 'center',
-            } }, React.createElement(Trash2, { size: 12, color: COLORS.red })))))), emEdicao && mostrarDetalhes && (React.createElement("tr", null, React.createElement("td", { colSpan: 10, style: { padding: '0 8px 12px', borderTop: 'none' } }, React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 8, padding: 10 } }, React.createElement('label', {style:{display:'flex',gap:8,alignItems:'center',marginBottom:10,fontSize:13}}, 'Crianças nesta cobrança', React.createElement('input',{type:'number',min:1,step:1,value:quantidadeEdit,onChange:function(e){setQuantidadeEdit(e.target.value);},style:{width:75,padding:8}})), React.createElement('div',{style:{fontSize:12,marginBottom:8}},'Pago = quitado, inclusive desconto acordado. Para bolsa integral, informe 0 no cheio e no recebido; campos vazios são apenas cadastro. Parcial = total devido no cheio e total já recebido no pago.'), React.createElement("button", { type: "button", onClick: function () { return setProporcionalAberto(function (v) { return !v; }); }, style: {
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                color: COLORS.gold, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4,
-            } }, "\uD83E\uDDEE Calcular mensalidade proporcional ", proporcionalAberto ? '▲' : '▼'), proporcionalAberto && (diasLetivos[t.mes] ? (React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'end', marginTop: 8 } }, React.createElement("div", { style: { fontSize: 12, color: COLORS.inkSoft, alignSelf: 'center' } }, MESES_ABREV[t.mes], " tem ", React.createElement("b", null, diasLetivos[t.mes]), " dias letivos."), React.createElement("div", { style: { display: 'grid', gap: 3 } }, React.createElement("label", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DIAS FREQUENTADOS"), React.createElement("input", { value: diasFrequentados, onChange: function (e) { return setDiasFrequentados(e.target.value); }, type: "number", min: "0", max: diasLetivos[t.mes], placeholder: "ex: 12", className: "mono", style: __assign(__assign({}, inputCell), { width: 80 }) })), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 5, alignSelf: 'center' } }, React.createElement("input", { type: "checkbox", id: 'descAvista' + t.id, checked: aplicarDescontoAvista, onChange: function (e) { return setAplicarDescontoAvista(e.target.checked); }, style: { width: 14, height: 14, cursor: 'pointer' } }), React.createElement("label", { htmlFor: 'descAvista' + t.id, style: { fontSize: 11, color: COLORS.inkSoft, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' } }, "desconto \u00E0 vista de"), React.createElement("input", { value: descontoAvista, onChange: function (e) { return setDescontoAvista(e.target.value); }, type: "number", min: "0", max: "100", step: "0.5", placeholder: "5", className: "mono", disabled: !aplicarDescontoAvista, style: __assign(__assign({}, inputCell), { width: 45, opacity: aplicarDescontoAvista ? 1 : 0.5 }) }), React.createElement("span", { style: { fontSize: 11, color: COLORS.inkSoft, fontWeight: 600 } }, "%")), React.createElement("button", { type: "button", onClick: function () {
-                var base = statusEdit === 'Parcial' ? (parseBRLInput(valorCheioEdit) || parseBRLInput(valorEdit)) : (parseBRLInput(valorEdit) || parseBRLInput(valorCheioEdit));
-                var dias = Number(diasFrequentados);
-                var total = diasLetivos[t.mes];
-                if (!(base>0) || !Number.isInteger(dias) || dias<0 || !(total>0))
-                    return;
-                var proporcional = Math.round((base * Math.min(dias, total) / total) * 100) / 100;
-                if (aplicarDescontoAvista) {
-                    var pct = Math.min(100,Math.max(0,parseBRLInput(descontoAvista) || 0));
-                    proporcional = Math.round(proporcional * (1 - pct / 100) * 100) / 100;
-                }
-                if (statusEdit === 'Parcial' && !valorCheioEdit)
-                    setValorCheioEdit(formatBRLNumber(base));
-                setValorEdit(formatBRLNumber(proporcional));
-            }, style: {
-                background: COLORS.gold, color: '#FFFFFF', border: 'none', borderRadius: 6, padding: '6px 10px',
-                fontWeight: 600, fontSize: 11.5, cursor: 'pointer', height: 31,
-            } }, "Aplicar no Valor Pago"))) : (React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 6 } }, "Cadastre quantos dias letivos tem ", MESES_ABREV[t.mes], " na aba ", React.createElement("b", null, "Valores"), " (se\u00E7\u00E3o \"\uD83D\uDCC5 Calend\u00E1rio letivo\") pra poder calcular.")))))))));
+            } }, React.createElement(Trash2, { size: 12, color: COLORS.red })))))), emEdicao && mostrarDetalhes && (React.createElement("tr", null, React.createElement("td", { colSpan: 10, style: { padding: '0 8px 12px', borderTop: 'none' } }, React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 8, padding: 10 } }, React.createElement('label', {style:{display:'flex',gap:8,alignItems:'center',marginBottom:10,fontSize:13}}, 'Crianças nesta cobrança', React.createElement('input',{type:'number',min:1,step:1,value:quantidadeEdit,onChange:function(e){setQuantidadeEdit(e.target.value);},style:{width:75,padding:8}})), React.createElement('div',{style:{fontSize:12,marginBottom:8}},'Pago = quitado, inclusive desconto acordado. Para bolsa integral, informe 0 no cheio e no recebido; campos vazios são apenas cadastro. Parcial = total devido no cheio e total já recebido no pago.')))))));
     })))))));
+}
+// Bolha "Conta proporcional" (Mensalidades): estado só local, nada é gravado.
+function ContaProporcionalBolhaTDB(p) {
+    var transacoes = p.transacoes || [];
+    var tabela = p.tabelaValores || SEED_VALORES || {};
+    var mes = p.mes;
+    var dl = p.diasLetivos || {};
+    var _a = useState(false), aberto = _a[0], setAberto = _a[1];
+    var _b = useState(''), aluno = _b[0], setAluno = _b[1];
+    var _c = useState(''), base = _c[0], setBase = _c[1];
+    var _d = useState(''), conv = _d[0], setConv = _d[1];
+    var _e = useState(''), descTxt = _e[0], setDescTxt = _e[1];
+    var _f = useState(false), descEd = _f[0], setDescEd = _f[1];
+    var _g = useState(''), dias = _g[0], setDias = _g[1];
+    var _h = useState(false), avista = _h[0], setAvista = _h[1];
+    var _i = useState('5'), pct = _i[0], setPct = _i[1];
+    var _j = useState(''), totalManual = _j[0], setTotalManual = _j[1];
+    var _k = useState(false), copiado = _k[0], setCopiado = _k[1];
+    var ref = useRef(null);
+    useEffect(function () {
+        if (!aberto) return undefined;
+        function fora(e) {
+            var caminho = e.composedPath ? e.composedPath() : [];
+            if (ref.current && (caminho.indexOf(ref.current) >= 0 || ref.current.contains(e.target))) return;
+            setAberto(false);
+        }
+        function tecla(e) { if (e.key === 'Escape') setAberto(false); }
+        document.addEventListener('click', fora);
+        document.addEventListener('keydown', tecla);
+        return function () { document.removeEventListener('click', fora); document.removeEventListener('keydown', tecla); };
+    }, [aberto]);
+    var ultimos = useMemo(function () {
+        var m = {};
+        transacoes.forEach(function (t) {
+            if (!t || t.tipo !== 'Entrada' || !String(t.categoria || '').startsWith('Mensalidade - ')) return;
+            var n = nomeExibicao(t.categoria);
+            var ant = m[n];
+            if (!ant || String(t.data || '') > String(ant.data || '') || (String(t.data || '') === String(ant.data || '') && (t.id || 0) > (ant.id || 0))) m[n] = t;
+        });
+        return m;
+    }, [transacoes]);
+    var nomes = Object.keys(ultimos).sort(function (x, y) { return x.localeCompare(y, 'pt-BR'); });
+    var chaves = Object.keys(tabela || {});
+    var kPart = chaves.filter(function (k) { return tabela[k] && /^particular$/i.test(String(tabela[k].nome || '').trim()); })[0] || '';
+    var listaConv = chaves.filter(function (k) { return tabela[k] && tabela[k].nome && k !== kPart; }).map(function (k) { return { k: k, nome: String(tabela[k].nome) }; });
+    function escolherAluno(nome) {
+        setAluno(nome); setDescEd(false); setDescTxt('');
+        var t = ultimos[nome];
+        if (!t) { setBase(''); setConv(''); return; }
+        var convNome = String(t.convenio || '').toUpperCase();
+        var kConv = chaves.filter(function (k) { return tabela[k] && String(tabela[k].nome || '').toUpperCase() === convNome; })[0] || '';
+        var alvo = Number(t.valorCheio) > 0 ? Number(t.valorCheio) : (Number(t.valor) || 0);
+        var titulo = '', melhor = 1e9;
+        ((kConv && tabela[kConv].grupos) || []).forEach(function (g) { [g.semDesconto, g.comDesconto].forEach(function (v) { var dif = Math.abs((Number(v) || 0) - alvo); if (dif < melhor) { melhor = dif; titulo = g.titulo; } }); });
+        var gPart = (kPart && melhor < 60) ? (tabela[kPart].grupos || []).filter(function (g) { return g.titulo === titulo; })[0] : null;
+        var b = gPart ? (Number(gPart.semDesconto) || alvo) : alvo;
+        setBase(b > 0 ? formatBRLNumber(b) : '');
+        setConv(kConv && kConv !== kPart ? kConv : '');
+    }
+    var convAtual = listaConv.filter(function (c) { return c.k === conv; })[0] || null;
+    var nota = convAtual && tabela[convAtual.k] && tabela[convAtual.k].nota != null ? (Number(tabela[convAtual.k].nota) || 0) : 0;
+    var descShow = descEd ? descTxt : (nota > 0 ? formatBRLNumber(nota) : '');
+    var total = Number(dl[mes]) > 0 ? Number(dl[mes]) : Math.floor(TDBFinance.num(totalManual));
+    var df = Math.floor(TDBFinance.num(dias));
+    var cheio = parseBRLInput(base);
+    var pronto = cheio > 0 && total > 0 && df > 0;
+    var prop = pronto ? Math.round((cheio * Math.min(df, total) / total) * 100) / 100 : 0;
+    var propBruto = prop;
+    var pc = avista ? Math.min(100, Math.max(0, parseBRLInput(pct) || 0)) : 0;
+    if (pc) prop = Math.round(prop * (1 - pc / 100) * 100) / 100;
+    var descConv = convAtual ? Math.max(0, parseBRLInput(descShow) || 0) : 0;
+    var descAplic = Math.min(descConv, prop);
+    var valor = pronto ? Math.max(0, Math.round((prop - descAplic) * 100) / 100) : 0;
+    var formula = pronto
+        ? formatBRL(cheio) + ' ÷ ' + total + ' dias × ' + Math.min(df, total) + ' dias = ' + formatBRL(propBruto) + (pc ? ' − ' + pc + '% à vista = ' + formatBRL(prop) : '') + (descAplic > 0 ? ' − ' + convAtual.nome + ' ' + formatBRL(descAplic) + ' = ' + formatBRL(valor) : '')
+        : (total > 0 ? 'Informe o valor cheio e os dias frequentados para ver a conta.' : 'Cadastre os dias letivos de ' + (MESES_ABREV[mes] || '') + ' em Valores (Calendário letivo) ou digite aqui.');
+    var lbl = { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 };
+    var inp = { width: '100%', minWidth: 0, boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 10, padding: '0 11px', height: 38, fontSize: 13, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink };
+    function campo(rotulo, filho, flex) { return React.createElement("div", { style: { display: 'grid', gap: 4, flex: flex || '1 1 140px', minWidth: 0, alignContent: 'start' } }, React.createElement("label", { style: lbl }, rotulo), filho); }
+    function limpar() { setAluno(''); setBase(''); setConv(''); setDescEd(false); setDescTxt(''); setDias(''); setAvista(false); setPct('5'); setTotalManual(''); }
+    function copiar() {
+        if (!(valor > 0)) return;
+        var txt = formatBRLNumber(valor);
+        try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt); } catch (e) { }
+        setCopiado(true); setTimeout(function () { setCopiado(false); }, 1600);
+    }
+    function usar() {
+        if (!(valor > 0)) return;
+        if (p.onUsar) p.onUsar(valor, cheio);
+        setAberto(false);
+    }
+    var resumoFechado = aluno ? aluno + (convAtual ? ' · ' + convAtual.nome : '') : 'entrou/saiu no meio do mês — escolha o aluno e calcule';
+    return React.createElement("div", { ref: ref, className: "busca-liquid-glass tdb-conta-prop", 'data-export-ignore': true, style: { borderRadius: 18, boxShadow: aberto ? 'inset 0 0 0 1.5px ' + COLORS.inkButton : undefined } },
+        React.createElement("button", { type: "button", 'aria-expanded': aberto, onClick: function () { setAberto(function (v) { return !v; }); }, style: { display: 'flex', alignItems: 'center', gap: 10, width: '100%', border: 'none', background: 'transparent', color: COLORS.ink, cursor: 'pointer', padding: '12px 16px', textAlign: 'left', fontFamily: 'inherit' } },
+            React.createElement("span", { style: { fontSize: 18, lineHeight: 1 } }, "🧮"),
+            React.createElement("b", { style: { fontSize: 14 } }, "Conta proporcional"),
+            React.createElement("span", { style: { flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: COLORS.inkSoft, fontSize: 12.5 } }, resumoFechado),
+            React.createElement("span", { style: { color: COLORS.inkSoft, fontSize: 12, transition: 'transform .2s', transform: aberto ? 'rotate(180deg)' : 'none' } }, "▾")),
+        aberto && React.createElement("div", { style: { display: 'grid', gap: 12, padding: '2px 16px 16px' } },
+            React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' } },
+                campo("ALUNO", React.createElement("select", { value: aluno, onChange: function (e) { escolherAluno(e.target.value); }, style: inp }, React.createElement("option", { value: "" }, "— Conta avulsa (sem aluno) —"), nomes.map(function (n) { return React.createElement("option", { key: n, value: n }, n); })), '2 1 230px'),
+                campo("VALOR CHEIO DO MÊS", React.createElement(CampoDinheiroTDB, { value: base, onChange: setBase, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", "aria-label": "Valor cheio do mês", style: inp } }), '1 1 150px'),
+                campo("DIAS LETIVOS (" + (MESES_ABREV[mes] || '').toUpperCase() + ")", Number(dl[mes]) > 0 ? React.createElement("input", { value: String(dl[mes]), readOnly: true, className: "mono", style: Object.assign({}, inp, { opacity: .8 }) }) : React.createElement("input", { value: totalManual, onChange: function (e) { setTotalManual(e.target.value.replace(/[^0-9]/g, '')); }, inputMode: "numeric", placeholder: "ex: 20", className: "mono", style: inp }), '1 1 110px'),
+                campo("DIAS FREQUENTADOS", React.createElement("input", { value: dias, onChange: function (e) { setDias(e.target.value.replace(/[^0-9]/g, '')); }, inputMode: "numeric", placeholder: "ex: 12", className: "mono", "aria-label": "Dias frequentados", style: inp }), '1 1 110px')),
+            React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' } },
+                campo("DESCONTO À VISTA", React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8, height: 38, border: '1px solid ' + COLORS.line, borderRadius: 10, padding: '0 11px', background: COLORS.paperCard, boxSizing: 'border-box' } },
+                    React.createElement("input", { type: "checkbox", id: "tdbCpAvista", checked: avista, onChange: function (e) { setAvista(e.target.checked); }, style: { width: 16, height: 16, margin: 0, cursor: 'pointer' } }),
+                    React.createElement("label", { htmlFor: "tdbCpAvista", style: { fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: COLORS.ink } }, "aplicar"),
+                    React.createElement("input", { value: pct, onChange: function (e) { setPct(e.target.value.replace(/[^0-9.,]/g, '')); }, disabled: !avista, inputMode: "decimal", className: "mono", "aria-label": "Percentual de desconto à vista", style: { width: 48, height: 26, border: '1px solid ' + COLORS.line, borderRadius: 8, textAlign: 'center', background: 'transparent', color: COLORS.ink, padding: 0, opacity: avista ? 1 : .45 } }), "%"), '1 1 190px'),
+                campo("CONVÊNIO", React.createElement("select", { value: convAtual ? conv : '', onChange: function (e) { setConv(e.target.value); setDescEd(false); setDescTxt(''); }, "aria-label": "Convênio", style: inp }, React.createElement("option", { value: "" }, "Sem convênio"), listaConv.map(function (c) { return React.createElement("option", { key: c.k, value: c.k }, c.nome); })), '1 1 150px'),
+                campo("DESCONTO DO CONVÊNIO (R$)", React.createElement(React.Fragment, null, React.createElement(CampoDinheiroTDB, { value: descShow, onChange: function (v) { setDescTxt(v); setDescEd(true); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", disabled: !convAtual, "aria-label": "Desconto do convênio em reais", style: Object.assign({}, inp, { opacity: convAtual ? 1 : .5 }) } }), convAtual && nota > 0 && descEd ? React.createElement("button", { type: "button", onClick: function () { setDescEd(false); setDescTxt(''); }, style: { justifySelf: 'start', border: 'none', borderRadius: 8, padding: '3px 8px', background: COLORS.goldSoft, color: COLORS.gold, fontWeight: 700, fontSize: 11, cursor: 'pointer' } }, "usar nota de Valores") : null), '1 1 170px')),
+            React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "O valor cheio é o da Particular; o convênio é descontado depois da conta proporcional (a nota vem de Valores). Se o valor cheio já vier com o convênio descontado, deixe o desconto do convênio vazio."),
+            React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: COLORS.paperCard, border: '1px solid ' + COLORS.line, borderRadius: 14, padding: '10px 14px' } },
+                React.createElement("div", null, React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase' } }, "Valor a cobrar"), React.createElement("div", { className: "mono", style: { fontSize: 21, fontWeight: 800, color: COLORS.green } }, formatBRL(valor))),
+                React.createElement("div", { style: { flex: '1 1 220px', minWidth: 0, fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.5 } }, formula),
+                React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                    React.createElement("button", { type: "button", onClick: limpar, style: { border: '1px solid ' + COLORS.line, background: 'transparent', color: COLORS.inkSoft, borderRadius: 10, padding: '9px 12px', fontWeight: 700, fontSize: 12.5, cursor: 'pointer' } }, "Limpar"),
+                    React.createElement("button", { type: "button", onClick: copiar, disabled: !(valor > 0), style: { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink, borderRadius: 10, padding: '9px 12px', fontWeight: 700, fontSize: 12.5, cursor: valor > 0 ? 'pointer' : 'default', opacity: valor > 0 ? 1 : .5 } }, copiado ? "Copiado ✓" : "Copiar valor"),
+                    React.createElement("button", { type: "button", onClick: usar, disabled: !(valor > 0), style: { border: 'none', background: COLORS.inkButton, color: '#fff', borderRadius: 10, padding: '9px 14px', fontWeight: 800, fontSize: 12.5, cursor: valor > 0 ? 'pointer' : 'default', opacity: valor > 0 ? 1 : .5 } }, "Usar no Novo registro")))));
 }
 function Mensalidades(_a) {
     var _this = this;
@@ -14187,27 +14313,7 @@ function Mensalidades(_a) {
         }, style: inputStyle }, React.createElement("option", { value: "" }, "\u2014 nenhum \u2014"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })), bancoOutroModo && (React.createElement("input", { autoFocus: true, value: novoBanco, onChange: function (e) { return setNovoBanco(e.target.value.toUpperCase()); }, placeholder: "Nome do banco", style: inputStyle }))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 100px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "STATUS"), React.createElement("select", { value: novoStatus, onChange: function (e) { return setNovoStatus(e.target.value); }, style: inputStyle }, React.createElement("option", null, "Pago"), React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"))), React.createElement("button", { type: "submit", style: {
             background: COLORS.inkButton, color: '#FFFFFF', border: 'none', borderRadius: 7, padding: '10px 16px',
             fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, height: 39, justifyContent: 'center',
-        } }, React.createElement(Plus, { size: 15 }), " Adicionar")), React.createElement("div", { style: { marginTop: 10 } }, React.createElement("button", { type: "button", onClick: function () { return setProporcionalAberto(function (v) { return !v; }); }, style: {
-            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-            color: COLORS.gold, fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4,
-        } }, "\uD83E\uDDEE Calcular mensalidade proporcional (entrou/saiu no meio do m\u00EAs) ", proporcionalAberto ? '▲' : '▼'), proporcionalAberto && (React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'end', marginTop: 8, background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 8, padding: 10 } }, diasLetivos[novoMes] ? (React.createElement(React.Fragment, null, React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, alignSelf: 'center' } }, MESES_ABREV[novoMes], " tem ", React.createElement("b", null, diasLetivos[novoMes]), " dias letivos."), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DIAS FREQUENTADOS"), React.createElement("input", { value: diasFrequentados, onChange: function (e) { return setDiasFrequentados(e.target.value); }, type: "number", min: "0", max: diasLetivos[novoMes], placeholder: "ex: 12", className: "mono", style: __assign(__assign({}, inputStyle), { width: 90 }) })), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 6, alignSelf: 'center' } }, React.createElement("input", { type: "checkbox", id: "descontoAvistaChk", checked: aplicarDescontoAvista, onChange: function (e) { return setAplicarDescontoAvista(e.target.checked); }, style: { width: 15, height: 15, cursor: 'pointer' } }), React.createElement("label", { htmlFor: "descontoAvistaChk", style: { fontSize: 12, color: COLORS.inkSoft, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' } }, "desconto \u00E0 vista de"), React.createElement("input", { value: descontoAvista, onChange: function (e) { return setDescontoAvista(e.target.value); }, type: "number", min: "0", max: "100", step: "0.5", placeholder: "5", className: "mono", disabled: !aplicarDescontoAvista, style: __assign(__assign({}, inputStyle), { width: 55, opacity: aplicarDescontoAvista ? 1 : 0.5 }) }), React.createElement("span", { style: { fontSize: 12, color: COLORS.inkSoft, fontWeight: 600 } }, "%")), React.createElement("button", { type: "button", onClick: function () {
-            var base = novoStatus === 'Parcial' ? (parseBRLInput(novoValorCheio) || parseBRLInput(novoValor)) : (parseBRLInput(novoValor) || parseBRLInput(novoValorCheio));
-            var dias = Number(diasFrequentados);
-            var total = diasLetivos[novoMes];
-            if (!base || !dias || dias <= 0)
-                return;
-            var proporcional = Math.round((base * Math.min(dias, total) / total) * 100) / 100;
-            if (aplicarDescontoAvista) {
-                var pct = Math.min(100,Math.max(0,parseBRLInput(descontoAvista) || 0));
-                proporcional = Math.round(proporcional * (1 - pct / 100) * 100) / 100;
-            }
-            if (novoStatus === 'Parcial' && !novoValorCheio)
-                setNovoValorCheio(formatBRLNumber(base));
-            setNovoValor(formatBRLNumber(proporcional));
-        }, style: {
-            background: COLORS.gold, color: '#FFFFFF', border: 'none', borderRadius: 7, padding: '8px 14px',
-            fontWeight: 600, fontSize: 13, cursor: 'pointer', height: 37,
-        } }, "Aplicar no Valor Pago"))) : (React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft } }, "Cadastre quantos dias letivos tem ", MESES_ABREV[novoMes], " na aba ", React.createElement("b", null, "Valores"), " (se\u00E7\u00E3o \"\uD83D\uDCC5 Calend\u00E1rio letivo\") pra poder calcular.")))))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { style: { position: 'relative', flex: '0 1 150px' } }, React.createElement(Search, { size: 13, color: COLORS.inkSoft, style: { position: 'absolute', left: 10, top: 12 } }), React.createElement("input", { value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, placeholder: "Buscar por data...", title: "Busca pela data do pagamento (ex: 01/09 ou 01/09/2026)", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 30, boxSizing: 'border-box' }) })), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement("select", { value: filtroBanco, onChange: function (e) { return setFiltroBanco(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os bancos"), React.createElement("option", { value: "SEM_BANCO" }, "Sem banco"), bancosDisponiveis.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })), React.createElement("select", { value: filtroConvenio, onChange: function (e) { return setFiltroConvenio(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os conv\u00EAnios"), React.createElement("option", { value: "SEM_CONVENIO" }, "Sem conv\u00EAnio"), conveniosDisponiveis.map(function (c) { return React.createElement("option", { key: c, value: c }, c); })), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
+        } }, React.createElement(Plus, { size: 15 }), " Adicionar"))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement(ContaProporcionalBolhaTDB, { transacoes: transacoes, tabelaValores: tabelaValores, diasLetivos: diasLetivos, mes: novoMes, onUsar: function (valor, base) { if (novoStatus === 'Parcial' && !novoValorCheio) setNovoValorCheio(formatBRLNumber(base)); setNovoValor(formatBRLNumber(valor)); } }), React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { style: { position: 'relative', flex: '0 1 150px' } }, React.createElement(Search, { size: 13, color: COLORS.inkSoft, style: { position: 'absolute', left: 10, top: 12 } }), React.createElement("input", { value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, placeholder: "Buscar por data...", title: "Busca pela data do pagamento (ex: 01/09 ou 01/09/2026)", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 30, boxSizing: 'border-box' }) })), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement("select", { value: filtroBanco, onChange: function (e) { return setFiltroBanco(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os bancos"), React.createElement("option", { value: "SEM_BANCO" }, "Sem banco"), bancosDisponiveis.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })), React.createElement("select", { value: filtroConvenio, onChange: function (e) { return setFiltroConvenio(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os conv\u00EAnios"), React.createElement("option", { value: "SEM_CONVENIO" }, "Sem conv\u00EAnio"), conveniosDisponiveis.map(function (c) { return React.createElement("option", { key: c, value: c }, c); })), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
         } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), semFiltroNenhum && filtradasCompleto.length > 100 && (React.createElement("div", { style: { fontSize: 13, color: COLORS.gold, background: COLORS.goldSoft, borderRadius: 8, padding: '8px 12px' } }, "Mostrando s\u00F3 os 100 primeiros de ", filtradasCompleto.length, " registros \u2014 escolha um m\u00EAs ou busque um nome pra ver o resto (evita travar a tela).")), React.createElement("datalist", { id: "convenios-lista" }, CONVENIOS_CONHECIDOS.map(function (c) { return React.createElement("option", { key: c, value: c }); })), React.createElement("datalist", { id: "valores-fotos-lista" }, valoresConhecidos.map(function (v, i) { return (React.createElement("option", { key: i, value: formatBRLNumber(v) })); })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Alunos", itens: alunosLista, contagemAlunos: contagemAlunosLista, mostrarDetalhes: true }, linhaHandlers), { modoPrivado: privadoDetalhes })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Empresas / Conv\u00EAnios", itens: empresasLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes })), outrosLista.length > 0 && React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Outros", itens: outrosLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes }))));
@@ -20671,4 +20777,47 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
   .tdb-fixas-mini{min-height:185px!important;padding:12px 14px!important;}
   .tdb-fixas-mini>div:nth-child(3){height:115px!important;min-height:115px!important;}
 }
+</style>
+
+<style id="tdb-festas-baloes-css">
+/* TEMPO 1 — Festas TDB: balões de filtro, letra igual à aba Mensalidades e campos do formulário no mesmo tamanho. Só aparência. */
+html body .festas-tdb-export-raiz .festas-tdb-filtros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;min-width:0}
+html body .festas-tdb-export-raiz .festas-tdb-filtros>.festas-balao{min-width:0!important;width:auto!important;max-width:100%!important;box-sizing:border-box}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x) .festas-balao select,html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x) .festas-balao input{border:0!important;box-shadow:none!important;outline:0!important;background-color:transparent!important;border-radius:0!important;height:auto!important;min-height:0!important;padding-top:12px!important;padding-bottom:12px!important;padding-left:2px!important;font-size:14px!important;font-family:Inter,-apple-system,sans-serif!important;font-weight:600!important;color:var(--c-ink,#111318)!important;min-width:0!important;width:100%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x) .festas-balao select{padding-right:26px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x) .festas-balao input[type=date]{padding-right:2px!important}
+html body .festas-tdb-export-raiz .festas-tdb-busca input[type=search]{font-family:Inter,-apple-system,sans-serif!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form input,html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form select{font-family:Inter,-apple-system,sans-serif!important;font-size:13px!important;height:38px!important;padding-top:0!important;padding-bottom:0!important;padding-left:11px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form select{padding-right:30px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form input[type=date]{padding-left:8px!important;padding-right:6px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form .festas-add-btn{height:38px!important;font-size:13px!important;font-family:Inter,-apple-system,sans-serif!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form label{font-size:10px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td input,html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td select{font-family:Inter,-apple-system,sans-serif!important}
+/* tablet: o formulário quebra em 2 linhas (como no esboço) para os campos caberem com a letra normal */
+@media (min-width:761px) and (max-width:1100px){
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form>div:nth-child(1){grid-column:span 3}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form>div:nth-child(2){grid-column:span 3}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form>div:nth-child(3),html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form>div:nth-child(4),html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form>div:nth-child(5){grid-column:span 2}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form>div:nth-child(6),html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form>div:nth-child(7){grid-column:span 3}
+html body .festas-tdb-export-raiz:not(#tdb3x) form.festas-tdb-form.festas-tdb-form>.festas-add-btn{grid-column:span 6;width:100%}
+}
+/* tabela de Festas no tablet: mesma letra da tabela de Mensalidades no tablet */
+@media (min-width:761px) and (max-width:1366px){
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela td{font-size:11px!important}
+}
+@media (max-width:640px){
+html body .festas-tdb-export-raiz .festas-tdb-filtros{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+html body .festas-tdb-export-raiz .festas-tdb-filtros>.festas-balao-data{grid-column:span 2!important}
+}
+@media (max-width:760px){
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x) .festas-balao select,html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x) .festas-balao input{font-size:16px!important}
+html body .festas-tdb-export-raiz .festas-tdb-filtros>.festas-balao{min-height:52px!important}
+}
+</style>
+
+<style id="tdb-conta-prop-css">
+/* TEMPO 1 — Mensalidades: bolha "Conta proporcional". Só aparência. */
+html body .tdb-conta-prop:not(#tdb3x) input,html body .tdb-conta-prop:not(#tdb3x) select{font-family:Inter,-apple-system,sans-serif}
+@media (max-width:760px){html body .tdb-conta-prop:not(#tdb3x) input:not([type=checkbox]),html body .tdb-conta-prop:not(#tdb3x) select{font-size:16px!important}}
 </style>
