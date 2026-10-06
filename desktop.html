@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261006-tempo1-v23";
+    window.__TDB_BUILD = "tdbn-20261006-tempo1-v24";
   </script>
-  <script src="./config.js?build=tdbn-20261006-tempo1-v23"></script>
+  <script src="./config.js?build=tdbn-20261006-tempo1-v24"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261006-tempo1-v23"></script>
+  <script src="./sync.js?build=tdbn-20261006-tempo1-v24"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261006-tempo1-v23-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261006-tempo1-v24-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -13737,7 +13737,7 @@ function TabelaMensalidades(_a) {
                 color: COLORS.red,
                 display: 'flex',
                 alignItems: 'center',
-            } }, React.createElement(Trash2, { size: 12, color: COLORS.red })))))), emEdicao && mostrarDetalhes && (React.createElement("tr", null, React.createElement("td", { colSpan: 10, style: { padding: '0 8px 12px', borderTop: 'none' } }, React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 8, padding: 10 } }, React.createElement('label', {style:{display:'flex',gap:8,alignItems:'center',marginBottom:10,fontSize:13}}, 'Crianças nesta cobrança', React.createElement('input',{type:'number',min:1,step:1,value:quantidadeEdit,onChange:function(e){setQuantidadeEdit(e.target.value);},style:{width:75,padding:8}})), React.createElement('div',{style:{fontSize:12,marginBottom:8}},'Pago = quitado, inclusive desconto acordado. Para bolsa integral, informe 0 no cheio e no recebido; campos vazios são apenas cadastro. Parcial = total devido no cheio e total já recebido no pago.')))))));
+            } }, React.createElement(Trash2, { size: 12, color: COLORS.red })))))), null));
     })))))));
 }
 // Bolha "Conta proporcional" (Mensalidades): estado só local, nada é gravado.
@@ -13833,10 +13833,10 @@ function ContaProporcionalBolhaTDB(p) {
     var resumoFechado = aluno ? aluno + (convAtual ? ' · ' + convAtual.nome : '') : 'entrou/saiu no meio do mês — escolha o aluno e calcule';
     return React.createElement("div", { ref: ref, className: "busca-liquid-glass tdb-conta-prop", 'data-export-ignore': true, style: { borderRadius: 18, boxShadow: aberto ? 'inset 0 0 0 1.5px ' + COLORS.inkButton : undefined } },
         React.createElement("button", { type: "button", 'aria-expanded': aberto, onClick: function () { setAberto(function (v) { return !v; }); }, style: { display: 'flex', alignItems: 'center', gap: 10, width: '100%', border: 'none', background: 'transparent', color: COLORS.ink, cursor: 'pointer', padding: '12px 16px', textAlign: 'left', fontFamily: 'inherit' } },
-            React.createElement("span", { style: { fontSize: 18, lineHeight: 1 } }, "🧮"),
+            React.createElement("span", { style: { width: 32, height: 32, borderRadius: 11, background: 'rgba(40,120,222,.12)', color: '#2878de', display: 'grid', placeItems: 'center', flex: '0 0 auto' } }, React.createElement("svg", { viewBox: "0 0 24 24", width: 17, height: 17, fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, React.createElement("rect", { x: 5, y: 3, width: 14, height: 18, rx: 3 }), React.createElement("path", { d: "M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01" }))),
             React.createElement("b", { style: { fontSize: 14 } }, "Conta proporcional"),
             React.createElement("span", { style: { flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: COLORS.inkSoft, fontSize: 12.5 } }, resumoFechado),
-            React.createElement("span", { style: { color: COLORS.inkSoft, fontSize: 12, transition: 'transform .2s', transform: aberto ? 'rotate(180deg)' : 'none' } }, "▾")),
+            React.createElement("span", { style: { width: 34, height: 34, borderRadius: '50%', background: aberto ? 'rgba(40,120,222,.16)' : COLORS.paperCard, boxShadow: '0 3px 10px rgba(30,40,60,.10)', display: 'grid', placeItems: 'center', color: '#2878de', flex: '0 0 auto', transition: 'transform .2s, background .2s', transform: aberto ? 'rotate(180deg)' : 'none' } }, React.createElement("svg", { viewBox: "0 0 24 24", width: 20, height: 20, fill: "none", stroke: "currentColor", strokeWidth: 2.6, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, React.createElement("path", { d: "m6 9 6 6 6-6" })))),
         aberto && React.createElement("div", { style: { display: 'grid', gap: 12, padding: '2px 16px 16px' } },
             React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' } },
                 campo("ALUNO", React.createElement("select", { value: aluno, onChange: function (e) { escolherAluno(e.target.value); }, style: inp }, React.createElement("option", { value: "" }, "— Conta avulsa (sem aluno) —"), nomes.map(function (n) { return React.createElement("option", { key: n, value: n }, n); })), '2 1 230px'),
