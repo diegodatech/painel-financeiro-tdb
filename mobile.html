@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261005-tempo1-v20";
+    window.__TDB_BUILD = "tdbn-20261005-tempo1-v22";
   </script>
-  <script src="./config.js?build=tdbn-20261005-tempo1-v20"></script>
+  <script src="./config.js?build=tdbn-20261005-tempo1-v22"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261005-tempo1-v20"></script>
+  <script src="./sync.js?build=tdbn-20261005-tempo1-v22"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v20-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261005-tempo1-v22-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7779,6 +7779,14 @@ function DescontoComDesfazer(props) {
 }
 
 // ===================== MENSALIDADE PROPORCIONAL (ferramenta avulsa) =====================
+// Campo em formato de dinheiro: digitando mostra o texto como está; ao sair mostra "R$ 1.562,00". O estado guarda o texto digitado (a conta lê com parseBRLInput, aceita 1562, 1.562,00 e R$ 1.562,00).
+function CampoDinheiroTDB(p) {
+    var _f = useState(false), foco = _f[0], setFoco = _f[1];
+    var v = String(p.value == null ? '' : p.value);
+    var n = v.trim() === '' ? null : parseBRLInput(v);
+    var exibido = (!foco && n !== null && !isNaN(n)) ? formatBRL(n) : v;
+    return React.createElement("input", Object.assign({}, p.extra, { value: exibido, onChange: function (e) { p.onChange(e.target.value); }, onFocus: function (e) { setFoco(true); var el = e.target; var sel_ = function () { try { el.select(); if (el.setSelectionRange) el.setSelectionRange(0, String(el.value || '').length); } catch (_) { } }; sel_(); setTimeout(sel_, 0); setTimeout(sel_, 60); }, onBlur: function () { setFoco(false); } }));
+}
 function DiasProporcionaisCalc(props) {
     var dadosConv_ = (props || {}).dadosValores;
     var paginaOculta = !!((props || {}).oculto);
@@ -7812,10 +7820,10 @@ function DiasProporcionaisCalc(props) {
         React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 } },
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias letivos"), React.createElement("input", { value: diasTotal, onChange: function (e) { return setDiasTotal(e.target.value); }, type: "number", style: inp })),
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias frequentados"), React.createElement("input", { value: diasFreq, onChange: function (e) { return setDiasFreq(e.target.value); }, type: "number", style: inp })),
-            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Valor mensalidade cheia (R$)"), React.createElement("input", { value: valorCheio, onChange: function (e) { return setValorCheio(e.target.value); }, style: inp })),
+            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Valor mensalidade cheia (R$)"), React.createElement(CampoDinheiroTDB, { value: valorCheio, onChange: setValorCheio, extra: { style: inp, inputMode: "decimal", "aria-label": "Valor da mensalidade cheia" } })),
             React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Convênio · desconto (R$)"), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 8 } },
                 React.createElement("select", { value: convAtual ? convSel : '', onChange: function (e) { setConvSel(e.target.value); setConvEditado(false); setConvDesc(''); }, "aria-label": "Convênio", style: Object.assign({}, inp, { fontFamily: 'inherit' }, {}) }, React.createElement("option", { value: '' }, "Sem convênio"), listaConv.map(function (c) { return React.createElement("option", { key: c.k, value: c.k }, c.nome); })),
-                React.createElement("input", { value: convDescTxt, onChange: function (e) { setConvDesc(e.target.value); setConvEditado(true); }, placeholder: "0,00", disabled: !convAtual, inputMode: 'decimal', "aria-label": "Desconto do convênio em reais", style: Object.assign({}, inp, {}, { opacity: convAtual ? 1 : 0.5 }) }))),
+                React.createElement(CampoDinheiroTDB, { value: convDescTxt, onChange: function (v) { setConvDesc(v); setConvEditado(true); }, extra: { placeholder: "R$ 0,00", disabled: !convAtual, inputMode: 'decimal', "aria-label": "Desconto do convênio em reais", style: Object.assign({}, inp, {}, { opacity: convAtual ? 1 : 0.5 }) } }))),
             React.createElement("div", { style: { gridColumn: '1/-1', borderRadius: 10, padding: '12px 14px', background: COLORS.greenBg, border: "1px solid rgba(28,158,143,.3)", textAlign: 'center' } }, React.createElement("div", { style: { fontSize: 24, fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", color: COLORS.green } }, formatBRL(valorFinal)), React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 } }, temConv ? "Valor com conv\u00EAnio" : "Valor proporcional"))),
         React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, "(", freq, " \u00F7 ", total, ") \u00D7 ", formatBRL(cheio), " = ", formatBRL(proporcional), temConv ? [" \u2212 ", convAtual.nome, " ", formatBRL(descAplicado), " = ", formatBRL(valorFinal), descConv > propArred ? " (desconto limitado ao valor proporcional)" : ""] : null));
 }
