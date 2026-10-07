@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261007-tempo1-v37";
+    window.__TDB_BUILD = "tdbn-20261007-tempo1-v39";
   </script>
-  <script src="./config.js?build=tdbn-20261007-tempo1-v37"></script>
+  <script src="./config.js?build=tdbn-20261007-tempo1-v39"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261007-tempo1-v37"></script>
+  <script src="./sync.js?build=tdbn-20261007-tempo1-v39"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v37-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v39-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -5138,7 +5138,9 @@ function Compras(_a) {
                         url = URL.createObjectURL(blob);
                         a = document.createElement('a');
                         a.href = url;
-                        a.download = "lista_compras_".concat(subTab, "_").concat(new Date().toISOString().slice(0, 10), ".pdf");
+                        var __nomePdf = subTab === 'rancho' ? 'Rancho TDB' : subTab === 'arraiaTdb' ? 'Festa Junina' : String((listaAtual && listaAtual.fornecedor) || (categoriaAtualCompra && categoriaAtualCompra.label) || 'Lista de compras');
+                        __nomePdf = __nomePdf.replace(/[\\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Lista de compras';
+                        a.download = __nomePdf + ' ' + new Date().toISOString().slice(0, 10) + '.pdf';
                         document.body.appendChild(a);
                         a.click();
                         a.remove();
@@ -13756,6 +13758,69 @@ function TabelaMensalidades(_a) {
             } }, React.createElement(Trash2, { size: 12, color: COLORS.red })))))), emEdicao && mostrarDetalhes && (React.createElement("tr", null, React.createElement("td", { colSpan: 10, style: { padding: '0 8px 12px', borderTop: 'none' } }, React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 8, padding: 10 } }, React.createElement('label', {style:{display:'flex',gap:8,alignItems:'center',fontSize:13}}, 'Crianças nesta cobrança', React.createElement('input',{type:'number',min:1,step:1,value:quantidadeEdit,onChange:function(e){setQuantidadeEdit(e.target.value);},style:{width:75,padding:8}}))))))));
     })))))));
 }
+// Filtro de seleção múltipla (Mensalidades: bancos e convênios). Lista vazia = todos. Só filtra a exibição.
+(function () {
+    if (typeof document === 'undefined' || document.getElementById('tdb-fm-css')) return;
+    var s = document.createElement('style'); s.id = 'tdb-fm-css';
+    s.textContent = '.tdb-fm-pop,html:not(.tdb-aurora-pdf) body .tdb-fm-pop{background:var(--c-paper)!important}.tdb-fm-row{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;font-size:14px;font-family:Inter,sans-serif;color:var(--c-ink)}.tdb-fm-row:hover{background:var(--c-lineSoft)}.tdb-fm-row input{width:16px;height:16px;margin:0;cursor:pointer;accent-color:#2878de}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros select:nth-of-type(3){grid-column:auto!important}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros label.tdb-fm-row input[type=checkbox]{min-height:18px!important;min-width:18px!important;max-width:18px!important;height:18px!important;padding:0!important;margin:0!important;flex:none!important;width:18px!important}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros .tdb-fm-row{width:100%!important;box-sizing:border-box!important;padding:10px 14px!important;font-size:16px!important;min-height:0!important;height:auto!important;margin:0!important;line-height:1.25!important}';
+    document.head.appendChild(s);
+})();
+function FiltroMultiTDB(p) {
+    var _a = useState(false), aberto = _a[0], setAberto = _a[1];
+    var ref = useRef(null);
+    var sel = p.valor || [];
+    useEffect(function () {
+        if (!aberto) return undefined;
+        function fora(e) { if (ref.current && !ref.current.contains(e.target)) setAberto(false); }
+        function tecla(e) { if (e.key === 'Escape') setAberto(false); }
+        document.addEventListener('mousedown', fora);
+        document.addEventListener('touchstart', fora);
+        document.addEventListener('keydown', tecla);
+        return function () {
+            document.removeEventListener('mousedown', fora);
+            document.removeEventListener('touchstart', fora);
+            document.removeEventListener('keydown', tecla);
+        };
+    }, [aberto]);
+    function nomeDe(v) { return v === p.valSem ? p.rotuloSem : v; }
+    var rotulo = sel.length === 0 ? p.rotuloTodos
+        : sel.length <= 2 ? sel.map(nomeDe).join(', ')
+        : nomeDe(sel[0]) + ' +' + (sel.length - 1);
+    function alternar(v) {
+        p.onChange(sel.indexOf(v) >= 0 ? sel.filter(function (x) { return x !== v; }) : sel.concat([v]));
+    }
+    function linha(v, texto, chave) {
+        return React.createElement('label', { key: chave, className: 'tdb-fm-row' },
+            React.createElement('input', { type: 'checkbox', checked: sel.indexOf(v) >= 0, onChange: function () { return alternar(v); } }),
+            React.createElement('span', null, texto));
+    }
+    var ativo = sel.length > 0;
+    return React.createElement('div', { ref: ref, style: { position: 'relative', display: 'inline-block', minWidth: 0, gridColumn: p.colunaCheia ? '1 / -1' : undefined } },
+        React.createElement('button', {
+            type: 'button', 'aria-label': p.ariaLabel, 'aria-haspopup': 'listbox', 'aria-expanded': aberto,
+            onClick: function () { return setAberto(function (v) { return !v; }); },
+            style: __assign(__assign({}, p.estilo), {
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer',
+                textAlign: 'left', width: '100%', minWidth: 150, boxSizing: 'border-box',
+                borderColor: ativo ? '#2878de' : undefined, fontWeight: ativo ? 600 : undefined
+            })
+        }, React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, rotulo),
+           React.createElement('span', { 'aria-hidden': true, style: { fontSize: 11, opacity: 0.7 } }, aberto ? '▴' : '▾')),
+        aberto && React.createElement('div', {
+            role: 'listbox', className: 'tdb-fm-pop', 'aria-multiselectable': true, 'aria-label': p.ariaLabel,
+            style: { position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 60, minWidth: '100%', width: 'max-content', maxWidth: 'min(320px, 86vw)', backgroundColor: 'var(--c-paper)', backdropFilter: 'none', WebkitBackdropFilter: 'none', border: '1px solid ' + COLORS.line, borderRadius: 10, boxShadow: '0 10px 28px rgba(0,0,0,.18)', overflow: 'hidden' }
+        },
+            React.createElement('div', { style: { maxHeight: 260, overflowY: 'auto', padding: '4px 0' } },
+                React.createElement('label', { className: 'tdb-fm-row', style: { fontWeight: sel.length === 0 ? 600 : 400 } },
+                    React.createElement('input', { type: 'checkbox', checked: sel.length === 0, onChange: function () { p.onChange([]); } }),
+                    React.createElement('span', null, p.rotuloTodos)),
+                linha(p.valSem, p.rotuloSem, '__sem'),
+                React.createElement('div', { style: { height: 1, background: COLORS.line, margin: '4px 0' } }),
+                (p.opcoes || []).map(function (o) { return linha(o, o, o); })),
+            React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 12px', borderTop: '1px solid ' + COLORS.line, fontSize: 12, color: COLORS.inkSoft, fontFamily: 'Inter, sans-serif' } },
+                React.createElement('span', null, sel.length + (sel.length === 1 ? ' selecionado' : ' selecionados')),
+                React.createElement('span', { role: 'button', tabIndex: 0, onClick: function () { p.onChange([]); }, onKeyDown: function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); p.onChange([]); } }, style: { cursor: 'pointer', color: '#2878de', fontWeight: 600 } }, 'Limpar'))));
+}
 // Bolha "Conta proporcional" (Mensalidades): calculadora simples. Não busca aluno, convênio nem valores em lugar nenhum; estado só local, nada é gravado.
 function ContaProporcionalBolhaTDB(p) {
     var _a = useState(false), aberto = _a[0], setAberto = _a[1];
@@ -13889,8 +13954,8 @@ function Mensalidades(_a) {
     }
 
     var _d = useState('TODOS'), filtroStatus = _d[0], setFiltroStatus = _d[1];
-    var _e = useState('TODOS'), filtroBanco = _e[0], setFiltroBanco = _e[1];
-    var _f = useState('TODOS'), filtroConvenio = _f[0], setFiltroConvenio = _f[1];
+    var _e = useState([]), filtroBanco = _e[0], setFiltroBanco = _e[1];
+    var _f = useState([]), filtroConvenio = _f[0], setFiltroConvenio = _f[1];
     var _g = useState('TODOS'), filtroNota = _g[0], setFiltroNota = _g[1];
     var _h = useState(''), filtroData = _h[0], setFiltroData = _h[1];
     var _j = useState(''), filtroTexto = _j[0], setFiltroTexto = _j[1];
@@ -14116,8 +14181,8 @@ function Mensalidades(_a) {
         return entradas
             .filter(function (t) { return filtroMes === 'TODOS' || t.mes === filtroMes; })
             .filter(function (t) { return filtroStatus === 'TODOS' || (filtroStatus === 'Pendente' ? itensPendentes.has(t) : t.status === filtroStatus); })
-            .filter(function (t) { return filtroBanco === 'TODOS' || (filtroBanco === 'SEM_BANCO' ? !t.banco : t.banco === filtroBanco); })
-            .filter(function (t) { return filtroConvenio === 'TODOS' || (filtroConvenio === 'SEM_CONVENIO' ? !t.convenio : t.convenio === filtroConvenio); })
+            .filter(function (t) { return filtroBanco.length === 0 || filtroBanco.some(function (v) { return v === 'SEM_BANCO' ? !t.banco : t.banco === v; }); })
+            .filter(function (t) { return filtroConvenio.length === 0 || filtroConvenio.some(function (v) { return v === 'SEM_CONVENIO' ? !t.convenio : t.convenio === v; }); })
             .filter(function (t) { return filtroNota === 'TODOS' || (filtroNota === 'SEM_NOTA' ? t.nota === undefined
             : filtroNota === 'PAGO_NOTA_PENDENTE' ? (t.status === 'Pago' && t.nota === 'Pendente')
                 : t.nota === filtroNota); })
@@ -14292,7 +14357,7 @@ function Mensalidades(_a) {
         }, style: inputStyle }, React.createElement("option", { value: "" }, "\u2014 nenhum \u2014"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })), bancoOutroModo && (React.createElement("input", { autoFocus: true, value: novoBanco, onChange: function (e) { return setNovoBanco(e.target.value.toUpperCase()); }, placeholder: "Nome do banco", style: inputStyle }))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 100px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "STATUS"), React.createElement("select", { value: novoStatus, onChange: function (e) { return setNovoStatus(e.target.value); }, style: inputStyle }, React.createElement("option", null, "Pago"), React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"))), React.createElement("button", { type: "submit", style: {
             background: COLORS.inkButton, color: '#FFFFFF', border: 'none', borderRadius: 7, padding: '10px 16px',
             fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, height: 39, justifyContent: 'center',
-        } }, React.createElement(Plus, { size: 15 }), " Adicionar"))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement(ContaProporcionalBolhaTDB, { transacoes: transacoes, tabelaValores: tabelaValores, diasLetivos: diasLetivos, mes: novoMes, onUsar: function (valor, base) { if (novoStatus === 'Parcial' && !novoValorCheio) setNovoValorCheio(formatBRLNumber(base)); setNovoValor(formatBRLNumber(valor)); } }), React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { style: { position: 'relative', flex: '0 1 150px' } }, React.createElement(Search, { size: 13, color: COLORS.inkSoft, style: { position: 'absolute', left: 10, top: 12 } }), React.createElement("input", { value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, placeholder: "Buscar por data...", title: "Busca pela data do pagamento (ex: 01/09 ou 01/09/2026)", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 30, boxSizing: 'border-box' }) })), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement("select", { value: filtroBanco, onChange: function (e) { return setFiltroBanco(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os bancos"), React.createElement("option", { value: "SEM_BANCO" }, "Sem banco"), bancosDisponiveis.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })), React.createElement("select", { value: filtroConvenio, onChange: function (e) { return setFiltroConvenio(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os conv\u00EAnios"), React.createElement("option", { value: "SEM_CONVENIO" }, "Sem conv\u00EAnio"), conveniosDisponiveis.map(function (c) { return React.createElement("option", { key: c, value: c }, c); })), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
+        } }, React.createElement(Plus, { size: 15 }), " Adicionar"))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement(ContaProporcionalBolhaTDB, { transacoes: transacoes, tabelaValores: tabelaValores, diasLetivos: diasLetivos, mes: novoMes, onUsar: function (valor, base) { if (novoStatus === 'Parcial' && !novoValorCheio) setNovoValorCheio(formatBRLNumber(base)); setNovoValor(formatBRLNumber(valor)); } }), React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { style: { position: 'relative', flex: '0 1 150px' } }, React.createElement(Search, { size: 13, color: COLORS.inkSoft, style: { position: 'absolute', left: 10, top: 12 } }), React.createElement("input", { value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, placeholder: "Buscar por data...", title: "Busca pela data do pagamento (ex: 01/09 ou 01/09/2026)", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 30, boxSizing: 'border-box' }) })), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por banco", valor: filtroBanco, onChange: setFiltroBanco, opcoes: bancosDisponiveis, rotuloTodos: "Todos os bancos", rotuloSem: "Sem banco", valSem: "SEM_BANCO", estilo: inputStyle, colunaCheia: true }), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por conv\u00EAnio", valor: filtroConvenio, onChange: setFiltroConvenio, opcoes: conveniosDisponiveis, rotuloTodos: "Todos os conv\u00EAnios", rotuloSem: "Sem conv\u00EAnio", valSem: "SEM_CONVENIO", estilo: inputStyle, colunaCheia: true }), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
         } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), semFiltroNenhum && filtradasCompleto.length > 100 && (React.createElement("div", { style: { fontSize: 13, color: COLORS.gold, background: COLORS.goldSoft, borderRadius: 8, padding: '8px 12px' } }, "Mostrando s\u00F3 os 100 primeiros de ", filtradasCompleto.length, " registros \u2014 escolha um m\u00EAs ou busque um nome pra ver o resto (evita travar a tela).")), React.createElement("datalist", { id: "convenios-lista" }, CONVENIOS_CONHECIDOS.map(function (c) { return React.createElement("option", { key: c, value: c }); })), React.createElement("datalist", { id: "valores-fotos-lista" }, valoresConhecidos.map(function (v, i) { return (React.createElement("option", { key: i, value: formatBRLNumber(v) })); })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Alunos", itens: alunosLista, contagemAlunos: contagemAlunosLista, mostrarDetalhes: true }, linhaHandlers), { modoPrivado: privadoDetalhes })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Empresas / Conv\u00EAnios", itens: empresasLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes })), outrosLista.length > 0 && React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Outros", itens: outrosLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes }))));
