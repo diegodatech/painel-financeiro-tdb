@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261006-tempo1-v26";
+    window.__TDB_BUILD = "tdbn-20261007-tempo1-v27";
   </script>
-  <script src="./config.js?build=tdbn-20261006-tempo1-v26"></script>
+  <script src="./config.js?build=tdbn-20261007-tempo1-v27"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261006-tempo1-v26"></script>
+  <script src="./sync.js?build=tdbn-20261007-tempo1-v27"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261006-tempo1-v26-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v27-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7808,9 +7808,7 @@ function DiasProporcionaisCalc(props) {
     var listaConv = Object.keys(fonteConv || {}).filter(function (k) { var g = fonteConv[k]; return g && g.nome && k !== 'particular' && !/^particular$/i.test(String(g.nome).trim()); }).map(function (k) { return { k: k, nome: String(fonteConv[k].nome) }; });
     var convAtual = listaConv.filter(function (c) { return c.k === convSel; })[0] || null;
     var _cvE = useState(false), convEditado = _cvE[0], setConvEditado = _cvE[1];
-    var baseConvTab = convAtual ? tdbBaseConvenio(fonteConv, convAtual.k, cheio) : null;
-    var convDescTxt = convEditado ? convDesc : (baseConvTab && baseConvTab.valor > 0 ? formatBRLNumber(baseConvTab.valor) : '');
-    var valorConv = convAtual ? Math.max(0, parseBRLInput(convDescTxt) || 0) : 0;
+    var valorConv = Math.max(0, parseBRLInput(convDesc) || 0);
     var temConv = valorConv > 0;
     var proporcionalConv = temConv && total > 0 ? Math.round((valorConv * freq / total) * 100) / 100 : 0;
     var valorFinal = temConv ? proporcionalConv : proporcional;
@@ -7823,11 +7821,9 @@ function DiasProporcionaisCalc(props) {
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias letivos"), React.createElement("input", { value: diasTotal, onChange: function (e) { return setDiasTotal(e.target.value); }, type: "number", style: inp })),
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias frequentados"), React.createElement("input", { value: diasFreq, onChange: function (e) { return setDiasFreq(e.target.value); }, type: "number", style: inp })),
             React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Valor mensalidade cheia (R$)"), React.createElement(CampoDinheiroTDB, { value: valorCheio, onChange: setValorCheio, extra: { style: inp, inputMode: "decimal", "aria-label": "Valor da mensalidade cheia" } })),
-            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Convênio · valor do mês (R$)"), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 8 } },
-                React.createElement("select", { value: convAtual ? convSel : '', onChange: function (e) { setConvSel(e.target.value); setConvEditado(false); setConvDesc(''); }, "aria-label": "Convênio", style: Object.assign({}, inp, { fontFamily: 'inherit' }, {}) }, React.createElement("option", { value: '' }, "Sem convênio"), listaConv.map(function (c) { return React.createElement("option", { key: c.k, value: c.k }, c.nome); })),
-                React.createElement(CampoDinheiroTDB, { value: convDescTxt, onChange: function (v) { setConvDesc(v); setConvEditado(true); }, extra: { placeholder: "R$ 0,00", disabled: !convAtual, inputMode: 'decimal', "aria-label": "Valor mensal do convênio em reais", style: Object.assign({}, inp, {}, { opacity: convAtual ? 1 : 0.5 }) } }))),
+            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Convênio (valor do mês, R$)"), React.createElement(CampoDinheiroTDB, { value: convDesc, onChange: setConvDesc, extra: { placeholder: "digite se tiver convênio", inputMode: "decimal", "aria-label": "Valor mensal do convênio em reais", style: inp } })),
             React.createElement("div", { style: { gridColumn: '1/-1', borderRadius: 10, padding: '12px 14px', background: COLORS.greenBg, border: "1px solid rgba(28,158,143,.3)", textAlign: 'center' } }, React.createElement("div", { style: { fontSize: 24, fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", color: COLORS.green } }, formatBRL(valorFinal)), React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 } }, temConv ? "Valor com conv\u00EAnio" : "Valor proporcional"))),
-        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, "(", freq, " \u00F7 ", total, ") \u00D7 ", temConv ? [convAtual.nome, (baseConvTab && baseConvTab.grupo && !convEditado ? " " + baseConvTab.grupo : ""), " "] : "", formatBRL(temConv ? valorConv : cheio), " = ", formatBRL(temConv ? proporcionalConv : proporcional), temConv && baseConvTab && baseConvTab.origem === "nota" && !convEditado ? " (sem valor equivalente em Valores: valor cheio \u2212 nota)" : ""));
+        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, "(", freq, " \u00F7 ", total, ") \u00D7 ", temConv ? ["Convênio "] : "", formatBRL(temConv ? valorConv : cheio), " = ", formatBRL(temConv ? proporcionalConv : proporcional),""));
 }
 
 // ===================== SIMULADOR DE DESCONTO PERSONALIZADO (ferramenta avulsa) =====================
@@ -14550,23 +14546,6 @@ function TabelaMensalidades(_a) {
     })))))));
 }
 // Bolha "Conta proporcional" (Mensalidades): estado só local, nada é gravado.
-// Valor mensal do convênio escolhido, tirado da aba Valores: acha o grupo da Particular que bate com o valor cheio digitado (Integral, Meio turno...) e devolve o valor do MESMO grupo no convênio.
-// Se o valor cheio bateu com o preço "com desconto" usa o "com desconto" do convênio; senão o "sem desconto". Sem grupo equivalente: valor cheio − nota.
-function tdbBaseConvenio(fonte, kConv, cheio) {
-    try {
-        var conv = fonte && fonte[kConv]; if (!conv) return null;
-        var kPart = Object.keys(fonte).filter(function (k) { return fonte[k] && /^particular$/i.test(String(fonte[k].nome || '').trim()); })[0] || '';
-        var alvo = Number(cheio) || 0, titulo = '', lado = 'semDesconto', melhor = 1e9;
-        ((kPart && fonte[kPart].grupos) || []).forEach(function (g) { ['semDesconto', 'comDesconto'].forEach(function (c) { var dif = Math.abs((Number(g[c]) || 0) - alvo); if (dif < melhor) { melhor = dif; titulo = g.titulo; lado = c; } }); });
-        if (titulo && melhor < 60) {
-            var gc = (conv.grupos || []).filter(function (g) { return g.titulo === titulo; })[0];
-            if (gc && Number(gc[lado]) > 0) return { valor: Number(gc[lado]), origem: 'tabela', grupo: titulo };
-        }
-        var nota = Number(conv.nota) || 0;
-        if (alvo > 0 && nota > 0) return { valor: Math.max(0, Math.round((alvo - nota) * 100) / 100), origem: 'nota', grupo: '' };
-        return null;
-    } catch (e) { return null; }
-}
 function ContaProporcionalBolhaTDB(p) {
     var transacoes = p.transacoes || [];
     var tabela = p.tabelaValores || SEED_VALORES || {};
@@ -14613,24 +14592,15 @@ function ContaProporcionalBolhaTDB(p) {
     function escolherAluno(nome) {
         setAluno(nome); setDescEd(false); setDescTxt('');
         var t = ultimos[nome];
-        if (!t) { setBase(''); setConv(''); return; }
-        var convNome = String(t.convenio || '').toUpperCase();
-        var kConv = chaves.filter(function (k) { return tabela[k] && String(tabela[k].nome || '').toUpperCase() === convNome; })[0] || '';
+        if (!t) { setBase(''); return; }
         var alvo = Number(t.valorCheio) > 0 ? Number(t.valorCheio) : (Number(t.valor) || 0);
-        var titulo = '', melhor = 1e9;
-        ((kConv && tabela[kConv].grupos) || []).forEach(function (g) { [g.semDesconto, g.comDesconto].forEach(function (v) { var dif = Math.abs((Number(v) || 0) - alvo); if (dif < melhor) { melhor = dif; titulo = g.titulo; } }); });
-        var gPart = (kPart && melhor < 60) ? (tabela[kPart].grupos || []).filter(function (g) { return g.titulo === titulo; })[0] : null;
-        var b = gPart ? (Number(gPart.semDesconto) || alvo) : alvo;
-        setBase(b > 0 ? formatBRLNumber(b) : '');
-        setConv(kConv && kConv !== kPart ? kConv : '');
+        setBase(alvo > 0 ? formatBRLNumber(alvo) : '');
     }
     var convAtual = listaConv.filter(function (c) { return c.k === conv; })[0] || null;
     var total = Number(dl[mes]) > 0 ? Number(dl[mes]) : Math.floor(TDBFinance.num(totalManual));
     var df = Math.floor(TDBFinance.num(dias));
     var cheio = parseBRLInput(base);
-    var baseConv = convAtual ? tdbBaseConvenio(tabela, convAtual.k, cheio) : null;
-    var descShow = descEd ? descTxt : (baseConv && baseConv.valor > 0 ? formatBRLNumber(baseConv.valor) : '');
-    var valorConv = convAtual ? Math.max(0, parseBRLInput(descShow) || 0) : 0;
+    var valorConv = Math.max(0, parseBRLInput(descTxt) || 0);
     var baseCalc = valorConv > 0 ? valorConv : cheio;
     var pronto = baseCalc > 0 && total > 0 && df > 0;
     var prop = pronto ? Math.round((baseCalc * Math.min(df, total) / total) * 100) / 100 : 0;
@@ -14638,9 +14608,9 @@ function ContaProporcionalBolhaTDB(p) {
     var pc = avista ? Math.min(100, Math.max(0, parseBRLInput(pct) || 0)) : 0;
     if (pc) prop = Math.round(prop * (1 - pc / 100) * 100) / 100;
     var valor = pronto ? Math.max(0, prop) : 0;
-    var nomeBase = valorConv > 0 ? (convAtual.nome + (baseConv && baseConv.grupo && !descEd ? ' ' + baseConv.grupo : '')) : '';
+    var nomeBase = valorConv > 0 ? 'Convênio' : '';
     var formula = pronto
-        ? (nomeBase ? nomeBase + ' ' : '') + formatBRL(baseCalc) + ' ÷ ' + total + ' dias × ' + Math.min(df, total) + ' dias = ' + formatBRL(propBruto) + (pc ? ' − ' + pc + '% à vista = ' + formatBRL(prop) : '') + (baseConv && baseConv.origem === 'nota' && !descEd ? ' (sem valor equivalente em Valores: valor cheio − nota)' : '')
+        ? (nomeBase ? nomeBase + ' ' : '') + formatBRL(baseCalc) + ' ÷ ' + total + ' dias × ' + Math.min(df, total) + ' dias = ' + formatBRL(propBruto) + (pc ? ' − ' + pc + '% à vista = ' + formatBRL(prop) : '')
         : (total > 0 ? 'Informe o valor cheio e os dias frequentados para ver a conta.' : 'Cadastre os dias letivos de ' + (MESES_ABREV[mes] || '') + ' em Valores (Calendário letivo) ou digite aqui.');
     var lbl = { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 };
     var inp = { width: '100%', minWidth: 0, boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 10, padding: '0 11px', height: 38, fontSize: 13, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink };
@@ -14675,9 +14645,8 @@ function ContaProporcionalBolhaTDB(p) {
                     React.createElement("input", { type: "checkbox", id: "tdbCpAvista", checked: avista, onChange: function (e) { setAvista(e.target.checked); }, style: { width: 16, height: 16, margin: 0, cursor: 'pointer' } }),
                     React.createElement("label", { htmlFor: "tdbCpAvista", style: { fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: COLORS.ink } }, "aplicar"),
                     React.createElement("input", { value: pct, onChange: function (e) { setPct(e.target.value.replace(/[^0-9.,]/g, '')); }, disabled: !avista, inputMode: "decimal", className: "mono", "aria-label": "Percentual de desconto à vista", style: { width: 48, height: 26, border: '1px solid ' + COLORS.line, borderRadius: 8, textAlign: 'center', background: 'transparent', color: COLORS.ink, padding: 0, opacity: avista ? 1 : .45 } }), "%"), '1 1 190px'),
-                campo("CONVÊNIO", React.createElement("select", { value: convAtual ? conv : '', onChange: function (e) { setConv(e.target.value); setDescEd(false); setDescTxt(''); }, "aria-label": "Convênio", style: inp }, React.createElement("option", { value: "" }, "Sem convênio"), listaConv.map(function (c) { return React.createElement("option", { key: c.k, value: c.k }, c.nome); })), '1 1 150px'),
-                campo("VALOR DO CONVÊNIO (R$)", React.createElement(React.Fragment, null, React.createElement(CampoDinheiroTDB, { value: descShow, onChange: function (v) { setDescTxt(v); setDescEd(true); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", disabled: !convAtual, "aria-label": "Valor mensal do convênio em reais", style: Object.assign({}, inp, { opacity: convAtual ? 1 : .5 }) } }), convAtual && baseConv && baseConv.valor > 0 && descEd ? React.createElement("button", { type: "button", onClick: function () { setDescEd(false); setDescTxt(''); }, style: { justifySelf: 'start', border: 'none', borderRadius: 8, padding: '3px 8px', background: COLORS.goldSoft, color: COLORS.gold, fontWeight: 700, fontSize: 11, cursor: 'pointer' } }, "usar valor de Valores") : null), '1 1 170px')),
-            React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Com convênio, a conta parte do valor do próprio convênio (da aba Valores, mesmo grupo do valor cheio) × dias frequentados ÷ dias letivos; o desconto à vista vem depois."),
+                campo("CONVÊNIO (VALOR DO MÊS, R$)", React.createElement(CampoDinheiroTDB, { value: descTxt, onChange: function (v) { setDescTxt(v); }, extra: { inputMode: "decimal", placeholder: "digite se tiver convênio", className: "mono", "aria-label": "Valor mensal do convênio em reais", style: inp } }), '1 1 220px')),
+            React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Sem convênio, a conta parte do valor cheio. Se tiver convênio, digite no campo Convênio o valor mensal dele: a conta parte desse valor × dias frequentados ÷ dias letivos; o desconto à vista vem depois."),
             React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: COLORS.paperCard, border: '1px solid ' + COLORS.line, borderRadius: 14, padding: '10px 14px' } },
                 React.createElement("div", null, React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase' } }, "Valor a cobrar"), React.createElement("div", { className: "mono", style: { fontSize: 21, fontWeight: 800, color: COLORS.green } }, formatBRL(valor))),
                 React.createElement("div", { style: { flex: '1 1 220px', minWidth: 0, fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.5 } }, formula),
