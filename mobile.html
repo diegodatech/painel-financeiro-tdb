@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261007-tempo1-v33";
+    window.__TDB_BUILD = "tdbn-20261007-tempo1-v34";
   </script>
-  <script src="./config.js?build=tdbn-20261007-tempo1-v33"></script>
+  <script src="./config.js?build=tdbn-20261007-tempo1-v34"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261007-tempo1-v33"></script>
+  <script src="./sync.js?build=tdbn-20261007-tempo1-v34"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v33-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v34-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7795,9 +7795,9 @@ function DiasProporcionaisCalc(props) {
     var paginaOculta = !!((props || {}).oculto);
     var _priv = useState(false), cardOculto = _priv[0], setCardOculto = _priv[1];
     var escondido = paginaOculta || cardOculto;
-    var _a = useState('30'), diasTotal = _a[0], setDiasTotal = _a[1];
-    var _b = useState('15'), diasFreq = _b[0], setDiasFreq = _b[1];
-    var _c = useState('1562'), valorCheio = _c[0], setValorCheio = _c[1];
+    var _a = useState(''), diasTotal = _a[0], setDiasTotal = _a[1];
+    var _b = useState(''), diasFreq = _b[0], setDiasFreq = _b[1];
+    var _c = useState(''), valorCheio = _c[0], setValorCheio = _c[1];
     var total = Math.max(0,Math.floor(TDBFinance.num(diasTotal))); 
     var freq = Math.max(0, Math.min(Math.floor(TDBFinance.num(diasFreq)), Math.max(0,total))); 
     var _cvM = useState(''), convManual = _cvM[0], setConvManual = _cvM[1];
@@ -7818,6 +7818,7 @@ function DiasProporcionaisCalc(props) {
     function r2(x) { return Math.round(Math.round(x * 100 * 1e6) / 1e6) / 100; }
     var propRap = r2(proporcional);
     var temConv = pcRap > 0;
+    var semDados = !(total > 0 && freq > 0 && cheio > 0);
     var valorFinal = temConv ? r2(propRap * (1 - pcRap / 100)) : propRap;
     var lbl = { fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: 3, display: 'block' };
     var inp = { width: '100%', border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '9px 10px', fontSize: 14.5, fontFamily: "'IBM Plex Mono', monospace", boxSizing: 'border-box' };
@@ -7825,13 +7826,13 @@ function DiasProporcionaisCalc(props) {
         React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 4 } }, React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: COLORS.ink } }, "\uD83D\uDCC5 Conv\u00EAnio mensal"), React.createElement('button', { type: 'button', onClick: function(){ return setCardOculto(function(v){ return !v; }); }, title: cardOculto ? 'Mostrar valores deste card' : 'Esconder valores deste card', 'data-export-ignore': true, style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '6px 8px', cursor: 'pointer', color: COLORS.inkSoft, display: 'flex', alignItems: 'center' } }, cardOculto ? React.createElement(EyeOff, { size: 15 }) : React.createElement(Eye, { size: 15 }))),
         React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, marginBottom: 6 } }, "Pra estimar r\u00E1pido sem abrir o aluno em Mensalidades."),
         React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 } },
-            React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias letivos"), React.createElement("input", { value: diasTotal, onChange: function (e) { return setDiasTotal(e.target.value); }, type: "number", style: inp })),
-            React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias frequentados"), React.createElement("input", { value: diasFreq, onChange: function (e) { return setDiasFreq(e.target.value); }, type: "number", style: inp })),
-            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Valor mensalidade cheia (R$)"), React.createElement(CampoDinheiroTDB, { value: valorCheio, onChange: setValorCheio, extra: { style: inp, inputMode: "decimal", "aria-label": "Valor da mensalidade cheia" } })),
+            React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias letivos"), React.createElement("input", { value: diasTotal, onChange: function (e) { return setDiasTotal(e.target.value); }, type: "number", placeholder: "ex: 22", style: inp })),
+            React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias frequentados"), React.createElement("input", { value: diasFreq, onChange: function (e) { return setDiasFreq(e.target.value); }, type: "number", placeholder: "ex: 12", style: inp })),
+            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Valor mensalidade cheia (R$)"), React.createElement(CampoDinheiroTDB, { value: valorCheio, onChange: setValorCheio, extra: { style: inp, inputMode: "decimal", placeholder: "R$ 0,00", "aria-label": "Valor da mensalidade cheia" } })),
             React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Convênio mensal (R$)"), React.createElement(CampoDinheiroTDB, { value: convManual, onChange: setConvManual, extra: { style: inp, inputMode: "decimal", placeholder: "se tiver, valor mensal", "aria-label": "Convênio mensal" } })),
             React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Desconto"), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: descModo === 'outro' ? 'minmax(0,1.4fr) minmax(0,1fr)' : '1fr', gap: 8 } }, React.createElement("select", { value: descModo, onChange: function (e) { setDescModo(e.target.value); }, "aria-label": "Desconto", style: Object.assign({}, inp, { fontFamily: 'inherit' }, { flex: '1 1 130px', width: 'auto' }) }, React.createElement("option", { value: '0' }, "Sem desconto"), React.createElement("option", { value: '5' }, "5%"), React.createElement("option", { value: '10' }, "10%"), React.createElement("option", { value: 'outro' }, "Outro %")), descModo === 'outro' ? React.createElement("input", { value: descOutro, onChange: function (e) { setDescOutro(e.target.value.replace(/[^0-9.,]/g, '')); }, inputMode: 'decimal', placeholder: "ex: 7,5", "aria-label": "Percentual de desconto", style: Object.assign({}, inp, { flex: '1 1 90px', width: 'auto' }) }) : null)),
             React.createElement("div", { style: { gridColumn: '1/-1', borderRadius: 10, padding: '12px 14px', background: COLORS.greenBg, border: "1px solid rgba(28,158,143,.3)", textAlign: 'center' } }, React.createElement("div", { style: { fontSize: 24, fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", color: COLORS.green } }, formatBRL(valorFinal)), React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 } }, temConv ? "Valor com desconto" : "Valor proporcional"))),
-        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, "(", freq, " \u00F7 ", total, ") \u00D7 ", usaConvR ? ["(", formatBRL(mensR), " \u2212 ", formatBRL(convValR), " conv\u00EAnio mensal = ", formatBRL(cheio), ")"] : formatBRL(cheio), " = ", formatBRL(propRap), temConv ? [" \u2212 ", String(pcRap).replace('.', ','), "% = ", formatBRL(valorFinal)] : ""));
+        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, semDados ? "Digite os dias letivos, os dias frequentados e a mensalidade." : ["(", freq, " \u00F7 ", total, ") \u00D7 ", usaConvR ? ["(", formatBRL(mensR), " \u2212 ", formatBRL(convValR), " conv\u00EAnio mensal = ", formatBRL(cheio), ")"] : formatBRL(cheio), " = ", formatBRL(propRap), temConv ? [" \u2212 ", String(pcRap).replace('.', ','), "% = ", formatBRL(valorFinal)] : ""]));
 }
 
 // ===================== SIMULADOR DE DESCONTO PERSONALIZADO (ferramenta avulsa) =====================
