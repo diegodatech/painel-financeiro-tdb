@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261007-tempo1-v34";
+    window.__TDB_BUILD = "tdbn-20261007-tempo1-v35";
   </script>
-  <script src="./config.js?build=tdbn-20261007-tempo1-v34"></script>
+  <script src="./config.js?build=tdbn-20261007-tempo1-v35"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261007-tempo1-v34"></script>
+  <script src="./sync.js?build=tdbn-20261007-tempo1-v35"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v34-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v35-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7820,19 +7820,28 @@ function DiasProporcionaisCalc(props) {
     var temConv = pcRap > 0;
     var semDados = !(total > 0 && freq > 0 && cheio > 0);
     var valorFinal = temConv ? r2(propRap * (1 - pcRap / 100)) : propRap;
-    var lbl = { fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: 3, display: 'block' };
-    var inp = { width: '100%', border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '9px 10px', fontSize: 14.5, fontFamily: "'IBM Plex Mono', monospace", boxSizing: 'border-box' };
-    return React.createElement(QuadroRematricula, { className:"tdb-proporcional", style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, padding: '15px 16px' } },
-        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 4 } }, React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: COLORS.ink } }, "\uD83D\uDCC5 Conv\u00EAnio mensal"), React.createElement('button', { type: 'button', onClick: function(){ return setCardOculto(function(v){ return !v; }); }, title: cardOculto ? 'Mostrar valores deste card' : 'Esconder valores deste card', 'data-export-ignore': true, style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '6px 8px', cursor: 'pointer', color: COLORS.inkSoft, display: 'flex', alignItems: 'center' } }, cardOculto ? React.createElement(EyeOff, { size: 15 }) : React.createElement(Eye, { size: 15 }))),
-        React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, marginBottom: 6 } }, "Pra estimar r\u00E1pido sem abrir o aluno em Mensalidades."),
-        React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 } },
-            React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias letivos"), React.createElement("input", { value: diasTotal, onChange: function (e) { return setDiasTotal(e.target.value); }, type: "number", placeholder: "ex: 22", style: inp })),
-            React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias frequentados"), React.createElement("input", { value: diasFreq, onChange: function (e) { return setDiasFreq(e.target.value); }, type: "number", placeholder: "ex: 12", style: inp })),
-            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Valor mensalidade cheia (R$)"), React.createElement(CampoDinheiroTDB, { value: valorCheio, onChange: setValorCheio, extra: { style: inp, inputMode: "decimal", placeholder: "R$ 0,00", "aria-label": "Valor da mensalidade cheia" } })),
-            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Convênio mensal (R$)"), React.createElement(CampoDinheiroTDB, { value: convManual, onChange: setConvManual, extra: { style: inp, inputMode: "decimal", placeholder: "se tiver, valor mensal", "aria-label": "Convênio mensal" } })),
-            React.createElement("div", { style: { gridColumn: '1/-1' } }, React.createElement("label", { style: lbl }, "Desconto"), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: descModo === 'outro' ? 'minmax(0,1.4fr) minmax(0,1fr)' : '1fr', gap: 8 } }, React.createElement("select", { value: descModo, onChange: function (e) { setDescModo(e.target.value); }, "aria-label": "Desconto", style: Object.assign({}, inp, { fontFamily: 'inherit' }, { flex: '1 1 130px', width: 'auto' }) }, React.createElement("option", { value: '0' }, "Sem desconto"), React.createElement("option", { value: '5' }, "5%"), React.createElement("option", { value: '10' }, "10%"), React.createElement("option", { value: 'outro' }, "Outro %")), descModo === 'outro' ? React.createElement("input", { value: descOutro, onChange: function (e) { setDescOutro(e.target.value.replace(/[^0-9.,]/g, '')); }, inputMode: 'decimal', placeholder: "ex: 7,5", "aria-label": "Percentual de desconto", style: Object.assign({}, inp, { flex: '1 1 90px', width: 'auto' }) }) : null)),
-            React.createElement("div", { style: { gridColumn: '1/-1', borderRadius: 10, padding: '12px 14px', background: COLORS.greenBg, border: "1px solid rgba(28,158,143,.3)", textAlign: 'center' } }, React.createElement("div", { style: { fontSize: 24, fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", color: COLORS.green } }, formatBRL(valorFinal)), React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 } }, temConv ? "Valor com desconto" : "Valor proporcional"))),
-        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, semDados ? "Digite os dias letivos, os dias frequentados e a mensalidade." : ["(", freq, " \u00F7 ", total, ") \u00D7 ", usaConvR ? ["(", formatBRL(mensR), " \u2212 ", formatBRL(convValR), " conv\u00EAnio mensal = ", formatBRL(cheio), ")"] : formatBRL(cheio), " = ", formatBRL(propRap), temConv ? [" \u2212 ", String(pcRap).replace('.', ','), "% = ", formatBRL(valorFinal)] : ""]));
+    var lbl = { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 };
+    var inp = { width: '100%', minWidth: 0, boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 10, padding: '0 11px', height: 38, fontSize: 13, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink };
+    function campo(rotulo, filho, flex) { return React.createElement("div", { style: { display: 'grid', gap: 4, flex: flex || '1 1 140px', minWidth: 0, alignContent: 'start' } }, React.createElement("label", { style: lbl }, rotulo), filho); }
+    function F(v) { return formatBRLPrivado(v, escondido); }
+    var formulaTxt = semDados ? "Digite os dias letivos, os dias frequentados e a mensalidade." : ["(", freq, " ÷ ", total, ") × ", usaConvR ? ["(", F(mensR), " − ", F(convValR), " convênio mensal = ", F(cheio), ")"] : F(cheio), " = ", F(propRap), temConv ? [" − ", String(pcRap).replace('.', ','), "% = ", F(valorFinal)] : ""];
+    return React.createElement(QuadroRematricula, { className:"tdb-proporcional", style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, padding: '15px 18px' } },
+        React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, marginBottom: 4 } }, React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700, color: COLORS.ink } }, React.createElement("span", { style: { width: 32, height: 32, borderRadius: 11, background: 'rgba(40,120,222,.12)', color: '#2878de', display: 'grid', placeItems: 'center', flex: '0 0 auto' } }, React.createElement("svg", { viewBox: "0 0 24 24", width: 17, height: 17, fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, React.createElement("rect", { x: 5, y: 3, width: 14, height: 18, rx: 3 }), React.createElement("path", { d: "M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01" }))), React.createElement("span", null, "Convênio mensal")), React.createElement('button', { type: 'button', onClick: function(){ return setCardOculto(function(v){ return !v; }); }, title: cardOculto ? 'Mostrar valores deste card' : 'Esconder valores deste card', 'data-export-ignore': true, style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '6px 8px', cursor: 'pointer', color: COLORS.inkSoft, display: 'flex', alignItems: 'center' } }, cardOculto ? React.createElement(EyeOff, { size: 15 }) : React.createElement(Eye, { size: 15 }))),
+        React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, marginBottom: 6 } }, "Pra estimar rápido sem abrir o aluno em Mensalidades."),
+        React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 } },
+            React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' } },
+                campo("VALOR MENSALIDADE CHEIA (R$)", React.createElement(CampoDinheiroTDB, { value: valorCheio, onChange: setValorCheio, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", "aria-label": "Valor da mensalidade cheia", style: inp } }), '1 1 190px'),
+                campo("CONVÊNIO MENSAL (R$)", React.createElement(CampoDinheiroTDB, { value: convManual, onChange: setConvManual, extra: { inputMode: "decimal", placeholder: "se tiver, valor mensal", className: "mono", "aria-label": "Convênio mensal", style: inp } }), '1 1 190px'),
+                campo("DIAS LETIVOS NO MÊS", React.createElement("input", { value: diasTotal, onChange: function (e) { return setDiasTotal(e.target.value.replace(/[^0-9]/g, '')); }, inputMode: "numeric", placeholder: "ex: 22", className: "mono", "aria-label": "Dias letivos no mês", style: inp }), '1 1 130px'),
+                campo("DIAS FREQUENTADOS", React.createElement("input", { value: diasFreq, onChange: function (e) { return setDiasFreq(e.target.value.replace(/[^0-9]/g, '')); }, inputMode: "numeric", placeholder: "ex: 12", className: "mono", "aria-label": "Dias frequentados", style: inp }), '1 1 130px')),
+            React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' } },
+                campo("DESCONTO", React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                    React.createElement("select", { value: descModo, onChange: function (e) { return setDescModo(e.target.value); }, "aria-label": "Desconto", style: Object.assign({}, inp, { flex: '1 1 150px', width: 'auto' }) },
+                        React.createElement("option", { value: '0' }, "Sem desconto"), React.createElement("option", { value: '5' }, "5%"), React.createElement("option", { value: '10' }, "10%"), React.createElement("option", { value: 'outro' }, "Outro %")),
+                    descModo === 'outro' ? React.createElement("input", { value: descOutro, onChange: function (e) { return setDescOutro(e.target.value.replace(/[^0-9.,]/g, '')); }, inputMode: "decimal", placeholder: "ex: 7,5", className: "mono", "aria-label": "Percentual de desconto", style: Object.assign({}, inp, { flex: '1 1 90px', width: 'auto' }) }) : null), '1 1 280px'))),
+        React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: COLORS.paperCard, border: '1px solid ' + COLORS.line, borderRadius: 14, padding: '10px 14px', marginTop: 12 } },
+            React.createElement("div", null, React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase' } }, temConv ? "Valor com desconto" : "Valor proporcional"), React.createElement("div", { className: "mono", style: { fontSize: 21, fontWeight: 800, color: COLORS.green } }, F(valorFinal))),
+            React.createElement("div", { style: { flex: '1 1 220px', minWidth: 0, fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.5 } }, formulaTxt)));
 }
 
 // ===================== SIMULADOR DE DESCONTO PERSONALIZADO (ferramenta avulsa) =====================
@@ -14551,7 +14560,7 @@ function TabelaMensalidades(_a) {
                 color: COLORS.red,
                 display: 'flex',
                 alignItems: 'center',
-            } }, React.createElement(Trash2, { size: 12, color: COLORS.red })))))), null));
+            } }, React.createElement(Trash2, { size: 12, color: COLORS.red })))))), emEdicao && mostrarDetalhes && (React.createElement("tr", null, React.createElement("td", { colSpan: 10, style: { padding: '0 8px 12px', borderTop: 'none' } }, React.createElement("div", { style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 8, padding: 10 } }, React.createElement('label', {style:{display:'flex',gap:8,alignItems:'center',fontSize:13}}, 'Crianças nesta cobrança', React.createElement('input',{type:'number',min:1,step:1,value:quantidadeEdit,onChange:function(e){setQuantidadeEdit(e.target.value);},style:{width:75,padding:8}}))))))));
     })))))));
 }
 // Bolha "Conta proporcional" (Mensalidades): calculadora simples. Não busca aluno, convênio nem valores em lugar nenhum; estado só local, nada é gravado.
@@ -14969,7 +14978,7 @@ function Mensalidades(_a) {
         var nomeFinal = nomeEdit.trim();
         var categoriaFinal = nomeFinal ? (prefixoEdit + nomeFinal.toUpperCase()) : null;
         var __origEdit = transacoes.find(function (t) { return t.id === id; });
-        var __qtdAposEdicao = (categoriaFinal && __origEdit && categoriaFinal !== __origEdit.categoria) ? TDBFinance.children({ categoria: categoriaFinal }) : Number(quantidadeEdit);
+        var __qtdAposEdicao = Number(quantidadeEdit);
         editarLancamento(id, __assign({ quantidadeAlunos: __qtdAposEdicao, valor: valorFinal, valorCheio: valorCheioFinal, status: statusEdit, banco: bancoEdit, pai: paiEdit, tirarNota: tirarNotaEdit, convenio: convenioEdit, data: dataEdit || null, ok: okEdit || null }, (categoriaFinal ? { categoria: categoriaFinal } : {})));
         setEditandoId(null);
     }
@@ -15043,7 +15052,7 @@ function Mensalidades(_a) {
         setOkEdit: setOkEdit,
         inputStyle: inputStyle,
         nomeEdit: nomeEdit,
-        setNomeEdit: setNomeEdit,
+        setNomeEdit: function (v) { setNomeEdit(v); var __n = String(v == null ? '' : v).trim(); if (__n) setQuantidadeEdit(String(TDBFinance.children({ categoria: prefixoEdit + __n.toUpperCase() }))); },
         avulsos: avulsos,
         diasLetivos: diasLetivos,
         tabelaValores: tabelaValores,
@@ -15051,7 +15060,8 @@ function Mensalidades(_a) {
     };
     return (React.createElement("div", { className: "export-pagina-mensalidades", style: { display: 'grid', gap: 20 } }, editandoId && React.createElement(TDBMobileEditSheet, { titulo: "Editar mensalidade", subtitulo: "Edite com segurança e toque em Salvar para confirmar.", onSalvar: function () { return salvarEdicao(editandoId); }, onCancelar: cancelarEdicao },
         React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 } },
-            React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "NOME"), React.createElement("input", { value: nomeEdit, onChange: function (e) { return setNomeEdit(e.target.value); }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
+            React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "NOME"), React.createElement("input", { value: nomeEdit, onChange: function (e) { var __v = e.target.value; setNomeEdit(__v); var __n = String(__v).trim(); if (__n) setQuantidadeEdit(String(TDBFinance.children({ categoria: prefixoEdit + __n.toUpperCase() }))); }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
+            React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "CRIANÇAS NESTA COBRANÇA"), React.createElement("input", { type: "number", min: 1, step: 1, inputMode: "numeric", "aria-label": "Crianças nesta cobrança", value: quantidadeEdit, onChange: function (e) { return setQuantidadeEdit(e.target.value); }, style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
             React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "RESPONSÁVEL / PAI"), React.createElement("input", { value: paiEdit, onChange: function (e) { return setPaiEdit(e.target.value); }, style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "CONVÊNIO"), React.createElement("input", { value: convenioEdit, onChange: function (e) { return setConvenioEdit(e.target.value); }, list: "convenios-edicao-mobile", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) }), React.createElement("datalist", { id: "convenios-edicao-mobile" }, conveniosDisponiveis.map(function (c) { return React.createElement("option", { key: c, value: c }); }))),
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "BANCO"), React.createElement("select", { value: bancoEdit, onChange: function (e) { return setBancoEdit(e.target.value); }, style: __assign(__assign({}, inputStyle), { width: '100%', color: bancoEdit ? corBanco(bancoEdit) : COLORS.ink, fontWeight: bancoEdit ? 800 : 500 }) }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))),
@@ -18862,7 +18872,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
  if(window.TDBMunicipioCB)return;
  var KEY='municipio_cb_v1';
  var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
- var FERIADOS_FIXOS=['01-01','04-21','05-01','09-07','10-12','11-02','11-15','12-25'];
+ var FERIADOS_FIXOS=['01-01','04-21','05-01','09-07','09-20','09-25','10-12','11-02','11-15','11-20','12-25'];
  function pascoaDoAno(y){var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;return new Date(y,mes-1,dia);}
  function feriadosDoAno(y){var p=pascoaDoAno(y),L=FERIADOS_FIXOS.slice();[-48,-47,-2,60].forEach(function(n){var x=new Date(p.getFullYear(),p.getMonth(),p.getDate()+n);L.push(String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'));});return L;}
  var ESC_LISTA=['JESSICKA E DIEGO ESCOLA INFANTIL','CNPJ: 22.978.931/0001-00','Rua: Ampélio Carlotto, 380 – Aurora Carlos Barbosa – RS','Telefone: 54 3461.6393','Email: escolatempodebrincarcb@gmail.com'];
@@ -23400,4 +23410,9 @@ html body .festas-tdb-export-raiz .festas-tdb-filtros>.festas-balao{min-height:5
 /* TEMPO 1 — Mensalidades: bolha "Conta proporcional". Só aparência. */
 html body .tdb-conta-prop:not(#tdb3x) input,html body .tdb-conta-prop:not(#tdb3x) select{font-family:Inter,-apple-system,sans-serif}
 @media (max-width:760px){html body .tdb-conta-prop:not(#tdb3x) input:not([type=checkbox]),html body .tdb-conta-prop:not(#tdb3x) select{font-size:16px!important}}
+</style>
+<style id="tdb-prop-rem-css">
+/* TEMPO 1 — Rematrícula "Convênio mensal": mesmo visual dos campos da calculadora de Mensalidades. Só aparência. */
+html body .tdb-proporcional:not(#tdb3x) input,html body .tdb-proporcional:not(#tdb3x) select{font-family:Inter,-apple-system,sans-serif}
+@media (max-width:760px){html body .tdb-proporcional:not(#tdb3x) input:not([type=checkbox]),html body .tdb-proporcional:not(#tdb3x) select{font-size:16px!important}}
 </style>
