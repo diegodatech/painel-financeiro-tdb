@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261006-tempo1-v24";
+    window.__TDB_BUILD = "tdbn-20261006-tempo1-v26";
   </script>
-  <script src="./config.js?build=tdbn-20261006-tempo1-v24"></script>
+  <script src="./config.js?build=tdbn-20261006-tempo1-v26"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261006-tempo1-v24"></script>
+  <script src="./sync.js?build=tdbn-20261006-tempo1-v26"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261006-tempo1-v24-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261006-tempo1-v26-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -3869,7 +3869,6 @@ function Recibos(_a) {
         if (!chaves || !chaves.length) return;
         var restore = chaves.map(function (k) { return { op: 'set', key: 'recibos_convenios', path: [k], value: dados[k] }; });
         var rotulo = chaves.length === 1 ? ('Recibo · ' + rotuloRecibo(chaves[0])) : (chaves.length + ' recibos adicionados');
-        window.__tdbLixeiraAdicionar({ rotulo: rotulo, origem: 'Recibos · Recibo completo', restoreOps: restore }).catch(function () {});
         var prox = __assign({}, dados);
         chaves.forEach(function (k) { delete prox[k]; });
         var lista = categoriasRecibos.map(function (c) { return c.key; });
@@ -3877,9 +3876,11 @@ function Recibos(_a) {
         var restantes = lista.filter(function (k) { return chaves.indexOf(k) < 0; });
         var destino = restantes[Math.min(Math.max(pos - 1, 0), restantes.length - 1)] || CATEGORIAS_RECIBOS[0].key;
         if (chaves.indexOf(subTab) < 0) destino = subTab;
-        salvar(prox);
-        setSubTab(destino);
-        mostrarToast(chaves.length === 1 ? '✓ Recibo movido para a lixeira.' : '✓ ' + chaves.length + ' recibos movidos para a lixeira.');
+        window.__tdbLixeiraAdicionar({ rotulo: rotulo, origem: 'Recibos · Recibo completo', restoreOps: restore }).then(function () {
+            salvar(prox);
+            setSubTab(destino);
+            mostrarToast(chaves.length === 1 ? '✓ Recibo movido para a lixeira.' : '✓ ' + chaves.length + ' recibos movidos para a lixeira.');
+        }, function () { mostrarToast('Não consegui mandar para a lixeira. Nada foi excluído.'); });
     }
     function excluirReciboSelecionado() {
         if (!subTabAdicionado) { mostrarToast('Este é um recibo original e não pode ser excluído. Só os recibos criados em Adicionar.'); return; }
@@ -3976,8 +3977,10 @@ function Recibos(_a) {
         var removida = r.rows[idx];
         if (!removida) return;
         if (!window.confirm('Mover este registro de recibo para a lixeira?')) return;
-        window.__tdbLixeiraAdicionar({ rotulo: removida.crianca || removida.pai || 'Registro de recibo', origem: 'Recibos', restoreOps: [{ op:'insert', key:'recibos_convenios', path:[subTab,'rows'], index:idx, item:removida }] }).catch(function(){});
-        salvar(__assign(__assign({}, dados), (_a = {}, _a[subTab] = __assign(__assign({}, r), { rows: r.rows.filter(function (_, i) { return i !== idx; }) }), _a)));
+        var proxRecibo = __assign(__assign({}, dados), (_a = {}, _a[subTab] = __assign(__assign({}, r), { rows: r.rows.filter(function (_, i) { return i !== idx; }) }), _a));
+        window.__tdbLixeiraAdicionar({ rotulo: removida.crianca || removida.pai || 'Registro de recibo', origem: 'Recibos', restoreOps: [{ op:'insert', key:'recibos_convenios', path:[subTab,'rows'], index:idx, item:removida }] }).then(function () {
+            salvar(proxRecibo);
+        }, function () { mostrarToast('Não consegui mandar para a lixeira. Nada foi excluído.'); });
     }
     function exportarPDFRecibo(chavesEmpresas) { return window.__tdbProg.env(exportarPDFRecibo_, this, arguments); }
     async function exportarPDFRecibo_(chavesEmpresas) {
@@ -7180,13 +7183,12 @@ function DiasProporcionaisCalc(_a) {
     var listaConv = Object.keys(fonteConv || {}).filter(function (k) { var g = fonteConv[k]; return g && g.nome && k !== 'particular' && !/^particular$/i.test(String(g.nome).trim()); }).map(function (k) { return { k: k, nome: String(fonteConv[k].nome) }; });
     var convAtual = listaConv.filter(function (c) { return c.k === convSel; })[0] || null;
     var _cvE = useState(false), convEditado = _cvE[0], setConvEditado = _cvE[1];
-    var notaConv = convAtual && fonteConv[convAtual.k] && fonteConv[convAtual.k].nota != null ? (Number(fonteConv[convAtual.k].nota) || 0) : 0;
-    var convDescTxt = convEditado ? convDesc : (notaConv > 0 ? formatBRLNumber(notaConv) : '');
-    var descConv = convAtual ? Math.max(0, parseBRLInput(convDescTxt) || 0) : 0;
-    var propArred = Math.round(proporcional * 100) / 100;
-    var descAplicado = Math.min(descConv, propArred);
-    var temConv = descConv > 0;
-    var valorFinal = temConv ? Math.max(0, Math.round((propArred - descAplicado) * 100) / 100) : proporcional;
+    var baseConvTab = convAtual ? tdbBaseConvenio(fonteConv, convAtual.k, cheio) : null;
+    var convDescTxt = convEditado ? convDesc : (baseConvTab && baseConvTab.valor > 0 ? formatBRLNumber(baseConvTab.valor) : '');
+    var valorConv = convAtual ? Math.max(0, parseBRLInput(convDescTxt) || 0) : 0;
+    var temConv = valorConv > 0;
+    var proporcionalConv = temConv && total > 0 ? Math.round((valorConv * freq / total) * 100) / 100 : 0;
+    var valorFinal = temConv ? proporcionalConv : proporcional;
     var escondido = modoPrivado || oculto;
     var lbl = { fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: 3, display: 'block' };
     var inp = { width: '100%', border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, fontFamily: "'IBM Plex Mono', monospace", boxSizing: 'border-box' };
@@ -7197,11 +7199,11 @@ function DiasProporcionaisCalc(_a) {
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias letivos no m\u00EAs"), React.createElement("input", { value: diasTotal, onChange: function (e) { return setDiasTotal(e.target.value); }, type: "number", style: inp })),
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias frequentados"), React.createElement("input", { value: diasFreq, onChange: function (e) { return setDiasFreq(e.target.value); }, type: "number", style: inp })),
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Valor mensalidade cheia (R$)"), React.createElement(CampoDinheiroTDB, { value: valorCheio, onChange: setValorCheio, extra: { style: inp, inputMode: "decimal", "aria-label": "Valor da mensalidade cheia" } })),
-            React.createElement("div", { style: {} }, React.createElement("label", { style: lbl }, "Convênio · desconto (R$)"), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+            React.createElement("div", { style: {} }, React.createElement("label", { style: lbl }, "Convênio · valor do mês (R$)"), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
                 React.createElement("select", { value: convAtual ? convSel : '', onChange: function (e) { setConvSel(e.target.value); setConvEditado(false); setConvDesc(''); }, "aria-label": "Convênio", style: Object.assign({}, inp, { fontFamily: 'inherit' }, { flex: '1 1 130px', width: 'auto' }) }, React.createElement("option", { value: '' }, "Sem convênio"), listaConv.map(function (c) { return React.createElement("option", { key: c.k, value: c.k }, c.nome); })),
-                React.createElement(CampoDinheiroTDB, { value: convDescTxt, onChange: function (v) { setConvDesc(v); setConvEditado(true); }, extra: { placeholder: "R$ 0,00", disabled: !convAtual, inputMode: 'decimal', "aria-label": "Desconto do convênio em reais", style: Object.assign({}, inp, { flex: '1 1 90px', width: 'auto' }, { opacity: convAtual ? 1 : 0.5 }) } }))),
+                React.createElement(CampoDinheiroTDB, { value: convDescTxt, onChange: function (v) { setConvDesc(v); setConvEditado(true); }, extra: { placeholder: "R$ 0,00", disabled: !convAtual, inputMode: 'decimal', "aria-label": "Valor mensal do convênio em reais", style: Object.assign({}, inp, { flex: '1 1 90px', width: 'auto' }, { opacity: convAtual ? 1 : 0.5 }) } }))),
             React.createElement("div", { style: { borderRadius: 10, padding: '12px 14px', background: COLORS.greenBg, border: "1px solid rgba(28,158,143,.3)", textAlign: 'center' } }, React.createElement("div", { style: { fontSize: 22, fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", color: COLORS.green } }, formatBRLPrivado(valorFinal, escondido)), React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 } }, temConv ? "Valor com conv\u00EAnio" : "Valor proporcional"))),
-        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, "(", freq, " \u00F7 ", total, ") \u00D7 ", formatBRLPrivado(cheio, escondido), " = ", formatBRLPrivado(proporcional, escondido), temConv ? [" \u2212 ", convAtual.nome, " ", formatBRLPrivado(descAplicado, escondido), " = ", formatBRLPrivado(valorFinal, escondido), descConv > propArred ? " (desconto limitado ao valor proporcional)" : ""] : null));
+        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, "(", freq, " \u00F7 ", total, ") \u00D7 ", temConv ? [convAtual.nome, (baseConvTab && baseConvTab.grupo && !convEditado ? " " + baseConvTab.grupo : ""), " "] : "", formatBRLPrivado(temConv ? valorConv : cheio, escondido), " = ", formatBRLPrivado(temConv ? proporcionalConv : proporcional, escondido), temConv && baseConvTab && baseConvTab.origem === "nota" && !convEditado ? " (sem valor equivalente em Valores: valor cheio \u2212 nota)" : ""));
 }
 
 // ===================== SIMULADOR DE DESCONTO PERSONALIZADO (ferramenta avulsa) =====================
@@ -13741,6 +13743,23 @@ function TabelaMensalidades(_a) {
     })))))));
 }
 // Bolha "Conta proporcional" (Mensalidades): estado só local, nada é gravado.
+// Valor mensal do convênio escolhido, tirado da aba Valores: acha o grupo da Particular que bate com o valor cheio digitado (Integral, Meio turno...) e devolve o valor do MESMO grupo no convênio.
+// Se o valor cheio bateu com o preço "com desconto" usa o "com desconto" do convênio; senão o "sem desconto". Sem grupo equivalente: valor cheio − nota.
+function tdbBaseConvenio(fonte, kConv, cheio) {
+    try {
+        var conv = fonte && fonte[kConv]; if (!conv) return null;
+        var kPart = Object.keys(fonte).filter(function (k) { return fonte[k] && /^particular$/i.test(String(fonte[k].nome || '').trim()); })[0] || '';
+        var alvo = Number(cheio) || 0, titulo = '', lado = 'semDesconto', melhor = 1e9;
+        ((kPart && fonte[kPart].grupos) || []).forEach(function (g) { ['semDesconto', 'comDesconto'].forEach(function (c) { var dif = Math.abs((Number(g[c]) || 0) - alvo); if (dif < melhor) { melhor = dif; titulo = g.titulo; lado = c; } }); });
+        if (titulo && melhor < 60) {
+            var gc = (conv.grupos || []).filter(function (g) { return g.titulo === titulo; })[0];
+            if (gc && Number(gc[lado]) > 0) return { valor: Number(gc[lado]), origem: 'tabela', grupo: titulo };
+        }
+        var nota = Number(conv.nota) || 0;
+        if (alvo > 0 && nota > 0) return { valor: Math.max(0, Math.round((alvo - nota) * 100) / 100), origem: 'nota', grupo: '' };
+        return null;
+    } catch (e) { return null; }
+}
 function ContaProporcionalBolhaTDB(p) {
     var transacoes = p.transacoes || [];
     var tabela = p.tabelaValores || SEED_VALORES || {};
@@ -13799,21 +13818,22 @@ function ContaProporcionalBolhaTDB(p) {
         setConv(kConv && kConv !== kPart ? kConv : '');
     }
     var convAtual = listaConv.filter(function (c) { return c.k === conv; })[0] || null;
-    var nota = convAtual && tabela[convAtual.k] && tabela[convAtual.k].nota != null ? (Number(tabela[convAtual.k].nota) || 0) : 0;
-    var descShow = descEd ? descTxt : (nota > 0 ? formatBRLNumber(nota) : '');
     var total = Number(dl[mes]) > 0 ? Number(dl[mes]) : Math.floor(TDBFinance.num(totalManual));
     var df = Math.floor(TDBFinance.num(dias));
     var cheio = parseBRLInput(base);
-    var pronto = cheio > 0 && total > 0 && df > 0;
-    var prop = pronto ? Math.round((cheio * Math.min(df, total) / total) * 100) / 100 : 0;
+    var baseConv = convAtual ? tdbBaseConvenio(tabela, convAtual.k, cheio) : null;
+    var descShow = descEd ? descTxt : (baseConv && baseConv.valor > 0 ? formatBRLNumber(baseConv.valor) : '');
+    var valorConv = convAtual ? Math.max(0, parseBRLInput(descShow) || 0) : 0;
+    var baseCalc = valorConv > 0 ? valorConv : cheio;
+    var pronto = baseCalc > 0 && total > 0 && df > 0;
+    var prop = pronto ? Math.round((baseCalc * Math.min(df, total) / total) * 100) / 100 : 0;
     var propBruto = prop;
     var pc = avista ? Math.min(100, Math.max(0, parseBRLInput(pct) || 0)) : 0;
     if (pc) prop = Math.round(prop * (1 - pc / 100) * 100) / 100;
-    var descConv = convAtual ? Math.max(0, parseBRLInput(descShow) || 0) : 0;
-    var descAplic = Math.min(descConv, prop);
-    var valor = pronto ? Math.max(0, Math.round((prop - descAplic) * 100) / 100) : 0;
+    var valor = pronto ? Math.max(0, prop) : 0;
+    var nomeBase = valorConv > 0 ? (convAtual.nome + (baseConv && baseConv.grupo && !descEd ? ' ' + baseConv.grupo : '')) : '';
     var formula = pronto
-        ? formatBRL(cheio) + ' ÷ ' + total + ' dias × ' + Math.min(df, total) + ' dias = ' + formatBRL(propBruto) + (pc ? ' − ' + pc + '% à vista = ' + formatBRL(prop) : '') + (descAplic > 0 ? ' − ' + convAtual.nome + ' ' + formatBRL(descAplic) + ' = ' + formatBRL(valor) : '')
+        ? (nomeBase ? nomeBase + ' ' : '') + formatBRL(baseCalc) + ' ÷ ' + total + ' dias × ' + Math.min(df, total) + ' dias = ' + formatBRL(propBruto) + (pc ? ' − ' + pc + '% à vista = ' + formatBRL(prop) : '') + (baseConv && baseConv.origem === 'nota' && !descEd ? ' (sem valor equivalente em Valores: valor cheio − nota)' : '')
         : (total > 0 ? 'Informe o valor cheio e os dias frequentados para ver a conta.' : 'Cadastre os dias letivos de ' + (MESES_ABREV[mes] || '') + ' em Valores (Calendário letivo) ou digite aqui.');
     var lbl = { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 };
     var inp = { width: '100%', minWidth: 0, boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 10, padding: '0 11px', height: 38, fontSize: 13, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink };
@@ -13827,7 +13847,7 @@ function ContaProporcionalBolhaTDB(p) {
     }
     function usar() {
         if (!(valor > 0)) return;
-        if (p.onUsar) p.onUsar(valor, cheio);
+        if (p.onUsar) p.onUsar(valor, baseCalc);
         setAberto(false);
     }
     var resumoFechado = aluno ? aluno + (convAtual ? ' · ' + convAtual.nome : '') : 'entrou/saiu no meio do mês — escolha o aluno e calcule';
@@ -13849,8 +13869,8 @@ function ContaProporcionalBolhaTDB(p) {
                     React.createElement("label", { htmlFor: "tdbCpAvista", style: { fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: COLORS.ink } }, "aplicar"),
                     React.createElement("input", { value: pct, onChange: function (e) { setPct(e.target.value.replace(/[^0-9.,]/g, '')); }, disabled: !avista, inputMode: "decimal", className: "mono", "aria-label": "Percentual de desconto à vista", style: { width: 48, height: 26, border: '1px solid ' + COLORS.line, borderRadius: 8, textAlign: 'center', background: 'transparent', color: COLORS.ink, padding: 0, opacity: avista ? 1 : .45 } }), "%"), '1 1 190px'),
                 campo("CONVÊNIO", React.createElement("select", { value: convAtual ? conv : '', onChange: function (e) { setConv(e.target.value); setDescEd(false); setDescTxt(''); }, "aria-label": "Convênio", style: inp }, React.createElement("option", { value: "" }, "Sem convênio"), listaConv.map(function (c) { return React.createElement("option", { key: c.k, value: c.k }, c.nome); })), '1 1 150px'),
-                campo("DESCONTO DO CONVÊNIO (R$)", React.createElement(React.Fragment, null, React.createElement(CampoDinheiroTDB, { value: descShow, onChange: function (v) { setDescTxt(v); setDescEd(true); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", disabled: !convAtual, "aria-label": "Desconto do convênio em reais", style: Object.assign({}, inp, { opacity: convAtual ? 1 : .5 }) } }), convAtual && nota > 0 && descEd ? React.createElement("button", { type: "button", onClick: function () { setDescEd(false); setDescTxt(''); }, style: { justifySelf: 'start', border: 'none', borderRadius: 8, padding: '3px 8px', background: COLORS.goldSoft, color: COLORS.gold, fontWeight: 700, fontSize: 11, cursor: 'pointer' } }, "usar nota de Valores") : null), '1 1 170px')),
-            React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "O valor cheio é o da Particular; o convênio é descontado depois da conta proporcional (a nota vem de Valores). Se o valor cheio já vier com o convênio descontado, deixe o desconto do convênio vazio."),
+                campo("VALOR DO CONVÊNIO (R$)", React.createElement(React.Fragment, null, React.createElement(CampoDinheiroTDB, { value: descShow, onChange: function (v) { setDescTxt(v); setDescEd(true); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", disabled: !convAtual, "aria-label": "Valor mensal do convênio em reais", style: Object.assign({}, inp, { opacity: convAtual ? 1 : .5 }) } }), convAtual && baseConv && baseConv.valor > 0 && descEd ? React.createElement("button", { type: "button", onClick: function () { setDescEd(false); setDescTxt(''); }, style: { justifySelf: 'start', border: 'none', borderRadius: 8, padding: '3px 8px', background: COLORS.goldSoft, color: COLORS.gold, fontWeight: 700, fontSize: 11, cursor: 'pointer' } }, "usar valor de Valores") : null), '1 1 170px')),
+            React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Com convênio, a conta parte do valor do próprio convênio (da aba Valores, mesmo grupo do valor cheio) × dias frequentados ÷ dias letivos; o desconto à vista vem depois."),
             React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: COLORS.paperCard, border: '1px solid ' + COLORS.line, borderRadius: 14, padding: '10px 14px' } },
                 React.createElement("div", null, React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase' } }, "Valor a cobrar"), React.createElement("div", { className: "mono", style: { fontSize: 21, fontWeight: 800, color: COLORS.green } }, formatBRL(valor))),
                 React.createElement("div", { style: { flex: '1 1 220px', minWidth: 0, fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.5 } }, formula),
@@ -14191,7 +14211,9 @@ function Mensalidades(_a) {
         if(statusEdit==='Parcial' && (!(valorCheioFinal>valorFinal) || !(valorFinal>0))){mostrarToast('No pagamento parcial, informe o total devido e o valor já recebido, menor que o total.');return;}
         var nomeFinal = nomeEdit.trim();
         var categoriaFinal = nomeFinal ? (prefixoEdit + nomeFinal.toUpperCase()) : null;
-        editarLancamento(id, __assign({ quantidadeAlunos: Number(quantidadeEdit), valor: valorFinal, valorCheio: valorCheioFinal, status: statusEdit, banco: bancoEdit, pai: paiEdit, tirarNota: tirarNotaEdit, convenio: convenioEdit, data: dataEdit || null, ok: okEdit || null }, (categoriaFinal ? { categoria: categoriaFinal } : {})));
+        var __origEdit = transacoes.find(function (t) { return t.id === id; });
+        var __qtdAposEdicao = (categoriaFinal && __origEdit && categoriaFinal !== __origEdit.categoria) ? TDBFinance.children({ categoria: categoriaFinal }) : Number(quantidadeEdit);
+        editarLancamento(id, __assign({ quantidadeAlunos: __qtdAposEdicao, valor: valorFinal, valorCheio: valorCheioFinal, status: statusEdit, banco: bancoEdit, pai: paiEdit, tirarNota: tirarNotaEdit, convenio: convenioEdit, data: dataEdit || null, ok: okEdit || null }, (categoriaFinal ? { categoria: categoriaFinal } : {})));
         setEditandoId(null);
     }
     function submeterNovo(e) {
@@ -16563,7 +16585,9 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
  if(window.TDBMunicipioCB)return;
  var KEY='municipio_cb_v1';
  var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
- var FERIADOS=['01-01','02-16','02-17','04-03','04-21','05-01','06-04','09-07','10-12','11-02','11-15','12-25'];
+ var FERIADOS_FIXOS=['01-01','04-21','05-01','09-07','10-12','11-02','11-15','12-25'];
+ function pascoaDoAno(y){var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;return new Date(y,mes-1,dia);}
+ function feriadosDoAno(y){var p=pascoaDoAno(y),L=FERIADOS_FIXOS.slice();[-48,-47,-2,60].forEach(function(n){var x=new Date(p.getFullYear(),p.getMonth(),p.getDate()+n);L.push(String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'));});return L;}
  var ESC_LISTA=['JESSICKA E DIEGO ESCOLA INFANTIL','CNPJ: 22.978.931/0001-00','Rua: Ampélio Carlotto, 380 – Aurora Carlos Barbosa – RS','Telefone: 54 3461.6393','Email: escolatempodebrincarcb@gmail.com'];
  var ESC_FREQ=['ESCOLA INFANTIL TEMPO DE BRINCAR','Rua: Ampélio Carlotto nº 380 – Aurora','Carlos Barbosa -RS','Telefone: (54) 3461 6393','Email: escolatempodebrincarcb@gmail.com'];
  var SEED={"lista":[{"nome":"MURILO FONTOURA","end":"RUA 26 de Maio,  52 – Apto 10- Triângulo","nasc":"03/10/2025","ini":"09/03/2026","valor":"1.294,42"},{"nome":"LAUANA RIBEIRO CASTANHO","end":"Rua: Verona, 137 – Ponte Seca","nasc":"30/10/2024","ini":"08/09/2025","valor":"1.294,42"},{"nome":"MURILO BORGES GOSSENHEIMER","end":"Rua: Angelo Malvessi 1228 – Com. Sta Clara","nasc":"09/12/2024","ini":"09/06/2025","valor":"1.294,42"},{"nome":"HELENA GANDOLFI TRENTINI","end":"Rua João de Martini, 538 - Triângulo","nasc":"22/12/2024","ini":"09/06/2025","valor":"1.294,42"},{"nome":"LIA WERNER","end":"Rua Veneza, 36 - Centro","nasc":"26/02/2025","ini":"08/09/2025","valor":"1.294,42"},{"nome":"MATTEO HAEFLIGER. CANAL","end":"Rua Humberto Accorsi, 670-  Bela Vista","nasc":"26/02/2025","ini":"08/09/2025","valor":"1.294,42"},{"nome":"ELOÁ ADORNA MOCELLIN","end":"Rua 21 de abril, 659 – APT 103","nasc":"12/05/2025","ini":"08/12/2025","valor":"1.294,42"},{"nome":"LIZ PATZLAFF BIANCO","end":"Rua Irmã Teofânia, 880 – Triângulo","nasc":"10/05/2025","ini":"08/12/2025","valor":"1.294,42"},{"nome":"VALENTIM MARION DE CARMO","end":"Assis Brasil, 285 – AP 304- Centro","nasc":"05/06/2025","ini":"08/12/2025","valor":"1.294,42"},{"nome":"NATHALY RAVENNA SANÇÃO E SILVA","end":"Rua: Duque de Caxias, 330 - Aurora","nasc":"14/04/2025","ini":"08/12/2025","valor":"1.294,42"},{"nome":"CECÍLIA DALCIN KOLLING","end":"Rua Celeste Mafaciolli, 4245 - Torino","nasc":"30/05/2025","ini":"08/12/2025","valor":"1.294,42"},{"nome":"ELISA DOTTA DOLZAN","end":"Rua:Buarque de Macedo, 4192 – AP 506- Centro","nasc":"23/09/2025","ini":"08/06/2026","valor":"1.294,42"}],"freq":[{"nome":"CECÍLIA DALCIN KOLLING","c":[".",".",".",".",".","F",".",".",".",".",".",".",".",".",".",".",".",".",".","."],"f":""},{"nome":"ELOÁ ADORNA MOCELLIN","c":[".",".",".",".",".",".",".","",".",".",".",".",".",".",".",".",".",".",".","."],"f":""},{"nome":"HELENA GANDOLFI TRENTINI","c":[".","",".",".",".",".",".",".",".",".",".",".","",".",".",".",".",".",".","."],"f":""},{"nome":"LAUANA RIBEIRO CASTANHO","c":["","","","","","","","","","","","","","","","","","","",""],"f":""},{"nome":"LIA WERNER","c":[".",".",".",".",".",".",".",".",".",".",".",".",".","",".",".",".",".",".","."],"f":""},{"nome":"LIZ PATZLAFF BIANCO","c":[".",".","",".",".",".",".",".",".",".",".",".",".",".",".",".",".","",".","."],"f":""},{"nome":"MATTEO HAEFLIGER CANAL","c":[".","",".",".",".",".","F","F","F",".","F","F",".",".",".",".",".",".",".","."],"f":""},{"nome":"MURILO BORGES GOSSENHEIMER","c":[".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","","",""],"f":""},{"nome":"MURILO FONTOURA","c":[".",".",".",".",".",".",".",".",".",".",".",".",".","F",".",".","F",".",".","."],"f":""},{"nome":"NATHALY RAVENNA SANÇÃO E SILVA","c":[".",".",".",".",".",".",".",".",".",".","F","F","F",".",".",".",".",".",".","."],"f":""},{"nome":"VALENTIM MARION DE CARMO","c":["","",".",".",".",".",".","F",".",".",".",".",".",".",".",".",".",".",".","."],"f":""},{"nome":"ELISA DOTTA DOLZAN","c":[".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","."],"f":""}],"dias":["01/09","02/09","03/09","04/09","08/09","09/09","10/09","11/09","14/09","15/09","16/09","17/09","18/09","21/09","22/09","23/09","24/09","28/09","29/09","30/09"]};
@@ -16582,12 +16606,14 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
  function ANO(){return Number(window.__exercicioAtual)||new Date().getFullYear();}
  function clone(o){return JSON.parse(JSON.stringify(o));}
  function nid(){return 'mcb'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+ function encerrado(){return !!window.__exercicioSomenteLeitura&&Number(window.__anoSomenteLeitura)===ANO();}
+ function avisarEncerrado(){var t=Date.now();if(S.avisoEnc&&t-S.avisoEnc<1500)return true;S.avisoEnc=t;try{window.dispatchEvent(new CustomEvent('painel:exercicio-bloqueado',{detail:{ano:ANO(),mensagem:'O exercício '+ANO()+' está ENCERRADO e protegido contra alterações.\n\nConsulta, pesquisa, relatórios e exportações continuam liberados.'}}));}catch(e){}return true;}
  function toast(msg){
   var old=document.querySelector('.mcb-toast');if(old)old.remove();
   var t=document.createElement('div');t.className='mcb-toast';t.setAttribute('data-export-ignore','true');t.textContent=msg;document.body.appendChild(t);
   clearTimeout(S.toastT);S.toastT=setTimeout(function(){t.remove();},3600);
  }
- function diasUteis(i){var out=[],n=new Date(ANO(),i+1,0).getDate();for(var d=1;d<=n;d++){var w=new Date(ANO(),i,d).getDay();if(w===0||w===6)continue;if(FERIADOS.indexOf(pad(i+1)+'-'+pad(d))>=0)continue;out.push(pad(d)+'/'+pad(i+1));}return out;}
+ function diasUteis(i){var FERIADOS=feriadosDoAno(ANO()),out=[],n=new Date(ANO(),i+1,0).getDate();for(var d=1;d<=n;d++){var w=new Date(ANO(),i,d).getDay();if(w===0||w===6)continue;if(FERIADOS.indexOf(pad(i+1)+'-'+pad(d))>=0)continue;out.push(pad(d)+'/'+pad(i+1));}return out;}
  function diaSem(s){var m=/^(\d{1,2})\/(\d{1,2})/.exec(s||'');if(!m)return '';return ['dom','seg','ter','qua','qui','sex','sáb'][new Date(ANO(),+m[2]-1,+m[1]).getDay()]||'';}
 
  /* ---------- dados ---------- */
@@ -16912,7 +16938,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
  function focoRen(){if(!S.ren||!S.host)return;var i=S.host.querySelector('#mcb-ren');if(i){try{i.focus();i.select();}catch(e){}}}
  function confirmarRen(){
   var id=S.ren;if(!id)return;var i=S.host&&S.host.querySelector('#mcb-ren'),d=anoObj().docs[id];S.ren=null;
-  if(i&&d&&!S.erro){var n=i.value.trim();if(n&&n!==d.nome){d.nome=n;touch();toast('✓ Nome alterado');}}
+  if(i&&d&&!S.erro&&!encerrado()){var n=i.value.trim();if(n&&n!==d.nome){d.nome=n;touch();toast('✓ Nome alterado');}}
   render();
  }
  function refreshDerived(){
@@ -16944,6 +16970,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   var el=e.target,s=el.getAttribute&&el.getAttribute('data-s');if(!s)return;
   var d=curDoc();if(!d)return;var m=mes(d,S.mi),f=el.getAttribute('data-f'),r=m.rows[+el.getAttribute('data-r')];
   if(S.erro)return;
+  if(encerrado()){avisarEncerrado();setTimeout(render,0);return;}
   if(s==='docnome'){d.nome=el.value;var c=S.host.querySelector('.mcb-chip.on');if(c){var sm=c.querySelector('small');c.textContent=d.nome||'(sem nome)';if(sm)c.appendChild(sm);}touch();return;}
   if(s==='esc')d.escola[+f]=el.value;
   else if(s==='mes')m[f]=el.value;
@@ -16955,7 +16982,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   touch();repaintPv();refreshDerived();
  }
  function onFocusOut(e){
-  var el=e.target,s=el.getAttribute&&el.getAttribute('data-s');if(!s||S.erro)return;
+  var el=e.target,s=el.getAttribute&&el.getAttribute('data-s');if(!s||S.erro||encerrado())return;
   var d=curDoc();if(!d)return;var m=mes(d,S.mi),f=el.getAttribute('data-f');
   if(s==='row'&&f==='valor'&&el.value.trim()){var r=m.rows[+el.getAttribute('data-r')];if(r){el.value=fBR(pBR(el.value));r.valor=el.value;touch();repaintPv();refreshDerived();}}
   else if(s==='vp'){if(el.value.trim()){el.value=fBR(pBR(el.value));m.rows.forEach(function(x){if(!x.valor)x.valor=el.value;});m.valorPadrao=el.value;}touch();syncInputs();repaintPv();refreshDerived();}
@@ -17035,6 +17062,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   var b=e.target.closest&&e.target.closest('[data-act]');
   if(!b){if(S.menu&&!(e.target.closest&&e.target.closest('.mcb-menu'))){S.menu=null;render();}return;}
   var a=b.getAttribute('data-act'),d=curDoc();
+  if(encerrado()&&['ren','renok','add','cell','delrow','delDoc','delTodos','copiar','delcol','addcol','addL','addF'].indexOf(a)>=0){avisarEncerrado();return;}
   if(a==='ren'){e.stopPropagation();if(!S.erro){S.ren=b.getAttribute('data-id');render();}return;}
   if(a==='renok'){confirmarRen();return;}
   if(a==='renno'){S.ren=null;render();return;}
@@ -17043,7 +17071,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   if(a==='cell'){if(!d||S.erro)return;var m=mes(d,S.mi),r=m.rows[+b.getAttribute('data-r')],j=+b.getAttribute('data-c');if(!r)return;while(r.c.length<m.dias.length)r.c.push('');var ord=['.','F','FE',''];r.c[j]=ord[(ord.indexOf(r.c[j])+1)%4];touch();render();return;}
   if(a==='doc'){
    var cid=b.getAttribute('data-id'),agora=Date.now();
-   if(S.ultChip&&S.ultChip.id===cid&&agora-S.ultChip.t<600){S.ultChip=null;if(!S.erro){S.cur=cid;S.ren=cid;render();}return;}
+   if(S.ultChip&&S.ultChip.id===cid&&agora-S.ultChip.t<600){S.ultChip=null;if(!S.erro&&!encerrado()){S.cur=cid;S.ren=cid;render();}return;}
    S.ultChip={id:cid,t:agora};
    if(cid===S.cur&&!S.menu)return;
    S.cur=cid;S.menu=null;S.abertas={};render();}
@@ -17056,7 +17084,14 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   else if(a==='delDoc'){excluirDoc();}
   else if(a==='delTodos'){excluirTodos();}
   else if(a==='copiar'){copiarAnterior();}
-  else if(a==='delcol'){if(!d||S.erro)return;var m2=mes(d,S.mi),j2=+b.getAttribute('data-c');m2.dias.splice(j2,1);m2.rows.forEach(function(r){if(r.c)r.c.splice(j2,1);});touch();render();}
+  else if(a==='delcol'){if(!d||S.erro)return;var m2=mes(d,S.mi),j2=+b.getAttribute('data-c'),dia2=m2.dias[j2];if(dia2==null)return;
+   if(!window.confirm('Mover o dia '+dia2+' (com as marcações de todos os alunos nele) para a lixeira?\n\nVocê poderá restaurar depois (menu ⚙ › Lixeira).'))return;
+   var base2=['anos',String(ANO()),'docs',d.id,'meses',String(S.mi)];
+   var ops2=[{op:'insert',key:KEY,path:base2.concat(['dias']),index:j2,item:dia2}];
+   m2.rows.forEach(function(r,i2){if(r.c)ops2.push({op:'insert',key:KEY,path:base2.concat(['rows',String(i2),'c']),index:j2,item:r.c[j2]==null?'':r.c[j2]});});
+   paraLixeira('Dia '+dia2+' · '+(d.nome||''),'Município CB · '+(d.nome||'')+' · '+MESES[S.mi]+' · Dia',ops2).then(function(){
+    m2.dias.splice(j2,1);m2.rows.forEach(function(r){if(r.c)r.c.splice(j2,1);});touch();salvar(true);render();toast('✓ Dia movido para a lixeira (menu ⚙ › Lixeira)');
+   }).catch(falhaLixeira);}
   else if(a==='addcol'){
    if(!d||S.erro)return;var m3=mes(d,S.mi),inp=S.host.querySelector('#mcb-aD'),iso=inp&&inp.value;
    if(!iso){toast('Escolha o dia no calendário.');return;}
@@ -17069,7 +17104,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   else if(a==='addF'){if(!d||S.erro)return;var m5=mes(d,S.mi);m5.rows.push({nome:'',c:Array(m5.dias.length).fill(''),f:''});S.abertas[itemKey(d,m5.rows.length-1)]=1;touch();render();toast('✓ Aluno adicionado. Escreva o nome.');}
  }
  function onDbl(e){
-  var c=e.target.closest&&e.target.closest('.mcb-chip');if(!c||S.erro||c.classList.contains('mcb-chip-ed'))return;
+  var c=e.target.closest&&e.target.closest('.mcb-chip');if(!c||S.erro||c.classList.contains('mcb-chip-ed'))return;if(encerrado()){avisarEncerrado();return;}
   S.ren=c.getAttribute('data-id');render();
  }
  function onRenKey(e){
