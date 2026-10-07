@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261007-tempo1-v27";
+    window.__TDB_BUILD = "tdbn-20261007-tempo1-v28";
   </script>
-  <script src="./config.js?build=tdbn-20261007-tempo1-v27"></script>
+  <script src="./config.js?build=tdbn-20261007-tempo1-v28"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261007-tempo1-v27"></script>
+  <script src="./sync.js?build=tdbn-20261007-tempo1-v28"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v27-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v28-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7183,10 +7183,13 @@ function DiasProporcionaisCalc(_a) {
     var listaConv = Object.keys(fonteConv || {}).filter(function (k) { var g = fonteConv[k]; return g && g.nome && k !== 'particular' && !/^particular$/i.test(String(g.nome).trim()); }).map(function (k) { return { k: k, nome: String(fonteConv[k].nome) }; });
     var convAtual = listaConv.filter(function (c) { return c.k === convSel; })[0] || null;
     var _cvE = useState(false), convEditado = _cvE[0], setConvEditado = _cvE[1];
-    var valorConv = Math.max(0, parseBRLInput(convDesc) || 0);
-    var temConv = valorConv > 0;
-    var proporcionalConv = temConv && total > 0 ? Math.round((valorConv * freq / total) * 100) / 100 : 0;
-    var valorFinal = temConv ? proporcionalConv : proporcional;
+    var _dm = useState('0'), descModo = _dm[0], setDescModo = _dm[1];
+    var _do = useState(''), descOutro = _do[0], setDescOutro = _do[1];
+    var pcRap = descModo === '5' ? 5 : (descModo === '10' ? 10 : (descModo === 'outro' ? Math.min(100, Math.max(0, parseFloat(String(descOutro).replace(',', '.')) || 0)) : 0));
+    function r2(x) { return Math.round(Math.round(x * 100 * 1e6) / 1e6) / 100; }
+    var propRap = r2(proporcional);
+    var temConv = pcRap > 0;
+    var valorFinal = temConv ? r2(propRap * (1 - pcRap / 100)) : propRap;
     var escondido = modoPrivado || oculto;
     var lbl = { fontSize: 10.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: 3, display: 'block' };
     var inp = { width: '100%', border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, fontFamily: "'IBM Plex Mono', monospace", boxSizing: 'border-box' };
@@ -7197,9 +7200,9 @@ function DiasProporcionaisCalc(_a) {
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias letivos no m\u00EAs"), React.createElement("input", { value: diasTotal, onChange: function (e) { return setDiasTotal(e.target.value); }, type: "number", style: inp })),
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Dias frequentados"), React.createElement("input", { value: diasFreq, onChange: function (e) { return setDiasFreq(e.target.value); }, type: "number", style: inp })),
             React.createElement("div", null, React.createElement("label", { style: lbl }, "Valor mensalidade cheia (R$)"), React.createElement(CampoDinheiroTDB, { value: valorCheio, onChange: setValorCheio, extra: { style: inp, inputMode: "decimal", "aria-label": "Valor da mensalidade cheia" } })),
-            React.createElement("div", { style: {} }, React.createElement("label", { style: lbl }, "Convênio (valor do mês, R$)"), React.createElement(CampoDinheiroTDB, { value: convDesc, onChange: setConvDesc, extra: { placeholder: "digite se tiver convênio", inputMode: "decimal", "aria-label": "Valor mensal do convênio em reais", style: inp } })),
-            React.createElement("div", { style: { borderRadius: 10, padding: '12px 14px', background: COLORS.greenBg, border: "1px solid rgba(28,158,143,.3)", textAlign: 'center' } }, React.createElement("div", { style: { fontSize: 22, fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", color: COLORS.green } }, formatBRLPrivado(valorFinal, escondido)), React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 } }, temConv ? "Valor com conv\u00EAnio" : "Valor proporcional"))),
-        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, "(", freq, " \u00F7 ", total, ") \u00D7 ", temConv ? ["Convênio "] : "", formatBRLPrivado(temConv ? valorConv : cheio, escondido), " = ", formatBRLPrivado(temConv ? proporcionalConv : proporcional, escondido),""));
+            React.createElement("div", { style: {} }, React.createElement("label", { style: lbl }, "Desconto"), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, React.createElement("select", { value: descModo, onChange: function (e) { setDescModo(e.target.value); }, "aria-label": "Desconto", style: Object.assign({}, inp, { fontFamily: 'inherit' }, { flex: '1 1 130px', width: 'auto' }) }, React.createElement("option", { value: '0' }, "Sem desconto"), React.createElement("option", { value: '5' }, "5%"), React.createElement("option", { value: '10' }, "10%"), React.createElement("option", { value: 'outro' }, "Outro %")), descModo === 'outro' ? React.createElement("input", { value: descOutro, onChange: function (e) { setDescOutro(e.target.value.replace(/[^0-9.,]/g, '')); }, inputMode: 'decimal', placeholder: "ex: 7,5", "aria-label": "Percentual de desconto", style: Object.assign({}, inp, { flex: '1 1 90px', width: 'auto' }) }) : null)),
+            React.createElement("div", { style: { borderRadius: 10, padding: '12px 14px', background: COLORS.greenBg, border: "1px solid rgba(28,158,143,.3)", textAlign: 'center' } }, React.createElement("div", { style: { fontSize: 22, fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace", color: COLORS.green } }, formatBRLPrivado(valorFinal, escondido)), React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', marginTop: 2 } }, temConv ? "Valor com desconto" : "Valor proporcional"))),
+        React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, marginTop: 8, fontFamily: "'IBM Plex Mono', monospace" } }, "(", freq, " \u00F7 ", total, ") \u00D7 ", formatBRLPrivado(cheio, escondido), " = ", formatBRLPrivado(propRap, escondido), temConv ? [" \u2212 ", String(pcRap).replace('.', ','), "% = ", formatBRLPrivado(valorFinal, escondido)] : ""));
 }
 
 // ===================== SIMULADOR DE DESCONTO PERSONALIZADO (ferramenta avulsa) =====================
@@ -13738,22 +13741,14 @@ function TabelaMensalidades(_a) {
             } }, React.createElement(Trash2, { size: 12, color: COLORS.red })))))), null));
     })))))));
 }
-// Bolha "Conta proporcional" (Mensalidades): estado só local, nada é gravado.
+// Bolha "Conta proporcional" (Mensalidades): calculadora simples. Não busca aluno, convênio nem valores em lugar nenhum; estado só local, nada é gravado.
 function ContaProporcionalBolhaTDB(p) {
-    var transacoes = p.transacoes || [];
-    var tabela = p.tabelaValores || SEED_VALORES || {};
-    var mes = p.mes;
-    var dl = p.diasLetivos || {};
     var _a = useState(false), aberto = _a[0], setAberto = _a[1];
-    var _b = useState(''), aluno = _b[0], setAluno = _b[1];
-    var _c = useState(''), base = _c[0], setBase = _c[1];
-    var _d = useState(''), conv = _d[0], setConv = _d[1];
-    var _e = useState(''), descTxt = _e[0], setDescTxt = _e[1];
-    var _f = useState(false), descEd = _f[0], setDescEd = _f[1];
-    var _g = useState(''), dias = _g[0], setDias = _g[1];
-    var _h = useState(false), avista = _h[0], setAvista = _h[1];
-    var _i = useState('5'), pct = _i[0], setPct = _i[1];
-    var _j = useState(''), totalManual = _j[0], setTotalManual = _j[1];
+    var _b = useState(''), base = _b[0], setBase = _b[1];
+    var _c = useState(''), totalTxt = _c[0], setTotalTxt = _c[1];
+    var _d = useState(''), dias = _d[0], setDias = _d[1];
+    var _e = useState('0'), modo = _e[0], setModo = _e[1];
+    var _f = useState(''), outro = _f[0], setOutro = _f[1];
     var _k = useState(false), copiado = _k[0], setCopiado = _k[1];
     var ref = useRef(null);
     useEffect(function () {
@@ -13768,47 +13763,22 @@ function ContaProporcionalBolhaTDB(p) {
         document.addEventListener('keydown', tecla);
         return function () { document.removeEventListener('click', fora); document.removeEventListener('keydown', tecla); };
     }, [aberto]);
-    var ultimos = useMemo(function () {
-        var m = {};
-        transacoes.forEach(function (t) {
-            if (!t || t.tipo !== 'Entrada' || !String(t.categoria || '').startsWith('Mensalidade - ')) return;
-            var n = nomeExibicao(t.categoria);
-            var ant = m[n];
-            if (!ant || String(t.data || '') > String(ant.data || '') || (String(t.data || '') === String(ant.data || '') && (t.id || 0) > (ant.id || 0))) m[n] = t;
-        });
-        return m;
-    }, [transacoes]);
-    var nomes = Object.keys(ultimos).sort(function (x, y) { return x.localeCompare(y, 'pt-BR'); });
-    var chaves = Object.keys(tabela || {});
-    var kPart = chaves.filter(function (k) { return tabela[k] && /^particular$/i.test(String(tabela[k].nome || '').trim()); })[0] || '';
-    var listaConv = chaves.filter(function (k) { return tabela[k] && tabela[k].nome && k !== kPart; }).map(function (k) { return { k: k, nome: String(tabela[k].nome) }; });
-    function escolherAluno(nome) {
-        setAluno(nome); setDescEd(false); setDescTxt('');
-        var t = ultimos[nome];
-        if (!t) { setBase(''); return; }
-        var alvo = Number(t.valorCheio) > 0 ? Number(t.valorCheio) : (Number(t.valor) || 0);
-        setBase(alvo > 0 ? formatBRLNumber(alvo) : '');
-    }
-    var convAtual = listaConv.filter(function (c) { return c.k === conv; })[0] || null;
-    var total = Number(dl[mes]) > 0 ? Number(dl[mes]) : Math.floor(TDBFinance.num(totalManual));
+    var total = Math.floor(TDBFinance.num(totalTxt));
     var df = Math.floor(TDBFinance.num(dias));
     var cheio = parseBRLInput(base);
-    var valorConv = Math.max(0, parseBRLInput(descTxt) || 0);
-    var baseCalc = valorConv > 0 ? valorConv : cheio;
-    var pronto = baseCalc > 0 && total > 0 && df > 0;
-    var prop = pronto ? Math.round((baseCalc * Math.min(df, total) / total) * 100) / 100 : 0;
-    var propBruto = prop;
-    var pc = avista ? Math.min(100, Math.max(0, parseBRLInput(pct) || 0)) : 0;
-    if (pc) prop = Math.round(prop * (1 - pc / 100) * 100) / 100;
-    var valor = pronto ? Math.max(0, prop) : 0;
-    var nomeBase = valorConv > 0 ? 'Convênio' : '';
+    var pronto = cheio > 0 && total > 0 && df > 0;
+    var diasUsados = Math.min(df, total);
+    function r2(x) { return Math.round(Math.round(x * 100 * 1e6) / 1e6) / 100; }
+    var prop = pronto ? r2(cheio * diasUsados / total) : 0;
+    var pc = modo === '5' ? 5 : (modo === '10' ? 10 : (modo === 'outro' ? Math.min(100, Math.max(0, parseFloat(String(outro).replace(',', '.')) || 0)) : 0));
+    var valor = pronto ? (pc ? r2(prop * (1 - pc / 100)) : prop) : 0;
     var formula = pronto
-        ? (nomeBase ? nomeBase + ' ' : '') + formatBRL(baseCalc) + ' ÷ ' + total + ' dias × ' + Math.min(df, total) + ' dias = ' + formatBRL(propBruto) + (pc ? ' − ' + pc + '% à vista = ' + formatBRL(prop) : '')
-        : (total > 0 ? 'Informe o valor cheio e os dias frequentados para ver a conta.' : 'Cadastre os dias letivos de ' + (MESES_ABREV[mes] || '') + ' em Valores (Calendário letivo) ou digite aqui.');
+        ? formatBRL(cheio) + ' ÷ ' + total + ' dias × ' + diasUsados + ' dias = ' + formatBRL(prop) + (pc ? ' − ' + String(pc).replace('.', ',') + '% = ' + formatBRL(valor) : '')
+        : 'Digite o valor da mensalidade, os dias letivos e os dias frequentados.';
     var lbl = { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 800 };
     var inp = { width: '100%', minWidth: 0, boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 10, padding: '0 11px', height: 38, fontSize: 13, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink };
     function campo(rotulo, filho, flex) { return React.createElement("div", { style: { display: 'grid', gap: 4, flex: flex || '1 1 140px', minWidth: 0, alignContent: 'start' } }, React.createElement("label", { style: lbl }, rotulo), filho); }
-    function limpar() { setAluno(''); setBase(''); setConv(''); setDescEd(false); setDescTxt(''); setDias(''); setAvista(false); setPct('5'); setTotalManual(''); }
+    function limpar() { setBase(''); setTotalTxt(''); setDias(''); setModo('0'); setOutro(''); }
     function copiar() {
         if (!(valor > 0)) return;
         var txt = formatBRLNumber(valor);
@@ -13817,10 +13787,10 @@ function ContaProporcionalBolhaTDB(p) {
     }
     function usar() {
         if (!(valor > 0)) return;
-        if (p.onUsar) p.onUsar(valor, baseCalc);
+        if (p.onUsar) p.onUsar(valor, cheio);
         setAberto(false);
     }
-    var resumoFechado = aluno ? aluno + (convAtual ? ' · ' + convAtual.nome : '') : 'entrou/saiu no meio do mês — escolha o aluno e calcule';
+    var resumoFechado = 'entrou/saiu no meio do mês — calcule o valor proporcional';
     return React.createElement("div", { ref: ref, className: "busca-liquid-glass tdb-conta-prop", 'data-export-ignore': true, style: { borderRadius: 18, boxShadow: aberto ? 'inset 0 0 0 1.5px ' + COLORS.inkButton : undefined } },
         React.createElement("button", { type: "button", 'aria-expanded': aberto, onClick: function () { setAberto(function (v) { return !v; }); }, style: { display: 'flex', alignItems: 'center', gap: 10, width: '100%', border: 'none', background: 'transparent', color: COLORS.ink, cursor: 'pointer', padding: '12px 16px', textAlign: 'left', fontFamily: 'inherit' } },
             React.createElement("span", { style: { width: 32, height: 32, borderRadius: 11, background: 'rgba(40,120,222,.12)', color: '#2878de', display: 'grid', placeItems: 'center', flex: '0 0 auto' } }, React.createElement("svg", { viewBox: "0 0 24 24", width: 17, height: 17, fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, React.createElement("rect", { x: 5, y: 3, width: 14, height: 18, rx: 3 }), React.createElement("path", { d: "M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01" }))),
@@ -13829,17 +13799,15 @@ function ContaProporcionalBolhaTDB(p) {
             React.createElement("span", { style: { width: 34, height: 34, borderRadius: '50%', background: aberto ? 'rgba(40,120,222,.16)' : COLORS.paperCard, boxShadow: '0 3px 10px rgba(30,40,60,.10)', display: 'grid', placeItems: 'center', color: '#2878de', flex: '0 0 auto', transition: 'transform .2s, background .2s', transform: aberto ? 'rotate(180deg)' : 'none' } }, React.createElement("svg", { viewBox: "0 0 24 24", width: 20, height: 20, fill: "none", stroke: "currentColor", strokeWidth: 2.6, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, React.createElement("path", { d: "m6 9 6 6 6-6" })))),
         aberto && React.createElement("div", { style: { display: 'grid', gap: 12, padding: '2px 16px 16px' } },
             React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' } },
-                campo("ALUNO", React.createElement("select", { value: aluno, onChange: function (e) { escolherAluno(e.target.value); }, style: inp }, React.createElement("option", { value: "" }, "— Conta avulsa (sem aluno) —"), nomes.map(function (n) { return React.createElement("option", { key: n, value: n }, n); })), '2 1 230px'),
-                campo("VALOR CHEIO DO MÊS", React.createElement(CampoDinheiroTDB, { value: base, onChange: setBase, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", "aria-label": "Valor cheio do mês", style: inp } }), '1 1 150px'),
-                campo("DIAS LETIVOS (" + (MESES_ABREV[mes] || '').toUpperCase() + ")", Number(dl[mes]) > 0 ? React.createElement("input", { value: String(dl[mes]), readOnly: true, className: "mono", style: Object.assign({}, inp, { opacity: .8 }) }) : React.createElement("input", { value: totalManual, onChange: function (e) { setTotalManual(e.target.value.replace(/[^0-9]/g, '')); }, inputMode: "numeric", placeholder: "ex: 20", className: "mono", style: inp }), '1 1 110px'),
-                campo("DIAS FREQUENTADOS", React.createElement("input", { value: dias, onChange: function (e) { setDias(e.target.value.replace(/[^0-9]/g, '')); }, inputMode: "numeric", placeholder: "ex: 12", className: "mono", "aria-label": "Dias frequentados", style: inp }), '1 1 110px')),
+                campo("VALOR DA MENSALIDADE (R$)", React.createElement(CampoDinheiroTDB, { value: base, onChange: setBase, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", "aria-label": "Valor da mensalidade", style: inp } }), '1 1 190px'),
+                campo("DIAS LETIVOS NO MÊS", React.createElement("input", { value: totalTxt, onChange: function (e) { setTotalTxt(e.target.value.replace(/[^0-9]/g, '')); }, inputMode: "numeric", placeholder: "ex: 22", className: "mono", "aria-label": "Dias letivos no mês", style: inp }), '1 1 130px'),
+                campo("DIAS FREQUENTADOS", React.createElement("input", { value: dias, onChange: function (e) { setDias(e.target.value.replace(/[^0-9]/g, '')); }, inputMode: "numeric", placeholder: "ex: 12", className: "mono", "aria-label": "Dias frequentados", style: inp }), '1 1 130px')),
             React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' } },
-                campo("DESCONTO À VISTA", React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8, height: 38, border: '1px solid ' + COLORS.line, borderRadius: 10, padding: '0 11px', background: COLORS.paperCard, boxSizing: 'border-box' } },
-                    React.createElement("input", { type: "checkbox", id: "tdbCpAvista", checked: avista, onChange: function (e) { setAvista(e.target.checked); }, style: { width: 16, height: 16, margin: 0, cursor: 'pointer' } }),
-                    React.createElement("label", { htmlFor: "tdbCpAvista", style: { fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: COLORS.ink } }, "aplicar"),
-                    React.createElement("input", { value: pct, onChange: function (e) { setPct(e.target.value.replace(/[^0-9.,]/g, '')); }, disabled: !avista, inputMode: "decimal", className: "mono", "aria-label": "Percentual de desconto à vista", style: { width: 48, height: 26, border: '1px solid ' + COLORS.line, borderRadius: 8, textAlign: 'center', background: 'transparent', color: COLORS.ink, padding: 0, opacity: avista ? 1 : .45 } }), "%"), '1 1 190px'),
-                campo("CONVÊNIO (VALOR DO MÊS, R$)", React.createElement(CampoDinheiroTDB, { value: descTxt, onChange: function (v) { setDescTxt(v); }, extra: { inputMode: "decimal", placeholder: "digite se tiver convênio", className: "mono", "aria-label": "Valor mensal do convênio em reais", style: inp } }), '1 1 220px')),
-            React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Sem convênio, a conta parte do valor cheio. Se tiver convênio, digite no campo Convênio o valor mensal dele: a conta parte desse valor × dias frequentados ÷ dias letivos; o desconto à vista vem depois."),
+                campo("DESCONTO", React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                    React.createElement("select", { value: modo, onChange: function (e) { setModo(e.target.value); }, "aria-label": "Desconto", style: Object.assign({}, inp, { flex: '1 1 150px', width: 'auto' }) },
+                        React.createElement("option", { value: "0" }, "Sem desconto"), React.createElement("option", { value: "5" }, "5%"), React.createElement("option", { value: "10" }, "10%"), React.createElement("option", { value: "outro" }, "Outro %")),
+                    modo === 'outro' ? React.createElement("input", { value: outro, onChange: function (e) { setOutro(e.target.value.replace(/[^0-9.,]/g, '')); }, inputMode: "decimal", placeholder: "ex: 7,5", className: "mono", "aria-label": "Percentual de desconto", style: Object.assign({}, inp, { flex: '1 1 90px', width: 'auto' }) }) : null), '1 1 280px')),
+            React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Calculadora simples: valor da mensalidade × dias frequentados ÷ dias letivos. O desconto só entra se você escolher 5%, 10% ou outro percentual. Se o aluno tem convênio, digite o valor mensal do convênio no campo da mensalidade."),
             React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', background: COLORS.paperCard, border: '1px solid ' + COLORS.line, borderRadius: 14, padding: '10px 14px' } },
                 React.createElement("div", null, React.createElement("div", { style: { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase' } }, "Valor a cobrar"), React.createElement("div", { className: "mono", style: { fontSize: 21, fontWeight: 800, color: COLORS.green } }, formatBRL(valor))),
                 React.createElement("div", { style: { flex: '1 1 220px', minWidth: 0, fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.5 } }, formula),
