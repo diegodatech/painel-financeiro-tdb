@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v50";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v51";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v50"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v51"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v50"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v51"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v50-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v51-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2626,6 +2626,19 @@ function NotasFiscaisTDB(_a) {
         clearTimeout(timers.current[chave]);
         timers.current[chave] = setTimeout(function () { delete timers.current[chave]; gravar(chave, dadosDe(chave)); }, 450);
     }
+    // Marcações rápidas (caixas de Recibo/Boleto/Ativo): junta os cliques e só grava quando o Drive já confirmou a gravação anterior,
+    // para duas gravações seguidas do mesmo registro não "brigarem" entre si na sincronização.
+    function agendarSeguro(chave) {
+        if (erroLeitura) return;
+        clearTimeout(timers.current[chave]);
+        var t0 = Date.now();
+        function tentar() {
+            if (Number(window.__pendenciasSync || 0) > 0 && Date.now() - t0 < 8000) { timers.current[chave] = setTimeout(tentar, 400); return; }
+            delete timers.current[chave]; gravar(chave, dadosDe(chave));
+        }
+        timers.current[chave] = setTimeout(tentar, 700);
+    }
+    useEffect(function () { var f = function () { if (!erroLeitura) descarregar(); }; window.addEventListener('pagehide', f); return function () { window.removeEventListener('pagehide', f); }; }, [erroLeitura]);
     function descarregar() {
         Object.keys(timers.current).forEach(function (k) { clearTimeout(timers.current[k]); delete timers.current[k]; gravar(k, dadosDe(k)); });
     }
@@ -3047,10 +3060,10 @@ function NotasFiscaisTDB(_a) {
                     (nfTemBoleto(d.aluno) ? ['recibo', 'boleto'] : ['recibo']).map(function (k) {
                         var lista = emEd ? (d.anexos || []) : nfAnexosDe(c), marc = lista.indexOf(k) >= 0;
                         return h('label', { key: k, style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } },
-                            h('input', { type: 'checkbox', checked: marc, 'aria-label': 'Enviar ' + k + ' junto', onChange: function (e) { var nova = e.target.checked ? lista.concat([k]) : lista.filter(function (x) { return x !== k; }); if (emEd) alterarDraft('anexos', nova); else { editarConv(c.id, 'anexos', nova); descarregar(); } }, style: { width: 16, height: 16, accentColor: '#2878de' } }), NF_ROTULO_TIPO[k]);
+                            h('input', { type: 'checkbox', checked: marc, 'aria-label': 'Enviar ' + k + ' junto', onChange: function (e) { var nova = e.target.checked ? lista.concat([k]) : lista.filter(function (x) { return x !== k; }); if (emEd) alterarDraft('anexos', nova); else { editarConv(c.id, 'anexos', nova); agendarSeguro(NF_KEY_CONV); } }, style: { width: 16, height: 16, accentColor: '#2878de' } }), NF_ROTULO_TIPO[k]);
                     }))),
                 fimLinha(
-                  h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: (emEd && ed.novo ? d.ativo : c.ativo) !== false, 'aria-label': 'Ativo', onChange: function (e) { if (emEd && ed.novo) alterarDraft('ativo', e.target.checked); else { if (ehConv) editarConv(c.id, 'ativo', e.target.checked); else editarCad(c.id, 'ativo', e.target.checked); descarregar(); } }, style: { width: 18, height: 18, accentColor: '#2878de' } }), MOB ? 'Ativo' : ''),
+                  h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: (emEd && ed.novo ? d.ativo : c.ativo) !== false, 'aria-label': 'Ativo', onChange: function (e) { if (emEd && ed.novo) alterarDraft('ativo', e.target.checked); else { if (ehConv) { editarConv(c.id, 'ativo', e.target.checked); agendarSeguro(NF_KEY_CONV); } else { editarCad(c.id, 'ativo', e.target.checked); agendarSeguro(NF_KEY_CAD); } } }, style: { width: 18, height: 18, accentColor: '#2878de' } }), MOB ? 'Ativo' : ''),
                   acoesLinha(emEd, function () { iniciarEdicao(tipo, c); }, function () { if (ehConv) removerConvenio(c); else removerAluno(c); }, ehConv ? 'Editar convênio' : 'Editar aluno', ehConv ? 'Excluir convênio' : 'Excluir aluno')
                 ));
         });
