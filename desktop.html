@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v58";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v59";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v58"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v59"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v58"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v59"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v58-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v59-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2441,6 +2441,28 @@ function NotasFiscaisTDB(_a) {
         salvarNotas(atual); setMarcadas(function (p) { var o = Object.assign({}, p); Object.keys(ids).forEach(function (k) { delete o[k]; }); return o; });
         toast(lista.length + (lista.length === 1 ? ' nota enviada movida' : ' notas enviadas movidas') + ' para a lixeira.');
     }
+    // Excluir várias notas pendentes de uma vez (vão para a lixeira, como a exclusão uma a uma). Notas já enviadas saem por "Limpar enviadas".
+    function excluirNotas(ids, rotulo) {
+        var lista = notasRef.current.filter(function (n) { return ids[n.id] && n.mes === mesKey && !n.enviadaEm; });
+        if (!lista.length) { toast('Não há notas pendentes para excluir.'); return; }
+        if (!window.confirm('Mover ' + lista.length + (lista.length === 1 ? ' nota' : ' notas') + ' (' + rotulo + ') de ' + nfMesNome(mi, ano) + ' para a lixeira?')) return;
+        var atual = notasRef.current.slice();
+        lista.forEach(function (n) { paraLixeira(n.arquivo, 'Notas Fiscais', NF_KEY_NOTAS, atual, n); atual = atual.filter(function (x) { return x.id !== n.id; }); delete arquivosRef.current[n.id]; });
+        salvarNotas(atual); setMarcadas(function (p) { var o = Object.assign({}, p); lista.forEach(function (n) { delete o[n.id]; }); return o; });
+        toast(lista.length + (lista.length === 1 ? ' nota movida' : ' notas movidas') + ' para a lixeira.');
+    }
+    function excluirSelecionadas() {
+        // as marcadas + os recibos/boletos que vão junto com a empresa marcada
+        var ids = {};
+        notasMes.forEach(function (n) { if (marcadas[n.id]) ids[n.id] = 1; });
+        notasMes.forEach(function (n) {
+            if (ids[n.id] || n.enviadaEm || ehPrincipal(n)) return;
+            var c = n.alunoId ? porId[n.alunoId] : null;
+            if (c && c.convenio && notasMes.some(function (x) { return ids[x.id] && x.alunoId === c.id; })) ids[n.id] = 1;
+        });
+        excluirNotas(ids, 'marcadas');
+    }
+    function excluirTodasPendentes() { var ids = {}; notasMes.forEach(function (n) { if (!n.enviadaEm) ids[n.id] = 1; }); excluirNotas(ids, 'todas as pendentes'); }
     function exportarPDF() {
         var el = document.querySelector('.export-pagina-notas');
         if (!el) return;
@@ -2809,6 +2831,8 @@ function NotasFiscaisTDB(_a) {
                 h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
                     notasMes.some(function (n) { return ehPrincipal(n); }) && h('button', { type: 'button', 'data-nf-marcar-lote': '1', title: 'Marca todas as notas ainda não enviadas deste mês', onClick: function () { marcarLote(true); }, style: btnS }, '☑ Marcar todas'),
                     notasMes.some(function (n) { return ehPrincipal(n); }) && h('button', { type: 'button', 'data-nf-desmarcar-lote': '1', disabled: !nMarcadas, onClick: function () { marcarLote(false); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, '☐ Desmarcar todas'),
+                    notasMes.some(function (n) { return !n.enviadaEm; }) && h('button', { type: 'button', 'data-nf-excluir-sel': '1', disabled: !nMarcadas, title: nMarcadas ? 'Move as notas marcadas (e os recibos/boletos delas) para a lixeira' : 'Marque as notas que quer excluir', onClick: excluirSelecionadas, style: Object.assign({}, btnS, { color: COLORS.red, opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, '🗑 Excluir' + (nMarcadas ? ' (' + nMarcadas + ')' : '')),
+                    notasMes.some(function (n) { return !n.enviadaEm; }) && h('button', { type: 'button', 'data-nf-excluir-todas': '1', title: 'Move todas as notas pendentes deste mês para a lixeira', onClick: excluirTodasPendentes, style: Object.assign({}, btnS, { color: COLORS.red }) }, '🗑 Excluir todas'),
                     h('button', { type: 'button', onClick: function () { setDlg('previa'); }, style: btnS }, 'Prévia do e-mail'),
                     h('button', { type: 'button', disabled: !nMarcadas, title: nMarcadas ? '' : 'Marque as notas na primeira coluna', onClick: function () { abrirEnvio('selecionadas'); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, 'Enviar selecionadas' + (nMarcadas ? ' (' + nMarcadas + ')' : '')),
                     h('button', { type: 'button', disabled: !elegiveis.length, title: elegiveis.length ? '' : 'Nenhuma nota pronta neste mês', onClick: function () { abrirEnvio('todas'); }, style: Object.assign({}, btnP, { opacity: elegiveis.length ? 1 : .5, cursor: elegiveis.length ? 'pointer' : 'not-allowed' }) }, 'Enviar todas ✅' + (elegiveis.length ? ' (' + elegiveis.length + ')' : '')))),
