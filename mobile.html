@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v51";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v52";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v51"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v52"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v51"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v52"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v51-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v52-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2643,6 +2643,16 @@ function NotasFiscaisTDB(_a) {
         Object.keys(timers.current).forEach(function (k) { clearTimeout(timers.current[k]); delete timers.current[k]; gravar(k, dadosDe(k)); });
     }
     useEffect(function () { return function () { if (!erroLeitura) descarregar(); }; }, [erroLeitura]);
+    // Marcar / desmarcar o "Ativo" de todos os alunos que aparecem na lista (respeita a busca). Uma gravação só.
+    function ativarTodos(valor) {
+        if (edRef.current && edRef.current.tipo === 'cad') { toast('Salve ou cancele a linha em edição antes.'); return; }
+        var ids = {}; cadVis.forEach(function (c) { ids[c.id] = 1; });
+        var n = 0;
+        var next = cadRef.current.map(function (c) { if (!ids[c.id] || (c.ativo !== false) === valor) return c; n++; return Object.assign({}, c, { ativo: valor }); });
+        if (!n) { toast(valor ? 'Todos os alunos da lista já estão ativos.' : 'Todos os alunos da lista já estão desmarcados.'); return; }
+        salvarCad(next); agendarSeguro(NF_KEY_CAD);
+        toast(valor ? n + (n === 1 ? ' aluno marcado como ativo.' : ' alunos marcados como ativos.') : n + (n === 1 ? ' aluno desmarcado.' : ' alunos desmarcados.') + ' Marque só os que quer enviar.');
+    }
     function salvarCad(next) { cadRef.current = next; setCad(next); agendar(NF_KEY_CAD); }
     function salvarConv(next) { convRef.current = next; setConv(next); agendar(NF_KEY_CONV); }
     function salvarNotas(next) { notasRef.current = next; setNotas(next); agendar(NF_KEY_NOTAS); }
@@ -3132,6 +3142,8 @@ function NotasFiscaisTDB(_a) {
                 h('div', null, h('div', { style: { fontSize: 16, fontWeight: 800, color: COLORS.ink } }, 'Cadastro de envio'),
                     h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 2 } }, cad.length + (cad.length === 1 ? ' aluno' : ' alunos') + (semEmailCad ? ' · ' + semEmailCad + ' sem e-mail' : ''))),
                 h('div', { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                    cad.length > 1 && h('button', { type: 'button', 'data-nf-ativar-todos': '1', title: q ? 'Marca como ativos os alunos que aparecem na busca' : 'Marca todos os alunos como ativos', onClick: function () { ativarTodos(true); }, style: btnS }, '☑ Marcar todos'),
+                    cad.length > 1 && h('button', { type: 'button', 'data-nf-desativar-todos': '1', title: q ? 'Desmarca os alunos que aparecem na busca' : 'Desmarca todos os alunos (depois marque só os que quer enviar)', onClick: function () { ativarTodos(false); }, style: btnS }, '☐ Desmarcar todos'),
                     h('button', { type: 'button', onClick: abrirImportar, style: btnS }, '⬇ Importar alunos da Mensalidade'),
                     h('button', { type: 'button', onClick: adicionarAluno, style: btnP }, h(Plus, { size: 14 }), ' Adicionar aluno'))),
             cad.length > 6 && h('div', { 'data-export-ignore': true, style: { padding: '0 16px 12px', position: 'relative' } }, h(Search, { size: 14, color: COLORS.inkSoft, style: { position: 'absolute', left: 28, top: 11 } }), h('input', { value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: 'Buscar aluno ou e-mail...', 'aria-label': 'Buscar no cadastro', style: Object.assign({}, inp, { paddingLeft: 34 }) })),
@@ -19841,7 +19853,8 @@ body.dark-mode .mcb-it{background:rgba(255,255,255,.06)}
 .mcb-ith .f{font-weight:800;color:var(--mr);font-size:12px}
 .mcb-ico{border:0;background:transparent;width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;color:#c9707a;cursor:pointer;padding:0;flex:none}
 .mcb-ico:hover{background:#fdeceb}
-.mcb-chev{color:#7a8394;width:22px;text-align:center;font-size:12px;flex:none}
+.mcb-chev{color:#3d4658;width:30px;text-align:center;font-size:22px;font-weight:900;line-height:1;flex:none}
+body.dark-mode .mcb-chev{color:#c5ccd9}
 .mcb-itb{padding:4px 12px 14px;display:grid;gap:9px;border-top:1px solid var(--mls)}
 .mcb-itb .g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .mcb-itb label{font-size:10.5px;color:var(--ms);display:grid;gap:2px}
@@ -20319,7 +20332,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
    +'<div><label class="l">Legenda</label><input class="mcb-rf" data-s="mes" data-f="leg" value="'+esc(m.leg)+'"></div>'
    +'<div><label class="l">Dados da escola (uma linha cada)</label><div style="display:grid;gap:6px">'+d.escola.map(function(t,k){return '<input class="mcb-rf" data-s="esc" data-f="'+k+'" value="'+esc(t)+'">';}).join('')+'</div></div>'
    +'<div><label class="l">Dias da folha ('+m.dias.length+')</label><div class="mcb-dchips">'+m.dias.map(function(x,j){return '<span class="mcb-dchip">'+esc(x)+' <small style="color:#7a8394">'+diaSem(x)+'</small><button data-act="delcol" data-c="'+j+'" title="Tirar este dia">✕</button></span>';}).join('')+'</div><div class="mcb-dline"><input class="mcb-rf" type="date" id="mcb-aD"><button class="mcb-addc" data-act="addcol">＋ Dia</button></div></div>'
-   +'<div><div class="mcb-hd2"><label class="l" style="margin:0">Alunos / faltas (<span id="mcb-nrows">'+m.rows.length+'</span>)</label><button class="mcb-addc" data-act="addF">＋ Adicionar aluno</button></div><div class="mcb-nt" style="margin:4px 0 8px">Clique num aluno pra marcar os dias: “.” → F → FE → vazio. Também dá pra clicar direto na prévia.</div><div style="display:grid;gap:8px">';
+   +'<div><div class="mcb-hd2"><label class="l" style="margin:0">Alunos / faltas (<span id="mcb-nrows">'+m.rows.length+'</span>)</label><span style="display:flex;gap:6px;flex-wrap:nowrap;justify-content:flex-end;flex:none"><button class="mcb-addc" data-act="trazerAlunos" title="Traz os nomes da Lista das crianças (sem repetir), com os dias em branco" style="padding:8px 12px">⬇ Trazer alunos</button><button class="mcb-addc" data-act="addF">＋ Adicionar aluno</button></span></div><div class="mcb-nt" style="margin:4px 0 8px">Clique num aluno pra marcar os dias: “.” → F → FE → vazio. Também dá pra clicar direto na prévia.</div><div style="display:grid;gap:8px">';
   m.rows.forEach(function(r,i){var k=itemKey(d,i),op=opn(k);
    h+='<div class="mcb-it"><div class="mcb-ith" data-act="tog" data-k="'+k+'"><span class="t" id="mcb-t'+i+'">'+(esc(r.nome)||'(sem nome)')+'</span><span class="f" id="mcb-f'+i+'">'+(fTxt(r)!=='0'?fTxt(r)+' falta(s)':'')+'</span><button class="mcb-ico" data-act="delrow" data-i="'+i+'" title="Excluir">'+IC.trash+'</button><span class="mcb-chev">'+schev(k)+'</span></div>';
    if(op)h+='<div class="mcb-itb"><label>Nome do aluno<input class="mcb-rf" data-s="row" data-r="'+i+'" data-f="nome" value="'+esc(r.nome)+'"></label><div class="mcb-dias">'+m.dias.map(function(x,j){var v=r.c[j]||'';return '<div class="mcb-dd"><b>'+esc(x.slice(0,2))+'</b><button class="mcb-cl '+(v==='F'?'F':v==='FE'?'FE':'')+'" data-act="cell" data-r="'+i+'" data-c="'+j+'">'+(v==='.'?'·':esc(v))+'</button></div>';}).join('')+'</div><label>Faltas (automático — digite para substituir)<input class="mcb-rf mono" data-s="falt" data-r="'+i+'" value="'+esc(r.f!==''?r.f:String(nF(r)))+'" style="width:110px"></label></div>';
@@ -20468,6 +20481,28 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   d.meses[S.mi]=novoMes(d,S.mi,tipo==='lista'?primeiroMes(base):{turma:'',prof:''});
   anoObj().docs[d.id]=d;S.cur=d.id;S.abertas={};touch();render();toast('✓ Novo documento criado. Escreva o nome e o título e preencha os dados.');
  }
+ function nomeLimpo(s){return String(s||'').replace(/\.(\s|$)/g,' ').replace(/\s+/g,' ').trim();}
+ function chaveNome(s){return nomeLimpo(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.,\-]/g,' ').replace(/\s+/g,' ').trim().toUpperCase();}
+ function trazerAlunos(){
+  var d=curDoc();if(!d||d.tipo!=='freq'||S.erro)return;
+  var best=null;
+  docsArr().filter(function(x){return x.tipo==='lista';}).forEach(function(l){
+   var ordem=[],i;for(i=S.mi;i>=0;i--)ordem.push(i);for(i=S.mi+1;i<12;i++)ordem.push(i);
+   for(var k=0;k<ordem.length;k++){if(preenchido(l,ordem[k])){var dist=Math.abs(ordem[k]-S.mi);if(!best||dist<best.dist)best={l:l,i:ordem[k],dist:dist};break;}}
+  });
+  if(!best){toast('Não há Lista das crianças preenchida para trazer os alunos.');return;}
+  var m=mes(d,S.mi),existentes={};
+  m.rows.forEach(function(r){if(String(r.nome||'').trim())existentes[chaveNome(r.nome)]=1;});
+  var vistos={},novos=[];
+  best.l.meses[best.i].rows.forEach(function(r){var n=nomeLimpo(r.nome);if(!n)return;var k=chaveNome(n);if(existentes[k]||vistos[k])return;vistos[k]=1;novos.push(n);});
+  if(!novos.length){toast('Todos os alunos da Lista das crianças de '+MESES[best.i]+' já estão nesta frequência.');return;}
+  novos.sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+  var tinha=m.rows.some(function(r){return String(r.nome||'').trim();});
+  var linhas=novos.map(function(n){return {nome:n,c:Array(m.dias.length).fill(''),f:''};});
+  m.rows=tinha?m.rows.concat(linhas):linhas;
+  S.abertas={};touch();render();
+  toast('✓ '+novos.length+(novos.length===1?' aluno trazido':' alunos trazidos')+' da Lista das crianças de '+MESES[best.i]+(best.i!==S.mi?' (mês mais próximo preenchido)':'')+'. Dias em branco.');
+ }
  function copiarAnterior(){
   var d=curDoc();if(!d||S.erro)return;var src=-1;for(var i=S.mi-1;i>=0;i--){if(preenchido(d,i)){src=i;break;}}
   if(src<0){toast('Não há mês anterior preenchido para copiar.');return;}
@@ -20482,7 +20517,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   var b=e.target.closest&&e.target.closest('[data-act]');
   if(!b){if(S.menu&&!(e.target.closest&&e.target.closest('.mcb-menu'))){S.menu=null;render();}return;}
   var a=b.getAttribute('data-act'),d=curDoc();
-  if(encerrado()&&['ren','renok','add','cell','delrow','delDoc','delTodos','copiar','delcol','addcol','addL','addF'].indexOf(a)>=0){avisarEncerrado();return;}
+  if(encerrado()&&['ren','renok','add','cell','delrow','delDoc','delTodos','copiar','delcol','addcol','addL','addF','trazerAlunos'].indexOf(a)>=0){avisarEncerrado();return;}
   if(a==='ren'){e.stopPropagation();if(!S.erro){S.ren=b.getAttribute('data-id');render();}return;}
   if(a==='renok'){confirmarRen();return;}
   if(a==='renno'){S.ren=null;render();return;}
@@ -20504,6 +20539,7 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   else if(a==='delDoc'){excluirDoc();}
   else if(a==='delTodos'){excluirTodos();}
   else if(a==='copiar'){copiarAnterior();}
+  else if(a==='trazerAlunos'){trazerAlunos();}
   else if(a==='delcol'){if(!d||S.erro)return;var m2=mes(d,S.mi),j2=+b.getAttribute('data-c'),dia2=m2.dias[j2];if(dia2==null)return;
    if(!window.confirm('Mover o dia '+dia2+' (com as marcações de todos os alunos nele) para a lixeira?\n\nVocê poderá restaurar depois (menu ⚙ › Lixeira).'))return;
    var base2=['anos',String(ANO()),'docs',d.id,'meses',String(S.mi)];
