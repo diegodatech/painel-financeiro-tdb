@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v55";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v56";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v55"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v56"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v55"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v56"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v55-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v56-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2678,6 +2678,16 @@ function NotasFiscaisTDB(_a) {
         Object.keys(timers.current).forEach(function (k) { clearTimeout(timers.current[k]); delete timers.current[k]; gravar(k, dadosDe(k)); });
     }
     useEffect(function () { return function () { if (!erroLeitura) descarregar(); }; }, [erroLeitura]);
+    // Mesma coisa para os convênios (empresas): marca / desmarca o "Ativo" de todas as que aparecem na lista (respeita a busca).
+    function ativarTodosConv(valor) {
+        if (edRef.current && edRef.current.tipo === 'conv') { toast('Salve ou cancele a linha em edição antes.'); return; }
+        var ids = {}; convVis.forEach(function (c) { ids[c.id] = 1; });
+        var n = 0;
+        var next = convRef.current.map(function (c) { if (!ids[c.id] || (c.ativo !== false) === valor) return c; n++; return Object.assign({}, c, { ativo: valor }); });
+        if (!n) { toast(valor ? 'Todas as empresas da lista já estão ativas.' : 'Todas as empresas da lista já estão desmarcadas.'); return; }
+        salvarConv(next); agendarSeguro(NF_KEY_CONV);
+        toast(valor ? n + (n === 1 ? ' empresa marcada como ativa.' : ' empresas marcadas como ativas.') : n + (n === 1 ? ' empresa desmarcada.' : ' empresas desmarcadas.') + ' Marque só as que quer enviar.');
+    }
     // Marcar / desmarcar o "Ativo" de todos os alunos que aparecem na lista (respeita a busca). Uma gravação só.
     function ativarTodos(valor) {
         if (edRef.current && edRef.current.tipo === 'cad') { toast('Salve ou cancele a linha em edição antes.'); return; }
@@ -3227,6 +3237,8 @@ function NotasFiscaisTDB(_a) {
                 h('div', null, h('div', { style: { fontSize: 16, fontWeight: 800, color: COLORS.ink } }, 'Convênios (empresas)'),
                     h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 2 } }, conv.length + (conv.length === 1 ? ' empresa' : ' empresas') + ' · e-mails fixos, valem todo mês' + (semEmailConv ? ' · ' + semEmailConv + ' sem e-mail' : ''))),
                 h('div', { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                    conv.length > 1 && h('button', { type: 'button', 'data-nf-ativar-todos-conv': '1', title: qc ? 'Marca como ativas as empresas que aparecem na busca' : 'Marca todas as empresas como ativas', onClick: function () { ativarTodosConv(true); }, style: btnS }, '☑ Marcar todos'),
+                    conv.length > 1 && h('button', { type: 'button', 'data-nf-desativar-todos-conv': '1', title: qc ? 'Desmarca as empresas que aparecem na busca' : 'Desmarca todas as empresas (depois marque só as que quer enviar)', onClick: function () { ativarTodosConv(false); }, style: btnS }, '☐ Desmarcar todos'),
                     h('button', { type: 'button', onClick: abrirImportarConv, style: btnS }, '⬇ Importar convênios da Mensalidade'),
                     h('button', { type: 'button', onClick: adicionarConvenio, style: btnP }, h(Plus, { size: 14 }), ' Adicionar convênio'))),
             conv.length > 6 && h('div', { 'data-export-ignore': true, style: { padding: '0 16px 12px', position: 'relative' } }, h(Search, { size: 14, color: COLORS.inkSoft, style: { position: 'absolute', left: 28, top: 11 } }), h('input', { value: buscaConv, onChange: function (e) { setBuscaConv(e.target.value); }, placeholder: 'Buscar empresa, CNPJ ou e-mail...', 'aria-label': 'Buscar nos convênios', style: Object.assign({}, inp, { paddingLeft: 34 }) })),
