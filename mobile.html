@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261007-tempo1-v46";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v47";
   </script>
-  <script src="./config.js?build=tdbn-20261007-tempo1-v46"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v47"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261007-tempo1-v46"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v47"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v46-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v47-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2718,10 +2718,11 @@ function NotasFiscaisTDB(_a) {
     var q = nfNorm(busca);
     var qd = nfDig(busca);
     var qc = nfNorm(buscaConv), qcd = nfDig(buscaConv);
-    var convVis = conv.filter(function (c) { return !qc || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(qc) >= 0 || (qcd.length >= 3 && nfDig(c.cnpj).indexOf(qcd) >= 0); });
+    var convVis = conv.filter(function (c) { return !qc || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(qc) >= 0 || (qcd.length >= 3 && nfDig(c.cnpj).indexOf(qcd) >= 0); }).sort(porNome);
     var semEmailConv = conv.filter(function (c) { return c.ativo !== false && !(c.emails || []).some(nfEmailOk); }).length;
     var convOrd = conv.filter(function (c) { return c.ativo !== false || notasMes.some(function (n) { return n.alunoId === c.id; }); }).slice().sort(function (a, b) { return String(a.aluno).localeCompare(String(b.aluno), 'pt-BR'); });
-    var cadVis = cad.filter(function (c) { return !q || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(q) >= 0 || (qd.length >= 3 && nfDig(c.cpf).indexOf(qd) >= 0); });
+    function porNome(a, b) { return String(a.aluno || '').localeCompare(String(b.aluno || ''), 'pt-BR', { sensitivity: 'base' }); }
+    var cadVis = cad.filter(function (c) { return !q || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(q) >= 0 || (qd.length >= 3 && nfDig(c.cpf).indexOf(qd) >= 0); }).sort(porNome);
     var semEmailCad = cad.filter(function (c) { return c.ativo !== false && !(c.emails || []).some(nfEmailOk); }).length;
     var alunosOrd = cad.filter(function (c) { return c.ativo !== false || notasMes.some(function (n) { return n.alunoId === c.id; }); }).slice().sort(function (a, b) { return String(a.aluno).localeCompare(String(b.aluno), 'pt-BR'); });
     // ---------- envio ----------
