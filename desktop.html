@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v53";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v54";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v53"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v54"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v53"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v54"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v53-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v54-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1819,8 +1819,13 @@ function nfAnalisarGrupo(T, ativos, docs, docDe, nomesDe) {
     return { alunoId: alunoId, cand: cand };
 }
 // Liga uma nota ao cadastro: pelo CPF/CNPJ lido na nota + nome (ou só pelo nome). Usado ao ler o PDF e de novo quando o cadastro muda depois.
+// Procura primeiro entre os ativos; se não achar ninguém, procura também entre os desmarcados (o "Ativo" não deve impedir de ligar a nota ao aluno).
 function nfCasar(T, cpfs, cnpjs, cad, tipo) {
-    var ativos = cad.filter(function (c) { return c.ativo !== false; });
+    var r = nfCasarEm(T, cpfs, cnpjs, cad.filter(function (c) { return c.ativo !== false; }), tipo);
+    if (!r.alunoId && !r.cand.length) r = nfCasarEm(T, cpfs, cnpjs, cad, tipo);
+    return r;
+}
+function nfCasarEm(T, cpfs, cnpjs, ativos, tipo) {
     if (tipo === 'recibo' || tipo === 'boleto') {
         // recibo e boleto são sempre de um convênio: procura o nome da empresa (do cadastro ou o escrito na nota) e ignora alunos
         return nfAnalisarGrupo(T, ativos.filter(function (c) { return !!c.convenio; }), [], function () { return ''; }, function (c) { return [c.nomeNota, c.aluno].filter(Boolean); });
@@ -2448,11 +2453,11 @@ function NotasFiscaisTDB(_a) {
     var qc = nfNorm(buscaConv), qcd = nfDig(buscaConv);
     var convVis = conv.filter(function (c) { return !qc || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(qc) >= 0 || (qcd.length >= 3 && nfDig(c.cnpj).indexOf(qcd) >= 0); }).sort(porNome);
     var semEmailConv = conv.filter(function (c) { return c.ativo !== false && !(c.emails || []).some(nfEmailOk); }).length;
-    var convOrd = conv.filter(function (c) { return c.ativo !== false || notasMes.some(function (n) { return n.alunoId === c.id; }); }).slice().sort(function (a, b) { return String(a.aluno).localeCompare(String(b.aluno), 'pt-BR'); });
+    var convOrd = conv.slice().sort(function (a, b) { return String(a.aluno).localeCompare(String(b.aluno), 'pt-BR'); });
     function porNome(a, b) { return String(a.aluno || '').localeCompare(String(b.aluno || ''), 'pt-BR', { sensitivity: 'base' }); }
     var cadVis = cad.filter(function (c) { return !q || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(q) >= 0 || (qd.length >= 3 && nfDig(c.cpf).indexOf(qd) >= 0); }).sort(porNome);
     var semEmailCad = cad.filter(function (c) { return c.ativo !== false && !(c.emails || []).some(nfEmailOk); }).length;
-    var alunosOrd = cad.filter(function (c) { return c.ativo !== false || notasMes.some(function (n) { return n.alunoId === c.id; }); }).slice().sort(function (a, b) { return String(a.aluno).localeCompare(String(b.aluno), 'pt-BR'); });
+    var alunosOrd = cad.slice().sort(function (a, b) { return String(a.aluno).localeCompare(String(b.aluno), 'pt-BR'); });
     // ---------- envio ----------
     var cfgOk = nfCfgOk(cfg), modoTeste = cfg.teste !== false;
     var mesNomeCompleto = nfMesNome(mi, ano);
@@ -2505,7 +2510,7 @@ function NotasFiscaisTDB(_a) {
             if (c && c.convenio) ['recibo', 'boleto'].forEach(function (tp) { var r = anexoEscolhido(c.id, tp); if (r) an.push({ id: r.id, tipo: tp, arquivo: r.arquivo }); });
             var semArq = an.filter(function (a) { return !arquivosRef.current[a.id]; });
             if (tipoDe(n) !== 'nota') pulados.push({ id: n.id, nome: n.arquivo, motivo: 'o ' + tipoDe(n) + ' vai junto com a nota da empresa (marque a nota)' });
-            else if (!c) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'sem aluno escolhido' });
+            else if (!c) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'sem aluno ligado — escolha o aluno na coluna “Aluno / convênio” desta nota' });
             else if (!em.length) pulados.push({ id: n.id, nome: c.aluno, motivo: 'sem e-mail cadastrado' });
             else if (falta.length) pulados.push({ id: n.id, nome: c.aluno, motivo: 'falta o ' + falta.join(' e o ') + ' deste mês' });
             else if (!arquivosRef.current[n.id]) pulados.push({ id: n.id, nome: c.aluno, motivo: 'escolha este PDF de novo (botão “Escolher PDFs”)' });
@@ -2685,8 +2690,8 @@ function NotasFiscaisTDB(_a) {
             campoRot('Aluno / convênio', modoPdf ? h('div', { 'data-nf-aluno-nota': true, style: { fontSize: 13, fontWeight: 700, color: c ? COLORS.ink : COLORS.inkSoft } }, c ? c.aluno : 'Sem aluno escolhido') : h('select', { value: d.alunoId || '', tabIndex: lk ? -1 : 0, 'data-nf-aluno-nota': true, 'aria-label': 'Aluno da nota', onChange: function (e) { alterarDraft('alunoId', e.target.value || null); }, style: Object.assign({}, inp, { fontWeight: d.alunoId ? 700 : 400 }, trava) },
                 h('option', { value: '' }, 'Escolher aluno…'),
                 cands.length > 0 && h('optgroup', { label: 'Prováveis' }, cands.map(function (x) { return h('option', { key: 'c' + x.id, value: x.id }, x.aluno); })),
-                h('optgroup', { label: 'Todos os alunos' }, alunosOrd.map(function (x) { return h('option', { key: x.id, value: x.id }, x.aluno || '(sem nome)'); })),
-                convOrd.length > 0 && h('optgroup', { label: 'Convênios' }, convOrd.map(function (x) { return h('option', { key: x.id, value: x.id }, x.aluno || '(sem nome)'); })))),
+                h('optgroup', { label: 'Todos os alunos' }, alunosOrd.map(function (x) { return h('option', { key: x.id, value: x.id }, (x.aluno || '(sem nome)') + (x.ativo === false ? ' (desmarcado)' : '')); })),
+                convOrd.length > 0 && h('optgroup', { label: 'Convênios' }, convOrd.map(function (x) { return h('option', { key: x.id, value: x.id }, (x.aluno || '(sem nome)') + (x.ativo === false ? ' (desmarcado)' : '')); })))),
             campoRot('Enviar para', h('div', { style: { fontSize: 12.5, color: c && (c.emails || []).some(nfEmailOk) ? COLORS.ink : COLORS.red, overflowWrap: modoPdf ? 'normal' : 'anywhere', whiteSpace: modoPdf ? 'pre-line' : 'normal' } }, c ? ((c.emails || []).join(modoPdf ? '\n' : ', ') || 'sem e-mail cadastrado') : '—')),
             campoRot('Situação', h('div', null, tagSituacao(n), falhas[n.id] && !modoPdf && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 4, overflowWrap: 'anywhere' } }, falhas[n.id]))),
             campoRot('Enviada em', h('div', null, h('input', { type: 'date', value: d.enviadaEm || '', tabIndex: lk ? -1 : 0, 'aria-label': 'Data de envio', onChange: function (e) { alterarDraft('enviadaEm', e.target.value); }, style: Object.assign({}, inp, trava) }),
