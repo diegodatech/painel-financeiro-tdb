@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v49";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v50";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v49"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v50"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v49"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v50"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v49-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v50-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1741,7 +1741,8 @@ function nfDocsTexto(tipos) {
 }
 // Padrão combinado com a escola: Tramontina e Irwin recebem recibo; Santa Clara recebe boleto. Vale enquanto o convênio não tiver sido editado.
 function nfAnexosPadrao(nome) { var k = nfNorm(nome); if (/TRAMONTINA|IRWIN/.test(k)) return ['recibo']; if (/SANTA CLARA/.test(k)) return ['boleto']; return []; }
-function nfAnexosDe(c) { if (!c || !c.convenio) return []; return Array.isArray(c.anexos) ? c.anexos.filter(function (k) { return k === 'recibo' || k === 'boleto'; }) : nfAnexosPadrao(c.aluno); }
+function nfTemBoleto(nome) { return /SANTA CLARA/.test(nfNorm(nome)); }
+function nfAnexosDe(c) { if (!c || !c.convenio) return []; return Array.isArray(c.anexos) ? c.anexos.filter(function (k) { return k === 'recibo' || (k === 'boleto' && nfTemBoleto(c.aluno)); }) : nfAnexosPadrao(c.aluno); }
 // Abre o .zip baixado da aba Recibos (arquivos guardados sem compressão; se vier comprimido, usa o descompactador do navegador).
 function nfZipPdfs(file) {
     return file.arrayBuffer().then(function (buf) {
@@ -2022,6 +2023,16 @@ function NFModalConfig(p) {
             h('button', { type: 'button', onClick: p.onFechar, style: nfBtnS() }, 'Cancelar'),
             h('button', { type: 'button', onClick: testar, style: nfBtnS() }, 'Testar conexão'),
             h('button', { type: 'button', disabled: !valido, onClick: salvar, style: Object.assign({}, nfBtnP(), { opacity: valido ? 1 : .5, cursor: valido ? 'pointer' : 'not-allowed' }) }, 'Salvar')));
+}
+// Campo de texto de 1 linha que cresce para mostrar o nome inteiro (nomes de empresa são grandes).
+function NFTexto(p) {
+    var ref = useRef(null);
+    function aj() { var el = ref.current; if (!el) return; el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+    useEffect(aj);
+    useEffect(function () { window.addEventListener('resize', aj); var t = setTimeout(aj, 250); return function () { window.removeEventListener('resize', aj); clearTimeout(t); }; }, []);
+    var q = Object.assign({}, p, { ref: ref, rows: 1, onKeyDown: function (e) { if (e.key === 'Enter') e.preventDefault(); } });
+    q.style = Object.assign({}, p.style, { resize: 'none', overflow: 'hidden', display: 'block', lineHeight: 1.3, wordBreak: 'break-word' });
+    return React.createElement('textarea', q);
 }
 function NFModalPrevia(p) {
     var h = React.createElement;
@@ -2558,29 +2569,29 @@ function NotasFiscaisTDB(_a) {
         return h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: MOB ? 'flex-end' : 'center', gap: 6 } }, lapisBtn(onEditar, tituloEditar), lixeiraBtn(onExcluir, tituloExcluir));
     }
     // ---------- cadastro ----------
-    var gradeConv = MOB ? gradeCad : Object.assign({}, gradeCad, { gridTemplateColumns: 'minmax(130px,1fr) minmax(130px,1fr) 160px minmax(190px,1.5fr) 122px 64px 112px' });
+    var gradeConv = MOB ? gradeCad : Object.assign({}, gradeCad, { gridTemplateColumns: 'minmax(150px,1fr) minmax(170px,1.2fr) 190px minmax(200px,1.5fr) 122px 64px 112px' });
     function montarLinhasCad(lista, ehConv) {
         var tipo = ehConv ? 'conv' : 'cad';
         return lista.map(function (c) {
             var emEd = emEdicaoDe(tipo, c.id), d = emEd ? ed.draft : c, lk = !emEd;
             var trava = lk ? { pointerEvents: 'none' } : {};
             var docRuim = ehConv ? (nfDig(d.cnpj).length === 14 && !nfCnpjOk(d.cnpj)) : (nfDig(d.cpf).length === 11 && !nfCpfOk(d.cpf));
-            var atrNome = { value: d.aluno, readOnly: lk, tabIndex: lk ? -1 : 0, placeholder: ehConv ? 'Nome da empresa' : 'Nome do aluno', 'aria-label': ehConv ? 'Empresa' : 'Aluno', onChange: function (e) { alterarDraft('aluno', e.target.value.toUpperCase()); }, style: Object.assign({}, inp, { fontWeight: 700 }, trava) };
+            var atrNome = { value: d.aluno, readOnly: lk, tabIndex: lk ? -1 : 0, placeholder: ehConv ? 'Nome da empresa' : 'Nome do aluno', 'aria-label': ehConv ? 'Empresa' : 'Aluno', onChange: function (e) { alterarDraft('aluno', e.target.value.replace(/\s*\n+\s*/g, ' ').toUpperCase()); }, style: Object.assign({}, inp, { fontWeight: 700 }, trava) };
             atrNome[ehConv ? 'data-nf-conv' : 'data-nf-aluno'] = c.id;
             var doc = ehConv ? d.cnpj : d.cpf;
             return h('div', { key: c.id, 'data-nf-row': true, 'data-nf-alvo': c.aluno, onClick: function () { if (!emEd) setSel({ tipo: tipo, id: c.id }); }, onDoubleClick: function (e) { if (!emEd) desmarcar(e); }, style: Object.assign({}, estiloLinha(tipo, c.id), ehConv ? gradeConv : gradeCad, { opacity: c.ativo === false ? .55 : 1 }) },
-                campoRot(ehConv ? 'Empresa (convênio)' : 'Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: COLORS.ink } }, c.aluno) : h('input', atrNome)),
-                campoRot('Nome na nota fiscal', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, c.nomeNota || '—') : h('input', { value: d.nomeNota, readOnly: lk, tabIndex: lk ? -1 : 0, placeholder: ehConv ? 'igual à empresa, se for o mesmo' : 'Nome do responsável na nota', 'aria-label': 'Nome na nota fiscal', onChange: function (e) { alterarDraft('nomeNota', e.target.value.toUpperCase()); }, style: Object.assign({}, inp, trava) })),
+                campoRot(ehConv ? 'Empresa (convênio)' : 'Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: COLORS.ink } }, c.aluno) : h(NFTexto, atrNome)),
+                campoRot('Nome na nota fiscal', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, c.nomeNota || '—') : h(NFTexto, { value: d.nomeNota, readOnly: lk, tabIndex: lk ? -1 : 0, placeholder: ehConv ? 'igual à empresa' : 'Nome do responsável na nota', 'aria-label': 'Nome na nota fiscal', onChange: function (e) { alterarDraft('nomeNota', e.target.value.replace(/\s*\n+\s*/g, ' ').toUpperCase()); }, style: Object.assign({}, inp, trava) })),
                 campoRot(ehConv ? 'CNPJ da empresa' : 'CPF do responsável', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, doc || '—') : h('div', null,
                     h('input', { value: doc || '', readOnly: lk, tabIndex: lk ? -1 : 0, placeholder: ehConv ? '00.000.000/0000-00' : '000.000.000-00', inputMode: 'numeric', autoComplete: 'off', 'aria-label': ehConv ? 'CNPJ da empresa' : 'CPF do responsável', onChange: function (e) { alterarDraft(ehConv ? 'cnpj' : 'cpf', ehConv ? nfCnpjFmt(e.target.value) : nfCpfFmt(e.target.value)); }, style: Object.assign({}, inp, { borderColor: docRuim ? COLORS.red : COLORS.line }, trava) }),
                     docRuim && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 3 } }, (ehConv ? 'CNPJ' : 'CPF') + ' inválido — confira os números'))),
                 campoRot('E-mail(s) para envio', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink, whiteSpace: 'pre-line' } }, (d.emails || []).join('\n') || '—') : h('div', { style: lk ? { pointerEvents: 'none' } : {} }, h(NFEmails, { valor: d.emails || [], travado: lk, placeholder: ehConv ? 'e-mail da empresa' : '', onChange: function (v) { alterarDraft('emails', v); } }))),
-                ehConv && campoRot('Envia junto com a nota', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink } }, ['Nota fiscal'].concat(nfAnexosDe(c).map(function (k) { return NF_ROTULO_TIPO[k]; })).join(' + ')) : h('div', { style: Object.assign({ display: 'flex', flexDirection: 'column', gap: 5 }, lk ? { pointerEvents: 'none' } : {}) },
-                    h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft } }, h('input', { type: 'checkbox', checked: true, disabled: true, 'aria-label': 'Nota fiscal (sempre)', style: { width: 16, height: 16 } }), 'Nota fiscal'),
-                    ['recibo', 'boleto'].map(function (k) {
+                ehConv && campoRot('Envia junto com a nota', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink } }, ['Nota fiscal'].concat(nfAnexosDe(c).map(function (k) { return NF_ROTULO_TIPO[k]; })).join(' + ')) : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 5 } },
+                    h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft } }, h('input', { type: 'checkbox', checked: true, disabled: true, 'aria-label': 'Nota fiscal (sempre)', style: { width: 16, height: 16, pointerEvents: 'none' } }), 'Nota fiscal'),
+                    (nfTemBoleto(d.aluno) ? ['recibo', 'boleto'] : ['recibo']).map(function (k) {
                         var lista = emEd ? (d.anexos || []) : nfAnexosDe(c), marc = lista.indexOf(k) >= 0;
-                        return h('label', { key: k, style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: lk ? 'default' : 'pointer' } },
-                            h('input', { type: 'checkbox', checked: marc, tabIndex: lk ? -1 : 0, 'aria-label': 'Enviar ' + k + ' junto', onChange: function (e) { alterarDraft('anexos', e.target.checked ? lista.concat([k]) : lista.filter(function (x) { return x !== k; })); }, style: { width: 16, height: 16, accentColor: '#2878de' } }), NF_ROTULO_TIPO[k]);
+                        return h('label', { key: k, style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } },
+                            h('input', { type: 'checkbox', checked: marc, 'aria-label': 'Enviar ' + k + ' junto', onChange: function (e) { var nova = e.target.checked ? lista.concat([k]) : lista.filter(function (x) { return x !== k; }); if (emEd) alterarDraft('anexos', nova); else { editarConv(c.id, 'anexos', nova); descarregar(); } }, style: { width: 16, height: 16, accentColor: '#2878de' } }), NF_ROTULO_TIPO[k]);
                     }))),
                 fimLinha(
                   h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: (emEd && ed.novo ? d.ativo : c.ativo) !== false, 'aria-label': 'Ativo', onChange: function (e) { if (emEd && ed.novo) alterarDraft('ativo', e.target.checked); else { if (ehConv) editarConv(c.id, 'ativo', e.target.checked); else editarCad(c.id, 'ativo', e.target.checked); descarregar(); } }, style: { width: 18, height: 18, accentColor: '#2878de' } }), MOB ? 'Ativo' : ''),
