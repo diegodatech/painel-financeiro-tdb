@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261007-tempo1-v41";
+    window.__TDB_BUILD = "tdbn-20261007-tempo1-v42";
   </script>
-  <script src="./config.js?build=tdbn-20261007-tempo1-v41"></script>
+  <script src="./config.js?build=tdbn-20261007-tempo1-v42"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261007-tempo1-v41"></script>
+  <script src="./sync.js?build=tdbn-20261007-tempo1-v42"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v41-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v42-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2169,24 +2169,54 @@ function nfExtrairTomador(t) {
     var v = m[1].replace(/\s+(CPF|CNPJ|CNPJ\/CPF|CPF\/CNPJ|ENDERE[ÇC]O|INSCRI[ÇC][ÃA]O|TELEFONE|E-?MAIL|MUNIC[ÍI]PIO)\b.*$/i, '').replace(/\s+/g, ' ').trim();
     return v.length >= 3 ? v.slice(0, 80) : '';
 }
+function nfDig(s) { return String(s || '').replace(/\D/g, ''); }
+function nfCpfFmt(s) { var d = nfDig(s).slice(0, 11), o = d.slice(0, 3); if (d.length > 3) o += '.' + d.slice(3, 6); if (d.length > 6) o += '.' + d.slice(6, 9); if (d.length > 9) o += '-' + d.slice(9, 11); return o; }
+function nfCpfOk(s) {
+    var d = nfDig(s);
+    if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+    for (var t = 9; t < 11; t++) { var soma = 0; for (var i = 0; i < t; i++) soma += Number(d.charAt(i)) * (t + 1 - i); if (((soma * 10) % 11) % 10 !== Number(d.charAt(t))) return false; }
+    return true;
+}
+// CPFs válidos que aparecem na nota, olhando só a partir do bloco "TOMADOR" (para não pegar o do prestador)
+function nfCpfsNota(texto) {
+    var t = String(texto || ''), i = t.search(/TOMADOR/i); if (i >= 0) t = t.slice(i);
+    var out = [], re = /(^|\D)(\d{3}\.?\d{3}\.?\d{3}-?\d{2})(?!\d)/g, m;
+    while ((m = re.exec(t))) { var d = nfDig(m[2]); if (nfCpfOk(d) && out.indexOf(d) < 0) out.push(d); }
+    return out;
+}
 // Procura, dentro do texto da nota (e no nome do arquivo), o "Nome na nota fiscal" de cada aluno cadastrado.
+// Se o cadastro tem o CPF do responsável, o CPF da nota decide (resolve pais com o mesmo nome).
 function nfAnalisar(texto, nomeArq, cad) {
     var T = ' ' + nfNorm(texto + ' ' + nomeArq) + ' ';
+    var ativos = cad.filter(function (c) { return c.ativo !== false; });
+    var cpfs = nfCpfsNota(texto);
     var hits = [];
-    cad.filter(function (c) { return c.ativo !== false; }).forEach(function (c) {
+    ativos.forEach(function (c) {
         var nn = nfNorm(c.nomeNota || c.aluno);
         if (nn.length < 5) return;
         if (T.indexOf(' ' + nn + ' ') >= 0) hits.push({ c: c, nn: nn });
     });
     hits = hits.filter(function (a) { return !hits.some(function (b) { return b.nn !== a.nn && b.nn.length > a.nn.length && (' ' + b.nn + ' ').indexOf(' ' + a.nn + ' ') >= 0; }); });
-    var cand = hits.map(function (x) { return x.c.id; });
-    var alunoId = null;
-    if (hits.length === 1) alunoId = hits[0].c.id;
-    else if (hits.length > 1) {
-        var porAluno = hits.filter(function (x) { var an = nfNorm(x.c.aluno); return an.length >= 3 && T.indexOf(' ' + an + ' ') >= 0; });
-        if (porAluno.length === 1) alunoId = porAluno[0].c.id;
+    function cpfDe(c) { var d = nfDig(c.cpf); return d.length === 11 ? d : ''; }
+    if (cpfs.length) hits = hits.filter(function (x) { var d = cpfDe(x.c); return !d || cpfs.indexOf(d) >= 0; });
+    var porCpf = cpfs.length ? ativos.filter(function (c) { var d = cpfDe(c); return d && cpfs.indexOf(d) >= 0; }) : [];
+    function porNomeAluno(lista) {
+        var r = lista.filter(function (c) { var an = nfNorm(c.aluno); return an.length >= 3 && T.indexOf(' ' + an + ' ') >= 0; });
+        return r.length === 1 ? r[0].id : null;
     }
-    return { nomeLido: nfExtrairTomador(texto), alunoId: alunoId, cand: cand };
+    var cand, alunoId = null;
+    if (porCpf.length) {
+        var hitIds = hits.map(function (x) { return x.c.id; });
+        var forte = porCpf.filter(function (c) { return hitIds.indexOf(c.id) >= 0; });
+        var base = forte.length ? forte : porCpf;
+        cand = base.map(function (c) { return c.id; });
+        alunoId = base.length === 1 ? base[0].id : porNomeAluno(base);
+    } else {
+        cand = hits.map(function (x) { return x.c.id; });
+        if (hits.length === 1) alunoId = hits[0].c.id;
+        else if (hits.length > 1) alunoId = porNomeAluno(hits.map(function (x) { return x.c; }));
+    }
+    return { nomeLido: nfExtrairTomador(texto), alunoId: alunoId, cand: cand, cpfLido: cpfs[0] ? nfCpfFmt(cpfs[0]) : '' };
 }
 function NFEmails(p) {
     var h = React.createElement;
@@ -2478,7 +2508,7 @@ function NotasFiscaisTDB(_a) {
     // ---------- cadastro ----------
     function editarCad(id, campo, valor) { salvarCad(cadRef.current.map(function (c) { if (c.id !== id) return c; var o = Object.assign({}, c); o[campo] = valor; return o; })); }
     function adicionarAluno() {
-        var novo = { id: nfId('nfc'), aluno: '', nomeNota: '', emails: [], ativo: true };
+        var novo = { id: nfId('nfc'), aluno: '', nomeNota: '', cpf: '', emails: [], ativo: true };
         salvarCad([novo].concat(cadRef.current)); setBusca(''); setSel({ tipo: 'cad', id: novo.id });
         setTimeout(function () { var el = document.querySelector('[data-nf-aluno="' + novo.id + '"]'); if (el) el.focus(); }, 60);
     }
@@ -2503,7 +2533,7 @@ function NotasFiscaisTDB(_a) {
         setImportar(nomes);
     }
     function confirmarImportar(nomes) {
-        var novos = nomes.map(function (n) { return { id: nfId('nfc'), aluno: n, nomeNota: n, emails: [], ativo: true }; });
+        var novos = nomes.map(function (n) { return { id: nfId('nfc'), aluno: n, nomeNota: n, cpf: '', emails: [], ativo: true }; });
         salvarCad(cadRef.current.concat(novos)); setImportar(null); toast(novos.length + (novos.length === 1 ? ' aluno importado.' : ' alunos importados.'));
     }
     // ---------- notas ----------
@@ -2519,7 +2549,7 @@ function NotasFiscaisTDB(_a) {
                 if (jaTem[f.name + '|' + f.size]) { var idEx = jaTem[f.name + '|' + f.size]; if (idEx !== 1 && !arquivosRef.current[idEx]) { arquivosRef.current[idEx] = f; reconectados++; } else repetidos++; return; }
                 return nfLerPdf(f).catch(function () { return ''; }).then(function (texto) {
                     var r = nfAnalisar(texto, f.name, cadRef.current);
-                    var item = { id: nfId('nfn'), mes: mesKey, arquivo: f.name, tamanho: f.size, nomeLido: r.nomeLido, alunoId: r.alunoId, cand: r.cand, semTexto: !String(texto).trim(), enviadaEm: '', criadaEm: new Date().toISOString() };
+                    var item = { id: nfId('nfn'), mes: mesKey, arquivo: f.name, tamanho: f.size, nomeLido: r.nomeLido, cpfLido: r.cpfLido || '', alunoId: r.alunoId, cand: r.cand, semTexto: !String(texto).trim(), enviadaEm: '', criadaEm: new Date().toISOString() };
                     arquivosRef.current[item.id] = f; jaTem[f.name + '|' + f.size] = item.id; novos.push(item);
                 });
             });
@@ -2550,17 +2580,20 @@ function NotasFiscaisTDB(_a) {
     if (!cad || !notas) return h('div', { style: { padding: 18, color: COLORS.inkSoft, fontSize: 13.5 } }, 'Carregando...');
     var porId = {}; cad.forEach(function (c) { porId[c.id] = c; });
     var notasMes = notas.filter(function (n) { return n.mes === mesKey; });
+    function cpfDiverge(n, c) { var d = nfDig(c && c.cpf), l = nfDig(n && n.cpfLido); return d.length === 11 && l.length === 11 && d !== l; }
     function situacao(n) {
         if (n.enviadaEm) return 'enviada';
         var c = n.alunoId ? porId[n.alunoId] : null;
         if (!c) return 'conferir';
+        if (cpfDiverge(n, c)) return 'conferir';
         var em = (c.emails || []).filter(nfEmailOk);
         return em.length ? 'ok' : 'semEmail';
     }
     var cont = { ok: 0, conferir: 0, semEmail: 0, enviada: 0 };
     notasMes.forEach(function (n) { cont[situacao(n)]++; });
     var q = nfNorm(busca);
-    var cadVis = cad.filter(function (c) { return !q || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(q) >= 0; });
+    var qd = nfDig(busca);
+    var cadVis = cad.filter(function (c) { return !q || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(q) >= 0 || (qd.length >= 3 && nfDig(c.cpf).indexOf(qd) >= 0); });
     var semEmailCad = cad.filter(function (c) { return c.ativo !== false && !(c.emails || []).some(nfEmailOk); }).length;
     var alunosOrd = cad.filter(function (c) { return c.ativo !== false || notasMes.some(function (n) { return n.alunoId === c.id; }); }).slice().sort(function (a, b) { return String(a.aluno).localeCompare(String(b.aluno), 'pt-BR'); });
     // ---------- envio ----------
@@ -2679,7 +2712,7 @@ function NotasFiscaisTDB(_a) {
         return tag('⚠️ Conferir', COLORS.goldSoft || '#FFF4D6', '#8a5a00');
     }
     function campoRot(texto, filho, extra) { return h('div', { style: Object.assign({ minWidth: 0 }, extra || {}) }, MOB && h('div', { style: rot }, texto), filho); }
-    var gradeCad = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: 'minmax(150px,1fr) minmax(150px,1fr) minmax(240px,1.8fr) 64px 34px', gap: 12, alignItems: 'center' };
+    var gradeCad = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: 'minmax(140px,1fr) minmax(140px,1fr) 150px minmax(220px,1.6fr) 64px 34px', gap: 12, alignItems: 'center' };
     var gradeNota = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: '26px minmax(90px,.8fr) minmax(100px,1fr) minmax(130px,1.1fr) minmax(140px,1.4fr) 112px 140px 34px', gap: 12, alignItems: 'center' };
     function cabecalho(cols, grade) {
         if (MOB) return null;
@@ -2695,6 +2728,9 @@ function NotasFiscaisTDB(_a) {
         return h('div', { key: c.id, 'data-nf-row': true, onClick: marcar('cad', c.id), onDoubleClick: desmarcar, style: Object.assign({}, estiloLinha('cad', c.id), gradeCad, { opacity: c.ativo === false ? .55 : 1 }) },
             campoRot('Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: COLORS.ink } }, c.aluno) : h('input', { 'data-nf-aluno': c.id, value: c.aluno, placeholder: 'Nome do aluno', 'aria-label': 'Aluno', onChange: function (e) { editarCad(c.id, 'aluno', e.target.value.toUpperCase()); }, onBlur: descarregar, style: Object.assign({}, inp, { fontWeight: 700 }) })),
             campoRot('Nome na nota fiscal', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, c.nomeNota || c.aluno) : h('input', { value: c.nomeNota, placeholder: 'igual ao aluno, se for o mesmo', 'aria-label': 'Nome na nota fiscal', onChange: function (e) { editarCad(c.id, 'nomeNota', e.target.value.toUpperCase()); }, onBlur: descarregar, style: inp })),
+            campoRot('CPF do responsável', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, c.cpf || '—') : h('div', null,
+                h('input', { value: c.cpf || '', placeholder: '000.000.000-00', inputMode: 'numeric', autoComplete: 'off', 'aria-label': 'CPF do responsável', onChange: function (e) { editarCad(c.id, 'cpf', nfCpfFmt(e.target.value)); }, onBlur: descarregar, style: Object.assign({}, inp, { borderColor: nfDig(c.cpf).length === 11 && !nfCpfOk(c.cpf) ? COLORS.red : COLORS.line }) }),
+                nfDig(c.cpf).length === 11 && !nfCpfOk(c.cpf) && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 3 } }, 'CPF inválido — confira os números'))),
             campoRot('E-mail(s) para envio', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink, whiteSpace: 'pre-line' } }, (c.emails || []).join('\n') || '—') : h(NFEmails, { valor: c.emails || [], onChange: function (v) { editarCad(c.id, 'emails', v); descarregar(); } }), { borderRadius: 8, outline: !temEm && c.ativo !== false ? '0' : '0' }),
             fimLinha(
               h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: c.ativo !== false, onChange: function (e) { editarCad(c.id, 'ativo', e.target.checked); descarregar(); }, style: { width: 18, height: 18, accentColor: '#2878de' } }), MOB ? 'Ativo' : ''),
@@ -2710,7 +2746,8 @@ function NotasFiscaisTDB(_a) {
                 ? h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: !!marcadas[n.id], onChange: function () { alternarMarca(n.id); }, style: { width: 20, height: 20, accentColor: '#2878de' } }), 'Marcar para envio')
                 : h('input', { type: 'checkbox', checked: !!marcadas[n.id], 'aria-label': 'Marcar para envio', onChange: function () { alternarMarca(n.id); }, style: { width: 18, height: 18, accentColor: '#2878de' } })),
             campoRot('Arquivo', h('div', null, h('div', { style: { fontSize: 13, fontWeight: 600, color: COLORS.ink, wordBreak: 'break-all' } }, n.arquivo), !modoPdf && !n.enviadaEm && !arquivosRef.current[n.id] && h('div', { style: { fontSize: 11.5, color: '#8a5a00', marginTop: 2 } }, 'Para enviar, escolha este PDF de novo.'))),
-            campoRot('Nome lido na nota', h('div', { style: { fontSize: 13, color: n.nomeLido ? COLORS.ink : COLORS.inkSoft } }, n.nomeLido || (n.semTexto ? 'PDF sem texto legível' : '—'))),
+            campoRot('Nome lido na nota', h('div', null, h('div', { style: { fontSize: 13, color: n.nomeLido ? COLORS.ink : COLORS.inkSoft } }, n.nomeLido || (n.semTexto ? 'PDF sem texto legível' : '—')),
+                n.cpfLido && h('div', { style: { fontSize: 11.5, marginTop: 2, color: c && cpfDiverge(n, c) ? COLORS.red : COLORS.inkSoft, fontWeight: c && cpfDiverge(n, c) ? 700 : 400 } }, 'CPF ' + n.cpfLido + (c && nfDig(c.cpf).length === 11 ? (cpfDiverge(n, c) ? ' — difere do cadastro!' : ' ✔ confere') : '')))),
             campoRot('Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: c ? COLORS.ink : COLORS.inkSoft } }, c ? c.aluno : 'Sem aluno escolhido') : h('select', { value: n.alunoId || '', 'aria-label': 'Aluno da nota', onChange: function (e) { editarNota(n.id, 'alunoId', e.target.value || null); descarregar(); }, style: Object.assign({}, inp, { fontWeight: n.alunoId ? 700 : 400 }) },
                 h('option', { value: '' }, 'Escolher aluno…'),
                 cands.length > 0 && h('optgroup', { label: 'Prováveis' }, cands.map(function (x) { return h('option', { key: 'c' + x.id, value: x.id }, x.aluno); })),
@@ -2759,7 +2796,7 @@ function NotasFiscaisTDB(_a) {
                     h('button', { type: 'button', onClick: abrirImportar, style: btnS }, '⬇ Importar alunos da Mensalidade'),
                     h('button', { type: 'button', onClick: adicionarAluno, style: btnP }, h(Plus, { size: 14 }), ' Adicionar aluno'))),
             cad.length > 6 && h('div', { 'data-export-ignore': true, style: { padding: '0 16px 12px', position: 'relative' } }, h(Search, { size: 14, color: COLORS.inkSoft, style: { position: 'absolute', left: 28, top: 11 } }), h('input', { value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: 'Buscar aluno ou e-mail...', 'aria-label': 'Buscar no cadastro', style: Object.assign({}, inp, { paddingLeft: 34 }) })),
-            cabecalho(['Aluno', 'Nome na nota fiscal', 'E-mail(s) para envio', 'Ativo', ''], gradeCad),
+            cabecalho(['Aluno', 'Nome na nota fiscal', 'CPF do responsável', 'E-mail(s) para envio', 'Ativo', ''], gradeCad),
             linhasCad.length ? linhasCad : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, cad.length ? 'Nenhum aluno encontrado.' : 'Nenhum aluno cadastrado. Use “Importar alunos da Mensalidade” ou “Adicionar aluno”.')),
         importar && h(NFModalImportar, { nomes: importar, onFechar: function () { setImportar(null); }, onImportar: confirmarImportar }),
         dlg === 'config' && h(NFModalConfig, { cfg: cfg, onFechar: function () { setDlg(null); }, onSalvar: salvarCfg }),
