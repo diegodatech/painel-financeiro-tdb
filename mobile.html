@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v52";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v53";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v52"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v53"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v52"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v53"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v52-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v53-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2274,15 +2274,13 @@ function nfAnalisarGrupo(T, ativos, docs, docDe, nomesDe) {
     }
     return { alunoId: alunoId, cand: cand };
 }
-function nfAnalisar(texto, nomeArq, cad, tipo) {
-    var T = ' ' + nfNorm(texto + ' ' + nomeArq) + ' ';
+// Liga uma nota ao cadastro: pelo CPF/CNPJ lido na nota + nome (ou só pelo nome). Usado ao ler o PDF e de novo quando o cadastro muda depois.
+function nfCasar(T, cpfs, cnpjs, cad, tipo) {
     var ativos = cad.filter(function (c) { return c.ativo !== false; });
     if (tipo === 'recibo' || tipo === 'boleto') {
         // recibo e boleto são sempre de um convênio: procura o nome da empresa (do cadastro ou o escrito na nota) e ignora alunos
-        var rr = nfAnalisarGrupo(T, ativos.filter(function (c) { return !!c.convenio; }), [], function () { return ''; }, function (c) { return [c.nomeNota, c.aluno].filter(Boolean); });
-        return { nomeLido: nfExtrairTomador(texto), alunoId: rr.alunoId, cand: rr.cand, cpfLido: '', cnpjLido: '' };
+        return nfAnalisarGrupo(T, ativos.filter(function (c) { return !!c.convenio; }), [], function () { return ''; }, function (c) { return [c.nomeNota, c.aluno].filter(Boolean); });
     }
-    var cpfs = nfCpfsNota(texto), cnpjs = nfCnpjsNota(texto);
     var alunos = ativos.filter(function (c) { return !c.convenio; }), convs = ativos.filter(function (c) { return !!c.convenio; });
     function cpfDe(c) { var d = nfDig(c.cpf); return d.length === 11 ? d : ''; }
     function cnpjDe(c) { var d = nfDig(c.cnpj); return d.length === 14 ? d : ''; }
@@ -2292,7 +2290,23 @@ function nfAnalisar(texto, nomeArq, cad, tipo) {
     if (ra.alunoId && !rc.cand.length) alunoId = ra.alunoId;
     else if (rc.alunoId && !ra.cand.length) alunoId = rc.alunoId;
     else if (cand.length === 1) alunoId = cand[0];
-    return { nomeLido: nfExtrairTomador(texto), alunoId: alunoId, cand: cand, cpfLido: cpfs[0] ? nfCpfFmt(cpfs[0]) : '', cnpjLido: cnpjs[0] ? nfCnpjFmt(cnpjs[0]) : '' };
+    return { alunoId: alunoId, cand: cand };
+}
+function nfAnalisar(texto, nomeArq, cad, tipo) {
+    var T = ' ' + nfNorm(texto + ' ' + nomeArq) + ' ';
+    if (tipo === 'recibo' || tipo === 'boleto') {
+        var rr = nfCasar(T, [], [], cad, tipo);
+        return { nomeLido: nfExtrairTomador(texto), alunoId: rr.alunoId, cand: rr.cand, cpfLido: '', cnpjLido: '' };
+    }
+    var cpfs = nfCpfsNota(texto), cnpjs = nfCnpjsNota(texto), r = nfCasar(T, cpfs, cnpjs, cad, tipo);
+    return { nomeLido: nfExtrairTomador(texto), alunoId: r.alunoId, cand: r.cand, cpfLido: cpfs[0] ? nfCpfFmt(cpfs[0]) : '', cnpjLido: cnpjs[0] ? nfCnpjFmt(cnpjs[0]) : '' };
+}
+// Mesma ligação, mas a partir do que já ficou guardado da nota (nome e CPF/CNPJ lidos), sem precisar do PDF.
+function nfRecasar(n, cad) {
+    var tp = n.tipo === 'recibo' || n.tipo === 'boleto' ? n.tipo : 'nota';
+    var T = ' ' + nfNorm((n.nomeLido || '') + ' ' + (n.arquivo || '')) + ' ';
+    var cp = nfDig(n.cpfLido), cn = nfDig(n.cnpjLido);
+    return nfCasar(T, cp.length === 11 ? [cp] : [], cn.length === 14 ? [cn] : [], cad, tp);
 }
 function NFEmails(p) {
     var h = React.createElement;
@@ -2639,6 +2653,18 @@ function NotasFiscaisTDB(_a) {
         timers.current[chave] = setTimeout(tentar, 700);
     }
     useEffect(function () { var f = function () { if (!erroLeitura) descarregar(); }; window.addEventListener('pagehide', f); return function () { window.removeEventListener('pagehide', f); }; }, [erroLeitura]);
+    // Notas que ainda estão sem aluno: quando o cadastro é preenchido/alterado depois, o TDB tenta ligar sozinho (pelo CPF/CNPJ e nome lidos na nota).
+    useEffect(function () {
+        if (!cad || !conv || !notas || erroLeitura) return;
+        var todos = cad.concat(conv), mudou = 0;
+        var nx = notasRef.current.map(function (n) {
+            if (n.alunoId || n.enviadaEm || (!n.nomeLido && !n.cpfLido && !n.cnpjLido)) return n;
+            var r = nfRecasar(n, todos);
+            if (r.alunoId) { mudou++; return Object.assign({}, n, { alunoId: r.alunoId, cand: r.cand }); }
+            return n;
+        });
+        if (mudou) { salvarNotas(nx); toast(mudou + (mudou === 1 ? ' nota ligada' : ' notas ligadas') + ' automaticamente ao cadastro.'); }
+    }, [cad, conv, notas]);
     function descarregar() {
         Object.keys(timers.current).forEach(function (k) { clearTimeout(timers.current[k]); delete timers.current[k]; gravar(k, dadosDe(k)); });
     }
@@ -2889,6 +2915,22 @@ function NotasFiscaisTDB(_a) {
     var elegiveis = notasMes.filter(function (n) { return !n.enviadaEm && situacao(n) === 'ok'; });
     var todasMarc = elegiveis.length > 0 && elegiveis.every(function (n) { return marcadas[n.id]; });
     var nMarcadas = notasMes.filter(function (n) { return marcadas[n.id]; }).length;
+    // Botões "Marcar todas / Desmarcar todas": marcam as notas ainda não enviadas deste mês (as que não estiverem prontas aparecem na confirmação como "Não serão enviadas", com o motivo).
+    function marcarLote(v) {
+        if (!v) { setMarcadas({}); return; }
+        var o = {}; notasMes.forEach(function (n) { if (tipoDe(n) === 'nota' && !n.enviadaEm) o[n.id] = true; }); setMarcadas(o);
+        if (!Object.keys(o).length) toast('Não há notas pendentes para marcar neste mês.');
+    }
+    // Clicar no nome do arquivo abre o PDF (só enquanto o arquivo ainda está na memória desta página).
+    function abrirPdf(n) {
+        var f = arquivosRef.current[n.id];
+        if (!f) { toast('Este PDF não está mais na memória. Escolha o arquivo de novo para poder abrir.'); return; }
+        var blob = f.type === 'application/pdf' ? f : new Blob([f], { type: 'application/pdf' });
+        var u = URL.createObjectURL(blob), w = null;
+        try { w = window.open(u, '_blank'); } catch (e) { w = null; }
+        if (!w) { var a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); }
+        setTimeout(function () { URL.revokeObjectURL(u); }, 180000);
+    }
     function alternarTodas() { if (todasMarc) setMarcadas({}); else { var o = {}; elegiveis.forEach(function (n) { o[n.id] = true; }); setMarcadas(o); } }
     function salvarCfg(c) {
         var g = nfLsSet(NF_LS.url, c.url) && nfLsSet(NF_LS.seg, c.segredo) && nfLsSet(NF_LS.teste, c.teste ? '1' : '0');
@@ -3090,7 +3132,7 @@ function NotasFiscaisTDB(_a) {
             modoPdf || tipoDe(n) !== 'nota' ? (MOB ? null : h('div', null)) : (MOB
                 ? h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: !!marcadas[n.id], onChange: function () { alternarMarca(n.id); }, style: { width: 20, height: 20, accentColor: '#2878de' } }), 'Marcar para envio')
                 : h('input', { type: 'checkbox', checked: !!marcadas[n.id], 'aria-label': 'Marcar para envio', onChange: function () { alternarMarca(n.id); }, style: { width: 18, height: 18, accentColor: '#2878de' } })),
-            campoRot('Arquivo', h('div', null, h('div', { style: { fontSize: 13, fontWeight: 600, color: COLORS.ink, wordBreak: 'break-all' } }, n.arquivo),
+            campoRot('Arquivo', h('div', null, modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 600, color: COLORS.ink, wordBreak: 'break-all' } }, n.arquivo) : h('button', { type: 'button', 'data-nf-abrir-pdf': '1', title: 'Abrir o PDF', onClick: function (e) { e.stopPropagation(); abrirPdf(n); }, style: { display: 'block', border: 'none', background: 'transparent', padding: 0, margin: 0, textAlign: 'left', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, color: '#1767cf', textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', wordBreak: 'break-all' } }, n.arquivo),
                 emEd ? h('select', { value: d.tipo === 'recibo' || d.tipo === 'boleto' ? d.tipo : 'nota', 'aria-label': 'Tipo do documento', onChange: function (e) { alterarDraft('tipo', e.target.value); }, style: Object.assign({}, inp, { marginTop: 4, padding: MOB ? '8px 10px' : '5px 8px', fontSize: MOB ? 15 : 12.5 }) }, h('option', { value: 'nota' }, 'Nota fiscal'), h('option', { value: 'recibo' }, 'Recibo'), h('option', { value: 'boleto' }, 'Boleto'))
                     : (tipoDe(n) !== 'nota' || (c && c.convenio)) && h('div', null, h('span', { 'data-nf-tipo': tipoDe(n), style: { display: 'inline-block', marginTop: 4, padding: '2px 9px', borderRadius: 999, fontSize: 11.5, fontWeight: 800, background: tipoDe(n) === 'recibo' ? '#ECE8FA' : tipoDe(n) === 'boleto' ? '#FFF4D6' : '#E4EEFC', color: tipoDe(n) === 'recibo' ? '#6B4FC4' : tipoDe(n) === 'boleto' ? '#8a5a00' : '#1767cf' } }, NF_ROTULO_TIPO[tipoDe(n)])),
                 !modoPdf && !n.enviadaEm && !arquivosRef.current[n.id] && h('div', { style: { fontSize: 11.5, color: '#8a5a00', marginTop: 2 } }, 'Para enviar, escolha este PDF de novo.'))),
@@ -3133,6 +3175,8 @@ function NotasFiscaisTDB(_a) {
             h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderTop: '1px solid ' + COLORS.lineSoft, background: COLORS.lineSoft } },
                 h('div', { style: { fontSize: 12, color: cfgOk && modoTeste ? '#8a5a00' : COLORS.inkSoft, fontWeight: cfgOk && modoTeste ? 700 : 400, flex: '1 1 220px' } }, !cfgOk ? 'Envio por e-mail ainda não configurado. Toque em “Configurar envio”.' : modoTeste ? '🧪 Modo teste ligado: os e-mails vão só para o e-mail de teste e nada é marcado como enviado.' : 'Envio real: os responsáveis recebem o e-mail e a Mensalidade do aluno é marcada como “Enviada”.'),
                 h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                    notasMes.some(function (n) { return tipoDe(n) === 'nota'; }) && h('button', { type: 'button', 'data-nf-marcar-lote': '1', title: 'Marca todas as notas ainda não enviadas deste mês', onClick: function () { marcarLote(true); }, style: btnS }, '☑ Marcar todas'),
+                    notasMes.some(function (n) { return tipoDe(n) === 'nota'; }) && h('button', { type: 'button', 'data-nf-desmarcar-lote': '1', disabled: !nMarcadas, onClick: function () { marcarLote(false); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, '☐ Desmarcar todas'),
                     h('button', { type: 'button', onClick: function () { setDlg('previa'); }, style: btnS }, 'Prévia do e-mail'),
                     h('button', { type: 'button', disabled: !nMarcadas, title: nMarcadas ? '' : 'Marque as notas na primeira coluna', onClick: function () { abrirEnvio('selecionadas'); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, 'Enviar selecionadas' + (nMarcadas ? ' (' + nMarcadas + ')' : '')),
                     h('button', { type: 'button', disabled: !elegiveis.length, title: elegiveis.length ? '' : 'Nenhuma nota pronta neste mês', onClick: function () { abrirEnvio('todas'); }, style: Object.assign({}, btnP, { opacity: elegiveis.length ? 1 : .5, cursor: elegiveis.length ? 'pointer' : 'not-allowed' }) }, 'Enviar todas ✅' + (elegiveis.length ? ' (' + elegiveis.length + ')' : ''))))),
