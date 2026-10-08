@@ -1,5 +1,5 @@
 window.TDB_CONFIG={
-  build: "tdbn-20261007-tempo1-v42",
+  build: "tdbn-20261007-tempo1-v43",
   buildLabel: "TEMPO\u00a01",
   appsScriptUrl: "https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec"
 };

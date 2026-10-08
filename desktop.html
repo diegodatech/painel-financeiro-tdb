@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261007-tempo1-v42";
+    window.__TDB_BUILD = "tdbn-20261007-tempo1-v43";
   </script>
-  <script src="./config.js?build=tdbn-20261007-tempo1-v42"></script>
+  <script src="./config.js?build=tdbn-20261007-tempo1-v43"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261007-tempo1-v42"></script>
+  <script src="./sync.js?build=tdbn-20261007-tempo1-v43"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v42-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v43-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1997,6 +1997,9 @@ function NotasFiscaisTDB(_a) {
     var _l = useState(false), lendo = _l[0], setLendo = _l[1];
     var _d = useState(false), arrastando = _d[0], setArrastando = _d[1];
     var _p = useState(false), modoPdf = _p[0], setModoPdf = _p[1];
+    var _ed = useState(null), ed = _ed[0], setEd = _ed[1];
+    var edRef = useRef(null);
+    function setEdit(v) { edRef.current = v; setEd(v); }
     var _cf = useState(nfCfgLer), cfg = _cf[0], setCfg = _cf[1];
     var _md = useState({ assunto: NF_ASSUNTO_PAD, corpo: NF_CORPO_PAD }), modelo = _md[0], setModelo = _md[1];
     var _mc = useState({}), marcadas = _mc[0], setMarcadas = _mc[1];
@@ -2042,7 +2045,7 @@ function NotasFiscaisTDB(_a) {
     function marcar(tipo, id) { return function () { setSel({ tipo: tipo, id: id }); }; }
     function desmarcar(e) { var t = e.target; if (t && t.closest && t.closest('input,select,textarea,button,[role=button],a')) return; setSel(null); }
     function estiloLinha(tipo, id) {
-        var on = sel && sel.tipo === tipo && sel.id === id;
+        var on = (sel && sel.tipo === tipo && sel.id === id) || (ed && ed.tipo === tipo && ed.id === id);
         return { background: on ? 'rgba(224, 174, 60, 0.16)' : 'transparent', borderLeft: on ? '3px solid #E0AE3C' : '3px solid transparent', borderTop: '1px solid ' + COLORS.lineSoft, padding: MOB ? '12px 12px' : '10px 14px', cursor: 'pointer' };
     }
     function paraLixeira(rotulo, origem, chave, lista, item) {
@@ -2050,10 +2053,44 @@ function NotasFiscaisTDB(_a) {
         try { window.__tdbLixeiraAdicionar({ rotulo: rotulo, origem: origem, restoreOps: [{ op: 'insert', key: chave, path: [], index: idx, item: item, uniqueField: 'id' }], cleanupKeys: [] }).catch(function () { }); } catch (e) { }
     }
     // ---------- cadastro ----------
-    function editarCad(id, campo, valor) { salvarCad(cadRef.current.map(function (c) { if (c.id !== id) return c; var o = Object.assign({}, c); o[campo] = valor; return o; })); }
+    function emEdicaoDe(tipo, id) { return !!ed && ed.tipo === tipo && ed.id === id; }
+    function iniciarEdicao(tipo, item) {
+        var e0 = edRef.current;
+        if (e0 && !(e0.tipo === tipo && e0.id === item.id)) { toast('Salve ou cancele a linha que está em edição antes de editar outra.'); return; }
+        setEdit({ tipo: tipo, id: item.id, novo: false, draft: Object.assign({}, item) }); setSel({ tipo: tipo, id: item.id });
+    }
+    function alterarDraft(campo, valor) {
+        var e0 = edRef.current; if (!e0) return;
+        var d = Object.assign({}, e0.draft); d[campo] = valor;
+        setEdit(Object.assign({}, e0, { draft: d }));
+    }
+    function cancelarEdicao() { setEdit(null); }
+    function salvarEdicao() {
+        var e0 = edRef.current; if (!e0) return;
+        var d = e0.draft;
+        if (e0.tipo === 'cad') {
+            var nome = String(d.aluno || '').trim().replace(/\s+/g, ' ');
+            if (!nome) { toast('Informe o nome do aluno.'); return; }
+            var dg = nfDig(d.cpf);
+            if (dg.length && !nfCpfOk(dg)) { toast('O CPF não é válido. Corrija ou deixe o campo em branco.'); return; }
+            var item = { id: d.id, aluno: nome.toUpperCase(), nomeNota: String(d.nomeNota || '').trim().replace(/\s+/g, ' ').toUpperCase(), cpf: dg.length ? nfCpfFmt(dg) : '', emails: d.emails || [], ativo: d.ativo !== false };
+            if (e0.novo) salvarCad([Object.assign({}, d, item)].concat(cadRef.current));
+            else salvarCad(cadRef.current.map(function (x) { return x.id === item.id ? Object.assign({}, x, item) : x; }));
+            toast(e0.novo ? 'Aluno cadastrado.' : 'Alterações salvas.');
+        } else {
+            var orig = notasRef.current.filter(function (x) { return x.id === e0.id; })[0];
+            if (!orig) { setEdit(null); return; }
+            var obj = { alunoId: d.alunoId || null, enviadaEm: d.enviadaEm || '' };
+            if (obj.enviadaEm !== (orig.enviadaEm || '')) obj.enviadaHora = '';
+            mesclarNota(orig.id, obj);
+            toast('Alterações salvas.');
+        }
+        setEdit(null); descarregar();
+    }
     function adicionarAluno() {
+        if (edRef.current) { toast('Salve ou cancele a linha em edição antes de adicionar outro aluno.'); return; }
         var novo = { id: nfId('nfc'), aluno: '', nomeNota: '', cpf: '', emails: [], ativo: true };
-        salvarCad([novo].concat(cadRef.current)); setBusca(''); setSel({ tipo: 'cad', id: novo.id });
+        setBusca(''); setEdit({ tipo: 'cad', id: novo.id, novo: true, draft: novo }); setSel({ tipo: 'cad', id: novo.id });
         setTimeout(function () { var el = document.querySelector('[data-nf-aluno="' + novo.id + '"]'); if (el) el.focus(); }, 60);
     }
     function removerAluno(c) {
@@ -2103,7 +2140,6 @@ function NotasFiscaisTDB(_a) {
             toast(novos.length + (novos.length === 1 ? ' nota lida' : ' notas lidas') + (reconectados ? ' · ' + reconectados + ' PDF(s) reconectado(s) para envio' : '') + (repetidos ? ' · ' + repetidos + ' já estava(m) na lista' : '') + '.'); if (reconectados) setNotas(notasRef.current.slice());
         }).catch(function () { toast('Não consegui ler os arquivos. Tente de novo.'); }).then(function () { setLendo(false); });
     }
-    function editarNota(id, campo, valor) { salvarNotas(notasRef.current.map(function (n) { if (n.id !== id) return n; var o = Object.assign({}, n); o[campo] = valor; return o; })); }
     function mesclarNota(id, obj) { salvarNotas(notasRef.current.map(function (n) { return n.id === id ? Object.assign({}, n, obj) : n; })); }
     function alternarMarca(id) { setMarcadas(function (p) { var o = Object.assign({}, p); if (o[id]) delete o[id]; else o[id] = true; return o; }); }
     function removerNota(n) {
@@ -2114,7 +2150,7 @@ function NotasFiscaisTDB(_a) {
     function exportarPDF() {
         var el = document.querySelector('.export-pagina-notas');
         if (!el) return;
-        descarregar(); setSel(null); setModoPdf(true);
+        descarregar(); setSel(null); setEdit(null); setModoPdf(true);
         setTimeout(function () {
             var alvo = document.querySelector('.export-pagina-notas') || el;
             Promise.resolve(exportarPaginaVisualPDF(alvo, 'Notas Fiscais — ' + (MESES_ABREV[MESES[mi]] || MESES[mi]) + ' ' + ano, 'Notas-Fiscais-' + mesKey, null)).catch(function () { }).then(function () { setModoPdf(false); });
@@ -2256,51 +2292,75 @@ function NotasFiscaisTDB(_a) {
         return tag('⚠️ Conferir', COLORS.goldSoft || '#FFF4D6', '#8a5a00');
     }
     function campoRot(texto, filho, extra) { return h('div', { style: Object.assign({ minWidth: 0 }, extra || {}) }, MOB && h('div', { style: rot }, texto), filho); }
-    var gradeCad = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: 'minmax(140px,1fr) minmax(140px,1fr) 150px minmax(220px,1.6fr) 64px 34px', gap: 12, alignItems: 'center' };
-    var gradeNota = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: '26px minmax(90px,.8fr) minmax(100px,1fr) minmax(130px,1.1fr) minmax(140px,1.4fr) 112px 140px 34px', gap: 12, alignItems: 'center' };
+    var gradeCad = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: 'minmax(140px,1fr) minmax(140px,1fr) 150px minmax(200px,1.6fr) 64px 112px', gap: 12, alignItems: 'center' };
+    var gradeNota = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: '26px minmax(85px,.8fr) minmax(95px,1fr) minmax(120px,1.1fr) minmax(110px,1.4fr) 108px 140px 112px', gap: 12, alignItems: 'center' };
     function cabecalho(cols, grade) {
         if (MOB) return null;
         return h('div', { style: Object.assign({}, grade, { padding: '9px 14px', background: COLORS.lineSoft, fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '.04em' }) }, cols.map(function (c, i) { return h('div', { key: i }, c); }));
     }
     function fimLinha(a, b) { return MOB ? h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 } }, a, b) : h(React.Fragment, null, a, b); }
     function lixeiraBtn(onClick, titulo) {
-        return h('span', { 'data-export-ignore': true, role: 'button', tabIndex: 0, title: titulo, 'aria-label': titulo, onClick: function (e) { e.stopPropagation(); onClick(); }, style: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 9, cursor: 'pointer', background: COLORS.redBg, flex: 'none' } }, h(Trash2, { size: 14, color: COLORS.red }));
+        return h('button', { type: 'button', 'data-export-ignore': true, title: titulo, 'aria-label': titulo, onClick: function (e) { e.stopPropagation(); onClick(); }, style: { border: 'none', background: 'none', borderRadius: 7, width: 30, height: 30, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', opacity: .65, flex: 'none' } }, h(Trash2, { size: 13, color: COLORS.red }));
+    }
+    function lapisBtn(onClick, titulo) {
+        return h('button', { type: 'button', 'data-export-ignore': true, title: titulo, 'aria-label': titulo, onClick: function (e) { e.stopPropagation(); onClick(); }, style: { border: 'none', background: 'none', borderRadius: 7, width: 30, height: 30, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', opacity: .65, flex: 'none' } }, h(Pencil, { size: 13, color: COLORS.ink }));
+    }
+    function acoesLinha(emEd, onEditar, onExcluir, tituloEditar, tituloExcluir) {
+        if (emEd) {
+            return h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: MOB ? 'flex-end' : 'center', gap: MOB ? 8 : 4 } },
+                h('button', { type: 'button', title: 'Salvar alterações', 'aria-label': 'Salvar alterações', onClick: function (e) { e.stopPropagation(); salvarEdicao(); }, style: { background: COLORS.green, color: '#fff', border: 'none', borderRadius: MOB ? 10 : 7, padding: MOB ? '10px 16px' : '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: MOB ? 13.5 : 11, fontWeight: 800 } }, h(Check, { size: MOB ? 14 : 12, color: '#FFFFFF' }), ' Salvar'),
+                h('button', { type: 'button', title: 'Cancelar edição', 'aria-label': 'Cancelar edição', onClick: function (e) { e.stopPropagation(); cancelarEdicao(); }, style: { background: COLORS.redBg, color: COLORS.red, border: '1px solid ' + COLORS.red + '44', borderRadius: MOB ? 10 : 7, padding: MOB ? '10px 14px' : '5px 7px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: MOB ? 13.5 : 11, fontWeight: 800 } }, h(X, { size: MOB ? 14 : 12, color: COLORS.red }), MOB ? ' Cancelar' : null));
+        }
+        return h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: MOB ? 'flex-end' : 'center', gap: 3 } }, lapisBtn(onEditar, tituloEditar), lixeiraBtn(onExcluir, tituloExcluir));
     }
     // ---------- cadastro ----------
-    var linhasCad = cadVis.map(function (c) {
-        var temEm = (c.emails || []).some(nfEmailOk);
-        return h('div', { key: c.id, 'data-nf-row': true, onClick: marcar('cad', c.id), onDoubleClick: desmarcar, style: Object.assign({}, estiloLinha('cad', c.id), gradeCad, { opacity: c.ativo === false ? .55 : 1 }) },
-            campoRot('Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: COLORS.ink } }, c.aluno) : h('input', { 'data-nf-aluno': c.id, value: c.aluno, placeholder: 'Nome do aluno', 'aria-label': 'Aluno', onChange: function (e) { editarCad(c.id, 'aluno', e.target.value.toUpperCase()); }, onBlur: descarregar, style: Object.assign({}, inp, { fontWeight: 700 }) })),
-            campoRot('Nome na nota fiscal', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, c.nomeNota || c.aluno) : h('input', { value: c.nomeNota, placeholder: 'igual ao aluno, se for o mesmo', 'aria-label': 'Nome na nota fiscal', onChange: function (e) { editarCad(c.id, 'nomeNota', e.target.value.toUpperCase()); }, onBlur: descarregar, style: inp })),
-            campoRot('CPF do responsável', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, c.cpf || '—') : h('div', null,
-                h('input', { value: c.cpf || '', placeholder: '000.000.000-00', inputMode: 'numeric', autoComplete: 'off', 'aria-label': 'CPF do responsável', onChange: function (e) { editarCad(c.id, 'cpf', nfCpfFmt(e.target.value)); }, onBlur: descarregar, style: Object.assign({}, inp, { borderColor: nfDig(c.cpf).length === 11 && !nfCpfOk(c.cpf) ? COLORS.red : COLORS.line }) }),
-                nfDig(c.cpf).length === 11 && !nfCpfOk(c.cpf) && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 3 } }, 'CPF inválido — confira os números'))),
-            campoRot('E-mail(s) para envio', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink, whiteSpace: 'pre-line' } }, (c.emails || []).join('\n') || '—') : h(NFEmails, { valor: c.emails || [], onChange: function (v) { editarCad(c.id, 'emails', v); descarregar(); } }), { borderRadius: 8, outline: !temEm && c.ativo !== false ? '0' : '0' }),
+    var mono = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' };
+    var listaCad = (ed && ed.tipo === 'cad' && ed.novo ? [ed.draft] : []).concat(cadVis);
+    var linhasCad = listaCad.map(function (c) {
+        var emEd = emEdicaoDe('cad', c.id), d = emEd ? ed.draft : c;
+        var cpfRuim = nfDig(d.cpf).length === 11 && !nfCpfOk(d.cpf);
+        var emails = d.emails || [];
+        return h('div', { key: c.id, 'data-nf-row': true, 'data-nf-alvo': c.aluno, onClick: function () { if (!emEd) setSel({ tipo: 'cad', id: c.id }); }, onDoubleClick: function (e) { if (!emEd) desmarcar(e); }, style: Object.assign({}, estiloLinha('cad', c.id), gradeCad, { opacity: c.ativo === false && !emEd ? .55 : 1 }) },
+            campoRot('Aluno', emEd ? h('input', { 'data-nf-aluno': c.id, value: d.aluno, placeholder: 'Nome do aluno', 'aria-label': 'Aluno', onChange: function (e) { alterarDraft('aluno', e.target.value.toUpperCase()); }, style: Object.assign({}, inp, { fontWeight: 700 }) })
+                : h('div', { 'data-nf-nome': true, style: { fontSize: 13.5, fontWeight: 800, color: COLORS.ink, overflowWrap: 'anywhere' } }, d.aluno || '—')),
+            campoRot('Nome na nota fiscal', emEd ? h('input', { value: d.nomeNota, placeholder: 'igual ao aluno, se for o mesmo', 'aria-label': 'Nome na nota fiscal', onChange: function (e) { alterarDraft('nomeNota', e.target.value.toUpperCase()); }, style: inp })
+                : h('div', { style: { fontSize: 13, color: COLORS.ink, overflowWrap: 'anywhere' } }, d.nomeNota || d.aluno || '—')),
+            campoRot('CPF do responsável', emEd ? h('div', null,
+                h('input', { value: d.cpf || '', placeholder: '000.000.000-00', inputMode: 'numeric', autoComplete: 'off', 'aria-label': 'CPF do responsável', onChange: function (e) { alterarDraft('cpf', nfCpfFmt(e.target.value)); }, style: Object.assign({}, inp, { borderColor: cpfRuim ? COLORS.red : COLORS.line }) }),
+                cpfRuim && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 3 } }, 'CPF inválido — confira os números'))
+                : h('div', { style: Object.assign({}, mono, { fontSize: 12.5, color: d.cpf ? (cpfRuim ? COLORS.red : COLORS.ink) : COLORS.inkSoft }) }, d.cpf ? d.cpf + (cpfRuim ? ' (inválido)' : '') : '—')),
+            campoRot('E-mail(s) para envio', emEd ? h(NFEmails, { valor: emails, onChange: function (v) { alterarDraft('emails', v); } })
+                : h('div', { style: { fontSize: 12.5, color: emails.length ? COLORS.ink : COLORS.red, overflowWrap: 'anywhere', whiteSpace: modoPdf ? 'pre-line' : 'normal' } }, emails.length ? emails.join(modoPdf ? '\n' : ', ') : 'sem e-mail cadastrado')),
             fimLinha(
-              h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: c.ativo !== false, onChange: function (e) { editarCad(c.id, 'ativo', e.target.checked); descarregar(); }, style: { width: 18, height: 18, accentColor: '#2878de' } }), MOB ? 'Ativo' : ''),
-              h('div', { style: { display: 'flex', justifyContent: MOB ? 'flex-end' : 'center' } }, lixeiraBtn(function () { removerAluno(c); }, 'Excluir aluno'))
+                emEd ? h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: d.ativo !== false, 'aria-label': 'Ativo', onChange: function (e) { alterarDraft('ativo', e.target.checked); }, style: { width: 18, height: 18, accentColor: '#2878de' } }), MOB ? 'Ativo' : '')
+                    : h('div', null, MOB && h('span', { style: { fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, marginRight: 8 } }, 'Ativo:'), tag(d.ativo !== false ? 'Sim' : 'Não', d.ativo !== false ? COLORS.greenBg : COLORS.lineSoft, d.ativo !== false ? COLORS.green : COLORS.inkSoft)),
+                acoesLinha(emEd, function () { iniciarEdicao('cad', c); }, function () { removerAluno(c); }, 'Editar aluno', 'Excluir aluno')
             ));
     });
     // ---------- notas ----------
     var linhasNotas = notasMes.map(function (n) {
+        var emEd = emEdicaoDe('nota', n.id), d = emEd ? ed.draft : n;
         var c = n.alunoId ? porId[n.alunoId] : null;
         var cands = (n.cand || []).map(function (id) { return porId[id]; }).filter(Boolean);
-        return h('div', { key: n.id, 'data-nf-row': true, onClick: marcar('nota', n.id), onDoubleClick: desmarcar, style: Object.assign({}, estiloLinha('nota', n.id), gradeNota) },
+        return h('div', { key: n.id, 'data-nf-row': true, 'data-nf-alvo': n.arquivo, onClick: function () { if (!emEd) setSel({ tipo: 'nota', id: n.id }); }, onDoubleClick: function (e) { if (!emEd) desmarcar(e); }, style: Object.assign({}, estiloLinha('nota', n.id), gradeNota) },
             modoPdf ? (MOB ? null : h('div', null)) : (MOB
                 ? h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: !!marcadas[n.id], onChange: function () { alternarMarca(n.id); }, style: { width: 20, height: 20, accentColor: '#2878de' } }), 'Marcar para envio')
                 : h('input', { type: 'checkbox', checked: !!marcadas[n.id], 'aria-label': 'Marcar para envio', onChange: function () { alternarMarca(n.id); }, style: { width: 18, height: 18, accentColor: '#2878de' } })),
             campoRot('Arquivo', h('div', null, h('div', { style: { fontSize: 13, fontWeight: 600, color: COLORS.ink, wordBreak: 'break-all' } }, n.arquivo), !modoPdf && !n.enviadaEm && !arquivosRef.current[n.id] && h('div', { style: { fontSize: 11.5, color: '#8a5a00', marginTop: 2 } }, 'Para enviar, escolha este PDF de novo.'))),
             campoRot('Nome lido na nota', h('div', null, h('div', { style: { fontSize: 13, color: n.nomeLido ? COLORS.ink : COLORS.inkSoft } }, n.nomeLido || (n.semTexto ? 'PDF sem texto legível' : '—')),
                 n.cpfLido && h('div', { style: { fontSize: 11.5, marginTop: 2, color: c && cpfDiverge(n, c) ? COLORS.red : COLORS.inkSoft, fontWeight: c && cpfDiverge(n, c) ? 700 : 400 } }, 'CPF ' + n.cpfLido + (c && nfDig(c.cpf).length === 11 ? (cpfDiverge(n, c) ? ' — difere do cadastro!' : ' ✔ confere') : '')))),
-            campoRot('Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: c ? COLORS.ink : COLORS.inkSoft } }, c ? c.aluno : 'Sem aluno escolhido') : h('select', { value: n.alunoId || '', 'aria-label': 'Aluno da nota', onChange: function (e) { editarNota(n.id, 'alunoId', e.target.value || null); descarregar(); }, style: Object.assign({}, inp, { fontWeight: n.alunoId ? 700 : 400 }) },
+            campoRot('Aluno', emEd ? h('select', { value: d.alunoId || '', 'aria-label': 'Aluno da nota', onChange: function (e) { alterarDraft('alunoId', e.target.value || null); }, style: Object.assign({}, inp, { fontWeight: d.alunoId ? 700 : 400 }) },
                 h('option', { value: '' }, 'Escolher aluno…'),
                 cands.length > 0 && h('optgroup', { label: 'Prováveis' }, cands.map(function (x) { return h('option', { key: 'c' + x.id, value: x.id }, x.aluno); })),
-                h('optgroup', { label: 'Todos os alunos' }, alunosOrd.map(function (x) { return h('option', { key: x.id, value: x.id }, x.aluno || '(sem nome)'); })))),
+                h('optgroup', { label: 'Todos os alunos' }, alunosOrd.map(function (x) { return h('option', { key: x.id, value: x.id }, x.aluno || '(sem nome)'); })))
+                : h('div', { 'data-nf-aluno-nota': true, style: { fontSize: 13, fontWeight: c ? 800 : 400, color: c ? COLORS.ink : COLORS.inkSoft, overflowWrap: 'anywhere' } }, c ? c.aluno : 'Sem aluno escolhido')),
             campoRot('Enviar para', h('div', { style: { fontSize: 12.5, color: c && (c.emails || []).some(nfEmailOk) ? COLORS.ink : COLORS.red, overflowWrap: modoPdf ? 'normal' : 'anywhere', whiteSpace: modoPdf ? 'pre-line' : 'normal' } }, c ? ((c.emails || []).join(modoPdf ? '\n' : ', ') || 'sem e-mail cadastrado') : '—')),
             campoRot('Situação', h('div', null, tagSituacao(n), falhas[n.id] && !modoPdf && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 4, overflowWrap: 'anywhere' } }, falhas[n.id]))),
-            campoRot('Enviada em', h('div', null, h('input', { type: 'date', value: n.enviadaEm || '', 'aria-label': 'Data de envio', onChange: function (e) { editarNota(n.id, 'enviadaEm', e.target.value); descarregar(); }, style: inp }),
-                (n.enviadaHora || n.driveUrl) && h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 3 } }, n.enviadaHora ? 'às ' + n.enviadaHora : '', n.enviadaHora && n.driveUrl ? ' · ' : '', n.driveUrl && !modoPdf ? h('a', { href: n.driveUrl, target: '_blank', rel: 'noopener noreferrer', style: { color: '#1767cf', fontWeight: 700 } }, 'PDF no Drive') : ''))),
-            h('div', { style: { display: 'flex', justifyContent: MOB ? 'flex-end' : 'center' } }, lixeiraBtn(function () { removerNota(n); }, 'Excluir nota')));
+            campoRot('Enviada em', h('div', null,
+                emEd ? h('input', { type: 'date', value: d.enviadaEm || '', 'aria-label': 'Data de envio', onChange: function (e) { alterarDraft('enviadaEm', e.target.value); }, style: inp })
+                    : h('div', { style: Object.assign({}, mono, { fontSize: 12.5, color: n.enviadaEm ? COLORS.ink : COLORS.inkSoft, whiteSpace: 'nowrap' }) }, n.enviadaEm ? nfDataBR(n.enviadaEm) : '—'),
+                !emEd && (n.enviadaHora || n.driveUrl) && h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 3 } }, n.enviadaHora ? 'às ' + n.enviadaHora : '', n.enviadaHora && n.driveUrl ? ' · ' : '', n.driveUrl && !modoPdf ? h('a', { href: n.driveUrl, target: '_blank', rel: 'noopener noreferrer', style: { color: '#1767cf', fontWeight: 700 } }, 'PDF no Drive') : ''))),
+            acoesLinha(emEd, function () { iniciarEdicao('nota', n); }, function () { removerNota(n); }, 'Editar nota', 'Excluir nota'));
     });
     var mesesOpc = MESES.map(function (m, i) { return h('option', { key: m, value: i }, MESES_ABREV[m] || m); });
     return h('div', { ref: raizRef, className: 'export-pagina-notas', style: { display: 'grid', gap: MOB ? 14 : 18, minWidth: 0 } },
@@ -2316,14 +2376,14 @@ function NotasFiscaisTDB(_a) {
         h('div', { style: Object.assign({}, card, { overflow: 'hidden' }) },
             h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '14px 16px' } },
                 h('div', null, h('div', { style: { fontSize: 16, fontWeight: 800, color: COLORS.ink } }, 'Notas do mês'), h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 2 } }, 'Escolha os PDFs (do Google Drive ou do aparelho) e confira antes de qualquer envio.')),
-                h('select', { 'data-export-ignore': true, value: mi, onChange: function (e) { setMi(Number(e.target.value)); setSel(null); setMarcadas({}); }, 'aria-label': 'Mês das notas', style: Object.assign({}, inp, { width: 'auto', minWidth: 90 }) }, mesesOpc)),
+                h('select', { 'data-export-ignore': true, value: mi, onChange: function (e) { setMi(Number(e.target.value)); setSel(null); setMarcadas({}); if (edRef.current && edRef.current.tipo === 'nota') setEdit(null); }, 'aria-label': 'Mês das notas', style: Object.assign({}, inp, { width: 'auto', minWidth: 90 }) }, mesesOpc)),
             h('div', { 'data-export-ignore': true, onDragOver: function (e) { e.preventDefault(); setArrastando(true); }, onDragLeave: function () { setArrastando(false); }, onDrop: function (e) { e.preventDefault(); setArrastando(false); receber(e.dataTransfer && e.dataTransfer.files); }, style: { margin: '0 16px 12px', padding: MOB ? '16px 12px' : '18px 14px', border: '2px dashed ' + (arrastando ? '#1767cf' : 'rgba(23,103,207,.35)'), background: arrastando ? 'rgba(23,103,207,.10)' : 'rgba(23,103,207,.05)', borderRadius: 12, textAlign: 'center' } },
                 h('input', { ref: inputRef, type: 'file', accept: 'application/pdf,.pdf', multiple: true, style: { display: 'none' }, 'aria-label': 'Escolher PDFs das notas', onChange: function (e) { receber(e.target.files); e.target.value = ''; } }),
                 h('button', { type: 'button', disabled: lendo, onClick: function () { inputRef.current && inputRef.current.click(); }, style: Object.assign({}, btnP, { padding: '11px 18px', fontSize: 13.5, opacity: lendo ? .6 : 1 }) }, h(FileText, { size: 15 }), lendo ? ' Lendo as notas…' : ' Escolher PDFs (Drive ou arquivos)'),
                 h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 8 } }, MOB ? 'O seletor do aparelho mostra o Google Drive.' : 'ou arraste os PDFs para cá — o TDB lê o nome dentro de cada nota.')),
             notasMes.length > 0 && h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', padding: '0 16px 12px' } },
                 tag('✅ ' + cont.ok + ' identificadas', COLORS.greenBg, COLORS.green), tag('⚠️ ' + cont.conferir + ' para conferir', COLORS.goldSoft || '#FFF4D6', '#8a5a00'), tag('❌ ' + cont.semEmail + ' sem e-mail', COLORS.redBg, COLORS.red), cont.enviada > 0 && tag('✉ ' + cont.enviada + ' enviadas', '#E4EEFC', '#1767cf')),
-            notasMes.length > 0 && cabecalho([modoPdf ? '' : h('input', { type: 'checkbox', checked: todasMarc, disabled: !elegiveis.length, 'aria-label': 'Marcar todas as notas prontas', title: 'Marcar todas as notas prontas', onChange: alternarTodas, style: { width: 18, height: 18, accentColor: '#2878de' } }), 'Arquivo', 'Nome lido na nota', 'Aluno', 'Enviar para', 'Situação', 'Enviada em', ''], gradeNota),
+            notasMes.length > 0 && cabecalho([modoPdf ? '' : h('input', { type: 'checkbox', checked: todasMarc, disabled: !elegiveis.length, 'aria-label': 'Marcar todas as notas prontas', title: 'Marcar todas as notas prontas', onChange: alternarTodas, style: { width: 18, height: 18, accentColor: '#2878de' } }), 'Arquivo', 'Nome lido na nota', 'Aluno', 'Enviar para', 'Situação', 'Enviada em', h('span', { 'data-export-ignore': true }, 'Ações')], gradeNota),
             notasMes.length ? linhasNotas : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, 'Nenhuma nota neste mês ainda.'),
             h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderTop: '1px solid ' + COLORS.lineSoft, background: COLORS.lineSoft } },
                 h('div', { style: { fontSize: 12, color: cfgOk && modoTeste ? '#8a5a00' : COLORS.inkSoft, fontWeight: cfgOk && modoTeste ? 700 : 400, flex: '1 1 220px' } }, !cfgOk ? 'Envio por e-mail ainda não configurado. Toque em “Configurar envio”.' : modoTeste ? '🧪 Modo teste ligado: os e-mails vão só para o e-mail de teste e nada é marcado como enviado.' : 'Envio real: os responsáveis recebem o e-mail e a Mensalidade do aluno é marcada como “Enviada”.'),
@@ -2340,7 +2400,7 @@ function NotasFiscaisTDB(_a) {
                     h('button', { type: 'button', onClick: abrirImportar, style: btnS }, '⬇ Importar alunos da Mensalidade'),
                     h('button', { type: 'button', onClick: adicionarAluno, style: btnP }, h(Plus, { size: 14 }), ' Adicionar aluno'))),
             cad.length > 6 && h('div', { 'data-export-ignore': true, style: { padding: '0 16px 12px', position: 'relative' } }, h(Search, { size: 14, color: COLORS.inkSoft, style: { position: 'absolute', left: 28, top: 11 } }), h('input', { value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: 'Buscar aluno ou e-mail...', 'aria-label': 'Buscar no cadastro', style: Object.assign({}, inp, { paddingLeft: 34 }) })),
-            cabecalho(['Aluno', 'Nome na nota fiscal', 'CPF do responsável', 'E-mail(s) para envio', 'Ativo', ''], gradeCad),
+            cabecalho(['Aluno', 'Nome na nota fiscal', 'CPF do responsável', 'E-mail(s) para envio', 'Ativo', h('span', { 'data-export-ignore': true }, 'Ações')], gradeCad),
             linhasCad.length ? linhasCad : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, cad.length ? 'Nenhum aluno encontrado.' : 'Nenhum aluno cadastrado. Use “Importar alunos da Mensalidade” ou “Adicionar aluno”.')),
         importar && h(NFModalImportar, { nomes: importar, onFechar: function () { setImportar(null); }, onImportar: confirmarImportar }),
         dlg === 'config' && h(NFModalConfig, { cfg: cfg, onFechar: function () { setDlg(null); }, onSalvar: salvarCfg }),
