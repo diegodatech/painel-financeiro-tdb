@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v56";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v57";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v56"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v57"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v56"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v57"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v56-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v57-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2244,6 +2244,12 @@ function nfCnpjsNota(texto) {
     while ((m = re.exec(t))) { var d = nfDig(m[2]); if (nfCnpjOk(d) && out.indexOf(d) < 0) out.push(d); }
     return out;
 }
+// Recibo/boleto: todos os CNPJs válidos que aparecem no documento (o da escola, o do banco, o da empresa...). Só serve para achar o convênio cujo CNPJ está cadastrado.
+function nfCnpjsTodos(texto) {
+    var t = String(texto || ''), out = [], re = /(^|\D)(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})(?!\d)/g, m;
+    while ((m = re.exec(t))) { var d = nfDig(m[2]); if (nfCnpjOk(d) && out.indexOf(d) < 0) out.push(d); }
+    return out;
+}
 // Procura, dentro do texto da nota (e no nome do arquivo), o "Nome na nota fiscal" de cada aluno (ou convênio) cadastrado.
 // Se o cadastro tem o CPF do responsável (ou o CNPJ da empresa), o documento da nota decide (resolve pais com o mesmo nome).
 function nfAnalisarGrupo(T, ativos, docs, docDe, nomesDe) {
@@ -2284,7 +2290,12 @@ function nfCasar(T, cpfs, cnpjs, cad, tipo) {
 function nfCasarEm(T, cpfs, cnpjs, ativos, tipo) {
     if (tipo === 'recibo' || tipo === 'boleto') {
         // recibo e boleto são sempre de um convênio: procura o nome da empresa (do cadastro ou o escrito na nota) e ignora alunos
-        return nfAnalisarGrupo(T, ativos.filter(function (c) { return !!c.convenio; }), [], function () { return ''; }, function (c) { return [c.nomeNota, c.aluno].filter(Boolean); });
+        var convsRb = ativos.filter(function (c) { return !!c.convenio; });
+        var rNome = nfAnalisarGrupo(T, convsRb, [], function () { return ''; }, function (c) { return [c.nomeNota, c.aluno].filter(Boolean); });
+        if (rNome.alunoId || !cnpjs.length) return rNome;
+        // não achou pelo nome: tenta pelo CNPJ da empresa que está no documento (só vale se o mesmo CNPJ estiver no cadastro do convênio)
+        var rDoc = nfAnalisarGrupo(T, convsRb, cnpjs, function (c) { var d = nfDig(c.cnpj); return d.length === 14 ? d : ''; });
+        return rDoc.alunoId ? rDoc : rNome;
     }
     var alunos = ativos.filter(function (c) { return !c.convenio; }), convs = ativos.filter(function (c) { return !!c.convenio; });
     function cpfDe(c) { var d = nfDig(c.cpf); return d.length === 11 ? d : ''; }
@@ -2300,8 +2311,9 @@ function nfCasarEm(T, cpfs, cnpjs, ativos, tipo) {
 function nfAnalisar(texto, nomeArq, cad, tipo) {
     var T = ' ' + nfNorm(texto + ' ' + nomeArq) + ' ';
     if (tipo === 'recibo' || tipo === 'boleto') {
-        var rr = nfCasar(T, [], [], cad, tipo);
-        return { nomeLido: nfExtrairTomador(texto), alunoId: rr.alunoId, cand: rr.cand, cpfLido: '', cnpjLido: '' };
+        var todosCnpj = nfCnpjsTodos(texto), rr = nfCasar(T, [], todosCnpj, cad, tipo);
+        var cConv = rr.alunoId ? cad.filter(function (x) { return x.id === rr.alunoId; })[0] : null, dConv = cConv ? nfDig(cConv.cnpj) : '';
+        return { nomeLido: nfExtrairTomador(texto), alunoId: rr.alunoId, cand: rr.cand, cpfLido: '', cnpjLido: dConv.length === 14 && todosCnpj.indexOf(dConv) >= 0 ? nfCnpjFmt(dConv) : '', cnpjsDoc: todosCnpj.join(',') };
     }
     var cpfs = nfCpfsNota(texto), cnpjs = nfCnpjsNota(texto), r = nfCasar(T, cpfs, cnpjs, cad, tipo);
     return { nomeLido: nfExtrairTomador(texto), alunoId: r.alunoId, cand: r.cand, cpfLido: cpfs[0] ? nfCpfFmt(cpfs[0]) : '', cnpjLido: cnpjs[0] ? nfCnpjFmt(cnpjs[0]) : '' };
@@ -2311,6 +2323,7 @@ function nfRecasar(n, cad) {
     var tp = n.tipo === 'recibo' || n.tipo === 'boleto' ? n.tipo : 'nota';
     var T = ' ' + nfNorm((n.nomeLido || '') + ' ' + (n.arquivo || '')) + ' ';
     var cp = nfDig(n.cpfLido), cn = nfDig(n.cnpjLido);
+    if (tp !== 'nota') return nfCasar(T, [], String(n.cnpjsDoc || '').split(',').filter(function (x) { return x.length === 14; }), cad, tp);
     return nfCasar(T, cp.length === 11 ? [cp] : [], cn.length === 14 ? [cn] : [], cad, tp);
 }
 function NFEmails(p) {
@@ -2667,9 +2680,14 @@ function NotasFiscaisTDB(_a) {
         if (!cad || !conv || !notas || erroLeitura) return;
         var todos = cad.concat(conv), mudou = 0;
         var nx = notasRef.current.map(function (n) {
-            if (n.alunoId || n.enviadaEm || (!n.nomeLido && !n.cpfLido && !n.cnpjLido)) return n;
+            if (n.alunoId || n.enviadaEm || (!n.nomeLido && !n.cpfLido && !n.cnpjLido && !n.cnpjsDoc)) return n;
             var r = nfRecasar(n, todos);
-            if (r.alunoId) { mudou++; return Object.assign({}, n, { alunoId: r.alunoId, cand: r.cand }); }
+            if (r.alunoId) {
+                mudou++;
+                var extra = {}, cm = todos.filter(function (x) { return x.id === r.alunoId; })[0], dm = cm ? nfDig(cm.cnpj) : '';
+                if (n.cnpjsDoc && !n.cnpjLido && dm.length === 14 && String(n.cnpjsDoc).split(',').indexOf(dm) >= 0) extra.cnpjLido = nfCnpjFmt(dm);
+                return Object.assign({}, n, extra, { alunoId: r.alunoId, cand: r.cand });
+            }
             return n;
         });
         if (mudou) { salvarNotas(nx); toast(mudou + (mudou === 1 ? ' nota ligada' : ' notas ligadas') + ' automaticamente ao cadastro.'); }
@@ -2848,7 +2866,7 @@ function NotasFiscaisTDB(_a) {
                 if (jaTem[f.name + '|' + f.size]) { var idEx = jaTem[f.name + '|' + f.size]; if (idEx !== 1 && !arquivosRef.current[idEx]) { arquivosRef.current[idEx] = f; reconectados++; } else repetidos++; return; }
                 return nfLerPdf(f).catch(function () { return ''; }).then(function (texto) {
                     var tipoDoc = nfTipoDoc(texto, f.name), r = nfAnalisar(texto, f.name, cadRef.current.concat(convRef.current), tipoDoc);
-                    var item = { id: nfId('nfn'), mes: mesKey, arquivo: f.name, tamanho: f.size, nomeLido: r.nomeLido, cpfLido: r.cpfLido || '', cnpjLido: r.cnpjLido || '', tipo: tipoDoc, alunoId: r.alunoId, cand: r.cand, semTexto: !String(texto).trim(), enviadaEm: '', criadaEm: new Date().toISOString() };
+                    var item = { id: nfId('nfn'), mes: mesKey, arquivo: f.name, tamanho: f.size, nomeLido: r.nomeLido, cpfLido: r.cpfLido || '', cnpjLido: r.cnpjLido || '', cnpjsDoc: r.cnpjsDoc || '', tipo: tipoDoc, alunoId: r.alunoId, cand: r.cand, semTexto: !String(texto).trim(), enviadaEm: '', criadaEm: new Date().toISOString() };
                     arquivosRef.current[item.id] = f; jaTem[f.name + '|' + f.size] = item.id; novos.push(item);
                 });
             });
