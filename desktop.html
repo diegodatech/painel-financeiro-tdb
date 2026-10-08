@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v48";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v49";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v48"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v49"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v48"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v49"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v48-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v49-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1911,6 +1911,34 @@ function nfLsSet(k, v) { try { window.localStorage.setItem(k, v); return true; }
 function nfCfgLer() { return { url: nfLsGet(NF_LS.url), segredo: nfLsGet(NF_LS.seg), teste: nfLsGet(NF_LS.teste) !== '0' }; }
 function nfCfgOk(c) { return !!c && /^https:\/\/script\.google\.com\/.+\/exec$/.test(String(c.url || '').trim()) && !!c.segredo; }
 function nfMesNome(i, ano) { var m = String(MESES[i] || ''); return m.charAt(0) + m.slice(1).toLowerCase() + ' de ' + ano; }
+// Imagem do e-mail (cartão/assinatura): encolhe no próprio aparelho (JPEG ~700px, no máx. ~150 KB) para ficar leve na sincronização e no e-mail.
+function nfReduzirImagem(file) {
+    return new Promise(function (res, rej) {
+        if (!file || !/^image\//.test(file.type || '')) { rej(new Error('Escolha um arquivo de imagem (JPG ou PNG).')); return; }
+        var url = URL.createObjectURL(file), img = new Image();
+        img.onload = function () {
+            try {
+                var w = img.naturalWidth, hh = img.naturalHeight;
+                if (!w || !hh) throw new Error('x');
+                var maxW = 700, out = '', q = .86;
+                for (var tent = 0; tent < 8; tent++) {
+                    var esc = Math.min(1, maxW / w, 900 / hh), cw = Math.max(1, Math.round(w * esc)), ch = Math.max(1, Math.round(hh * esc));
+                    var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+                    var cx = cv.getContext('2d'); cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, cw, ch); cx.drawImage(img, 0, 0, cw, ch);
+                    out = cv.toDataURL('image/jpeg', q);
+                    if (out.length <= 200000) break;
+                    if (q > .55) q -= .12; else maxW = Math.round(maxW * .8);
+                }
+                URL.revokeObjectURL(url);
+                if (out.length > 400000) { rej(new Error('A imagem ficou grande demais. Tente uma menor.')); return; }
+                res(out);
+            } catch (e) { URL.revokeObjectURL(url); rej(new Error('Não consegui abrir esta imagem.')); }
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('Não consegui abrir esta imagem. Use JPG ou PNG.')); };
+        img.src = url;
+    });
+}
+function nfImagemOk(s) { return typeof s === 'string' && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+\/=]+$/.test(s) && s.length < 450000; }
 function nfSub(modelo, v) { return String(modelo || '').replace(/\{(aluno|mes|escola|documentos)\}/g, function (m, k) { return v[k] != null ? v[k] : m; }); }
 function nfBase64(file) {
     return file.arrayBuffer().then(function (buf) {
@@ -1999,6 +2027,8 @@ function NFModalPrevia(p) {
     var h = React.createElement;
     var _a = useState(p.modelo.assunto), assunto = _a[0], setAssunto = _a[1];
     var _c = useState(p.modelo.corpo), corpo = _c[0], setCorpo = _c[1];
+    var _im = useState(nfImagemOk(p.modelo.imagem) ? p.modelo.imagem : ''), imagem = _im[0], setImagem = _im[1];
+    var _ie = useState(''), imgErro = _ie[0], setImgErro = _ie[1];
     var ex = p.ex;
     var vars = { aluno: ex.aluno, mes: ex.mes, escola: NF_ESCOLA, documentos: ex.documentos || 'a nota fiscal' };
     var campo = { fontSize: 12, fontWeight: 700, color: COLORS.ink, margin: '12px 0 4px', display: 'block' };
@@ -2007,19 +2037,35 @@ function NFModalPrevia(p) {
         h('label', { style: campo }, 'Assunto'),
         h('input', { value: assunto, onChange: function (e) { setAssunto(e.target.value); }, 'aria-label': 'Assunto do e-mail', style: nfInp() }),
         h('label', { style: campo }, 'Mensagem'),
-        h('textarea', { value: corpo, rows: 7, onChange: function (e) { setCorpo(e.target.value); }, 'aria-label': 'Mensagem do e-mail', style: Object.assign({}, nfInp(), { resize: 'vertical', lineHeight: 1.45 }) }),
+        h('textarea', { value: corpo, rows: 7, onChange: function (e) { setCorpo(e.target.value); }, 'aria-label': 'Mensagem do e-mail', style: Object.assign({}, nfInp(), { resize: 'vertical', lineHeight: 1.45, flexShrink: 0 }) }),
         corpo.indexOf('{documentos}') < 0 && h('div', { style: { fontSize: 11.5, color: '#8a5a00', marginTop: 4 } }, 'Dica: escreva {documentos} onde quiser citar o que vai anexado (ex.: “a nota fiscal e o recibo”). Sem isso, o recibo/boleto segue anexado, mas o texto fala só da nota.'),
+        h('label', { style: campo }, 'Imagem abaixo do texto (opcional)'),
+        h('div', { 'data-nf-imagem-area': '1', style: { flexShrink: 0, border: '1px dashed ' + COLORS.line, borderRadius: 12, padding: '10px 12px', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' } },
+            imagem && h('img', { src: imagem, alt: 'Imagem do e-mail', 'data-nf-imagem-mini': '1', style: { maxWidth: 120, maxHeight: 70, objectFit: 'contain', borderRadius: 6, border: '1px solid ' + COLORS.lineSoft } }),
+            h('div', { style: { flex: '1 1 200px', minWidth: 0, fontSize: 12, color: COLORS.inkSoft, lineHeight: 1.4 } }, imagem ? 'Esta imagem vai no final de todos os e-mails, abaixo da mensagem.' : 'Cartão, assinatura ou logo da escola. Vai no final de todos os e-mails, abaixo da mensagem.'),
+            h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                h('label', { style: Object.assign({}, nfBtnS(), { cursor: 'pointer' }) }, imagem ? 'Trocar imagem' : 'Escolher imagem',
+                    h('input', { type: 'file', accept: 'image/*', 'data-nf-imagem-input': '1', style: { display: 'none' }, onChange: function (e) {
+                        var f = e.target.files && e.target.files[0]; e.target.value = '';
+                        if (!f) return;
+                        setImgErro('');
+                        nfReduzirImagem(f).then(function (d) { setImagem(d); }).catch(function (er) { setImgErro(er && er.message || 'Não consegui usar esta imagem.'); });
+                    } })),
+                imagem && h('button', { type: 'button', 'data-nf-imagem-remover': '1', onClick: function () { setImagem(''); setImgErro(''); }, style: nfBtnS() }, 'Remover imagem'))),
+        imgErro && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 4 } }, imgErro),
+        imagem && h('div', { style: { fontSize: 11.5, color: '#8a5a00', marginTop: 4 } }, 'Para enviar com imagem, o script de envio precisa estar na versão 1.2 (o arquivo novo do script vem junto com esta atualização).'),
         h('div', { style: { fontSize: 11.5, fontWeight: 800, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '.04em', margin: '16px 0 6px' } }, 'Como vai chegar (exemplo: ' + ex.aluno + ')'),
-        h('div', { style: { border: '1px solid ' + COLORS.line, borderRadius: 12, padding: '12px 14px', background: COLORS.lineSoft, fontSize: 13, color: COLORS.ink } },
+        h('div', { style: { flexShrink: 0, border: '1px solid ' + COLORS.line, borderRadius: 12, padding: '12px 14px', background: COLORS.lineSoft, fontSize: 13, color: COLORS.ink } },
             h('div', { style: { color: COLORS.inkSoft, fontSize: 12, overflowWrap: 'anywhere' } }, 'Para: ' + (ex.emails.length ? ex.emails.join(', ') : '(sem e-mail cadastrado)')),
             h('div', { style: { fontWeight: 800, margin: '6px 0 8px', overflowWrap: 'anywhere' } }, nfSub(assunto, vars)),
             h('div', { style: { whiteSpace: 'pre-wrap', lineHeight: 1.5, overflowWrap: 'anywhere' } }, nfSub(corpo, vars)),
+            imagem && h('img', { src: imagem, alt: 'Imagem do e-mail', 'data-nf-imagem-prev': '1', style: { display: 'block', maxWidth: '100%', height: 'auto', marginTop: 12, borderRadius: 4 } }),
             h('div', { style: { marginTop: 10, fontSize: 12, color: COLORS.inkSoft } }, '📎 ' + ex.arquivo)),
         h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 18, flexWrap: 'wrap' } },
             h('button', { type: 'button', onClick: function () { setAssunto(NF_ASSUNTO_PAD); setCorpo(NF_CORPO_PAD); }, style: nfBtnS() }, 'Voltar ao texto padrão'),
             h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
                 h('button', { type: 'button', onClick: p.onFechar, style: nfBtnS() }, 'Fechar'),
-                h('button', { type: 'button', disabled: !assunto.trim() || !corpo.trim(), onClick: function () { p.onSalvar({ assunto: assunto.trim(), corpo: corpo.trim() }); }, style: nfBtnP() }, 'Salvar texto'))));
+                h('button', { type: 'button', disabled: !assunto.trim() || !corpo.trim(), onClick: function () { var m = { assunto: assunto.trim(), corpo: corpo.trim() }; if (imagem) m.imagem = imagem; p.onSalvar(m); }, style: nfBtnP() }, 'Salvar texto'))));
 }
 function NFModalEnvio(p) {
     var h = React.createElement, e = p.envio, fase = e.fase;
@@ -2102,7 +2148,7 @@ function NotasFiscaisTDB(_a) {
         });
         window.storage.get(NF_KEY_MODELO, false).then(function (r) {
             if (!vivo || !r || !r.value) return;
-            try { var o = JSON.parse(r.value); if (o && typeof o === 'object' && o.assunto && o.corpo) setModelo({ assunto: String(o.assunto), corpo: String(o.corpo) === NF_CORPO_ANT ? NF_CORPO_PAD : String(o.corpo) }); } catch (e) { }
+            try { var o = JSON.parse(r.value); if (o && typeof o === 'object' && o.assunto && o.corpo) var mm = { assunto: String(o.assunto), corpo: String(o.corpo) === NF_CORPO_ANT ? NF_CORPO_PAD : String(o.corpo) }; if (nfImagemOk(o.imagem)) mm.imagem = o.imagem; setModelo(mm); } catch (e) { }
         }).catch(function () { });
         return function () { vivo = false; };
     }, []);
@@ -2413,13 +2459,15 @@ function NotasFiscaisTDB(_a) {
         mostrar('enviando');
         var seq = Promise.resolve(), scriptOk = true;
         // pacote com recibo/boleto só sai se o script de envio já foi atualizado (senão iria só a nota, sem avisar)
-        if (itens.some(function (i) { return i.anexos && i.anexos.length; })) {
-            seq = seq.then(function () { return nfPost(cfgUso, { acao: 'ping' }, 40000).then(function (j) { scriptOk = !!(j && j.ok && parseFloat(j.versao) >= 1.1); }).catch(function () { scriptOk = false; }); });
+        var imgEnv = nfImagemOk(mod.imagem) ? mod.imagem : '', versaoScript = 0;
+        if (imgEnv || itens.some(function (i) { return i.anexos && i.anexos.length; })) {
+            seq = seq.then(function () { return nfPost(cfgUso, { acao: 'ping' }, 40000).then(function (j) { versaoScript = (j && j.ok) ? (parseFloat(j.versao) || 0) : 0; scriptOk = versaoScript >= 1.1; }).catch(function () { scriptOk = false; versaoScript = 0; }); });
         }
         itens.forEach(function (it) {
             seq = seq.then(function () {
                 st[it.id] = { s: 'enviando' }; mostrar();
                 var temAnexos = it.anexos && it.anexos.length > 0;
+                if (imgEnv && versaoScript < 1.2) { falha(it.id, 'O script de envio precisa ser atualizado (versão 1.2) para mandar a imagem do e-mail. Nada foi enviado. (Ou tire a imagem em “Prévia do e-mail”.)'); mostrar(); return; }
                 if (temAnexos && !scriptOk) { falha(it.id, 'O script de envio precisa ser atualizado (versão 1.1) para mandar recibo/boleto junto. Nada foi enviado.'); mostrar(); return; }
                 var arq = arquivosRef.current[it.id];
                 if (!arq) { falha(it.id, 'O PDF não está mais na memória. Escolha o arquivo de novo.'); mostrar(); return; }
@@ -2431,7 +2479,7 @@ function NotasFiscaisTDB(_a) {
                 return Promise.all([nfBase64(arq)].concat(arqsAn.map(nfBase64))).then(function (b64s) {
                     var nota = { id: it.id, aluno: it.aluno, nomeNota: it.nomeNota, mes: e0.mesKey, mesNome: mesNomeEnv, emails: it.emails, pdfBase64: b64s[0] };
                     if (temAnexos) nota.anexos = it.anexos.map(function (a, k) { return { tipo: a.tipo, nome: a.arquivo, pdfBase64: b64s[k + 1] }; });
-                    return nfPost(cfgUso, { acao: 'enviar', modoTeste: teste, forcar: !!it.reenvio, assunto: nfSub(mod.assunto, { documentos: docTxt }), corpo: nfSub(mod.corpo, { documentos: docTxt }), notas: [nota] }, 120000);
+                    return nfPost(cfgUso, { acao: 'enviar', modoTeste: teste, forcar: !!it.reenvio, assunto: nfSub(mod.assunto, { documentos: docTxt }), corpo: nfSub(mod.corpo, { documentos: docTxt }), imagem: imgEnv ? { mime: imgEnv.slice(5, imgEnv.indexOf(';')), base64: imgEnv.slice(imgEnv.indexOf(',') + 1) } : undefined, notas: [nota] }, 120000);
                 }).then(function (j) {
                     var r = j && j.resultados && j.resultados[0];
                     if (!r) { falha(it.id, (j && j.erro) || 'O serviço não devolveu resultado.'); return; }
@@ -4708,6 +4756,19 @@ function tdbTotalRecibo(r, preview, onCampo) {
                 React.createElement('span', { style: { whiteSpace: 'nowrap', marginLeft: 'auto', fontSize: 12, fontWeight: 800, color: '#181C26', fontFamily: "'IBM Plex Mono', monospace" } }, 'R$ ' + tdbBRL2(e.total))),
             e.dois && React.createElement('div', { style: { fontSize: 7.5, color: '#596170', textAlign: 'right' } }, 'Auxílio R$ ' + tdbBRL2(e.s1) + '  +  Compl. R$ ' + tdbBRL2(e.s2))));
 }
+function recCnpjDig(s) { return String(s || '').replace(/\D+/g, ''); }
+function recCnpjFmt(s) { var d = recCnpjDig(s).slice(0, 14), o = d.slice(0, 2); if (d.length > 2) o += '.' + d.slice(2, 5); if (d.length > 5) o += '.' + d.slice(5, 8); if (d.length > 8) o += '/' + d.slice(8, 12); if (d.length > 12) o += '-' + d.slice(12, 14); return o; }
+function recCnpjOk(s) {
+    var d = recCnpjDig(s);
+    if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+    for (var t = 12; t < 14; t++) {
+        var soma = 0, peso = t - 7;
+        for (var i = 0; i < t; i++) { soma += Number(d.charAt(i)) * peso; peso = peso === 2 ? 9 : peso - 1; }
+        var rs = soma % 11, dv = rs < 2 ? 0 : 11 - rs;
+        if (dv !== Number(d.charAt(t))) return false;
+    }
+    return true;
+}
 function Recibos(_a) {
     var _this = this;
     var chamarIA = _a.chamarIA;
@@ -5037,6 +5098,13 @@ function Recibos(_a) {
             doc.setTextColor.apply(doc, tinta);
             linhasTitulo.forEach(function (linhaTxt, idx) { centeredText(linhaTxt, W / 2, y + 11 + tamTitulo * 0.78 + idx * alturaLinhaTit); });
             y += alturaPilula + 16;
+            if (recCnpjOk(rEmp.cnpj)) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(11.2);
+                doc.setTextColor.apply(doc, suave);
+                centeredText('CNPJ: ' + recCnpjFmt(rEmp.cnpj), W / 2, y - 2);
+                y += 16;
+            }
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(12.2);
             doc.setTextColor(38, 43, 51);
@@ -5283,7 +5351,7 @@ function Recibos(_a) {
             color: COLORS.ink, border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 10px',
             cursor: revisandoTitulo ? 'default' : 'pointer', fontWeight: 700, fontSize: 12.5, alignSelf: 'flex-start',
             opacity: revisandoTitulo ? 0.7 : 1,
-        } }, React.createElement(IconeGemini, { size: 13 }), " ", revisandoTitulo ? 'Revisando...' : 'Revisar texto com IA'))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "VALOR PADR\u00C3O (deixe vazio se cada linha tem um valor diferente)"), React.createElement("input", { value: r.valorPadrao, onChange: function (e) { return atualizarCampo('valorPadrao', e.target.value); }, placeholder: "Ex: 458,07", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } })), r.temSegundaColuna && (React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "VALOR PADR\u00C3O \u2014 2\u00AA COLUNA"), React.createElement("input", { value: r.valorPadrao2 || '', onChange: function (e) { return atualizarValorPadrao2(e.target.value); }, placeholder: "Ex: 23,67", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft } }, "Ao alterar, atualiza as crian\u00E7as que ainda usam o valor padr\u00E3o anterior. Valores personalizados s\u00E3o mantidos."))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DATA DO DOCUMENTO"), React.createElement("div", { style: { display: 'flex', gap: 6 } }, React.createElement("input", { value: r.data, onChange: function (e) { return atualizarCampo('data', e.target.value); }, placeholder: "01 de setembro de 2026", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', flex: 1 } }), React.createElement("button", { onClick: function () { return atualizarCampo('data', dataDeHojeFormatada()); }, title: "Preencher com a data de hoje", style: {
+        } }, React.createElement(IconeGemini, { size: 13 }), " ", revisandoTitulo ? 'Revisando...' : 'Revisar texto com IA'))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "CNPJ DA EMPRESA (sai no recibo, abaixo do t\u00EDtulo)"), React.createElement("input", { "data-rec-cnpj": "1", value: r.cnpj || '', inputMode: 'numeric', placeholder: "00.000.000/0000-00", onChange: function (e) { return atualizarCampo('cnpj', recCnpjFmt(e.target.value)); }, style: { border: "1px solid ".concat((r.cnpj && !recCnpjOk(r.cnpj)) ? COLORS.red : COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), (r.cnpj && !recCnpjOk(r.cnpj)) ? React.createElement("div", { "data-rec-cnpj-aviso": "1", style: { fontSize: 11, color: COLORS.red } }, "CNPJ inv\u00E1lido \u2014 confira os n\u00FAmeros (n\u00E3o sai no recibo at\u00E9 corrigir)") : null), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "VALOR PADR\u00C3O (deixe vazio se cada linha tem um valor diferente)"), React.createElement("input", { value: r.valorPadrao, onChange: function (e) { return atualizarCampo('valorPadrao', e.target.value); }, placeholder: "Ex: 458,07", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } })), r.temSegundaColuna && (React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "VALOR PADR\u00C3O \u2014 2\u00AA COLUNA"), React.createElement("input", { value: r.valorPadrao2 || '', onChange: function (e) { return atualizarValorPadrao2(e.target.value); }, placeholder: "Ex: 23,67", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft } }, "Ao alterar, atualiza as crian\u00E7as que ainda usam o valor padr\u00E3o anterior. Valores personalizados s\u00E3o mantidos."))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DATA DO DOCUMENTO"), React.createElement("div", { style: { display: 'flex', gap: 6 } }, React.createElement("input", { value: r.data, onChange: function (e) { return atualizarCampo('data', e.target.value); }, placeholder: "01 de setembro de 2026", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', flex: 1 } }), React.createElement("button", { onClick: function () { return atualizarCampo('data', dataDeHojeFormatada()); }, title: "Preencher com a data de hoje", style: {
             background: COLORS.goldSoft, color: COLORS.gold, border: 'none', borderRadius: 7, padding: '8px 12px',
             cursor: 'pointer', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
         } }, "\uD83D\uDCC5 Hoje"))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DADOS BANC\u00C1RIOS (uma linha cada)"), r.banco.map(function (linha, i) { return (React.createElement("input", { key: i, value: linha, onChange: function (e) { return atualizarBanco(i, e.target.value); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 10px', fontSize: 13, boxSizing: 'border-box' } })); })), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "CRIAN\u00C7AS / VALORES (", r.rows.length, ")"), React.createElement("button", { onClick: adicionarRow, style: {
@@ -5308,7 +5376,7 @@ function Recibos(_a) {
         } }, "Gerar PDF s\u00F3 desta empresa"), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.4 } }, "A assinatura da diretora j\u00E1 sai como imagem de verdade no PDF, em cima da linha.")), React.createElement("div", { className: "recibo-preview", style: {
             background: '#FFFFFF', borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
             border: '3px solid #1C9E8F', padding: 3,
-        } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } }, React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain' } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), React.createElement("div", { style: { fontSize: 13.5, marginTop: 10, color: '#222' } }, "LISTA DE CRIAN\u00C7AS QUE RECEBEM AUX\u00CDLIO", React.createElement("br", null), r.valorPadrao ? "CRECHE NO VALOR DE R$ ".concat(r.valorPadrao) : 'CRECHE')), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, colsPrev.map(function (_a, i) {
+        } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } }, React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain' } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), recCnpjOk(r.cnpj) ? React.createElement("div", { "data-rec-cnpj-prev": "1", style: { fontSize: 12.5, marginTop: 6, color: '#333' } }, "CNPJ: " + recCnpjFmt(r.cnpj)) : null, React.createElement("div", { style: { fontSize: 13.5, marginTop: 10, color: '#222' } }, "LISTA DE CRIAN\u00C7AS QUE RECEBEM AUX\u00CDLIO", React.createElement("br", null), r.valorPadrao ? "CRECHE NO VALOR DE R$ ".concat(r.valorPadrao) : 'CRECHE')), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, colsPrev.map(function (_a, i) {
         var campo = _a[0], label = _a[1];
         return (React.createElement("th", { key: campo + i, style: { background: COLORS.gold, color: '#FFF', padding: '7px 6px', fontWeight: 700, fontSize: 12 } }, label));
     }))), React.createElement("tbody", null, r.rows.map(function (row, idx) { return (React.createElement("tr", { key: idx }, colsPrev.map(function (_a, ci) {
