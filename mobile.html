@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261007-tempo1-v39";
+    window.__TDB_BUILD = "tdbn-20261007-tempo1-v41";
   </script>
-  <script src="./config.js?build=tdbn-20261007-tempo1-v39"></script>
+  <script src="./config.js?build=tdbn-20261007-tempo1-v41"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1932,10 +1932,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261007-tempo1-v39"></script>
+  <script src="./sync.js?build=tdbn-20261007-tempo1-v41"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v39-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261007-tempo1-v41-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2132,6 +2132,647 @@ var MunicipioCbIcon = function (_a) {
         React.createElement("path", { d: "M5.5 20V10.8M10 20V10.8M14 20V10.8M18.5 20V10.8", stroke: "#1C9E8F", strokeWidth: "2" }),
         React.createElement("path", { d: "M3.5 20.5h17", stroke: "#3E7ACC", strokeWidth: "2" }),
         React.createElement("path", { d: "M12 8.2h.01", stroke: "#B87A1A", strokeWidth: "2.6" })));
+};
+// ===================== Notas Fiscais (aba nova — Etapa 1: cadastro + leitura/conferência) =====================
+// Dados próprios, separados do resto do projeto, na mesma sincronização de sempre (window.storage):
+//   notas_fiscais_cadastro_v1 = [{id, aluno, nomeNota, emails:[], ativo}]
+//   notas_fiscais_notas_v1    = [{id, mes:'AAAA-MM', arquivo, nomeLido, alunoId, cand:[], enviadaEm:'AAAA-MM-DD'}]
+// Etapa 2: envio por e-mail via Apps Script próprio (ver mais abaixo). Única alteração fora desta aba: marcar a nota como 'Enviada' na Mensalidade do aluno (só no envio real).
+var NF_KEY_CAD = 'notas_fiscais_cadastro_v1', NF_KEY_NOTAS = 'notas_fiscais_notas_v1';
+var NF_MOB = true;
+function nfNorm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+function nfEmailOk(e) { return /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/.test(String(e || '')); }
+function nfId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function nfLer(chave) {
+    return window.storage.get(chave, false).then(function (r) {
+        if (!r || !r.value) return [];
+        try { var v = JSON.parse(r.value); return Array.isArray(v) ? v : []; } catch (e) { return null; }
+    }).catch(function () { return null; });
+}
+function nfDataBR(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '')); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; }
+function nfLerPdf(file) {
+    return window.__ensurePDFJS().then(function () { return file.arrayBuffer(); }).then(function (buf) {
+        return window.pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+    }).then(function (pdf) {
+        var n = Math.min(pdf.numPages, 3), ps = [];
+        for (var i = 1; i <= n; i++) {
+            ps.push(pdf.getPage(i).then(function (pg) { return pg.getTextContent(); }).then(function (c) {
+                return c.items.map(function (it) { return it.str + (it.hasEOL ? '\n' : ' '); }).join('');
+            }));
+        }
+        return Promise.all(ps).then(function (t) { return t.join('\n'); });
+    });
+}
+function nfExtrairTomador(t) {
+    var m = /TOMADOR[\s\S]{0,260}?(?:NOME|RAZ[ÃA]O\s+SOCIAL)[^\n:]*[:\s]\s*([^\n]{3,90})/i.exec(String(t || ''));
+    if (!m) return '';
+    var v = m[1].replace(/\s+(CPF|CNPJ|CNPJ\/CPF|CPF\/CNPJ|ENDERE[ÇC]O|INSCRI[ÇC][ÃA]O|TELEFONE|E-?MAIL|MUNIC[ÍI]PIO)\b.*$/i, '').replace(/\s+/g, ' ').trim();
+    return v.length >= 3 ? v.slice(0, 80) : '';
+}
+// Procura, dentro do texto da nota (e no nome do arquivo), o "Nome na nota fiscal" de cada aluno cadastrado.
+function nfAnalisar(texto, nomeArq, cad) {
+    var T = ' ' + nfNorm(texto + ' ' + nomeArq) + ' ';
+    var hits = [];
+    cad.filter(function (c) { return c.ativo !== false; }).forEach(function (c) {
+        var nn = nfNorm(c.nomeNota || c.aluno);
+        if (nn.length < 5) return;
+        if (T.indexOf(' ' + nn + ' ') >= 0) hits.push({ c: c, nn: nn });
+    });
+    hits = hits.filter(function (a) { return !hits.some(function (b) { return b.nn !== a.nn && b.nn.length > a.nn.length && (' ' + b.nn + ' ').indexOf(' ' + a.nn + ' ') >= 0; }); });
+    var cand = hits.map(function (x) { return x.c.id; });
+    var alunoId = null;
+    if (hits.length === 1) alunoId = hits[0].c.id;
+    else if (hits.length > 1) {
+        var porAluno = hits.filter(function (x) { var an = nfNorm(x.c.aluno); return an.length >= 3 && T.indexOf(' ' + an + ' ') >= 0; });
+        if (porAluno.length === 1) alunoId = porAluno[0].c.id;
+    }
+    return { nomeLido: nfExtrairTomador(texto), alunoId: alunoId, cand: cand };
+}
+function NFEmails(p) {
+    var h = React.createElement;
+    var _t = useState(''), txt = _t[0], setTxt = _t[1];
+    var lista = p.valor || [];
+    function adicionar(bruto) {
+        var partes = String(bruto || '').split(/[\s,;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+        if (!partes.length) return;
+        var novo = lista.slice();
+        partes.forEach(function (e) { if (novo.map(function (x) { return x.toLowerCase(); }).indexOf(e.toLowerCase()) < 0) novo.push(e); });
+        p.onChange(novo); setTxt('');
+    }
+    return h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minWidth: 0, border: '1px solid ' + COLORS.line, borderRadius: 8, padding: '4px 6px', background: COLORS.paperCard } },
+        lista.map(function (e, i) {
+            var ok = nfEmailOk(e);
+            return h('span', { key: e + i, style: { display: 'inline-flex', alignItems: 'center', gap: 2, padding: '3px 4px 3px 9px', borderRadius: 999, background: ok ? '#E4EEFC' : COLORS.redBg, color: ok ? '#1767cf' : COLORS.red, fontSize: 12.5, fontWeight: 600, maxWidth: '100%' } },
+                h('span', { title: 'Toque para editar', onClick: function () { setTxt(e); p.onChange(lista.filter(function (_, k) { return k !== i; })); }, style: { cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, e),
+                h('span', { role: 'button', tabIndex: 0, 'aria-label': 'Remover e-mail ' + e, onClick: function () { p.onChange(lista.filter(function (_, k) { return k !== i; })); }, style: { cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: '0 5px', opacity: .75 } }, '×'));
+        }),
+        h('input', {
+            value: txt, placeholder: lista.length ? 'adicionar e-mail' : 'e-mail do responsável', inputMode: 'email', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, 'aria-label': 'Adicionar e-mail',
+            onChange: function (e) { setTxt(e.target.value); },
+            onKeyDown: function (e) {
+                if (e.key === 'Enter' || e.key === ',' || e.key === ';') { e.preventDefault(); adicionar(txt); }
+                else if (e.key === 'Backspace' && !txt && lista.length) p.onChange(lista.slice(0, -1));
+            },
+            onBlur: function () { adicionar(txt); },
+            style: { flex: '1 1 130px', minWidth: 120, border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: NF_MOB ? 16 : 13.5, padding: '5px 4px', fontFamily: 'Inter, sans-serif', boxShadow: 'none' }
+        }));
+}
+function NFModalImportar(p) {
+    var h = React.createElement;
+    var _s = useState(function () { var o = {}; p.nomes.forEach(function (n) { o[n] = true; }); return o; }), marc = _s[0], setMarc = _s[1];
+    useEffect(function () {
+        var ant = document.body.style.overflow; document.body.style.overflow = 'hidden';
+        var tecla = function (e) { if (e.key === 'Escape') p.onFechar(); };
+        document.addEventListener('keydown', tecla);
+        return function () { document.body.style.overflow = ant; document.removeEventListener('keydown', tecla); };
+    }, []);
+    var escolhidos = p.nomes.filter(function (n) { return marc[n]; });
+    return ReactDOM.createPortal(h('div', { style: { position: 'fixed', inset: 0, zIndex: 2147483600, background: 'rgba(10,22,20,.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }, onMouseDown: function (e) { if (e.target === e.currentTarget) p.onFechar(); } },
+        h('div', { className: 'busca-liquid-glass', onMouseDown: function (e) { e.stopPropagation(); }, style: { width: 'min(520px,94vw)', maxHeight: '86vh', display: 'flex', flexDirection: 'column', borderRadius: 20, background: COLORS.paperCard, padding: 20, boxShadow: '0 24px 80px rgba(0,0,0,.38)', border: '1px solid ' + COLORS.line } },
+            h('div', { style: { fontSize: 19, fontWeight: 800, color: COLORS.ink } }, 'Importar alunos da Mensalidade'),
+            h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 4 } }, p.nomes.length ? 'Os nomes são copiados uma vez. Depois o cadastro é independente da Mensalidade.' : ''),
+            p.nomes.length === 0
+                ? h('div', { style: { margin: '18px 0', padding: '14px', borderRadius: 12, background: COLORS.greenBg, color: COLORS.ink, fontSize: 13.5 } }, 'Todos os alunos da Mensalidade já estão no cadastro.')
+                : h(React.Fragment, null,
+                    h('div', { style: { display: 'flex', gap: 8, margin: '12px 0 8px' } },
+                        h('span', { role: 'button', tabIndex: 0, onClick: function () { var o = {}; p.nomes.forEach(function (n) { o[n] = true; }); setMarc(o); }, style: { fontSize: 12.5, fontWeight: 700, color: '#1767cf', cursor: 'pointer' } }, 'Marcar todos'),
+                        h('span', { style: { color: COLORS.inkSoft } }, '·'),
+                        h('span', { role: 'button', tabIndex: 0, onClick: function () { setMarc({}); }, style: { fontSize: 12.5, fontWeight: 700, color: '#1767cf', cursor: 'pointer' } }, 'Desmarcar todos')),
+                    h('div', { style: { overflowY: 'auto', border: '1px solid ' + COLORS.line, borderRadius: 12, maxHeight: '48vh' } },
+                        p.nomes.map(function (n) {
+                            return h('label', { key: n, style: { display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderBottom: '1px solid ' + COLORS.lineSoft, cursor: 'pointer', fontSize: 14, color: COLORS.ink } },
+                                h('input', { type: 'checkbox', checked: !!marc[n], onChange: function () { var o = Object.assign({}, marc); o[n] = !o[n]; setMarc(o); }, style: { width: 18, height: 18, accentColor: '#2878de', flex: 'none' } }), n);
+                        }))),
+            h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16, flexWrap: 'wrap' } },
+                h('button', { type: 'button', onClick: p.onFechar, style: { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink, borderRadius: 10, padding: '10px 16px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' } }, p.nomes.length ? 'Cancelar' : 'Fechar'),
+                p.nomes.length > 0 && h('button', { type: 'button', disabled: !escolhidos.length, onClick: function () { p.onImportar(escolhidos); }, style: { border: 'none', background: COLORS.inkButton, color: '#fff', borderRadius: 10, padding: '10px 18px', fontWeight: 800, fontSize: 13.5, cursor: escolhidos.length ? 'pointer' : 'not-allowed', opacity: escolhidos.length ? 1 : .5 } }, 'Importar ' + escolhidos.length)))), document.body);
+}
+// ---------- Etapa 2: envio por e-mail (Apps Script separado, conta das notas) ----------
+// URL e senha do envio ficam SÓ neste aparelho (localStorage) — nunca no git nem na sincronização.
+// O texto do e-mail (assunto/corpo) sincroniza em notas_fiscais_modelo_v1. Em modo teste nada é marcado como enviado.
+var NF_KEY_MODELO = 'notas_fiscais_modelo_v1';
+var NF_LS = { url: 'tdb_nf_envio_url', seg: 'tdb_nf_envio_segredo', teste: 'tdb_nf_envio_teste' };
+var NF_ESCOLA = 'Escola Infantil Tempo de Brincar';
+var NF_ASSUNTO_PAD = 'Nota Fiscal – {aluno} – {mes} – {escola}';
+var NF_CORPO_PAD = 'Olá!\n\nSegue em anexo a nota fiscal de {aluno} referente a {mes}.\n\nQualquer dúvida, é só responder este e-mail.\n\nAtenciosamente,\n{escola}';
+function nfLsGet(k) { try { return window.localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function nfLsSet(k, v) { try { window.localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+function nfCfgLer() { return { url: nfLsGet(NF_LS.url), segredo: nfLsGet(NF_LS.seg), teste: nfLsGet(NF_LS.teste) !== '0' }; }
+function nfCfgOk(c) { return !!c && /^https:\/\/script\.google\.com\/.+\/exec$/.test(String(c.url || '').trim()) && !!c.segredo; }
+function nfMesNome(i, ano) { var m = String(MESES[i] || ''); return m.charAt(0) + m.slice(1).toLowerCase() + ' de ' + ano; }
+function nfSub(modelo, v) { return String(modelo || '').replace(/\{(aluno|mes|escola)\}/g, function (m, k) { return v[k]; }); }
+function nfBase64(file) {
+    return file.arrayBuffer().then(function (buf) {
+        var b = new Uint8Array(buf), s = '', C = 0x8000;
+        for (var i = 0; i < b.length; i += C) s += String.fromCharCode.apply(null, b.subarray(i, i + C));
+        return btoa(s);
+    });
+}
+function nfPost(cfg, corpo, ms) {
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, ms || 120000);
+    return fetch(String(cfg.url).trim(), { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ segredo: cfg.segredo }, corpo)), signal: ctrl ? ctrl.signal : undefined })
+        .then(function (r) { return r.text(); })
+        .then(function (txt) {
+            clearTimeout(to);
+            var j; try { j = JSON.parse(txt); } catch (e) { throw new Error('RESPOSTA_INVALIDA'); }
+            return j;
+        }, function (e) { clearTimeout(to); throw new Error(e && e.name === 'AbortError' ? 'DEMOROU' : 'SEM_REDE'); });
+}
+function nfErroMsg(e) {
+    var m = e && e.message;
+    if (m === 'SEM_REDE') return 'Não consegui falar com o serviço de envio (internet ou URL errada).';
+    if (m === 'DEMOROU') return 'O envio demorou demais. Confira o Gmail da conta das notas antes de tentar de novo.';
+    if (m === 'RESPOSTA_INVALIDA') return 'A URL não respondeu como esperado. Confira se a implantação está em “Qualquer pessoa” e se a URL termina em /exec.';
+    return 'Erro inesperado no envio.';
+}
+function nfBtnP() { return { border: 'none', background: COLORS.inkButton, color: '#fff', borderRadius: 10, padding: '10px 18px', fontWeight: 800, fontSize: 13.5, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }; }
+function nfBtnS() { return { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink, borderRadius: 10, padding: '10px 16px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }; }
+function nfInp() { return { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 8, padding: NF_MOB ? '10px 11px' : '8px 10px', fontSize: NF_MOB ? 16 : 13.5, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 }; }
+function NFModal(p) {
+    var h = React.createElement;
+    var ref = useRef(p); ref.current = p;
+    useEffect(function () {
+        var ant = document.body.style.overflow; document.body.style.overflow = 'hidden';
+        var tecla = function (e) { if (e.key === 'Escape' && !ref.current.travado) ref.current.onFechar(); };
+        document.addEventListener('keydown', tecla);
+        return function () { document.body.style.overflow = ant; document.removeEventListener('keydown', tecla); };
+    }, []);
+    return ReactDOM.createPortal(h('div', { style: { position: 'fixed', inset: 0, zIndex: 2147483600, background: 'rgba(10,22,20,.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }, onMouseDown: function (e) { if (e.target === e.currentTarget && !ref.current.travado) ref.current.onFechar(); } },
+        h('div', { className: 'busca-liquid-glass', onMouseDown: function (e) { e.stopPropagation(); }, style: { width: 'min(' + (p.largura || 520) + 'px,94vw)', maxHeight: '88vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRadius: 20, background: COLORS.paperCard, padding: 20, boxShadow: '0 24px 80px rgba(0,0,0,.38)', border: '1px solid ' + COLORS.line } }, p.children)), document.body);
+}
+function nfTitulo(t, sub) {
+    var h = React.createElement;
+    return h('div', { style: { marginBottom: 10 } }, h('div', { style: { fontSize: 19, fontWeight: 800, color: COLORS.ink } }, t), sub ? h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 4 } }, sub) : null);
+}
+function NFModalConfig(p) {
+    var h = React.createElement;
+    var _u = useState(p.cfg.url), url = _u[0], setUrl = _u[1];
+    var _s = useState(p.cfg.segredo), seg = _s[0], setSeg = _s[1];
+    var _t = useState(p.cfg.teste !== false), teste = _t[0], setTeste = _t[1];
+    var _v = useState(false), ver = _v[0], setVer = _v[1];
+    var _r = useState(null), res = _r[0], setRes = _r[1];
+    var atual = { url: url.trim(), segredo: seg, teste: teste };
+    var valido = nfCfgOk(atual);
+    function testar() {
+        if (!valido) { setRes({ tipo: 'erro', texto: 'Preencha a URL (termina em /exec) e a senha.' }); return; }
+        setRes({ tipo: 'carregando', texto: 'Testando a conexão…' });
+        nfPost(atual, { acao: 'ping' }, 40000).then(function (j) {
+            if (j && j.ok) setRes({ tipo: 'ok', texto: 'Conectado ✔ Conta: ' + j.conta + ' · e-mails que ainda dá para enviar hoje: ' + j.cotaRestante });
+            else setRes({ tipo: 'erro', texto: (j && j.erro) || 'O serviço não respondeu.' });
+        }).catch(function (e) { setRes({ tipo: 'erro', texto: nfErroMsg(e) }); });
+    }
+    function salvar() {
+        if (!teste && p.cfg.teste !== false && !window.confirm('Desligar o modo teste? A partir daí os e-mails vão de verdade para os responsáveis.')) return;
+        p.onSalvar(atual);
+    }
+    var campo = { fontSize: 12, fontWeight: 700, color: COLORS.ink, margin: '12px 0 4px', display: 'block' };
+    return h(NFModal, { onFechar: p.onFechar, largura: 520 },
+        nfTitulo('Configurar envio de notas', 'Estes dados ficam só neste aparelho. Em cada aparelho (computador, celular) você digita uma vez.'),
+        h('label', { style: campo }, 'URL do envio (Apps Script)'),
+        h('input', { value: url, onChange: function (e) { setUrl(e.target.value); setRes(null); }, placeholder: 'https://script.google.com/macros/s/.../exec', inputMode: 'url', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, 'aria-label': 'URL do envio', style: nfInp() }),
+        h('label', { style: campo }, 'Senha do envio'),
+        h('div', { style: { display: 'flex', gap: 8 } },
+            h('input', { type: ver ? 'text' : 'password', value: seg, onChange: function (e) { setSeg(e.target.value); setRes(null); }, placeholder: 'a mesma senha (SEGREDO) do script', autoComplete: 'new-password', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, 'aria-label': 'Senha do envio', style: nfInp() }),
+            h('button', { type: 'button', onClick: function () { setVer(!ver); }, style: Object.assign({}, nfBtnS(), { padding: '8px 12px', flex: 'none' }) }, ver ? 'Ocultar' : 'Mostrar')),
+        h('label', { style: { display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 16, padding: '10px 12px', borderRadius: 12, background: teste ? '#FFF4D6' : COLORS.lineSoft, cursor: 'pointer', fontSize: 13, color: COLORS.ink } },
+            h('input', { type: 'checkbox', checked: teste, onChange: function (e) { setTeste(e.target.checked); }, style: { width: 18, height: 18, accentColor: '#2878de', flex: 'none', marginTop: 1 } }),
+            h('span', null, h('b', null, 'Modo teste'), ' — os e-mails vão só para o e-mail de teste do script e nada é marcado como enviado. Desligue só quando estiver tudo certo.')),
+        res && h('div', { style: { marginTop: 12, padding: '10px 12px', borderRadius: 12, fontSize: 13, background: res.tipo === 'ok' ? COLORS.greenBg : res.tipo === 'erro' ? COLORS.redBg : COLORS.lineSoft, color: res.tipo === 'ok' ? COLORS.green : res.tipo === 'erro' ? COLORS.red : COLORS.ink } }, res.texto),
+        h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18, flexWrap: 'wrap' } },
+            h('button', { type: 'button', onClick: p.onFechar, style: nfBtnS() }, 'Cancelar'),
+            h('button', { type: 'button', onClick: testar, style: nfBtnS() }, 'Testar conexão'),
+            h('button', { type: 'button', disabled: !valido, onClick: salvar, style: Object.assign({}, nfBtnP(), { opacity: valido ? 1 : .5, cursor: valido ? 'pointer' : 'not-allowed' }) }, 'Salvar')));
+}
+function NFModalPrevia(p) {
+    var h = React.createElement;
+    var _a = useState(p.modelo.assunto), assunto = _a[0], setAssunto = _a[1];
+    var _c = useState(p.modelo.corpo), corpo = _c[0], setCorpo = _c[1];
+    var ex = p.ex;
+    var vars = { aluno: ex.aluno, mes: ex.mes, escola: NF_ESCOLA };
+    var campo = { fontSize: 12, fontWeight: 700, color: COLORS.ink, margin: '12px 0 4px', display: 'block' };
+    return h(NFModal, { onFechar: p.onFechar, largura: 600 },
+        nfTitulo('Prévia do e-mail', 'Use {aluno}, {mes} e {escola}: o TDB troca pelo nome certo em cada e-mail.'),
+        h('label', { style: campo }, 'Assunto'),
+        h('input', { value: assunto, onChange: function (e) { setAssunto(e.target.value); }, 'aria-label': 'Assunto do e-mail', style: nfInp() }),
+        h('label', { style: campo }, 'Mensagem'),
+        h('textarea', { value: corpo, rows: 7, onChange: function (e) { setCorpo(e.target.value); }, 'aria-label': 'Mensagem do e-mail', style: Object.assign({}, nfInp(), { resize: 'vertical', lineHeight: 1.45 }) }),
+        h('div', { style: { fontSize: 11.5, fontWeight: 800, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '.04em', margin: '16px 0 6px' } }, 'Como vai chegar (exemplo: ' + ex.aluno + ')'),
+        h('div', { style: { border: '1px solid ' + COLORS.line, borderRadius: 12, padding: '12px 14px', background: COLORS.lineSoft, fontSize: 13, color: COLORS.ink } },
+            h('div', { style: { color: COLORS.inkSoft, fontSize: 12, overflowWrap: 'anywhere' } }, 'Para: ' + (ex.emails.length ? ex.emails.join(', ') : '(sem e-mail cadastrado)')),
+            h('div', { style: { fontWeight: 800, margin: '6px 0 8px', overflowWrap: 'anywhere' } }, nfSub(assunto, vars)),
+            h('div', { style: { whiteSpace: 'pre-wrap', lineHeight: 1.5, overflowWrap: 'anywhere' } }, nfSub(corpo, vars)),
+            h('div', { style: { marginTop: 10, fontSize: 12, color: COLORS.inkSoft } }, '📎 ' + ex.arquivo)),
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 18, flexWrap: 'wrap' } },
+            h('button', { type: 'button', onClick: function () { setAssunto(NF_ASSUNTO_PAD); setCorpo(NF_CORPO_PAD); }, style: nfBtnS() }, 'Voltar ao texto padrão'),
+            h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                h('button', { type: 'button', onClick: p.onFechar, style: nfBtnS() }, 'Fechar'),
+                h('button', { type: 'button', disabled: !assunto.trim() || !corpo.trim(), onClick: function () { p.onSalvar({ assunto: assunto.trim(), corpo: corpo.trim() }); }, style: nfBtnP() }, 'Salvar texto'))));
+}
+function NFModalEnvio(p) {
+    var h = React.createElement, e = p.envio, fase = e.fase;
+    var okN = 0, erroN = 0, totalEm = 0;
+    e.itens.forEach(function (it) {
+        totalEm += it.emails.length;
+        var s = e.status[it.id];
+        if (s && (s.s === 'ok' || s.s === 'teste' || s.s === 'ja')) okN++; else if (s && s.s === 'erro') erroN++;
+    });
+    var n = e.itens.length;
+    var titulo = fase === 'confirmar' ? (e.teste ? 'Enviar TESTE de ' : 'Enviar ') + n + (n === 1 ? ' nota' : ' notas') : fase === 'enviando' ? 'Enviando… não feche esta janela' : 'Envio concluído';
+    var sub = fase === 'confirmar' ? totalEm + (totalEm === 1 ? ' e-mail' : ' e-mails') + (e.teste ? ' — no teste tudo chega só no e-mail de teste.' : ' ao todo. A Mensalidade de cada aluno será marcada como “Enviada”.') : fase === 'fim' ? (okN + ' de ' + n + (e.teste ? ' testes enviados' : ' enviadas') + (erroN ? ' · ' + erroN + ' com problema' : '')) : '';
+    function glifo(s) { return !s ? '·' : s.s === 'enviando' ? '⏳' : s.s === 'ok' ? '✅' : s.s === 'ja' ? '✅' : s.s === 'teste' ? '🧪' : s.s === 'erro' ? '❌' : '·'; }
+    return h(NFModal, { onFechar: p.onFechar, travado: fase === 'enviando', largura: 560 },
+        nfTitulo(titulo, sub),
+        e.teste && h('div', { style: { padding: '9px 12px', borderRadius: 12, background: '#FFF4D6', color: '#8a5a00', fontSize: 12.5, fontWeight: 700, marginBottom: 10 } }, '🧪 MODO TESTE — nenhum responsável vai receber e nada será marcado como enviado.'),
+        h('div', { style: { overflowY: 'auto', border: '1px solid ' + COLORS.line, borderRadius: 12, maxHeight: '42vh' } },
+            e.itens.map(function (it) {
+                var s = e.status[it.id];
+                return h('div', { key: it.id, style: { padding: '9px 12px', borderBottom: '1px solid ' + COLORS.lineSoft, fontSize: 13.5, color: COLORS.ink } },
+                    h('div', { style: { display: 'flex', gap: 8, alignItems: 'baseline' } },
+                        fase !== 'confirmar' && h('span', { style: { flex: 'none' } }, glifo(s)),
+                        h('span', { style: { fontWeight: 800, minWidth: 0, overflowWrap: 'anywhere' } }, it.aluno),
+                        it.reenvio && !e.teste && h('span', { style: { fontSize: 11, fontWeight: 800, padding: '1px 8px', borderRadius: 999, background: '#FFF4D6', color: '#8a5a00', flex: 'none' } }, 'REENVIO')),
+                    h('div', { style: { fontSize: 12, color: COLORS.inkSoft, overflowWrap: 'anywhere', marginTop: 2 } }, 'Para: ' + it.emails.join(', ')),
+                    s && s.msg && h('div', { style: { fontSize: 12, marginTop: 3, color: s.s === 'erro' ? COLORS.red : COLORS.green, overflowWrap: 'anywhere' } }, s.msg),
+                    s && s.msg2 && h('div', { style: { fontSize: 12, marginTop: 2, color: s.ok2 === false ? '#8a5a00' : COLORS.inkSoft, overflowWrap: 'anywhere' } }, s.msg2));
+            })),
+        fase === 'confirmar' && e.pulados.length > 0 && h('div', { style: { marginTop: 10, padding: '9px 12px', borderRadius: 12, background: COLORS.redBg, color: COLORS.ink, fontSize: 12.5 } },
+            h('b', null, 'Não serão enviadas (' + e.pulados.length + '):'),
+            e.pulados.map(function (x) { return h('div', { key: x.id, style: { marginTop: 3, overflowWrap: 'anywhere' } }, '• ' + x.nome + ' — ' + x.motivo); })),
+        h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16, flexWrap: 'wrap' } },
+            fase === 'confirmar' && h('button', { type: 'button', onClick: p.onFechar, style: nfBtnS() }, 'Cancelar'),
+            fase === 'confirmar' && h('button', { type: 'button', disabled: !n, onClick: p.onConfirmar, style: Object.assign({}, nfBtnP(), { opacity: n ? 1 : .5, cursor: n ? 'pointer' : 'not-allowed' }) }, e.teste ? 'Enviar teste' : 'Enviar agora'),
+            fase === 'enviando' && h('div', { style: { fontSize: 13, color: COLORS.inkSoft } }, (okN + erroN) + ' de ' + n + ' processadas…'),
+            fase === 'fim' && h('button', { type: 'button', onClick: p.onFechar, style: nfBtnP() }, 'Fechar')));
+}
+function NotasFiscaisTDB(_a) {
+    var h = React.createElement;
+    var transacoes = _a.transacoes || [];
+    var ano = Number(_a.exercicioAtual) || new Date().getFullYear();
+    var _vw = useState(function () { return window.innerWidth; }), vw = _vw[0], setVw = _vw[1];
+    useEffect(function () { var f = function () { setVw(window.innerWidth); }; window.addEventListener('resize', f); return function () { window.removeEventListener('resize', f); }; }, []);
+    var MOB = NF_MOB || vw < 980; // telas estreitas (tablet em pé) usam os cartões, para nada ficar cortado
+    var _c = useState(null), cad = _c[0], setCad = _c[1];
+    var _n = useState(null), notas = _n[0], setNotas = _n[1];
+    var _e = useState(false), erroLeitura = _e[0], setErroLeitura = _e[1];
+    var _m = useState(function () { return new Date().getMonth(); }), mi = _m[0], setMi = _m[1];
+    var _s = useState(null), sel = _s[0], setSel = _s[1];
+    var _b = useState(''), busca = _b[0], setBusca = _b[1];
+    var _t = useState(null), toastMsg = _t[0], setToastMsg = _t[1];
+    var _i = useState(null), importar = _i[0], setImportar = _i[1];
+    var _l = useState(false), lendo = _l[0], setLendo = _l[1];
+    var _d = useState(false), arrastando = _d[0], setArrastando = _d[1];
+    var _p = useState(false), modoPdf = _p[0], setModoPdf = _p[1];
+    var _cf = useState(nfCfgLer), cfg = _cf[0], setCfg = _cf[1];
+    var _md = useState({ assunto: NF_ASSUNTO_PAD, corpo: NF_CORPO_PAD }), modelo = _md[0], setModelo = _md[1];
+    var _mc = useState({}), marcadas = _mc[0], setMarcadas = _mc[1];
+    var _fh = useState({}), falhas = _fh[0], setFalhas = _fh[1];
+    var _dg = useState(null), dlg = _dg[0], setDlg = _dg[1];
+    var _ev = useState(null), envio = _ev[0], setEnvio = _ev[1];
+    var transRef = useRef(_a.transacoes || []), marcarRef = useRef(null), enviandoRef = useRef(false);
+    transRef.current = _a.transacoes || []; marcarRef.current = _a.marcarNotasEnviadas;
+    var cadRef = useRef([]), notasRef = useRef([]), timers = useRef({}), arquivosRef = useRef({}), raizRef = useRef(null), inputRef = useRef(null);
+    var mesKey = ano + '-' + ('0' + (mi + 1)).slice(-2);
+    function toast(m) { setToastMsg(m); setTimeout(function () { setToastMsg(null); }, 4000); }
+    useEffect(function () {
+        var vivo = true;
+        Promise.all([nfLer(NF_KEY_CAD), nfLer(NF_KEY_NOTAS)]).then(function (r) {
+            if (!vivo) return;
+            if (r[0] === null || r[1] === null) { setErroLeitura(true); return; }
+            cadRef.current = r[0]; notasRef.current = r[1]; setCad(r[0]); setNotas(r[1]);
+        });
+        window.storage.get(NF_KEY_MODELO, false).then(function (r) {
+            if (!vivo || !r || !r.value) return;
+            try { var o = JSON.parse(r.value); if (o && typeof o === 'object' && o.assunto && o.corpo) setModelo({ assunto: String(o.assunto), corpo: String(o.corpo) }); } catch (e) { }
+        }).catch(function () { });
+        return function () { vivo = false; };
+    }, []);
+    function gravar(chave, arr) { return window.storage.set(chave, JSON.stringify(arr), false).catch(function () { }); }
+    function agendar(chave) {
+        if (erroLeitura) return;
+        clearTimeout(timers.current[chave]);
+        timers.current[chave] = setTimeout(function () { delete timers.current[chave]; gravar(chave, chave === NF_KEY_CAD ? cadRef.current : notasRef.current); }, 450);
+    }
+    function descarregar() {
+        Object.keys(timers.current).forEach(function (k) { clearTimeout(timers.current[k]); delete timers.current[k]; gravar(k, k === NF_KEY_CAD ? cadRef.current : notasRef.current); });
+    }
+    useEffect(function () { return function () { if (!erroLeitura) descarregar(); }; }, [erroLeitura]);
+    function salvarCad(next) { cadRef.current = next; setCad(next); agendar(NF_KEY_CAD); }
+    function salvarNotas(next) { notasRef.current = next; setNotas(next); agendar(NF_KEY_NOTAS); }
+    // um toque marca (azul), dois toques desmarca; clique fora também desmarca
+    useEffect(function () {
+        function fora(e) { if (!e.target.closest || !e.target.closest('[data-nf-row]')) setSel(null); }
+        document.addEventListener('mousedown', fora); document.addEventListener('touchstart', fora, { passive: true });
+        return function () { document.removeEventListener('mousedown', fora); document.removeEventListener('touchstart', fora); };
+    }, []);
+    function marcar(tipo, id) { return function () { setSel({ tipo: tipo, id: id }); }; }
+    function desmarcar(e) { var t = e.target; if (t && t.closest && t.closest('input,select,textarea,button,[role=button],a')) return; setSel(null); }
+    function estiloLinha(tipo, id) {
+        var on = sel && sel.tipo === tipo && sel.id === id;
+        return { background: on ? 'rgba(224, 174, 60, 0.16)' : 'transparent', borderLeft: on ? '3px solid #E0AE3C' : '3px solid transparent', borderTop: '1px solid ' + COLORS.lineSoft, padding: MOB ? '12px 12px' : '10px 14px', cursor: 'pointer' };
+    }
+    function paraLixeira(rotulo, origem, chave, lista, item) {
+        var idx = lista.findIndex(function (x) { return x.id === item.id; });
+        try { window.__tdbLixeiraAdicionar({ rotulo: rotulo, origem: origem, restoreOps: [{ op: 'insert', key: chave, path: [], index: idx, item: item, uniqueField: 'id' }], cleanupKeys: [] }).catch(function () { }); } catch (e) { }
+    }
+    // ---------- cadastro ----------
+    function editarCad(id, campo, valor) { salvarCad(cadRef.current.map(function (c) { if (c.id !== id) return c; var o = Object.assign({}, c); o[campo] = valor; return o; })); }
+    function adicionarAluno() {
+        var novo = { id: nfId('nfc'), aluno: '', nomeNota: '', emails: [], ativo: true };
+        salvarCad([novo].concat(cadRef.current)); setBusca(''); setSel({ tipo: 'cad', id: novo.id });
+        setTimeout(function () { var el = document.querySelector('[data-nf-aluno="' + novo.id + '"]'); if (el) el.focus(); }, 60);
+    }
+    function removerAluno(c) {
+        if (!window.confirm('Mover "' + (c.aluno || 'sem nome') + '" para a lixeira?')) return;
+        paraLixeira(c.aluno || 'Aluno', 'Notas Fiscais', NF_KEY_CAD, cadRef.current, c);
+        salvarCad(cadRef.current.filter(function (x) { return x.id !== c.id; })); toast('Aluno movido para a lixeira.');
+    }
+    function abrirImportar() {
+        var vistos = {}, jaTem = {};
+        cadRef.current.forEach(function (c) { jaTem[nfNorm(c.aluno)] = 1; });
+        var nomes = [];
+        transacoes.forEach(function (t) {
+            var cat = String(t.categoria || '');
+            if (cat.indexOf('Mensalidade - ') !== 0) return;
+            var n = String(nomeExibicao(cat) || '').trim().replace(/\s+/g, ' ').toUpperCase();
+            var k = nfNorm(n);
+            if (!n || vistos[k] || jaTem[k]) return;
+            vistos[k] = 1; nomes.push(n);
+        });
+        nomes.sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+        setImportar(nomes);
+    }
+    function confirmarImportar(nomes) {
+        var novos = nomes.map(function (n) { return { id: nfId('nfc'), aluno: n, nomeNota: n, emails: [], ativo: true }; });
+        salvarCad(cadRef.current.concat(novos)); setImportar(null); toast(novos.length + (novos.length === 1 ? ' aluno importado.' : ' alunos importados.'));
+    }
+    // ---------- notas ----------
+    function receber(files) {
+        var lista = Array.prototype.slice.call(files || []).filter(function (f) { return /\.pdf$/i.test(f.name) || f.type === 'application/pdf'; });
+        if (!lista.length) { toast('Escolha arquivos em PDF.'); return; }
+        if (!cadRef.current.length) { toast('Cadastre os alunos antes, para o TDB reconhecer as notas.'); }
+        setLendo(true);
+        var jaTem = {}; notasRef.current.filter(function (n) { return n.mes === mesKey; }).forEach(function (n) { jaTem[n.arquivo + '|' + n.tamanho] = n.id; });
+        var novos = [], repetidos = 0, reconectados = 0, seq = Promise.resolve();
+        lista.forEach(function (f) {
+            seq = seq.then(function () {
+                if (jaTem[f.name + '|' + f.size]) { var idEx = jaTem[f.name + '|' + f.size]; if (idEx !== 1 && !arquivosRef.current[idEx]) { arquivosRef.current[idEx] = f; reconectados++; } else repetidos++; return; }
+                return nfLerPdf(f).catch(function () { return ''; }).then(function (texto) {
+                    var r = nfAnalisar(texto, f.name, cadRef.current);
+                    var item = { id: nfId('nfn'), mes: mesKey, arquivo: f.name, tamanho: f.size, nomeLido: r.nomeLido, alunoId: r.alunoId, cand: r.cand, semTexto: !String(texto).trim(), enviadaEm: '', criadaEm: new Date().toISOString() };
+                    arquivosRef.current[item.id] = f; jaTem[f.name + '|' + f.size] = item.id; novos.push(item);
+                });
+            });
+        });
+        seq.then(function () {
+            if (novos.length) salvarNotas(notasRef.current.concat(novos));
+            toast(novos.length + (novos.length === 1 ? ' nota lida' : ' notas lidas') + (reconectados ? ' · ' + reconectados + ' PDF(s) reconectado(s) para envio' : '') + (repetidos ? ' · ' + repetidos + ' já estava(m) na lista' : '') + '.'); if (reconectados) setNotas(notasRef.current.slice());
+        }).catch(function () { toast('Não consegui ler os arquivos. Tente de novo.'); }).then(function () { setLendo(false); });
+    }
+    function editarNota(id, campo, valor) { salvarNotas(notasRef.current.map(function (n) { if (n.id !== id) return n; var o = Object.assign({}, n); o[campo] = valor; return o; })); }
+    function mesclarNota(id, obj) { salvarNotas(notasRef.current.map(function (n) { return n.id === id ? Object.assign({}, n, obj) : n; })); }
+    function alternarMarca(id) { setMarcadas(function (p) { var o = Object.assign({}, p); if (o[id]) delete o[id]; else o[id] = true; return o; }); }
+    function removerNota(n) {
+        if (!window.confirm('Mover a nota "' + n.arquivo + '" para a lixeira?')) return;
+        paraLixeira(n.arquivo, 'Notas Fiscais', NF_KEY_NOTAS, notasRef.current, n);
+        salvarNotas(notasRef.current.filter(function (x) { return x.id !== n.id; })); delete arquivosRef.current[n.id]; toast('Nota movida para a lixeira.');
+    }
+    function exportarPDF() {
+        var el = document.querySelector('.export-pagina-notas');
+        if (!el) return;
+        descarregar(); setSel(null); setModoPdf(true);
+        setTimeout(function () {
+            var alvo = document.querySelector('.export-pagina-notas') || el;
+            Promise.resolve(exportarPaginaVisualPDF(alvo, 'Notas Fiscais — ' + (MESES_ABREV[MESES[mi]] || MESES[mi]) + ' ' + ano, 'Notas-Fiscais-' + mesKey, null)).catch(function () { }).then(function () { setModoPdf(false); });
+        }, 250);
+    }
+    if (erroLeitura) return h('div', { style: { padding: 18, borderRadius: 14, background: COLORS.redBg, color: COLORS.ink, fontSize: 13.5 } }, 'Não consegui ler os dados das Notas Fiscais agora. Por segurança nada será gravado nesta tela. Atualize a página e tente de novo.');
+    if (!cad || !notas) return h('div', { style: { padding: 18, color: COLORS.inkSoft, fontSize: 13.5 } }, 'Carregando...');
+    var porId = {}; cad.forEach(function (c) { porId[c.id] = c; });
+    var notasMes = notas.filter(function (n) { return n.mes === mesKey; });
+    function situacao(n) {
+        if (n.enviadaEm) return 'enviada';
+        var c = n.alunoId ? porId[n.alunoId] : null;
+        if (!c) return 'conferir';
+        var em = (c.emails || []).filter(nfEmailOk);
+        return em.length ? 'ok' : 'semEmail';
+    }
+    var cont = { ok: 0, conferir: 0, semEmail: 0, enviada: 0 };
+    notasMes.forEach(function (n) { cont[situacao(n)]++; });
+    var q = nfNorm(busca);
+    var cadVis = cad.filter(function (c) { return !q || nfNorm(c.aluno + ' ' + c.nomeNota + ' ' + (c.emails || []).join(' ')).indexOf(q) >= 0; });
+    var semEmailCad = cad.filter(function (c) { return c.ativo !== false && !(c.emails || []).some(nfEmailOk); }).length;
+    var alunosOrd = cad.filter(function (c) { return c.ativo !== false || notasMes.some(function (n) { return n.alunoId === c.id; }); }).slice().sort(function (a, b) { return String(a.aluno).localeCompare(String(b.aluno), 'pt-BR'); });
+    // ---------- envio ----------
+    var cfgOk = nfCfgOk(cfg), modoTeste = cfg.teste !== false;
+    var mesNomeCompleto = nfMesNome(mi, ano);
+    var elegiveis = notasMes.filter(function (n) { return !n.enviadaEm && situacao(n) === 'ok'; });
+    var todasMarc = elegiveis.length > 0 && elegiveis.every(function (n) { return marcadas[n.id]; });
+    var nMarcadas = notasMes.filter(function (n) { return marcadas[n.id]; }).length;
+    function alternarTodas() { if (todasMarc) setMarcadas({}); else { var o = {}; elegiveis.forEach(function (n) { o[n.id] = true; }); setMarcadas(o); } }
+    function salvarCfg(c) {
+        var g = nfLsSet(NF_LS.url, c.url) && nfLsSet(NF_LS.seg, c.segredo) && nfLsSet(NF_LS.teste, c.teste ? '1' : '0');
+        setCfg(c); setDlg(null);
+        toast(g ? 'Configuração do envio salva neste aparelho.' : 'Salvo só enquanto esta página estiver aberta (o navegador não deixou gravar).');
+    }
+    function salvarModelo(m) {
+        setModelo(m); setDlg(null);
+        window.storage.set(NF_KEY_MODELO, JSON.stringify(m), false).then(function () { toast('Texto do e-mail salvo.'); }).catch(function () { toast('Texto aplicado, mas não consegui salvar. Tente de novo.'); });
+    }
+    function exemploPrevia() {
+        var n = notasMes.filter(function (x) { return marcadas[x.id]; })[0] || elegiveis[0] || notasMes[0];
+        var c = n && n.alunoId ? porId[n.alunoId] : null;
+        var base = c || cad.filter(function (x) { return x.ativo !== false; })[0];
+        return { aluno: base ? (base.aluno || 'NOME DO ALUNO') : 'NOME DO ALUNO', mes: mesNomeCompleto, emails: base ? (base.emails || []).filter(nfEmailOk) : [], arquivo: n ? n.arquivo : 'nota-fiscal.pdf' };
+    }
+    function achaMensalidade(c, indice) {
+        var k = nfNorm(c.aluno), mesNome = MESES[indice];
+        return (transRef.current || []).filter(function (t) { return String(t.categoria || '').indexOf('Mensalidade - ') === 0 && t.mes === mesNome && nfNorm(nomeExibicao(t.categoria)) === k; });
+    }
+    function montarItens(lista) {
+        var itens = [], pulados = [];
+        lista.forEach(function (n) {
+            var c = n.alunoId ? porId[n.alunoId] : null;
+            var em = c ? (c.emails || []).filter(nfEmailOk) : [];
+            if (!c) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'sem aluno escolhido' });
+            else if (!em.length) pulados.push({ id: n.id, nome: c.aluno, motivo: 'sem e-mail cadastrado' });
+            else if (!arquivosRef.current[n.id]) pulados.push({ id: n.id, nome: c.aluno, motivo: 'escolha este PDF de novo (botão “Escolher PDFs”)' });
+            else itens.push({ id: n.id, cadId: c.id, aluno: c.aluno, nomeNota: c.nomeNota || c.aluno, emails: em, reenvio: !!n.enviadaEm, arquivo: n.arquivo });
+        });
+        return { itens: itens, pulados: pulados };
+    }
+    function abrirEnvio(modo) {
+        if (enviandoRef.current) return;
+        if (!cfgOk) { setDlg('config'); toast('Configure o envio primeiro (URL e senha).'); return; }
+        var lista = modo === 'todas' ? elegiveis : notasMes.filter(function (n) { return marcadas[n.id]; });
+        if (!lista.length) { toast(modo === 'todas' ? 'Nenhuma nota pronta para enviar neste mês.' : 'Marque as notas que quer enviar.'); return; }
+        var r = montarItens(lista);
+        setEnvio({ fase: 'confirmar', itens: r.itens, pulados: r.pulados, status: {}, teste: modoTeste, mi: mi, mesKey: mesKey });
+    }
+    function executarEnvio() {
+        if (enviandoRef.current || !envio || envio.fase !== 'confirmar') return;
+        enviandoRef.current = true;
+        var e0 = envio, itens = e0.itens, teste = e0.teste, cfgUso = cfg, mod = modelo;
+        var mesNomeEnv = nfMesNome(e0.mi, ano);
+        var st = {}, marcarPares = [];
+        itens.forEach(function (it) { st[it.id] = { s: 'espera' }; });
+        function mostrar(fase) { setEnvio(function (prev) { return prev ? Object.assign({}, prev, { fase: fase || prev.fase, status: Object.assign({}, st) }) : prev; }); }
+        function falha(id, msg) { st[id] = { s: 'erro', msg: msg }; setFalhas(function (p) { var o = Object.assign({}, p); o[id] = msg; return o; }); }
+        function semFalha(id) { setFalhas(function (p) { if (!p[id]) return p; var o = Object.assign({}, p); delete o[id]; return o; }); }
+        mostrar('enviando');
+        var seq = Promise.resolve();
+        itens.forEach(function (it) {
+            seq = seq.then(function () {
+                st[it.id] = { s: 'enviando' }; mostrar();
+                var arq = arquivosRef.current[it.id];
+                if (!arq) { falha(it.id, 'O PDF não está mais na memória. Escolha o arquivo de novo.'); mostrar(); return; }
+                if (arq.size > 15 * 1024 * 1024) { falha(it.id, 'O PDF passa de 15 MB.'); mostrar(); return; }
+                return nfBase64(arq).then(function (b64) {
+                    return nfPost(cfgUso, { acao: 'enviar', modoTeste: teste, forcar: !!it.reenvio, assunto: mod.assunto, corpo: mod.corpo, notas: [{ id: it.id, aluno: it.aluno, nomeNota: it.nomeNota, mes: e0.mesKey, mesNome: mesNomeEnv, emails: it.emails, pdfBase64: b64 }] }, 120000);
+                }).then(function (j) {
+                    var r = j && j.resultados && j.resultados[0];
+                    if (!r) { falha(it.id, (j && j.erro) || 'O serviço não devolveu resultado.'); return; }
+                    if (r.ok && teste) { st[it.id] = { s: 'teste', msg: 'Teste enviado para ' + (r.para || []).join(', ') + '.' }; return; }
+                    if (r.ok || r.jaEnviada) {
+                        var quando = String(r.enviadaEm || ''), iso = quando.slice(0, 10);
+                        if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) iso = new Date().toISOString().slice(0, 10);
+                        var hora = /T\d{2}:\d{2}/.test(quando) ? quando.slice(11, 16) : '';
+                        var obj = { enviadaEm: iso, enviadaHora: hora };
+                        if (r.driveUrl) obj.driveUrl = r.driveUrl;
+                        mesclarNota(it.id, obj); semFalha(it.id);
+                        setMarcadas(function (p) { if (!p[it.id]) return p; var o = Object.assign({}, p); delete o[it.id]; return o; });
+                        st[it.id] = { s: r.ok ? 'ok' : 'ja', msg: r.ok ? 'Enviada para ' + (r.para || it.emails).join(', ') + (r.driveUrl ? ' · cópia salva no Drive.' : '.') : 'Já constava como enviada em ' + nfDataBR(iso) + ' — marquei aqui também (nenhum e-mail novo).' };
+                        var c = cadRef.current.filter(function (x) { return x.id === it.cadId; })[0];
+                        var ms = c ? achaMensalidade(c, e0.mi) : [];
+                        if (ms.length === 1) {
+                            if (ms[0].nota === 'Enviada') st[it.id].msg2 = 'Mensalidade já estava marcada ✔';
+                            else { marcarPares.push([ms[0].id, it.id]); st[it.id].msg2 = 'Mensalidade marcada como “Enviada” ✔'; }
+                        } else { st[it.id].ok2 = false; st[it.id].msg2 = ms.length ? 'Há mais de uma mensalidade deste aluno em ' + nfMesNome(e0.mi, ano) + ' — marque a nota manualmente.' : 'Não achei a mensalidade deste aluno neste mês — marque a nota manualmente.'; }
+                        return;
+                    }
+                    falha(it.id, r.erro || 'Não foi possível enviar.');
+                }).catch(function (err) { falha(it.id, nfErroMsg(err)); }).then(function () { mostrar(); });
+            });
+        });
+        seq.catch(function () { }).then(function () {
+            if (marcarPares.length) {
+                var okM = false;
+                try { okM = typeof marcarRef.current === 'function' && marcarRef.current(marcarPares.map(function (x) { return x[0]; })) !== false; } catch (e) { okM = false; }
+                if (!okM) marcarPares.forEach(function (x) { st[x[1]].ok2 = false; st[x[1]].msg2 = 'Não consegui marcar na Mensalidade — marque a nota manualmente.'; });
+            }
+            enviandoRef.current = false;
+            mostrar('fim');
+        });
+    }
+    // ---------- estilos ----------
+    var card = { background: COLORS.paperCard, border: '1px solid ' + COLORS.line, borderRadius: 14 };
+    var inp = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 8, padding: MOB ? '10px 11px' : '8px 10px', fontSize: MOB ? 16 : 13.5, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
+    var btnP = { border: 'none', background: COLORS.inkButton, color: '#fff', borderRadius: 10, padding: '9px 14px', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 };
+    var btnS = { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink, borderRadius: 10, padding: '9px 12px', fontWeight: 700, fontSize: 12.5, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 };
+    var rot = { fontSize: 10.5, color: COLORS.inkSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 3 };
+    function tag(txt, bg, cor) { return h('span', { style: { display: 'inline-block', padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800, background: bg, color: cor, whiteSpace: 'nowrap' } }, txt); }
+    function tagSituacao(n) {
+        var s = situacao(n);
+        if (s === 'enviada') return tag('✉ Enviada ' + nfDataBR(n.enviadaEm).slice(0, 5), '#E4EEFC', '#1767cf');
+        if (s === 'ok') return tag('✅ Identificada', COLORS.greenBg, COLORS.green);
+        if (s === 'semEmail') return tag('❌ Falta e-mail', COLORS.redBg, COLORS.red);
+        return tag('⚠️ Conferir', COLORS.goldSoft || '#FFF4D6', '#8a5a00');
+    }
+    function campoRot(texto, filho, extra) { return h('div', { style: Object.assign({ minWidth: 0 }, extra || {}) }, MOB && h('div', { style: rot }, texto), filho); }
+    var gradeCad = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: 'minmax(150px,1fr) minmax(150px,1fr) minmax(240px,1.8fr) 64px 34px', gap: 12, alignItems: 'center' };
+    var gradeNota = MOB ? { display: 'flex', flexDirection: 'column', gap: 10 } : { display: 'grid', gridTemplateColumns: '26px minmax(90px,.8fr) minmax(100px,1fr) minmax(130px,1.1fr) minmax(140px,1.4fr) 112px 140px 34px', gap: 12, alignItems: 'center' };
+    function cabecalho(cols, grade) {
+        if (MOB) return null;
+        return h('div', { style: Object.assign({}, grade, { padding: '9px 14px', background: COLORS.lineSoft, fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '.04em' }) }, cols.map(function (c, i) { return h('div', { key: i }, c); }));
+    }
+    function fimLinha(a, b) { return MOB ? h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 } }, a, b) : h(React.Fragment, null, a, b); }
+    function lixeiraBtn(onClick, titulo) {
+        return h('span', { 'data-export-ignore': true, role: 'button', tabIndex: 0, title: titulo, 'aria-label': titulo, onClick: function (e) { e.stopPropagation(); onClick(); }, style: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 9, cursor: 'pointer', background: COLORS.redBg, flex: 'none' } }, h(Trash2, { size: 14, color: COLORS.red }));
+    }
+    // ---------- cadastro ----------
+    var linhasCad = cadVis.map(function (c) {
+        var temEm = (c.emails || []).some(nfEmailOk);
+        return h('div', { key: c.id, 'data-nf-row': true, onClick: marcar('cad', c.id), onDoubleClick: desmarcar, style: Object.assign({}, estiloLinha('cad', c.id), gradeCad, { opacity: c.ativo === false ? .55 : 1 }) },
+            campoRot('Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: COLORS.ink } }, c.aluno) : h('input', { 'data-nf-aluno': c.id, value: c.aluno, placeholder: 'Nome do aluno', 'aria-label': 'Aluno', onChange: function (e) { editarCad(c.id, 'aluno', e.target.value.toUpperCase()); }, onBlur: descarregar, style: Object.assign({}, inp, { fontWeight: 700 }) })),
+            campoRot('Nome na nota fiscal', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, c.nomeNota || c.aluno) : h('input', { value: c.nomeNota, placeholder: 'igual ao aluno, se for o mesmo', 'aria-label': 'Nome na nota fiscal', onChange: function (e) { editarCad(c.id, 'nomeNota', e.target.value.toUpperCase()); }, onBlur: descarregar, style: inp })),
+            campoRot('E-mail(s) para envio', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink, whiteSpace: 'pre-line' } }, (c.emails || []).join('\n') || '—') : h(NFEmails, { valor: c.emails || [], onChange: function (v) { editarCad(c.id, 'emails', v); descarregar(); } }), { borderRadius: 8, outline: !temEm && c.ativo !== false ? '0' : '0' }),
+            fimLinha(
+              h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: c.ativo !== false, onChange: function (e) { editarCad(c.id, 'ativo', e.target.checked); descarregar(); }, style: { width: 18, height: 18, accentColor: '#2878de' } }), MOB ? 'Ativo' : ''),
+              h('div', { style: { display: 'flex', justifyContent: MOB ? 'flex-end' : 'center' } }, lixeiraBtn(function () { removerAluno(c); }, 'Excluir aluno'))
+            ));
+    });
+    // ---------- notas ----------
+    var linhasNotas = notasMes.map(function (n) {
+        var c = n.alunoId ? porId[n.alunoId] : null;
+        var cands = (n.cand || []).map(function (id) { return porId[id]; }).filter(Boolean);
+        return h('div', { key: n.id, 'data-nf-row': true, onClick: marcar('nota', n.id), onDoubleClick: desmarcar, style: Object.assign({}, estiloLinha('nota', n.id), gradeNota) },
+            modoPdf ? (MOB ? null : h('div', null)) : (MOB
+                ? h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: !!marcadas[n.id], onChange: function () { alternarMarca(n.id); }, style: { width: 20, height: 20, accentColor: '#2878de' } }), 'Marcar para envio')
+                : h('input', { type: 'checkbox', checked: !!marcadas[n.id], 'aria-label': 'Marcar para envio', onChange: function () { alternarMarca(n.id); }, style: { width: 18, height: 18, accentColor: '#2878de' } })),
+            campoRot('Arquivo', h('div', null, h('div', { style: { fontSize: 13, fontWeight: 600, color: COLORS.ink, wordBreak: 'break-all' } }, n.arquivo), !modoPdf && !n.enviadaEm && !arquivosRef.current[n.id] && h('div', { style: { fontSize: 11.5, color: '#8a5a00', marginTop: 2 } }, 'Para enviar, escolha este PDF de novo.'))),
+            campoRot('Nome lido na nota', h('div', { style: { fontSize: 13, color: n.nomeLido ? COLORS.ink : COLORS.inkSoft } }, n.nomeLido || (n.semTexto ? 'PDF sem texto legível' : '—'))),
+            campoRot('Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: c ? COLORS.ink : COLORS.inkSoft } }, c ? c.aluno : 'Sem aluno escolhido') : h('select', { value: n.alunoId || '', 'aria-label': 'Aluno da nota', onChange: function (e) { editarNota(n.id, 'alunoId', e.target.value || null); descarregar(); }, style: Object.assign({}, inp, { fontWeight: n.alunoId ? 700 : 400 }) },
+                h('option', { value: '' }, 'Escolher aluno…'),
+                cands.length > 0 && h('optgroup', { label: 'Prováveis' }, cands.map(function (x) { return h('option', { key: 'c' + x.id, value: x.id }, x.aluno); })),
+                h('optgroup', { label: 'Todos os alunos' }, alunosOrd.map(function (x) { return h('option', { key: x.id, value: x.id }, x.aluno || '(sem nome)'); })))),
+            campoRot('Enviar para', h('div', { style: { fontSize: 12.5, color: c && (c.emails || []).some(nfEmailOk) ? COLORS.ink : COLORS.red, overflowWrap: modoPdf ? 'normal' : 'anywhere', whiteSpace: modoPdf ? 'pre-line' : 'normal' } }, c ? ((c.emails || []).join(modoPdf ? '\n' : ', ') || 'sem e-mail cadastrado') : '—')),
+            campoRot('Situação', h('div', null, tagSituacao(n), falhas[n.id] && !modoPdf && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 4, overflowWrap: 'anywhere' } }, falhas[n.id]))),
+            campoRot('Enviada em', h('div', null, h('input', { type: 'date', value: n.enviadaEm || '', 'aria-label': 'Data de envio', onChange: function (e) { editarNota(n.id, 'enviadaEm', e.target.value); descarregar(); }, style: inp }),
+                (n.enviadaHora || n.driveUrl) && h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 3 } }, n.enviadaHora ? 'às ' + n.enviadaHora : '', n.enviadaHora && n.driveUrl ? ' · ' : '', n.driveUrl && !modoPdf ? h('a', { href: n.driveUrl, target: '_blank', rel: 'noopener noreferrer', style: { color: '#1767cf', fontWeight: 700 } }, 'PDF no Drive') : ''))),
+            h('div', { style: { display: 'flex', justifyContent: MOB ? 'flex-end' : 'center' } }, lixeiraBtn(function () { removerNota(n); }, 'Excluir nota')));
+    });
+    var mesesOpc = MESES.map(function (m, i) { return h('option', { key: m, value: i }, MESES_ABREV[m] || m); });
+    return h('div', { ref: raizRef, className: 'export-pagina-notas', style: { display: 'grid', gap: MOB ? 14 : 18, minWidth: 0 } },
+        h(Toast, { mensagem: toastMsg }),
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } },
+            h('div', { style: { minWidth: 0 } },
+                h('div', { style: { fontSize: 20, fontWeight: 800, color: COLORS.ink } }, '🧾 Notas Fiscais'),
+                h('div', { style: { fontSize: 13, color: COLORS.inkSoft, marginTop: 2 } }, 'Cadastro, conferência e envio por e-mail das notas do mês — separado do resto do projeto.')),
+            h('div', { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                h('button', { type: 'button', onClick: function () { setDlg('config'); }, style: btnS }, '⚙ Configurar envio'),
+                h('button', { type: 'button', onClick: exportarPDF, style: btnS }, h(FileText, { size: 14 }), ' Exportar PDF'))),
+        // --- notas do mês ---
+        h('div', { style: Object.assign({}, card, { overflow: 'hidden' }) },
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '14px 16px' } },
+                h('div', null, h('div', { style: { fontSize: 16, fontWeight: 800, color: COLORS.ink } }, 'Notas do mês'), h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 2 } }, 'Escolha os PDFs (do Google Drive ou do aparelho) e confira antes de qualquer envio.')),
+                h('select', { 'data-export-ignore': true, value: mi, onChange: function (e) { setMi(Number(e.target.value)); setSel(null); setMarcadas({}); }, 'aria-label': 'Mês das notas', style: Object.assign({}, inp, { width: 'auto', minWidth: 90 }) }, mesesOpc)),
+            h('div', { 'data-export-ignore': true, onDragOver: function (e) { e.preventDefault(); setArrastando(true); }, onDragLeave: function () { setArrastando(false); }, onDrop: function (e) { e.preventDefault(); setArrastando(false); receber(e.dataTransfer && e.dataTransfer.files); }, style: { margin: '0 16px 12px', padding: MOB ? '16px 12px' : '18px 14px', border: '2px dashed ' + (arrastando ? '#1767cf' : 'rgba(23,103,207,.35)'), background: arrastando ? 'rgba(23,103,207,.10)' : 'rgba(23,103,207,.05)', borderRadius: 12, textAlign: 'center' } },
+                h('input', { ref: inputRef, type: 'file', accept: 'application/pdf,.pdf', multiple: true, style: { display: 'none' }, 'aria-label': 'Escolher PDFs das notas', onChange: function (e) { receber(e.target.files); e.target.value = ''; } }),
+                h('button', { type: 'button', disabled: lendo, onClick: function () { inputRef.current && inputRef.current.click(); }, style: Object.assign({}, btnP, { padding: '11px 18px', fontSize: 13.5, opacity: lendo ? .6 : 1 }) }, h(FileText, { size: 15 }), lendo ? ' Lendo as notas…' : ' Escolher PDFs (Drive ou arquivos)'),
+                h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 8 } }, MOB ? 'O seletor do aparelho mostra o Google Drive.' : 'ou arraste os PDFs para cá — o TDB lê o nome dentro de cada nota.')),
+            notasMes.length > 0 && h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', padding: '0 16px 12px' } },
+                tag('✅ ' + cont.ok + ' identificadas', COLORS.greenBg, COLORS.green), tag('⚠️ ' + cont.conferir + ' para conferir', COLORS.goldSoft || '#FFF4D6', '#8a5a00'), tag('❌ ' + cont.semEmail + ' sem e-mail', COLORS.redBg, COLORS.red), cont.enviada > 0 && tag('✉ ' + cont.enviada + ' enviadas', '#E4EEFC', '#1767cf')),
+            notasMes.length > 0 && cabecalho([modoPdf ? '' : h('input', { type: 'checkbox', checked: todasMarc, disabled: !elegiveis.length, 'aria-label': 'Marcar todas as notas prontas', title: 'Marcar todas as notas prontas', onChange: alternarTodas, style: { width: 18, height: 18, accentColor: '#2878de' } }), 'Arquivo', 'Nome lido na nota', 'Aluno', 'Enviar para', 'Situação', 'Enviada em', ''], gradeNota),
+            notasMes.length ? linhasNotas : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, 'Nenhuma nota neste mês ainda.'),
+            h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderTop: '1px solid ' + COLORS.lineSoft, background: COLORS.lineSoft } },
+                h('div', { style: { fontSize: 12, color: cfgOk && modoTeste ? '#8a5a00' : COLORS.inkSoft, fontWeight: cfgOk && modoTeste ? 700 : 400, flex: '1 1 220px' } }, !cfgOk ? 'Envio por e-mail ainda não configurado. Toque em “Configurar envio”.' : modoTeste ? '🧪 Modo teste ligado: os e-mails vão só para o e-mail de teste e nada é marcado como enviado.' : 'Envio real: os responsáveis recebem o e-mail e a Mensalidade do aluno é marcada como “Enviada”.'),
+                h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                    h('button', { type: 'button', onClick: function () { setDlg('previa'); }, style: btnS }, 'Prévia do e-mail'),
+                    h('button', { type: 'button', disabled: !nMarcadas, title: nMarcadas ? '' : 'Marque as notas na primeira coluna', onClick: function () { abrirEnvio('selecionadas'); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, 'Enviar selecionadas' + (nMarcadas ? ' (' + nMarcadas + ')' : '')),
+                    h('button', { type: 'button', disabled: !elegiveis.length, title: elegiveis.length ? '' : 'Nenhuma nota pronta neste mês', onClick: function () { abrirEnvio('todas'); }, style: Object.assign({}, btnP, { opacity: elegiveis.length ? 1 : .5, cursor: elegiveis.length ? 'pointer' : 'not-allowed' }) }, 'Enviar todas ✅' + (elegiveis.length ? ' (' + elegiveis.length + ')' : ''))))),
+        // --- cadastro ---
+        h('div', { style: Object.assign({}, card, { overflow: 'hidden' }) },
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '14px 16px' } },
+                h('div', null, h('div', { style: { fontSize: 16, fontWeight: 800, color: COLORS.ink } }, 'Cadastro de envio'),
+                    h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 2 } }, cad.length + (cad.length === 1 ? ' aluno' : ' alunos') + (semEmailCad ? ' · ' + semEmailCad + ' sem e-mail' : ''))),
+                h('div', { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+                    h('button', { type: 'button', onClick: abrirImportar, style: btnS }, '⬇ Importar alunos da Mensalidade'),
+                    h('button', { type: 'button', onClick: adicionarAluno, style: btnP }, h(Plus, { size: 14 }), ' Adicionar aluno'))),
+            cad.length > 6 && h('div', { 'data-export-ignore': true, style: { padding: '0 16px 12px', position: 'relative' } }, h(Search, { size: 14, color: COLORS.inkSoft, style: { position: 'absolute', left: 28, top: 11 } }), h('input', { value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: 'Buscar aluno ou e-mail...', 'aria-label': 'Buscar no cadastro', style: Object.assign({}, inp, { paddingLeft: 34 }) })),
+            cabecalho(['Aluno', 'Nome na nota fiscal', 'E-mail(s) para envio', 'Ativo', ''], gradeCad),
+            linhasCad.length ? linhasCad : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, cad.length ? 'Nenhum aluno encontrado.' : 'Nenhum aluno cadastrado. Use “Importar alunos da Mensalidade” ou “Adicionar aluno”.')),
+        importar && h(NFModalImportar, { nomes: importar, onFechar: function () { setImportar(null); }, onImportar: confirmarImportar }),
+        dlg === 'config' && h(NFModalConfig, { cfg: cfg, onFechar: function () { setDlg(null); }, onSalvar: salvarCfg }),
+        dlg === 'previa' && h(NFModalPrevia, { modelo: modelo, ex: exemploPrevia(), onFechar: function () { setDlg(null); }, onSalvar: salvarModelo }),
+        envio && h(NFModalEnvio, { envio: envio, onFechar: function () { setEnvio(null); }, onConfirmar: executarEnvio }));
+}
+var NotasFiscaisIcon = function (_a) {
+    var _b = _a.size, size = _b === void 0 ? 16 : _b, style = _a.style;
+    return (React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "none", strokeLinecap: "round", strokeLinejoin: "round", style: style },
+        React.createElement("path", { d: "M7 3h7l4 4v14H7z", stroke: "#3E7ACC", strokeWidth: "1.9" }),
+        React.createElement("path", { d: "M14 3v4h4", stroke: "#B87A1A", strokeWidth: "1.9" }),
+        React.createElement("path", { d: "M9.6 12h5M9.6 15h3", stroke: "#1C9E8F", strokeWidth: "1.9" }),
+        React.createElement("path", { d: "M13.6 18.2l1.4 1.4 2.6-2.8", stroke: "#C15CA0", strokeWidth: "1.9" })));
 };
 function MunicipioCbTDB() {
     var ref = useRef(null);
@@ -12767,6 +13408,19 @@ function salvarTudoAgora() {
             return;
         persist(transacoes.map(function (t) { return t.id === id ? __assign(__assign({}, t), { nota: t.nota === 'Enviada' ? 'Pendente' : 'Enviada' }) : t; }));
     }
+    var __transLatestRef = useRef(null);
+    __transLatestRef.current = transacoes;
+    function marcarNotasEnviadas(ids) {
+        var atual = __transLatestRef.current;
+        if (!Array.isArray(atual) || !ids || !ids.length)
+            return false;
+        if (bloquearEdicaoSeEncerrado_())
+            return false;
+        var prox = atual.map(function (t) { return ids.indexOf(t.id) >= 0 && t.nota !== 'Enviada' ? __assign(__assign({}, t), { nota: 'Enviada' }) : t; });
+        __transLatestRef.current = prox;
+        persist(prox);
+        return true;
+    }
     function definirFoto(id, fotoBase64) {
         if (bloquearEdicaoSeEncerrado_())
             return;
@@ -12998,6 +13652,7 @@ function salvarTudoAgora() {
         ['visao', 'Visão geral', IconePizza, '#106E6B', '#DEF5F1'],
         ['lancamentos', 'Lançamentos', Repeat, '#C15CA0', '#F8E4F1'],
         ['mensalidades', 'Mensalidades', Users, '#3E7ACC', '#E4EEFC'],
+        ['notasFiscais', 'Notas Fiscais', NotasFiscaisIcon, '#3E7ACC', '#E4EEFC'],
         ['contratos', 'Contratos', FileText, '#B87A1A', '#FCEFDD'],
         ['compras', 'Compras', ShoppingCart, '#C1272D', '#FBE9E8'],
         ['recibos', 'Recibos', Receipt, '#6B4FC4', '#ECE8FA'],
@@ -13049,7 +13704,7 @@ function salvarTudoAgora() {
             { label: 'Saídas (com dados)', valor: kpis.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
             { label: 'Resultado', valor: kpis.resultado, icon: kpis.resultado >= 0 ? TrendingUp : TrendingDown, cor: '#4A5A58', bg: COLORS.lineSoft, destaque: true },
             { label: 'A receber', valor: aReceber.valor, icon: Receipt, cor: '#2878de', bg: COLORS.paperCard, detalhe: aReceber.mes ? (MESES_ABREV[aReceber.mes] + ' · ' + ((modoPrivado || privadoTotais) ? 'mensalidades em aberto' : aReceber.qtd + (aReceber.qtd === 1 ? ' mensalidade em aberto' : ' mensalidades em aberto'))) : 'Sem mensalidades cadastradas' },
-        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : tab === 'municipioCb' ? (React.createElement(MunicipioCbTDB, null)) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
+        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : tab === 'municipioCb' ? (React.createElement(MunicipioCbTDB, null)) : tab === 'notasFiscais' ? (React.createElement(NotasFiscaisTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual, marcarNotasEnviadas: marcarNotasEnviadas })) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
 }
 function ModalExercicioEncerrado(_a) {
     var ano = _a.ano, onFechar = _a.onFechar;
@@ -14569,7 +15224,7 @@ function TabelaMensalidades(_a) {
 (function () {
     if (typeof document === 'undefined' || document.getElementById('tdb-fm-css')) return;
     var s = document.createElement('style'); s.id = 'tdb-fm-css';
-    s.textContent = '.tdb-fm-pop,html:not(.tdb-aurora-pdf) body .tdb-fm-pop{background:var(--c-paper)!important}.tdb-fm-row{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;font-size:14px;font-family:Inter,sans-serif;color:var(--c-ink)}.tdb-fm-row:hover{background:var(--c-lineSoft)}.tdb-fm-row input{width:16px;height:16px;margin:0;cursor:pointer;accent-color:#2878de}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros select:nth-of-type(3){grid-column:auto!important}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros label.tdb-fm-row input[type=checkbox]{min-height:18px!important;min-width:18px!important;max-width:18px!important;height:18px!important;padding:0!important;margin:0!important;flex:none!important;width:18px!important}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros .tdb-fm-row{width:100%!important;box-sizing:border-box!important;padding:10px 14px!important;font-size:16px!important;min-height:0!important;height:auto!important;margin:0!important;line-height:1.25!important}';
+    s.textContent = '.tdb-fm-pop,html:not(.tdb-aurora-pdf) body .tdb-fm-pop{background:var(--c-paper)!important}.tdb-fm-row{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;font-size:14px;font-family:Inter,sans-serif;color:var(--c-ink)}.tdb-fm-row:hover{background:var(--c-lineSoft)}.tdb-fm-row input{width:16px;height:16px;margin:0;cursor:pointer;accent-color:#2878de}html body button.tdb-fm-trig{border:1px solid rgb(214,220,229)!important;border-radius:12px!important;background-color:rgba(255,255,255,.83)!important;box-shadow:inset 0 1px 3px rgba(40,50,70,.024)!important;font-weight:500!important;color:var(--c-ink)!important}html body button.tdb-fm-trig.ativo{border-color:#2878de!important;font-weight:600!important}body.dark-mode button.tdb-fm-trig{border-color:var(--c-line)!important;background-color:rgba(37,39,45,.88)!important}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros select:nth-of-type(3){grid-column:auto!important}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros label.tdb-fm-row input[type=checkbox]{min-height:18px!important;min-width:18px!important;max-width:18px!important;height:18px!important;padding:0!important;margin:0!important;flex:none!important;width:18px!important}html:not(.tdb-aurora-pdf) body .mobile-mens-filtros .tdb-fm-row{width:100%!important;box-sizing:border-box!important;padding:10px 14px!important;font-size:16px!important;min-height:0!important;height:auto!important;margin:0!important;line-height:1.25!important}';
     document.head.appendChild(s);
 })();
 function FiltroMultiTDB(p) {
@@ -14604,7 +15259,7 @@ function FiltroMultiTDB(p) {
     var ativo = sel.length > 0;
     return React.createElement('div', { ref: ref, style: { position: 'relative', display: 'inline-block', minWidth: 0, gridColumn: p.colunaCheia ? '1 / -1' : undefined } },
         React.createElement('button', {
-            type: 'button', 'aria-label': p.ariaLabel, 'aria-haspopup': 'listbox', 'aria-expanded': aberto,
+            type: 'button', className: 'tdb-fm-trig' + (ativo ? ' ativo' : ''), 'aria-label': p.ariaLabel, 'aria-haspopup': 'listbox', 'aria-expanded': aberto,
             onClick: function () { return setAberto(function (v) { return !v; }); },
             style: __assign(__assign({}, p.estilo), {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer',
@@ -18922,6 +19577,11 @@ body.dark-mode .mcb-menu button:hover{background:rgba(255,255,255,.08)}
 .mcb-ren{border:0;outline:0;background:rgba(255,255,255,.95);color:#111318;border-radius:99px;padding:5px 11px;font:600 16px Inter,sans-serif;min-width:180px;max-width:70vw}
 .mcb-renb{border:0;background:rgba(255,255,255,.25);color:inherit;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;padding:0}
 
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="notasFiscais"]{--aurora-icon:#3E7ACC}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="notasFiscais"] .aba-icon svg > :nth-child(1){stroke:#3E7ACC!important}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="notasFiscais"] .aba-icon svg > :nth-child(2){stroke:#B87A1A!important}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="notasFiscais"] .aba-icon svg > :nth-child(3){stroke:#1C9E8F!important}
+html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="notasFiscais"] .aba-icon svg > :nth-child(4){stroke:#C15CA0!important}
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"]{--aurora-icon:#1C9E8F}
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] .aba-icon svg > :nth-child(1){stroke:#C15CA0!important;}
 html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] .aba-icon svg > :nth-child(2){stroke:#1C9E8F!important;}
