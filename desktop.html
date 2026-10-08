@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v54";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v55";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v54"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v55"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v54"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v55"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v54-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v55-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2127,7 +2127,10 @@ function NFModalEnvio(p) {
             })),
         fase === 'confirmar' && e.pulados.length > 0 && h('div', { style: { marginTop: 10, padding: '9px 12px', borderRadius: 12, background: COLORS.redBg, color: COLORS.ink, fontSize: 12.5 } },
             h('b', null, 'Não serão enviadas (' + e.pulados.length + '):'),
-            e.pulados.map(function (x) { return h('div', { key: x.id, style: { marginTop: 3, overflowWrap: 'anywhere' } }, '• ' + x.nome + ' — ' + x.motivo); })),
+            e.pulados.map(function (x) { return h('div', { key: x.id, style: { marginTop: 3, overflowWrap: 'anywhere' } }, '• ' + x.nome + ' — ' + x.motivo); }),
+            p.onEscolherPdfs && e.pulados.some(function (x) { return x.motivo.indexOf('Escolher PDFs') >= 0; }) && h('div', { style: { marginTop: 8 } },
+                h('div', { style: { color: COLORS.inkSoft, marginBottom: 6 } }, 'Os PDFs não ficam guardados no TDB (só os dados). Depois de abrir a página de novo, escolha outra vez os mesmos arquivos — eles se reconectam às notas já cadastradas, sem duplicar.'),
+                h('button', { type: 'button', 'data-nf-escolher-pdfs': '1', onClick: p.onEscolherPdfs, style: nfBtnP() }, 'Escolher os PDFs agora'))),
         h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16, flexWrap: 'wrap' } },
             fase === 'confirmar' && h('button', { type: 'button', onClick: p.onFechar, style: nfBtnS() }, 'Cancelar'),
             fase === 'confirmar' && h('button', { type: 'button', disabled: !n, onClick: p.onConfirmar, style: Object.assign({}, nfBtnP(), { opacity: n ? 1 : .5, cursor: n ? 'pointer' : 'not-allowed' }) }, e.teste ? 'Enviar teste' : 'Enviar agora'),
@@ -2154,6 +2157,7 @@ function NotasFiscaisTDB(_a) {
     var _bc = useState(''), buscaConv = _bc[0], setBuscaConv = _bc[1];
     var _l = useState(false), lendo = _l[0], setLendo = _l[1];
     var _d = useState(false), arrastando = _d[0], setArrastando = _d[1];
+    var _ea = useState(false), enviadasAbertas = _ea[0], setEnviadasAbertas = _ea[1];
     var _p = useState(false), modoPdf = _p[0], setModoPdf = _p[1];
     var _ed = useState(null), ed = _ed[0], setEd = _ed[1];
     var edRef = useRef(null);
@@ -2394,6 +2398,16 @@ function NotasFiscaisTDB(_a) {
         if (!window.confirm('Mover a nota "' + n.arquivo + '" para a lixeira?')) return;
         paraLixeira(n.arquivo, 'Notas Fiscais', NF_KEY_NOTAS, notasRef.current, n);
         salvarNotas(notasRef.current.filter(function (x) { return x.id !== n.id; })); delete arquivosRef.current[n.id]; toast('Nota movida para a lixeira.');
+    }
+    // Notas já enviadas deste mês saem da lista principal e ficam numa área recolhida; "Limpar enviadas" leva todas para a lixeira (uma confirmação só).
+    function limparEnviadas() {
+        var lista = notasRef.current.filter(function (n) { return n.mes === mesKey && !!n.enviadaEm; });
+        if (!lista.length) return;
+        if (!window.confirm('Mover ' + lista.length + (lista.length === 1 ? ' nota enviada' : ' notas enviadas') + ' de ' + nfMesNome(mi, ano) + ' para a lixeira?')) return;
+        var atual = notasRef.current.slice(), ids = {};
+        lista.forEach(function (n) { paraLixeira(n.arquivo, 'Notas Fiscais', NF_KEY_NOTAS, atual, n); atual = atual.filter(function (x) { return x.id !== n.id; }); ids[n.id] = 1; delete arquivosRef.current[n.id]; });
+        salvarNotas(atual); setMarcadas(function (p) { var o = Object.assign({}, p); Object.keys(ids).forEach(function (k) { delete o[k]; }); return o; });
+        toast(lista.length + (lista.length === 1 ? ' nota enviada movida' : ' notas enviadas movidas') + ' para a lixeira.');
     }
     function exportarPDF() {
         var el = document.querySelector('.export-pagina-notas');
@@ -2698,6 +2712,7 @@ function NotasFiscaisTDB(_a) {
                 !emEd && (n.enviadaHora || n.driveUrl) && h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 3 } }, n.enviadaHora ? 'às ' + n.enviadaHora : '', n.enviadaHora && n.driveUrl ? ' · ' : '', n.driveUrl && !modoPdf ? h('a', { href: n.driveUrl, target: '_blank', rel: 'noopener noreferrer', style: { color: '#1767cf', fontWeight: 700 } }, 'PDF no Drive') : ''))),
             acoesLinha(emEd, function () { iniciarEdicao('nota', n); }, function () { removerNota(n); }, 'Editar nota', 'Excluir nota'));
     });
+    var linhasPend = linhasNotas.filter(function (_, i) { return !notasMes[i].enviadaEm; }), linhasEnv = linhasNotas.filter(function (_, i) { return !!notasMes[i].enviadaEm; });
     var mesesOpc = MESES.map(function (m, i) { return h('option', { key: m, value: i }, MESES_ABREV[m] || m); });
     return h('div', { ref: raizRef, className: 'export-pagina-notas', style: { display: 'grid', gap: MOB ? 14 : 18, minWidth: 0 } },
         h(Toast, { mensagem: toastMsg }),
@@ -2720,7 +2735,7 @@ function NotasFiscaisTDB(_a) {
             notasMes.length > 0 && h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', padding: '0 16px 12px' } },
                 tag('✅ ' + cont.ok + ' identificadas', COLORS.greenBg, COLORS.green), tag('⚠️ ' + cont.conferir + ' para conferir', COLORS.goldSoft || '#FFF4D6', '#8a5a00'), tag('❌ ' + cont.semEmail + ' sem e-mail', COLORS.redBg, COLORS.red), cont.enviada > 0 && tag('✉ ' + cont.enviada + ' enviadas', '#E4EEFC', '#1767cf')),
             notasMes.length > 0 && cabecalho([modoPdf ? '' : h('input', { type: 'checkbox', checked: todasMarc, disabled: !elegiveis.length, 'aria-label': 'Marcar todas as notas prontas', title: 'Marcar todas as notas prontas', onChange: alternarTodas, style: { width: 18, height: 18, accentColor: '#2878de' } }), 'Arquivo', 'Nome lido na nota', 'Aluno / convênio', 'Enviar para', 'Situação', 'Enviada em', h('span', { 'data-export-ignore': true }, 'Ações')], gradeNota),
-            notasMes.length ? linhasNotas : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, 'Nenhuma nota neste mês ainda.'),
+            notasMes.length ? (linhasPend.length ? linhasPend : h('div', { style: { padding: '18px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, 'Nenhuma nota pendente — todas as notas deste mês já foram enviadas ✔')) : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, 'Nenhuma nota neste mês ainda.'),
             h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderTop: '1px solid ' + COLORS.lineSoft, background: COLORS.lineSoft } },
                 h('div', { style: { fontSize: 12, color: cfgOk && modoTeste ? '#8a5a00' : COLORS.inkSoft, fontWeight: cfgOk && modoTeste ? 700 : 400, flex: '1 1 220px' } }, !cfgOk ? 'Envio por e-mail ainda não configurado. Toque em “Configurar envio”.' : modoTeste ? '🧪 Modo teste ligado: os e-mails vão só para o e-mail de teste e nada é marcado como enviado.' : 'Envio real: os responsáveis recebem o e-mail e a Mensalidade do aluno é marcada como “Enviada”.'),
                 h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
@@ -2728,7 +2743,15 @@ function NotasFiscaisTDB(_a) {
                     notasMes.some(function (n) { return tipoDe(n) === 'nota'; }) && h('button', { type: 'button', 'data-nf-desmarcar-lote': '1', disabled: !nMarcadas, onClick: function () { marcarLote(false); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, '☐ Desmarcar todas'),
                     h('button', { type: 'button', onClick: function () { setDlg('previa'); }, style: btnS }, 'Prévia do e-mail'),
                     h('button', { type: 'button', disabled: !nMarcadas, title: nMarcadas ? '' : 'Marque as notas na primeira coluna', onClick: function () { abrirEnvio('selecionadas'); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, 'Enviar selecionadas' + (nMarcadas ? ' (' + nMarcadas + ')' : '')),
-                    h('button', { type: 'button', disabled: !elegiveis.length, title: elegiveis.length ? '' : 'Nenhuma nota pronta neste mês', onClick: function () { abrirEnvio('todas'); }, style: Object.assign({}, btnP, { opacity: elegiveis.length ? 1 : .5, cursor: elegiveis.length ? 'pointer' : 'not-allowed' }) }, 'Enviar todas ✅' + (elegiveis.length ? ' (' + elegiveis.length + ')' : ''))))),
+                    h('button', { type: 'button', disabled: !elegiveis.length, title: elegiveis.length ? '' : 'Nenhuma nota pronta neste mês', onClick: function () { abrirEnvio('todas'); }, style: Object.assign({}, btnP, { opacity: elegiveis.length ? 1 : .5, cursor: elegiveis.length ? 'pointer' : 'not-allowed' }) }, 'Enviar todas ✅' + (elegiveis.length ? ' (' + elegiveis.length + ')' : '')))),
+            linhasEnv.length > 0 && h('div', { 'data-nf-enviadas': '1', style: { borderTop: '1px solid ' + COLORS.lineSoft } },
+                h('div', { onClick: function () { setEnviadasAbertas(!enviadasAbertas); }, 'data-nf-enviadas-cab': '1', role: 'button', tabIndex: 0, 'aria-expanded': enviadasAbertas || modoPdf, onKeyDown: function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEnviadasAbertas(!enviadasAbertas); } }, style: { display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', cursor: 'pointer', flexWrap: 'wrap' } },
+                    h('span', { 'aria-hidden': true, style: { color: COLORS.ink, width: 30, textAlign: 'center', fontSize: 22, fontWeight: 900, lineHeight: 1, flex: 'none' } }, (enviadasAbertas || modoPdf) ? '▴' : '▾'),
+                    h('span', { style: { fontSize: 14, fontWeight: 800, color: COLORS.ink } }, 'Enviadas neste mês'),
+                    tag(String(linhasEnv.length), '#E4EEFC', '#1767cf'),
+                    h('span', { style: { flex: 1 } }),
+                    h('button', { type: 'button', 'data-export-ignore': true, 'data-nf-limpar-enviadas': '1', title: 'Move todas as notas enviadas deste mês para a lixeira', onClick: function (e) { e.stopPropagation(); limparEnviadas(); }, style: Object.assign({}, btnS, { color: COLORS.red }) }, '🗑 Limpar enviadas')),
+                (enviadasAbertas || modoPdf) && h('div', null, linhasEnv))),
         // --- cadastro ---
         h('div', { style: Object.assign({}, card, { overflow: 'hidden' }) },
             h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '14px 16px' } },
@@ -2757,7 +2780,7 @@ function NotasFiscaisTDB(_a) {
         importar && h(NFModalImportar, { nomes: importar, onFechar: function () { setImportar(null); }, onImportar: confirmarImportar }),
         dlg === 'config' && h(NFModalConfig, { cfg: cfg, onFechar: function () { setDlg(null); }, onSalvar: salvarCfg }),
         dlg === 'previa' && h(NFModalPrevia, { modelo: modelo, ex: exemploPrevia(), onFechar: function () { setDlg(null); }, onSalvar: salvarModelo }),
-        envio && h(NFModalEnvio, { envio: envio, onFechar: function () { setEnvio(null); }, onConfirmar: executarEnvio }));
+        envio && h(NFModalEnvio, { envio: envio, onFechar: function () { setEnvio(null); }, onConfirmar: executarEnvio, onEscolherPdfs: function () { setEnvio(null); inputRef.current && inputRef.current.click(); } }));
 }
 var NotasFiscaisIcon = function (_a) {
     var _b = _a.size, size = _b === void 0 ? 16 : _b, style = _a.style;
