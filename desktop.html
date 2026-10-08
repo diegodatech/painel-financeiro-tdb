@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v57";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v58";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v57"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v58"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1475,10 +1475,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v57"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v58"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v57-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v58-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1729,9 +1729,9 @@ function nfTipoDoc(texto, nomeArq) {
     if (/ BOLETO /.test(a)) return 'boleto';
     if (/ RECIBO /.test(a)) return 'recibo';
     if (/ (NOTA|NFSE|NFS E|NF) /.test(a)) return 'nota';
-    if (/ TOMADOR | NFS E | NFSE /.test(x)) return 'nota';
+    if (/ TOMADOR /.test(x)) return 'nota';
     if (/LINHA DIGITAVEL|BENEFICIARIO|SACADO|PAGADOR|FICHA DE COMPENSACAO| BOLETO |NOSSO NUMERO/.test(x)) return 'boleto';
-    if (/ RECIBO /.test(x)) return 'recibo';
+    if (/ RECIBO | LISTA DE CRIANCAS /.test(x)) return 'recibo';
     return 'nota';
 }
 var NF_ROTULO_TIPO = { nota: 'Nota fiscal', recibo: 'Recibo', boleto: 'Boleto' };
@@ -1741,8 +1741,12 @@ function nfDocsTexto(tipos) {
 }
 // Padrão combinado com a escola: Tramontina e Irwin recebem recibo; Santa Clara recebe boleto. Vale enquanto o convênio não tiver sido editado.
 function nfAnexosPadrao(nome) { var k = nfNorm(nome); if (/TRAMONTINA|IRWIN/.test(k)) return ['recibo']; if (/SANTA CLARA/.test(k)) return ['boleto']; return []; }
-function nfTemBoleto(nome) { return /SANTA CLARA/.test(nfNorm(nome)); }
-function nfAnexosDe(c) { if (!c || !c.convenio) return []; return Array.isArray(c.anexos) ? c.anexos.filter(function (k) { return k === 'recibo' || (k === 'boleto' && nfTemBoleto(c.aluno)); }) : nfAnexosPadrao(c.aluno); }
+function nfTemBoleto(nome) { return true; } // Boleto fica livre para qualquer empresa (escolhido no cadastro do convênio)
+// Convênio: "Nota fiscal" também é opção (enviaNota; padrão = sim). Sem nota fiscal, o 1º documento marcado (recibo, depois boleto) vira o principal do e-mail.
+function nfEnviaNota(c) { return !c || c.enviaNota !== false; }
+function nfPrincipalTipo(c) { if (!c || !c.convenio || nfEnviaNota(c)) return 'nota'; var l = nfAnexosDe(c); return l.indexOf('recibo') >= 0 ? 'recibo' : (l.indexOf('boleto') >= 0 ? 'boleto' : 'nota'); }
+function nfExtrasDe(c) { var p = nfPrincipalTipo(c); return nfAnexosDe(c).filter(function (k) { return k !== p; }); }
+function nfAnexosDe(c) { if (!c || !c.convenio) return []; return Array.isArray(c.anexos) ? c.anexos.filter(function (k) { return k === 'recibo' || k === 'boleto'; }) : nfAnexosPadrao(c.aluno); }
 // Abre o .zip baixado da aba Recibos (arquivos guardados sem compressão; se vier comprimido, usa o descompactador do navegador).
 function nfZipPdfs(file) {
     return file.arrayBuffer().then(function (buf) {
@@ -2312,7 +2316,7 @@ function NotasFiscaisTDB(_a) {
             if (!nomeC) { toast('Informe o nome da empresa.'); return; }
             var dc = nfDig(d.cnpj);
             if (dc.length && !nfCnpjOk(dc)) { toast('O CNPJ não é válido. Corrija ou deixe o campo em branco.'); return; }
-            var itemC = { id: d.id, aluno: nomeC.toUpperCase(), nomeNota: String(d.nomeNota || '').trim().replace(/\s+/g, ' ').toUpperCase(), cnpj: dc.length ? nfCnpjFmt(dc) : '', emails: d.emails || [], convenio: true, anexos: (d.anexos || []).filter(function (k) { return k === 'recibo' || k === 'boleto'; }) };
+            var itemC = { id: d.id, aluno: nomeC.toUpperCase(), nomeNota: String(d.nomeNota || '').trim().replace(/\s+/g, ' ').toUpperCase(), cnpj: dc.length ? nfCnpjFmt(dc) : '', emails: d.emails || [], convenio: true, enviaNota: d.enviaNota !== false, anexos: (d.anexos || []).filter(function (k) { return k === 'recibo' || k === 'boleto'; }) };
             if (e0.novo) salvarConv([Object.assign({}, d, itemC, { ativo: d.ativo !== false })].concat(convRef.current));
             else salvarConv(convRef.current.map(function (x) { return x.id === itemC.id ? Object.assign({}, x, itemC) : x; }));
             toast(e0.novo ? 'Convênio cadastrado.' : 'Alterações salvas.');
@@ -2470,26 +2474,30 @@ function NotasFiscaisTDB(_a) {
         else { var o = anexosConv[c.id] = anexosConv[c.id] || { recibo: [], boleto: [] }; o[tp].push(n); }
     });
     function anexoEscolhido(cid, tp) { var l = (anexosConv[cid] || {})[tp] || []; return l.slice().sort(function (a, b) { return String(b.criadaEm || '').localeCompare(String(a.criadaEm || '')); })[0] || null; }
-    function docsFaltando(c) { return nfAnexosDe(c).filter(function (tp) { return !anexoEscolhido(c.id, tp); }); }
+    function docsFaltando(c) { return nfExtrasDe(c).filter(function (tp) { return !anexoEscolhido(c.id, tp); }); }
+    // principal do e-mail de uma empresa = nota fiscal (padrão) ou, se a empresa não recebe nota, o recibo/boleto
+    function principaisDe(c) { var pt = nfPrincipalTipo(c); return pt === 'nota' ? (notasConv[c.id] || []) : ((anexosConv[c.id] || {})[pt] || []); }
+    function ehPrincipal(n) { var c = n.alunoId ? porId[n.alunoId] : null; if (c && c.convenio) return tipoDe(n) === nfPrincipalTipo(c); return tipoDe(n) === 'nota'; }
     function situacao(n) {
         if (n.enviadaEm) return 'enviada';
         var c = n.alunoId ? porId[n.alunoId] : null, tp = tipoDe(n);
-        if (tp !== 'nota') {
+        if (c && c.convenio && tp === 'nota' && !nfEnviaNota(c)) return 'semUso';
+        if (!ehPrincipal(n)) {
             if (!c || !c.convenio || anexoEscolhido(c.id, tp) !== n) return 'conferir';
-            return (notasConv[c.id] || []).some(function (x) { return !x.enviadaEm; }) ? 'anexo' : 'semNota';
+            return principaisDe(c).some(function (x) { return !x.enviadaEm; }) ? 'anexo' : 'semNota';
         }
         if (!c) return 'conferir';
         if (cpfDiverge(n, c)) return 'conferir';
         var em = (c.emails || []).filter(nfEmailOk);
         if (!em.length) return 'semEmail';
         if (c.convenio) {
-            if ((notasConv[c.id] || []).filter(function (x) { return !x.enviadaEm; }).length > 1) return 'conferir';
+            if (principaisDe(c).filter(function (x) { return !x.enviadaEm; }).length > 1) return 'conferir';
             if (docsFaltando(c).length) return 'faltaDoc';
         }
         return 'ok';
     }
-    var cont = { ok: 0, conferir: 0, semEmail: 0, enviada: 0 };
-    notasMes.forEach(function (n) { var s = situacao(n); if (s === 'anexo') return; if (s === 'faltaDoc' || s === 'semNota') s = 'conferir'; cont[s]++; });
+    var cont = { ok: 0, conferir: 0, semEmail: 0, enviada: 0, semUso: 0 };
+    notasMes.forEach(function (n) { var s = situacao(n); if (s === 'anexo' || s === 'semUso') return; if (s === 'faltaDoc' || s === 'semNota') s = 'conferir'; cont[s]++; });
     var q = nfNorm(busca);
     var qd = nfDig(busca);
     var qc = nfNorm(buscaConv), qcd = nfDig(buscaConv);
@@ -2509,7 +2517,7 @@ function NotasFiscaisTDB(_a) {
     // Botões "Marcar todas / Desmarcar todas": marcam as notas ainda não enviadas deste mês (as que não estiverem prontas aparecem na confirmação como "Não serão enviadas", com o motivo).
     function marcarLote(v) {
         if (!v) { setMarcadas({}); return; }
-        var o = {}; notasMes.forEach(function (n) { if (tipoDe(n) === 'nota' && !n.enviadaEm) o[n.id] = true; }); setMarcadas(o);
+        var o = {}; notasMes.forEach(function (n) { if (ehPrincipal(n) && !n.enviadaEm) o[n.id] = true; }); setMarcadas(o);
         if (!Object.keys(o).length) toast('Não há notas pendentes para marcar neste mês.');
     }
     // Clicar no nome do arquivo abre o PDF (só enquanto o arquivo ainda está na memória desta página).
@@ -2536,7 +2544,7 @@ function NotasFiscaisTDB(_a) {
         var n = notasMes.filter(function (x) { return marcadas[x.id]; })[0] || elegiveis[0] || notasMes[0];
         var c = n && n.alunoId ? porId[n.alunoId] : null;
         var base = c || cad.filter(function (x) { return x.ativo !== false; })[0] || conv.filter(function (x) { return x.ativo !== false; })[0];
-        return { documentos: nfDocsTexto(['nota'].concat(nfAnexosDe(base))), aluno: base ? (base.aluno || 'NOME DO ALUNO') : 'NOME DO ALUNO', mes: mesNomeCompleto, emails: base ? (base.emails || []).filter(nfEmailOk) : [], arquivo: n ? n.arquivo : 'nota-fiscal.pdf' };
+        return { documentos: nfDocsTexto([nfPrincipalTipo(base)].concat(nfExtrasDe(base))), aluno: base ? (base.aluno || 'NOME DO ALUNO') : 'NOME DO ALUNO', mes: mesNomeCompleto, emails: base ? (base.emails || []).filter(nfEmailOk) : [], arquivo: n ? n.arquivo : 'nota-fiscal.pdf' };
     }
     function achaMensalidade(c, indice) {
         var k = nfNorm(c.aluno), mesNome = MESES[indice];
@@ -2549,15 +2557,16 @@ function NotasFiscaisTDB(_a) {
             var em = c ? (c.emails || []).filter(nfEmailOk) : [];
             var falta = c && c.convenio ? docsFaltando(c) : [];
             var an = [];
-            if (c && c.convenio) ['recibo', 'boleto'].forEach(function (tp) { var r = anexoEscolhido(c.id, tp); if (r) an.push({ id: r.id, tipo: tp, arquivo: r.arquivo }); });
+            if (c && c.convenio) nfExtrasDe(c).forEach(function (tp) { var r = anexoEscolhido(c.id, tp); if (r) an.push({ id: r.id, tipo: tp, arquivo: r.arquivo }); });
             var semArq = an.filter(function (a) { return !arquivosRef.current[a.id]; });
-            if (tipoDe(n) !== 'nota') pulados.push({ id: n.id, nome: n.arquivo, motivo: 'o ' + tipoDe(n) + ' vai junto com a nota da empresa (marque a nota)' });
+            if (c && c.convenio && tipoDe(n) === 'nota' && !nfEnviaNota(c)) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'esta empresa não recebe nota fiscal (veja o cadastro do convênio)' });
+            else if (!ehPrincipal(n)) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'o ' + tipoDe(n) + ' vai junto com ' + (c && c.convenio && nfPrincipalTipo(c) !== 'nota' ? 'o ' + nfPrincipalTipo(c) + ' da empresa (marque o ' + nfPrincipalTipo(c) + ')' : 'a nota da empresa (marque a nota)') });
             else if (!c) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'sem aluno ligado — escolha o aluno na coluna “Aluno / convênio” desta nota' });
             else if (!em.length) pulados.push({ id: n.id, nome: c.aluno, motivo: 'sem e-mail cadastrado' });
             else if (falta.length) pulados.push({ id: n.id, nome: c.aluno, motivo: 'falta o ' + falta.join(' e o ') + ' deste mês' });
             else if (!arquivosRef.current[n.id]) pulados.push({ id: n.id, nome: c.aluno, motivo: 'escolha este PDF de novo (botão “Escolher PDFs”)' });
             else if (semArq.length) pulados.push({ id: n.id, nome: c.aluno, motivo: 'escolha de novo o ' + semArq.map(function (a) { return a.tipo; }).join(' e o ') + ' (botão “Escolher PDFs”)' });
-            else itens.push({ id: n.id, cadId: c.id, aluno: c.aluno, nomeNota: c.nomeNota || c.aluno, emails: em, reenvio: !!n.enviadaEm, arquivo: n.arquivo, anexos: an });
+            else itens.push({ id: n.id, princ: tipoDe(n), cadId: c.id, aluno: c.aluno, nomeNota: c.nomeNota || c.aluno, emails: em, reenvio: !!n.enviadaEm, arquivo: n.arquivo, anexos: an });
         });
         return { itens: itens, pulados: pulados };
     }
@@ -2598,11 +2607,11 @@ function NotasFiscaisTDB(_a) {
                 if (arqsAn.some(function (f) { return !f; })) { falha(it.id, 'Um dos PDFs (recibo/boleto) não está mais na memória. Escolha de novo.'); mostrar(); return; }
                 if (arq.size > 15 * 1024 * 1024 || arqsAn.some(function (f) { return f.size > 15 * 1024 * 1024; })) { falha(it.id, 'Um dos PDFs passa de 15 MB.'); mostrar(); return; }
                 if (arqsAn.reduce(function (s, f) { return s + f.size; }, arq.size) > 20 * 1024 * 1024) { falha(it.id, 'Os PDFs juntos passam de 20 MB.'); mostrar(); return; }
-                var docTxt = nfDocsTexto(['nota'].concat((it.anexos || []).map(function (a) { return a.tipo; })));
+                var docTxt = nfDocsTexto([it.princ || 'nota'].concat((it.anexos || []).map(function (a) { return a.tipo; })));
                 return Promise.all([nfBase64(arq)].concat(arqsAn.map(nfBase64))).then(function (b64s) {
                     var nota = { id: it.id, aluno: it.aluno, nomeNota: it.nomeNota, mes: e0.mesKey, mesNome: mesNomeEnv, emails: it.emails, pdfBase64: b64s[0] };
                     if (temAnexos) nota.anexos = it.anexos.map(function (a, k) { return { tipo: a.tipo, nome: a.arquivo, pdfBase64: b64s[k + 1] }; });
-                    return nfPost(cfgUso, { acao: 'enviar', modoTeste: teste, forcar: !!it.reenvio, assunto: nfSub(mod.assunto, { documentos: docTxt }), corpo: nfSub(mod.corpo, { documentos: docTxt }), imagem: imgEnv ? { mime: imgEnv.slice(5, imgEnv.indexOf(';')), base64: imgEnv.slice(imgEnv.indexOf(',') + 1) } : undefined, notas: [nota] }, 120000);
+                    return nfPost(cfgUso, { acao: 'enviar', modoTeste: teste, forcar: !!it.reenvio, assunto: nfSub(it.princ && it.princ !== 'nota' ? String(mod.assunto).replace(/nota fiscal/i, NF_ROTULO_TIPO[it.princ]) : mod.assunto, { documentos: docTxt }), corpo: nfSub(mod.corpo, { documentos: docTxt }), imagem: imgEnv ? { mime: imgEnv.slice(5, imgEnv.indexOf(';')), base64: imgEnv.slice(imgEnv.indexOf(',') + 1) } : undefined, notas: [nota] }, 120000);
                 }).then(function (j) {
                     var r = j && j.resultados && j.resultados[0];
                     if (!r) { falha(it.id, (j && j.erro) || 'O serviço não devolveu resultado.'); return; }
@@ -2651,9 +2660,10 @@ function NotasFiscaisTDB(_a) {
     function tagSituacao(n) {
         var s = situacao(n);
         if (s === 'enviada') return tag('✉ Enviada ' + nfDataBR(n.enviadaEm).slice(0, 5), '#E4EEFC', '#1767cf');
-        if (s === 'ok') { var cc = n.alunoId ? porId[n.alunoId] : null, an = nfAnexosDe(cc); return tag(an.length ? '✅ Completa: nota + ' + an.map(function (k) { return k; }).join(' + ') : '✅ Identificada', COLORS.greenBg, COLORS.green); }
-        if (s === 'anexo') return tag('↳ vai junto com a nota', '#EEF0F3', '#4B5563');
-        if (s === 'semNota') return tag('⚠️ Falta a nota', COLORS.goldSoft || '#FFF4D6', '#8a5a00');
+        if (s === 'ok') { var cc = n.alunoId ? porId[n.alunoId] : null, an = nfExtrasDe(cc), pt = nfPrincipalTipo(cc); return tag(an.length || pt !== 'nota' ? '✅ Completa: ' + [pt === 'nota' ? 'nota' : pt].concat(an).join(' + ') : '✅ Identificada', COLORS.greenBg, COLORS.green); }
+        if (s === 'semUso') return tag('Esta empresa não recebe nota fiscal', '#EEF0F3', '#4B5563');
+        if (s === 'anexo') { var c4 = n.alunoId ? porId[n.alunoId] : null, p4 = nfPrincipalTipo(c4); return tag('↳ vai junto com ' + (p4 === 'nota' ? 'a nota' : 'o ' + p4), '#EEF0F3', '#4B5563'); }
+        if (s === 'semNota') { var c3 = n.alunoId ? porId[n.alunoId] : null, p3 = nfPrincipalTipo(c3); return tag('⚠️ Falta ' + (p3 === 'nota' ? 'a nota' : 'o ' + p3), COLORS.goldSoft || '#FFF4D6', '#8a5a00'); }
         if (s === 'faltaDoc') { var c2 = n.alunoId ? porId[n.alunoId] : null; return tag('⚠️ Falta o ' + docsFaltando(c2).join(' e o '), COLORS.goldSoft || '#FFF4D6', '#8a5a00'); }
         if (s === 'semEmail') return tag('❌ Falta e-mail', COLORS.redBg, COLORS.red);
         return tag('⚠️ Conferir', COLORS.goldSoft || '#FFF4D6', '#8a5a00');
@@ -2698,9 +2708,9 @@ function NotasFiscaisTDB(_a) {
                     h('input', { value: doc || '', readOnly: lk, tabIndex: lk ? -1 : 0, placeholder: ehConv ? '00.000.000/0000-00' : '000.000.000-00', inputMode: 'numeric', autoComplete: 'off', 'aria-label': ehConv ? 'CNPJ da empresa' : 'CPF do responsável', onChange: function (e) { alterarDraft(ehConv ? 'cnpj' : 'cpf', ehConv ? nfCnpjFmt(e.target.value) : nfCpfFmt(e.target.value)); }, style: Object.assign({}, inp, { borderColor: docRuim ? COLORS.red : COLORS.line }, trava) }),
                     docRuim && h('div', { style: { fontSize: 11.5, color: COLORS.red, marginTop: 3 } }, (ehConv ? 'CNPJ' : 'CPF') + ' inválido — confira os números'))),
                 campoRot('E-mail(s) para envio', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink, whiteSpace: 'pre-line' } }, (d.emails || []).join('\n') || '—') : h('div', { style: lk ? { pointerEvents: 'none' } : {} }, h(NFEmails, { valor: d.emails || [], travado: lk, placeholder: ehConv ? 'e-mail da empresa' : '', onChange: function (v) { alterarDraft('emails', v); } }))),
-                ehConv && campoRot('Envia junto com a nota', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink } }, ['Nota fiscal'].concat(nfAnexosDe(c).map(function (k) { return NF_ROTULO_TIPO[k]; })).join(' + ')) : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 5 } },
-                    h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft } }, h('input', { type: 'checkbox', checked: true, disabled: true, 'aria-label': 'Nota fiscal (sempre)', style: { width: 16, height: 16, pointerEvents: 'none' } }), 'Nota fiscal'),
-                    (nfTemBoleto(d.aluno) ? ['recibo', 'boleto'] : ['recibo']).map(function (k) {
+                ehConv && campoRot('Envia', modoPdf ? h('div', { style: { fontSize: 12.5, color: COLORS.ink } }, (nfEnviaNota(c) ? ['Nota fiscal'] : []).concat(nfAnexosDe(c).map(function (k) { return NF_ROTULO_TIPO[k]; })).join(' + ') || '—') : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 5 } },
+                    h('label', { style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: (emEd ? d : c).enviaNota !== false, 'aria-label': 'Enviar nota fiscal', onChange: function (e) { if (emEd) alterarDraft('enviaNota', e.target.checked); else { editarConv(c.id, 'enviaNota', e.target.checked); agendarSeguro(NF_KEY_CONV); } }, style: { width: 16, height: 16, accentColor: '#2878de' } }), 'Nota fiscal'),
+                    ['recibo', 'boleto'].map(function (k) {
                         var lista = emEd ? (d.anexos || []) : nfAnexosDe(c), marc = lista.indexOf(k) >= 0;
                         return h('label', { key: k, style: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } },
                             h('input', { type: 'checkbox', checked: marc, 'aria-label': 'Enviar ' + k + ' junto', onChange: function (e) { var nova = e.target.checked ? lista.concat([k]) : lista.filter(function (x) { return x !== k; }); if (emEd) alterarDraft('anexos', nova); else { editarConv(c.id, 'anexos', nova); agendarSeguro(NF_KEY_CONV); } }, style: { width: 16, height: 16, accentColor: '#2878de' } }), NF_ROTULO_TIPO[k]);
@@ -2720,7 +2730,7 @@ function NotasFiscaisTDB(_a) {
         var c = n.alunoId ? porId[n.alunoId] : null;
         var cands = (n.cand || []).map(function (id) { return porId[id]; }).filter(Boolean);
         return h('div', { key: n.id, 'data-nf-row': true, 'data-nf-alvo': n.arquivo, onClick: function () { if (!emEd) setSel({ tipo: 'nota', id: n.id }); }, onDoubleClick: function (e) { if (!emEd) desmarcar(e); }, style: Object.assign({}, estiloLinha('nota', n.id), gradeNota) },
-            modoPdf || tipoDe(n) !== 'nota' ? (MOB ? null : h('div', null)) : (MOB
+            modoPdf || !ehPrincipal(n) ? (MOB ? null : h('div', null)) : (MOB
                 ? h('label', { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, fontWeight: 700, color: COLORS.ink, cursor: 'pointer' } }, h('input', { type: 'checkbox', checked: !!marcadas[n.id], onChange: function () { alternarMarca(n.id); }, style: { width: 20, height: 20, accentColor: '#2878de' } }), 'Marcar para envio')
                 : h('input', { type: 'checkbox', checked: !!marcadas[n.id], 'aria-label': 'Marcar para envio', onChange: function () { alternarMarca(n.id); }, style: { width: 18, height: 18, accentColor: '#2878de' } })),
             campoRot('Arquivo', h('div', null, modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 600, color: COLORS.ink, wordBreak: 'break-all' } }, n.arquivo) : h('button', { type: 'button', 'data-nf-abrir-pdf': '1', title: 'Abrir o PDF', onClick: function (e) { e.stopPropagation(); abrirPdf(n); }, style: { display: 'block', border: 'none', background: 'transparent', padding: 0, margin: 0, textAlign: 'left', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, color: '#1767cf', textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', wordBreak: 'break-all' } }, n.arquivo),
@@ -2740,7 +2750,37 @@ function NotasFiscaisTDB(_a) {
                 !emEd && (n.enviadaHora || n.driveUrl) && h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 3 } }, n.enviadaHora ? 'às ' + n.enviadaHora : '', n.enviadaHora && n.driveUrl ? ' · ' : '', n.driveUrl && !modoPdf ? h('a', { href: n.driveUrl, target: '_blank', rel: 'noopener noreferrer', style: { color: '#1767cf', fontWeight: 700 } }, 'PDF no Drive') : ''))),
             acoesLinha(emEd, function () { iniciarEdicao('nota', n); }, function () { removerNota(n); }, 'Editar nota', 'Excluir nota'));
     });
-    var linhasPend = linhasNotas.filter(function (_, i) { return !notasMes[i].enviadaEm; }), linhasEnv = linhasNotas.filter(function (_, i) { return !!notasMes[i].enviadaEm; });
+    var linhasEnv = linhasNotas.filter(function (_, i) { return !!notasMes[i].enviadaEm; });
+    // Pendentes: cada empresa (convênio) vira um bloco com os seus documentos juntos; alunos e notas sem vínculo ficam numa parte separada.
+    var elDe = {}; notasMes.forEach(function (n, i) { elDe[n.id] = linhasNotas[i]; });
+    var pendentes = notasMes.filter(function (n) { return !n.enviadaEm; });
+    var gruposConv = {}, ordemConv = [], outrosPend = [];
+    pendentes.forEach(function (n) {
+        var c = n.alunoId ? porId[n.alunoId] : null;
+        if (c && c.convenio) { if (!gruposConv[c.id]) { gruposConv[c.id] = []; ordemConv.push(c); } gruposConv[c.id].push(n); } else outrosPend.push(n);
+    });
+    ordemConv.sort(porNome);
+    var ORD_TIPO = { nota: 0, recibo: 1, boleto: 2 };
+    function cabSecao(txt, n) { return h('div', { key: 'sec-' + txt, style: { padding: '8px 16px', fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: COLORS.inkSoft, background: COLORS.lineSoft, borderTop: '1px solid ' + COLORS.line } }, txt + ' — ' + n); }
+    function cabGrupo(c, lista) {
+        var princ = lista.filter(function (n) { return ehPrincipal(n) && !n.enviadaEm; }), pt = nfPrincipalTipo(c);
+        var todasM = princ.length > 0 && princ.every(function (n) { return marcadas[n.id]; });
+        var st = !princ.length ? tag('⚠️ Falta ' + (pt === 'nota' ? 'a nota' : 'o ' + pt), COLORS.goldSoft || '#FFF4D6', '#8a5a00') : princ.length > 1 ? tag('⚠️ Conferir', COLORS.goldSoft || '#FFF4D6', '#8a5a00') : tagSituacao(princ[0]);
+        var emails = (c.emails || []).join(', ');
+        return h('div', { key: 'grp-' + c.id, 'data-nf-grupo': c.aluno, style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: MOB ? '11px 12px' : '11px 14px', background: 'rgba(23,103,207,.07)', borderTop: '1px solid ' + COLORS.line } },
+            !modoPdf && h('input', { type: 'checkbox', checked: todasM, disabled: !princ.length, 'aria-label': 'Marcar para envio: ' + c.aluno, title: 'Marca o envio desta empresa', onChange: function () { setMarcadas(function (p) { var o = Object.assign({}, p); princ.forEach(function (n) { if (todasM) delete o[n.id]; else o[n.id] = true; }); return o; }); }, style: { width: 18, height: 18, accentColor: '#2878de', flex: 'none' } }),
+            h('span', { style: { fontSize: 14, fontWeight: 800, color: COLORS.ink } }, c.aluno),
+            h('span', { style: { fontSize: 12.5, color: emails ? COLORS.inkSoft : COLORS.red, flex: '1 1 160px', minWidth: 0, overflowWrap: 'anywhere' } }, emails || 'sem e-mail cadastrado'),
+            st);
+    }
+    var linhasPend = [];
+    if (ordemConv.length) linhasPend.push(cabSecao('Convênios (empresas)', ordemConv.length));
+    ordemConv.forEach(function (c) {
+        var lista = gruposConv[c.id].slice().sort(function (a, b) { return (ORD_TIPO[tipoDe(a)] - ORD_TIPO[tipoDe(b)]) || String(a.arquivo).localeCompare(String(b.arquivo)); });
+        linhasPend.push(cabGrupo(c, lista));
+        linhasPend.push(h('div', { key: 'gl-' + c.id, style: { marginLeft: MOB ? 8 : 14, borderLeft: '3px solid rgba(23,103,207,.35)' } }, lista.map(function (n) { return elDe[n.id]; })));
+    });
+    if (outrosPend.length) { if (ordemConv.length) linhasPend.push(cabSecao('Alunos e notas sem vínculo', outrosPend.length)); outrosPend.forEach(function (n) { linhasPend.push(elDe[n.id]); }); }
     var mesesOpc = MESES.map(function (m, i) { return h('option', { key: m, value: i }, MESES_ABREV[m] || m); });
     return h('div', { ref: raizRef, className: 'export-pagina-notas', style: { display: 'grid', gap: MOB ? 14 : 18, minWidth: 0 } },
         h(Toast, { mensagem: toastMsg }),
@@ -2767,8 +2807,8 @@ function NotasFiscaisTDB(_a) {
             h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderTop: '1px solid ' + COLORS.lineSoft, background: COLORS.lineSoft } },
                 h('div', { style: { fontSize: 12, color: cfgOk && modoTeste ? '#8a5a00' : COLORS.inkSoft, fontWeight: cfgOk && modoTeste ? 700 : 400, flex: '1 1 220px' } }, !cfgOk ? 'Envio por e-mail ainda não configurado. Toque em “Configurar envio”.' : modoTeste ? '🧪 Modo teste ligado: os e-mails vão só para o e-mail de teste e nada é marcado como enviado.' : 'Envio real: os responsáveis recebem o e-mail e a Mensalidade do aluno é marcada como “Enviada”.'),
                 h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
-                    notasMes.some(function (n) { return tipoDe(n) === 'nota'; }) && h('button', { type: 'button', 'data-nf-marcar-lote': '1', title: 'Marca todas as notas ainda não enviadas deste mês', onClick: function () { marcarLote(true); }, style: btnS }, '☑ Marcar todas'),
-                    notasMes.some(function (n) { return tipoDe(n) === 'nota'; }) && h('button', { type: 'button', 'data-nf-desmarcar-lote': '1', disabled: !nMarcadas, onClick: function () { marcarLote(false); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, '☐ Desmarcar todas'),
+                    notasMes.some(function (n) { return ehPrincipal(n); }) && h('button', { type: 'button', 'data-nf-marcar-lote': '1', title: 'Marca todas as notas ainda não enviadas deste mês', onClick: function () { marcarLote(true); }, style: btnS }, '☑ Marcar todas'),
+                    notasMes.some(function (n) { return ehPrincipal(n); }) && h('button', { type: 'button', 'data-nf-desmarcar-lote': '1', disabled: !nMarcadas, onClick: function () { marcarLote(false); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, '☐ Desmarcar todas'),
                     h('button', { type: 'button', onClick: function () { setDlg('previa'); }, style: btnS }, 'Prévia do e-mail'),
                     h('button', { type: 'button', disabled: !nMarcadas, title: nMarcadas ? '' : 'Marque as notas na primeira coluna', onClick: function () { abrirEnvio('selecionadas'); }, style: Object.assign({}, btnS, { opacity: nMarcadas ? 1 : .5, cursor: nMarcadas ? 'pointer' : 'not-allowed' }) }, 'Enviar selecionadas' + (nMarcadas ? ' (' + nMarcadas + ')' : '')),
                     h('button', { type: 'button', disabled: !elegiveis.length, title: elegiveis.length ? '' : 'Nenhuma nota pronta neste mês', onClick: function () { abrirEnvio('todas'); }, style: Object.assign({}, btnP, { opacity: elegiveis.length ? 1 : .5, cursor: elegiveis.length ? 'pointer' : 'not-allowed' }) }, 'Enviar todas ✅' + (elegiveis.length ? ' (' + elegiveis.length + ')' : '')))),
@@ -2804,7 +2844,7 @@ function NotasFiscaisTDB(_a) {
                     h('button', { type: 'button', onClick: abrirImportarConv, style: btnS }, '⬇ Importar convênios da Mensalidade'),
                     h('button', { type: 'button', onClick: adicionarConvenio, style: btnP }, h(Plus, { size: 14 }), ' Adicionar convênio'))),
             conv.length > 6 && h('div', { 'data-export-ignore': true, style: { padding: '0 16px 12px', position: 'relative' } }, h(Search, { size: 14, color: COLORS.inkSoft, style: { position: 'absolute', left: 28, top: 11 } }), h('input', { value: buscaConv, onChange: function (e) { setBuscaConv(e.target.value); }, placeholder: 'Buscar empresa, CNPJ ou e-mail...', 'aria-label': 'Buscar nos convênios', style: Object.assign({}, inp, { paddingLeft: 34 }) })),
-            cabecalho(['Empresa (convênio)', 'Nome na nota fiscal', 'CNPJ da empresa', 'E-mail(s) para envio', 'Envia junto com a nota', 'Ativo', h('span', { 'data-export-ignore': true }, 'Ações')], gradeConv),
+            cabecalho(['Empresa (convênio)', 'Nome na nota fiscal', 'CNPJ da empresa', 'E-mail(s) para envio', 'Envia', 'Ativo', h('span', { 'data-export-ignore': true }, 'Ações')], gradeConv),
             linhasConv.length ? linhasConv : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, conv.length ? 'Nenhum convênio encontrado.' : 'Nenhum convênio cadastrado. Use “Importar convênios da Mensalidade” ou “Adicionar convênio”.')),
         importarConv && h(NFModalImportar, { nomes: importarConv, titulo: 'Importar convênios da Mensalidade', vazio: 'Todos os convênios da Mensalidade já estão no cadastro.', onFechar: function () { setImportarConv(null); }, onImportar: confirmarImportarConv }),
         importar && h(NFModalImportar, { nomes: importar, onFechar: function () { setImportar(null); }, onImportar: confirmarImportar }),
