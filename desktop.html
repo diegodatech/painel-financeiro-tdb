@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v62";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v63";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v62"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v63"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1438,6 +1438,38 @@ html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] 
 html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdbm-cp-extra-data input.tdbm-cp-date:disabled:not(.tdb2-vazio):not(#tdb1x){opacity:0!important;color:transparent!important;-webkit-text-fill-color:transparent!important}
 }
 </style>
+<style id="tdb-tablet-conv-festas-v63">
+/* tablet: convênios alinhados à tabela de Alunos; Festas com letra maior e margem lateral (só visual) */
+@media (min-width:761px) and (max-width:1366px){
+.tabela-mensalidades.mensalidades-resumida col:nth-child(1){width:25.4%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(2){width:10%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(3){width:7.4%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(4){width:37%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(5){width:9%!important}
+.tabela-mensalidades.mensalidades-resumida col:nth-child(6){width:11.2%!important}
+.tabela-mensalidades.mensalidades-resumida th:nth-child(2),
+.tabela-mensalidades.mensalidades-resumida tbody tr.mensalidades-row td:nth-child(2),
+.tabela-mensalidades.mensalidades-resumida tbody tr.mensalidades-row-editando td:nth-child(2){padding-left:2px!important;padding-right:7px!important}
+}
+@media (min-width:761px) and (max-width:880px){
+html body .tabela-mensalidades.mensalidades-resumida:not(:has(tr.mensalidades-row-editando)):not(#tdb63x){min-width:860px!important}
+}
+@media (min-width:761px) and (max-width:1366px){
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) .festas-tdb-scroll{padding-left:14px!important;padding-right:14px!important;box-sizing:border-box!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela col:nth-child(1){width:26%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela col:nth-child(2){width:10%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela col:nth-child(3){width:13%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela col:nth-child(4){width:12%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela col:nth-child(5){width:13%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela col:nth-child(6){width:13%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela col:nth-child(7){width:13%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela th{font-size:10.5px!important;padding:10px 8px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela td{font-size:13.5px!important;padding:8px 8px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela td .selection-chip{font-size:12px!important;padding:6px 4px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela td>span.busca-liquid-glass{font-size:11.5px!important;padding:5px 9px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela td input,html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela td select{font-size:13px!important}
+}
+</style>
 </head>
 <body>
 
@@ -1491,10 +1523,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v62"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v63"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v62-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v63-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
