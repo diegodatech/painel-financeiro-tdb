@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v63";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v64";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v63"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v64"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1980,10 +1980,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v63"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v64"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v63-mobile';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v64-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -21063,7 +21063,8 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
  function fechar(volta){
   if(!root)return;
   var el=st.el;root.classList.remove('on');fundo.classList.remove('on');st.el=null;st.teclado=false;
-  if(volta&&el&&document.body.contains(el)&&!isExt(el)){try{el.focus({preventScroll:true});}catch(e){}}
+  var tdbToqueFim=false;try{tdbToqueFim=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);}catch(e){}
+  if(volta&&el&&document.body.contains(el)&&!isExt(el)){if(tdbToqueFim&&el.type==='date'){try{el.blur();}catch(e){}}else{try{el.focus({preventScroll:true});}catch(e){}}}
  }
  // ligação com as caixas de data
  function tdbDataNativa(el){return !!(el&&el.classList&&el.classList.contains('tdb-native-date'));}
