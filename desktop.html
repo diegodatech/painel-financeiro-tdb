@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261009-tdb-v1-2";
+    window.__TDB_BUILD = "tdb-20261009-tdb-v1-3";
   </script>
-  <script src="./config.js?build=tdb-20261009-tdb-v1-2"></script>
+  <script src="./config.js?build=tdb-20261009-tdb-v1-3"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1523,10 +1523,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261009-tdb-v1-2"></script>
+  <script src="./sync.js?build=tdb-20261009-tdb-v1-3"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261009-tdb-v1-2-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261009-tdb-v1-3-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4930,6 +4930,55 @@ function dataDeHojeFormatada() {
 }
 
 /* TDB v58 — lixeira permanente e restaurável para todos os módulos. */
+window.__tdbRestaurarComSeguranca = async function (onProgress) {
+    var informar = function (t) { if (onProgress) onProgress(t); };
+    var url = (window.TDB_CONFIG && window.TDB_CONFIG.appsScriptUrl) || '';
+    if (!url) throw new Error('Apps Script não configurado. Nada foi alterado.');
+    if (!window.__criarBackupDrive) throw new Error('Backup indisponível neste aparelho. Nada foi alterado.');
+    // Passo 1: baixar o backup que será restaurado (antes de criar o de segurança)
+    informar('Passo 1 de 3: baixando o backup que será restaurado…');
+    var ctl = new AbortController();
+    var timer = setTimeout(function () { ctl.abort(); }, 45000);
+    var corpo = null;
+    try {
+        var resp = await fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'acao=ultimoBackupDados&_=' + Date.now(), { method: 'GET', cache: 'no-store', signal: ctl.signal });
+        try { corpo = await resp.json(); } catch (e0) { corpo = null; }
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    } catch (e1) {
+        clearTimeout(timer);
+        throw new Error('Não consegui baixar o backup (' + String(e1 && e1.message || e1) + '). Nada foi alterado.');
+    }
+    clearTimeout(timer);
+    if (!corpo || corpo.ok === false) throw new Error(String((corpo && corpo.erro) || 'O Apps Script não retornou o backup.') + ' Nada foi alterado.');
+    var dados = corpo.dados && typeof corpo.dados === 'object' && !Array.isArray(corpo.dados) ? corpo.dados : null;
+    if (!dados || !Object.keys(dados).length) throw new Error('O backup encontrado no Drive não tem dados válidos. Nada foi alterado.');
+    // Alterações ainda não confirmadas no Drive não entrariam no backup de segurança: tenta confirmá-las antes.
+    if (Number(window.__pendenciasSync || 0) > 0 && window.storage && window.storage.resync) {
+        informar('Confirmando no Drive as alterações pendentes antes do backup de segurança…');
+        try { await window.storage.resync(); } catch (e2) {}
+    }
+    if (Number(window.__pendenciasSync || 0) > 0) throw new Error('Há ' + Number(window.__pendenciasSync) + ' alteração(ões) ainda sem confirmação no Google Drive. Aguarde ficarem salvas e tente de novo, para o backup de segurança ficar completo. Nada foi alterado.');
+    // Passo 2: backup de segurança do estado atual
+    informar('Passo 2 de 3: criando um backup do estado atual (segurança)…');
+    var seg = null;
+    try { seg = await window.__criarBackupDrive(); }
+    catch (e3) { throw new Error('Não consegui criar o backup de segurança, então não restaurei nada. (' + String(e3 && e3.message || e3) + ')'); }
+    if (!seg || seg.ok === false || seg.erro) throw new Error('Não consegui criar o backup de segurança, então não restaurei nada.' + (seg && seg.erro ? ' (' + seg.erro + ')' : ''));
+    // Passo 3: restaurar (mesma gravação por chave usada antes)
+    var chaves = Object.keys(dados);
+    var feitas = 0;
+    for (var i = 0; i < chaves.length; i++) {
+        var valor = dados[chaves[i]];
+        if (valor === undefined || valor === null) continue;
+        informar('Passo 3 de 3: restaurando e confirmando item ' + (feitas + 1) + ' de ' + chaves.length + ' no Drive…');
+        await window.storage.set('@@raw:' + chaves[i], String(valor), true);
+        feitas++;
+    }
+    informar('Conferindo as pendências após a restauração…');
+    var conf = window.storage.resync ? await window.storage.resync() : { ok: true };
+    if (!conf.ok || Number(window.__pendenciasSync || 0) > 0) throw new Error('O backup foi carregado neste aparelho, mas ainda existem itens sem confirmação no Google Drive. Clique em Salvar novamente quando a conexão voltar. (O backup de segurança "' + String(seg.nome || '') + '" já foi criado.)');
+    return { ok: true, nome: corpo.nome, criadoEm: corpo.criadoEm, chaves: chaves.length, seguranca: seg.nome || '' };
+};
 window.__tdbLixeiraFila = Promise.resolve();
 window.__tdbLixeiraAdicionar = function(entrada) {
   var rodar = async function() {
@@ -14484,17 +14533,17 @@ function VisaoGeral(_a) {
                     case 0:
                         if (!window.__restaurarUltimoBackupDrive)
                             return [2 /*return*/];
-                        if (!window.confirm('Restaurar um backup antigo substitui os dados correspondentes neste aparelho e no Google Drive, afetando os outros aparelhos. Evite editar em outros aparelhos durante a restauração. O histórico de backups é preservado. Deseja continuar?'))
+                        if (!window.confirm('Restaurar o último backup substitui os dados correspondentes neste aparelho e no Google Drive, afetando os outros aparelhos.\n\nAntes de restaurar, o app cria automaticamente um backup do estado atual (se não conseguir, nada é restaurado).\n\nEvite editar em outros aparelhos durante a restauração. O histórico de backups é preservado. Deseja continuar?'))
                             return [2 /*return*/];
                         setBackupSistema({ tipo: 'andamento', texto: 'Buscando o último backup no Google Drive...' });
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, window.__restaurarUltimoBackupDrive(function (texto) { return setBackupSistema({ tipo: 'andamento', texto: texto }); })];
+                        return [4 /*yield*/, window.__tdbRestaurarComSeguranca(function (texto) { return setBackupSistema({ tipo: 'andamento', texto: texto }); })];
                     case 2:
                         r = _a.sent();
-                        setBackupSistema({ tipo: 'ok', texto: "\u2713 Backup \"".concat(r.nome, "\" restaurado (").concat(r.chaves, " chave(s)). Recarregando a tela...") });
-                        setTimeout(function () { return window.location.reload(); }, 900);
+                        setBackupSistema({ tipo: 'ok', texto: "\u2713 Backup \"".concat(r.nome, "\" restaurado (").concat(r.chaves, " chave(s)). O estado de antes foi guardado no backup \"").concat(r.seguranca || 'de segurança', "\". Recarregando a tela...") });
+                        setTimeout(function () { return window.location.reload(); }, 2600);
                         return [3 /*break*/, 4];
                     case 3:
                         e_92 = _a.sent();
