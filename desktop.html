@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v65";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v67";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v65"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v67"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1523,10 +1523,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v65"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v67"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v65-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v67-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2233,7 +2233,7 @@ function NotasFiscaisTDB(_a) {
     var _fh = useState({}), falhas = _fh[0], setFalhas = _fh[1];
     var _dg = useState(null), dlg = _dg[0], setDlg = _dg[1];
     var _ev = useState(null), envio = _ev[0], setEnvio = _ev[1];
-    var transRef = useRef(_a.transacoes || []), marcarRef = useRef(null), enviandoRef = useRef(false);
+    var transRef = useRef(_a.transacoes || []), marcarRef = useRef(null), enviandoRef = useRef(false), lixFilaRef = useRef(Promise.resolve());
     transRef.current = _a.transacoes || []; marcarRef.current = _a.marcarNotasEnviadas;
     var cadRef = useRef([]), convRef = useRef([]), notasRef = useRef([]), timers = useRef({}), arquivosRef = useRef({}), raizRef = useRef(null), inputRef = useRef(null);
     var mesKey = ano + '-' + ('0' + (mi + 1)).slice(-2);
@@ -2329,8 +2329,14 @@ function NotasFiscaisTDB(_a) {
     }
     function paraLixeira(rotulo, origem, chave, lista, item) {
         var idx = lista.findIndex(function (x) { return x.id === item.id; });
-        try { window.__tdbLixeiraAdicionar({ rotulo: rotulo, origem: origem, restoreOps: [{ op: 'insert', key: chave, path: [], index: idx, item: item, uniqueField: 'id' }], cleanupKeys: [] }).catch(function () { }); } catch (e) { }
+        // Um item de cada vez e devolvendo a promessa: só se apaga da lista depois que a lixeira confirmou (em lote, gravações juntas perdiam itens).
+        var entrada = { rotulo: rotulo, origem: origem, restoreOps: [{ op: 'insert', key: chave, path: [], index: idx, item: item, uniqueField: 'id' }], cleanupKeys: [] };
+        var rodar = function () { try { return Promise.resolve(window.__tdbLixeiraAdicionar(entrada)); } catch (e) { return Promise.reject(e); } };
+        var p = lixFilaRef.current.then(rodar, rodar);
+        lixFilaRef.current = p.then(function () { }, function () { });
+        return p;
     }
+    function lixeiraFalhou(o) { toast('Não consegui guardar na lixeira agora, então ' + o + ' não foi excluído. Tente de novo.'); }
     // ---------- cadastro ----------
     function editarConv(id, campo, valor) { salvarConv(convRef.current.map(function (c) { if (c.id !== id) return c; var o = Object.assign({}, c); o[campo] = valor; return o; })); }
     function editarCad(id, campo, valor) { salvarCad(cadRef.current.map(function (c) { if (c.id !== id) return c; var o = Object.assign({}, c); o[campo] = valor; return o; })); }
@@ -2392,8 +2398,9 @@ function NotasFiscaisTDB(_a) {
     }
     function removerConvenio(c) {
         if (!window.confirm('Mover "' + (c.aluno || 'sem nome') + '" para a lixeira?')) return;
-        paraLixeira(c.aluno || 'Convênio', 'Notas Fiscais', NF_KEY_CONV, convRef.current, c);
-        salvarConv(convRef.current.filter(function (x) { return x.id !== c.id; })); toast('Convênio movido para a lixeira.');
+        paraLixeira(c.aluno || 'Convênio', 'Notas Fiscais', NF_KEY_CONV, convRef.current, c).then(function () {
+            salvarConv(convRef.current.filter(function (x) { return x.id !== c.id; })); toast('Convênio movido para a lixeira.');
+        }, function () { lixeiraFalhou('o convênio'); });
     }
     function abrirImportarConv() {
         var vistos = {}, jaTem = {};
@@ -2416,8 +2423,9 @@ function NotasFiscaisTDB(_a) {
     }
     function removerAluno(c) {
         if (!window.confirm('Mover "' + (c.aluno || 'sem nome') + '" para a lixeira?')) return;
-        paraLixeira(c.aluno || 'Aluno', 'Notas Fiscais', NF_KEY_CAD, cadRef.current, c);
-        salvarCad(cadRef.current.filter(function (x) { return x.id !== c.id; })); toast('Aluno movido para a lixeira.');
+        paraLixeira(c.aluno || 'Aluno', 'Notas Fiscais', NF_KEY_CAD, cadRef.current, c).then(function () {
+            salvarCad(cadRef.current.filter(function (x) { return x.id !== c.id; })); toast('Aluno movido para a lixeira.');
+        }, function () { lixeiraFalhou('o aluno'); });
     }
     function abrirImportar() {
         var vistos = {}, jaTem = {};
@@ -2476,28 +2484,41 @@ function NotasFiscaisTDB(_a) {
     function alternarMarca(id) { setMarcadas(function (p) { var o = Object.assign({}, p); if (o[id]) delete o[id]; else o[id] = true; return o; }); }
     function removerNota(n) {
         if (!window.confirm('Mover a nota "' + n.arquivo + '" para a lixeira?')) return;
-        paraLixeira(n.arquivo, 'Notas Fiscais', NF_KEY_NOTAS, notasRef.current, n);
-        salvarNotas(notasRef.current.filter(function (x) { return x.id !== n.id; })); delete arquivosRef.current[n.id]; toast('Nota movida para a lixeira.');
+        paraLixeira(n.arquivo, 'Notas Fiscais', NF_KEY_NOTAS, notasRef.current, n).then(function () {
+            salvarNotas(notasRef.current.filter(function (x) { return x.id !== n.id; })); delete arquivosRef.current[n.id]; toast('Nota movida para a lixeira.');
+        }, function () { lixeiraFalhou('a nota'); });
     }
     // Notas já enviadas deste mês saem da lista principal e ficam numa área recolhida; "Limpar enviadas" leva todas para a lixeira (uma confirmação só).
     function limparEnviadas() {
         var lista = notasRef.current.filter(function (n) { return n.mes === mesKey && !!n.enviadaEm; });
         if (!lista.length) return;
         if (!window.confirm('Mover ' + lista.length + (lista.length === 1 ? ' nota enviada' : ' notas enviadas') + ' de ' + nfMesNome(mi, ano) + ' para a lixeira?')) return;
-        var atual = notasRef.current.slice(), ids = {};
-        lista.forEach(function (n) { paraLixeira(n.arquivo, 'Notas Fiscais', NF_KEY_NOTAS, atual, n); atual = atual.filter(function (x) { return x.id !== n.id; }); ids[n.id] = 1; delete arquivosRef.current[n.id]; });
-        salvarNotas(atual); setMarcadas(function (p) { var o = Object.assign({}, p); Object.keys(ids).forEach(function (k) { delete o[k]; }); return o; });
-        toast(lista.length + (lista.length === 1 ? ' nota enviada movida' : ' notas enviadas movidas') + ' para a lixeira.');
+        moverNotasParaLixeira(lista, function (n) { return n.arquivo; }, function (qtd) { return qtd + (qtd === 1 ? ' nota enviada movida' : ' notas enviadas movidas') + ' para a lixeira.'; });
     }
     // Excluir várias notas pendentes de uma vez (vão para a lixeira, como a exclusão uma a uma). Notas já enviadas saem por "Limpar enviadas".
     function excluirNotas(ids, rotulo) {
         var lista = notasRef.current.filter(function (n) { return ids[n.id] && n.mes === mesKey && !n.enviadaEm; });
         if (!lista.length) { toast('Não há notas pendentes para excluir.'); return; }
         if (!window.confirm('Mover ' + lista.length + (lista.length === 1 ? ' nota' : ' notas') + ' (' + rotulo + ') de ' + nfMesNome(mi, ano) + ' para a lixeira?')) return;
-        var atual = notasRef.current.slice();
-        lista.forEach(function (n) { paraLixeira(n.arquivo, 'Notas Fiscais', NF_KEY_NOTAS, atual, n); atual = atual.filter(function (x) { return x.id !== n.id; }); delete arquivosRef.current[n.id]; });
-        salvarNotas(atual); setMarcadas(function (p) { var o = Object.assign({}, p); lista.forEach(function (n) { delete o[n.id]; }); return o; });
-        toast(lista.length + (lista.length === 1 ? ' nota movida' : ' notas movidas') + ' para a lixeira.');
+        moverNotasParaLixeira(lista, function (n) { return n.arquivo; }, function (qtd) { return qtd + (qtd === 1 ? ' nota movida' : ' notas movidas') + ' para a lixeira.'; });
+    }
+    // Exclusão em lote: cada nota vai para a lixeira (uma por vez); só saem da lista as que a lixeira confirmou.
+    function moverNotasParaLixeira(lista, rotuloDe, msgOk) {
+        var atual = notasRef.current.slice(), jobs = [];
+        lista.forEach(function (n) {
+            jobs.push(paraLixeira(rotuloDe(n), 'Notas Fiscais', NF_KEY_NOTAS, atual, n).then(function () { return n; }, function () { return null; }));
+            atual = atual.filter(function (x) { return x.id !== n.id; });
+        });
+        Promise.all(jobs).then(function (res) {
+            var feitas = res.filter(Boolean), ids = {};
+            feitas.forEach(function (n) { ids[n.id] = 1; delete arquivosRef.current[n.id]; });
+            if (feitas.length) {
+                salvarNotas(notasRef.current.filter(function (x) { return !ids[x.id]; }));
+                setMarcadas(function (p) { var o = Object.assign({}, p); Object.keys(ids).forEach(function (k) { delete o[k]; }); return o; });
+            }
+            if (feitas.length === lista.length) toast(msgOk(feitas.length));
+            else toast((feitas.length ? feitas.length + ' de ' + lista.length + ' notas foram para a lixeira; ' : '') + 'não consegui guardar ' + (lista.length - feitas.length) + (lista.length - feitas.length === 1 ? ' nota' : ' notas') + ' na lixeira, então ' + (lista.length - feitas.length === 1 ? 'ela continua' : 'elas continuam') + ' na lista. Tente de novo.');
+        });
     }
     function excluirSelecionadas() {
         // as marcadas + os recibos/boletos que vão junto com a empresa marcada
@@ -2552,6 +2573,7 @@ function NotasFiscaisTDB(_a) {
         if (n.enviadaEm) return 'enviada';
         var c = n.alunoId ? porId[n.alunoId] : null, tp = tipoDe(n);
         if (c && c.convenio && tp === 'nota' && !nfEnviaNota(c)) return 'semUso';
+        if (c && c.ativo === false) return 'inativo';
         if (!ehPrincipal(n)) {
             if (!c || !c.convenio || anexoEscolhido(c.id, tp) !== n) return 'conferir';
             return principaisDe(c).some(function (x) { return !x.enviadaEm; }) ? 'anexo' : 'semNota';
@@ -2567,7 +2589,7 @@ function NotasFiscaisTDB(_a) {
         return 'ok';
     }
     var cont = { ok: 0, conferir: 0, semEmail: 0, enviada: 0, semUso: 0 };
-    notasMes.forEach(function (n) { var s = situacao(n); if (s === 'anexo' || s === 'semUso') return; if (s === 'faltaDoc' || s === 'semNota') s = 'conferir'; cont[s]++; });
+    notasMes.forEach(function (n) { var s = situacao(n); if (s === 'anexo' || s === 'semUso' || s === 'inativo') return; if (s === 'faltaDoc' || s === 'semNota') s = 'conferir'; cont[s]++; });
     var q = nfNorm(busca);
     var qd = nfDig(busca);
     var qc = nfNorm(buscaConv), qcd = nfDig(buscaConv);
@@ -2629,7 +2651,8 @@ function NotasFiscaisTDB(_a) {
             var an = [];
             if (c && c.convenio) nfExtrasDe(c).forEach(function (tp) { var r = anexoEscolhido(c.id, tp); if (r) an.push({ id: r.id, tipo: tp, arquivo: r.arquivo }); });
             var semArq = an.filter(function (a) { return !arquivosRef.current[a.id]; });
-            if (c && c.convenio && tipoDe(n) === 'nota' && !nfEnviaNota(c)) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'esta empresa não recebe nota fiscal (veja o cadastro do convênio)' });
+            if (c && c.ativo === false) pulados.push({ id: n.id, nome: c.aluno, motivo: 'está desmarcado em “Ativo” no cadastro (marque o “Ativo” para enviar)' });
+            else if (c && c.convenio && tipoDe(n) === 'nota' && !nfEnviaNota(c)) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'esta empresa não recebe nota fiscal (veja o cadastro do convênio)' });
             else if (!ehPrincipal(n)) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'o ' + tipoDe(n) + ' vai junto com ' + (c && c.convenio && nfPrincipalTipo(c) !== 'nota' ? 'o ' + nfPrincipalTipo(c) + ' da empresa (marque o ' + nfPrincipalTipo(c) + ')' : 'a nota da empresa (marque a nota)') });
             else if (!c) pulados.push({ id: n.id, nome: n.arquivo, motivo: 'sem aluno ligado — escolha o aluno na coluna “Aluno / convênio” desta nota' });
             else if (!em.length) pulados.push({ id: n.id, nome: c.aluno, motivo: 'sem e-mail cadastrado' });
@@ -2732,6 +2755,7 @@ function NotasFiscaisTDB(_a) {
         if (s === 'enviada') return tag('✉ Enviada ' + nfDataBR(n.enviadaEm).slice(0, 5), '#E4EEFC', '#1767cf');
         if (s === 'ok') { var cc = n.alunoId ? porId[n.alunoId] : null, an = nfExtrasDe(cc), pt = nfPrincipalTipo(cc); return tag(an.length || pt !== 'nota' ? '✅ Completa: ' + [pt === 'nota' ? 'nota' : pt].concat(an).join(' + ') : '✅ Identificada', COLORS.greenBg, COLORS.green); }
         if (s === 'semUso') return tag('Esta empresa não recebe nota fiscal', '#EEF0F3', '#4B5563');
+        if (s === 'inativo') return tag('Desmarcado em "Ativo": não será enviada', '#EEF0F3', '#4B5563');
         if (s === 'anexo') { var c4 = n.alunoId ? porId[n.alunoId] : null, p4 = nfPrincipalTipo(c4); return tag('↳ vai junto com ' + (p4 === 'nota' ? 'a nota' : 'o ' + p4), '#EEF0F3', '#4B5563'); }
         if (s === 'semNota') { var c3 = n.alunoId ? porId[n.alunoId] : null, p3 = nfPrincipalTipo(c3); return tag('⚠️ Falta ' + (p3 === 'nota' ? 'a nota' : 'o ' + p3), COLORS.goldSoft || '#FFF4D6', '#8a5a00'); }
         if (s === 'faltaDoc') { var c2 = n.alunoId ? porId[n.alunoId] : null; return tag('⚠️ Falta o ' + docsFaltando(c2).join(' e o '), COLORS.goldSoft || '#FFF4D6', '#8a5a00'); }
@@ -14860,7 +14884,7 @@ function Lancamentos(props) {
     var inputForm = __assign(__assign({}, inputStyle), { width: '100%', minWidth: 0, boxSizing: 'border-box', height: 39 });
     var itemEmEdicao=transacoes.find(function(t){return t.id===editandoId;});
     var controleRecorrencia=itemEmEdicao&&itemEmEdicao.tipo==='Fixa'?React.createElement('label',{'data-export-ignore':true,style:{gridColumn:'1 / -1',display:'flex',gap:8,alignItems:'flex-start',padding:10,border:'1px solid '+COLORS.line,borderRadius:8,fontSize:12}},React.createElement('input',{type:'checkbox',checked:projecaoEncerradaEdit,onChange:function(e){setProjecaoEncerradaEdit(e.target.checked);}}),React.createElement('span',null,'Encerrar repetição na projeção após '+TDBFinance.monthShort(itemEmEdicao.mes)+'.',' Lançamentos já preenchidos continuam considerados. Salve para aplicar.')):null;
-    return (React.createElement("div", { className: "export-pagina-lancamentos", style: { display: 'grid', gap: 22 } }, React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' } }, React.createElement("span", { style: { fontSize: 12, color: COLORS.inkSoft, fontWeight: 600 } }, 'M\u00EAs para exportar'), React.createElement("select", { value: mesExportarPdf, onChange: function (e) { return setMesExportarPdf(e.target.value); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 9px', fontSize: 13 } }, MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); }), React.createElement("option", { value: 'TODOS_MESES_PDF' }, 'Todos os 12 meses juntos')), React.createElement("button", { type: 'button', className: 'tdb-remat-exportar-tudo', disabled: exportandoMesPdf, onClick: exportarMesLancamentosPdf }, exportandoMesPdf ? 'Gerando...' : 'Exportar m\u00EAs em PDF')), React.createElement("div", null, React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 } }, React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.03em' } }, "Resumo de ", kpisMes.mesAlvo.charAt(0) + kpisMes.mesAlvo.slice(1).toLowerCase()), React.createElement("button", { onClick: function () { return setPrivadoTotais(function (v) { return !v; }); }, title: privadoTotais ? 'Mostrar totais' : 'Esconder totais', style: {
+    return (React.createElement("div", { className: "export-pagina-lancamentos", style: { display: 'grid', gap: 22 } }, React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' } }, React.createElement("span", { style: { fontSize: 12, color: COLORS.inkSoft, fontWeight: 600 } }, 'M\u00EAs para exportar'), React.createElement("select", { value: mesExportarPdf, onChange: function (e) { return setMesExportarPdf(e.target.value); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 9px', fontSize: 13 } }, MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); }), React.createElement("option", { value: 'TODOS_MESES_PDF' }, 'Todos os 12 meses juntos')), React.createElement("button", { type: 'button', className: 'tdb-remat-exportar-tudo', disabled: exportandoMesPdf, onClick: exportarMesLancamentosPdf }, exportandoMesPdf ? 'Gerando...' : 'Exportar m\u00EAs em PDF')), React.createElement("div", null, React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 } }, React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.03em' } }, "Resumo de ", kpisMes.mesAlvo.charAt(0) + kpisMes.mesAlvo.slice(1).toLowerCase(), (filtroMes === 'TODOS' && mesesSel.length > 1) ? " (último mês com movimento)" : ""), React.createElement("button", { onClick: function () { return setPrivadoTotais(function (v) { return !v; }); }, title: privadoTotais ? 'Mostrar totais' : 'Esconder totais', style: {
             background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             color: COLORS.inkSoft, fontSize: 12, fontWeight: 600,
         } }, privadoTotais ? React.createElement(EyeOff, { size: 15 }) : React.createElement(Eye, { size: 15 }), privadoTotais ? 'Totais ocultos' : 'Ocultar totais')), React.createElement(KPIStrip, { oculto: privadoTotais, items: [
