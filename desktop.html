@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdbn-20261008-tempo1-v61";
+    window.__TDB_BUILD = "tdbn-20261008-tempo1-v62";
   </script>
-  <script src="./config.js?build=tdbn-20261008-tempo1-v61"></script>
+  <script src="./config.js?build=tdbn-20261008-tempo1-v62"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1430,6 +1430,14 @@ html:not(.tdb-aurora-pdf) body .tdbnr.tdbnr .tdbnr-pf > div button{background:va
   html body .abas-menu{grid-template-columns:repeat(5,minmax(0,1fr))!important}
 }
 </style>
+<style id="tdb-cp-data-centro-v62">
+@media(max-width:600px){
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])):not(#tdb1x){grid-template-columns:96px minmax(0,1fr) auto;column-gap:6px}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdbm-cp-extra-data:not(#tdb1x){position:relative;text-align:center;justify-self:stretch}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdbm-cp-extra-data:has(input.tdbm-cp-date:disabled:not(.tdb2-vazio))::after{content:attr(data-br);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:12.5px;font-weight:700;color:var(--c-ink);white-space:nowrap;pointer-events:none}
+html:not(.tdb-aurora-pdf) body .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdbm-cp-extra-data input.tdbm-cp-date:disabled:not(.tdb2-vazio):not(#tdb1x){opacity:0!important;color:transparent!important;-webkit-text-fill-color:transparent!important}
+}
+</style>
 </head>
 <body>
 
@@ -1483,10 +1491,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdbn-20261008-tempo1-v61"></script>
+  <script src="./sync.js?build=tdbn-20261008-tempo1-v62"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v61-desktop';
+window.__TDB_BUILD_EXATO = 'tdbn-20261008-tempo1-v62-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -1896,7 +1904,7 @@ function NFEmails(p) {
     return h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minWidth: 0, border: '1px solid ' + COLORS.line, borderRadius: 8, padding: '4px 6px', background: COLORS.paperCard } },
         lista.map(function (e, i) {
             var ok = nfEmailOk(e);
-            return h('span', { key: e + i, style: { display: 'inline-flex', alignItems: 'center', gap: 2, padding: '3px 4px 3px 9px', borderRadius: 999, background: ok ? '#E4EEFC' : COLORS.redBg, color: ok ? '#1767cf' : COLORS.red, fontSize: 12.5, fontWeight: 600, maxWidth: '100%' } },
+            return h('span', { key: e + i, style: { display: 'inline-flex', alignItems: 'center', gap: 2, padding: '3px 4px 3px 9px', borderRadius: 999, background: ok ? '#E4EEFC' : COLORS.redBg, color: ok ? '#1767cf' : COLORS.red, fontSize: 12.5, fontWeight: 600, maxWidth: '100%', boxSizing: 'border-box', minWidth: 0 } },
                 h('span', { title: p.travado ? '' : 'Toque para editar', onClick: function () { if (p.travado) return; setTxt(e); p.onChange(lista.filter(function (_, k) { return k !== i; })); }, style: { cursor: p.travado ? 'inherit' : 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, e),
                 !p.travado && h('span', { role: 'button', tabIndex: 0, 'aria-label': 'Remover e-mail ' + e, onClick: function () { p.onChange(lista.filter(function (_, k) { return k !== i; })); }, style: { cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: '0 5px', opacity: .75 } }, '×'));
         }),
@@ -2721,7 +2729,7 @@ function NotasFiscaisTDB(_a) {
         return h('div', { 'data-export-ignore': true, style: { display: 'flex', justifyContent: MOB ? 'flex-end' : 'center', gap: 6 } }, lapisBtn(onEditar, tituloEditar), lixeiraBtn(onExcluir, tituloExcluir));
     }
     // ---------- cadastro ----------
-    var gradeConv = MOB ? gradeCad : Object.assign({}, gradeCad, { gridTemplateColumns: 'minmax(130px,1fr) minmax(150px,1.2fr) 160px minmax(180px,1.5fr) 110px 56px 96px' });
+    var gradeConv = MOB ? gradeCad : Object.assign({}, gradeCad, { gridTemplateColumns: 'minmax(118px,1fr) minmax(130px,1.1fr) 158px minmax(240px,2fr) 104px 48px 84px' });
     function montarLinhasCad(lista, ehConv) {
         var tipo = ehConv ? 'conv' : 'cad';
         return lista.map(function (c) {
@@ -18708,6 +18716,26 @@ html[data-tdb-aurora] body .abas-menu .aba-item[data-aurora-icon="municipioCb"] 
   if(root&&root.classList.contains('on')&&st.el===el&&el.type==='date'){fechar(false);return;}
   abrir(el,false);
  },true);
+ // iPhone/iPad: o toque numa caixa de data abria o seletor do sistema junto com o calendário do app.
+ // Aqui o toque é tratado por inteiro pelo calendário do app (sem clique sintético, sem foco, sem seletor nativo).
+ var tdbToque=null;
+ document.addEventListener('touchstart',function(e){
+  var el=e.target;
+  if(!isDate(el)||el.type!=='date'||el.disabled||tdbDataNativa(el)||!e.touches||e.touches.length!==1){tdbToque=null;return;}
+  tdbToque={el:el,x:e.touches[0].clientX,y:e.touches[0].clientY,mov:false};
+ },{capture:true,passive:true});
+ document.addEventListener('touchmove',function(e){
+  if(!tdbToque||!e.touches||!e.touches[0])return;
+  if(Math.abs(e.touches[0].clientX-tdbToque.x)>10||Math.abs(e.touches[0].clientY-tdbToque.y)>10)tdbToque.mov=true;
+ },{capture:true,passive:true});
+ document.addEventListener('touchend',function(e){
+  var t=tdbToque;tdbToque=null;
+  if(!t||t.mov||!document.body.contains(t.el)||t.el.disabled)return;
+  if(e.cancelable)e.preventDefault();
+  var el=t.el;marcar(el);try{el.blur();}catch(_){}
+  if(root&&root.classList.contains('on')&&st.el===el){fechar(false);return;}
+  abrir(el,false);
+ },{capture:true,passive:false});
  document.addEventListener('keydown',function(e){
   var el=e.target;if(!isDate(el)||el.type!=='date'||tdbDataNativa(el))return;
   if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();abrir(el,true);}
@@ -22106,8 +22134,8 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
           sel.addEventListener('click',function(ev){ev.stopPropagation();}); sel.addEventListener('change',function(){var mm=getM(nome,idx); mm.pago=sel.value; sel.classList.toggle('is-paid',sel.value==='PAGO'); sel.classList.toggle('is-pending',sel.value!=='PAGO'); saveMeta(); renderBalloons(root,table,idx,false);});
           tdPago.appendChild(sel);
           var tdData=document.createElement('td'); tdData.className='tdbm-cp-extra tdbm-cp-extra-data';
-          var dt=document.createElement('input'); dt.type='date'; dt.className='tdbm-cp-date'+(data?'':' tdb2-vazio'); dt.value=data; dt.disabled=!ed; if(!ed) dt.tabIndex=-1;
-          dt.addEventListener('click',function(ev){ev.stopPropagation();}); dt.addEventListener('change',function(){var mm=getM(nome,idx); mm.data=dt.value||''; dt.classList.toggle('tdb2-vazio',!dt.value); saveMeta();});
+          var dt=document.createElement('input'); dt.type='date'; dt.className='tdbm-cp-date'+(data?'':' tdb2-vazio'); dt.value=data; tdData.setAttribute('data-br',(function (v) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; })(data)); dt.disabled=!ed; if(!ed) dt.tabIndex=-1;
+          dt.addEventListener('click',function(ev){ev.stopPropagation();}); dt.addEventListener('change',function(){tdData.setAttribute('data-br',(function (v) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; })(dt.value)); var mm=getM(nome,idx); mm.data=dt.value||''; dt.classList.toggle('tdb2-vazio',!dt.value); saveMeta();});
           tdData.appendChild(dt);
           valueCell.after(tdPago,tdData);
         });
