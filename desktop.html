@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261009-tdb-v1-1";
+    window.__TDB_BUILD = "tdb-20261009-tdb-v1-2";
   </script>
-  <script src="./config.js?build=tdb-20261009-tdb-v1-1"></script>
+  <script src="./config.js?build=tdb-20261009-tdb-v1-2"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1523,10 +1523,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261009-tdb-v1-1"></script>
+  <script src="./sync.js?build=tdb-20261009-tdb-v1-2"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261009-tdb-v1-1-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261009-tdb-v1-2-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4930,7 +4930,9 @@ function dataDeHojeFormatada() {
 }
 
 /* TDB v58 — lixeira permanente e restaurável para todos os módulos. */
-window.__tdbLixeiraAdicionar = async function(entrada) {
+window.__tdbLixeiraFila = Promise.resolve();
+window.__tdbLixeiraAdicionar = function(entrada) {
+  var rodar = async function() {
     try {
         var r = await window.storage.get('lixeira_temporaria', false);
         var lista = r && r.value ? JSON.parse(r.value) : [];
@@ -4949,6 +4951,10 @@ window.__tdbLixeiraAdicionar = async function(entrada) {
         console.error('Falha ao guardar item na lixeira', e);
         throw e;
     }
+  };
+  var p = window.__tdbLixeiraFila.then(rodar, rodar);
+  window.__tdbLixeiraFila = p.catch(function () {});
+  return p;
 };
 window.__tdbLixeiraRestaurarGenerico = async function(entrada) {
     var ops = (entrada && entrada.restoreOps) || [];
