@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261008-tdb-v1-0";
+    window.__TDB_BUILD = "tdb-20261009-tdb-v1-1";
   </script>
-  <script src="./config.js?build=tdb-20261008-tdb-v1-0"></script>
+  <script src="./config.js?build=tdb-20261009-tdb-v1-1"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1980,10 +1980,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261008-tdb-v1-0"></script>
+  <script src="./sync.js?build=tdb-20261009-tdb-v1-1"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261008-tdb-v1-0-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261009-tdb-v1-1-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4282,6 +4282,77 @@ function BolhaFlutuanteIA(_a) {
             cursor: 'pointer', userSelect: 'none', WebkitTapHighlightColor: 'transparent',
             border: '1px solid rgba(255,255,255,0.58)'
         } }, _a.outlined ? React.createElement("svg", {width:20, height:20, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.7, strokeLinecap:"round", strokeLinejoin:"round", "aria-hidden":"true"}, React.createElement("path", {d:"m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6Z"}), React.createElement("path", {d:"M20 2v4M18 4h4"})) : React.createElement(IconeGemini, { size: 15 }));
+}
+function TDBVersaoApp() {
+    var cfg = window.TDB_CONFIG || {};
+    var _s = useState('checando'), est = _s[0], setEst = _s[1];
+    var _n = useState(null), nova = _n[0], setNova = _n[1];
+    var vivo = useRef(true);
+    useEffect(function () { vivo.current = true; return function () { vivo.current = false; }; }, []);
+    function dataDoBuild(b) {
+        var m = /-(\d{8})-/.exec(String(b || ''));
+        return m ? m[1].slice(6, 8) + '/' + m[1].slice(4, 6) + '/' + m[1].slice(0, 4) : '';
+    }
+    function rotulo(s) { return String(s || '').replace(/ /g, ' '); }
+    function verificar() {
+        if (navigator.onLine === false) { setEst('erro'); return; }
+        setEst('checando');
+        fetch('./version.json?v=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+            if (!r.ok) throw new Error('http');
+            return r.json();
+        }).then(function (j) {
+            if (!vivo.current) return;
+            if (j && j.build && j.build !== cfg.build) { setNova({ build: j.build, label: rotulo(j.label || j.build) }); setEst('nova'); }
+            else setEst('atual');
+        }).catch(function () { if (vivo.current) setEst('erro'); });
+    }
+    useEffect(function () { verificar(); }, []);
+    function atualizar() {
+        if (window.__salvandoAgoraFlag || window.__atualizandoAgoraFlag) { setEst('aguarde'); return; }
+        setEst('aplicando');
+        var t0 = Date.now();
+        (function esperar() {
+            var ocupado = window.__salvandoAgoraFlag || window.__atualizandoAgoraFlag;
+            var pend = Number(window.__pendenciasSync || 0) > 0;
+            if (Date.now() - t0 > 8000) { if (ocupado) { if (vivo.current) setEst('aguarde'); } else aplicar(); return; }
+            if (!ocupado && !pend) { aplicar(); return; }
+            setTimeout(esperar, 400);
+        })();
+    }
+    function aplicar() {
+        var feito = false;
+        function recarregar() {
+            if (feito) return; feito = true;
+            try { location.reload(); } catch (e) { location.href = location.href; }
+        }
+        if (!('serviceWorker' in navigator)) { recarregar(); return; }
+        navigator.serviceWorker.getRegistration().then(function (reg) {
+            if (!reg) { recarregar(); return; }
+            navigator.serviceWorker.addEventListener('controllerchange', function () { setTimeout(recarregar, 300); });
+            setTimeout(function () { if (!feito && vivo.current) setEst('falhou'); }, 25000);
+            return reg.update().then(function () {
+                if (!reg.installing && !reg.waiting) setTimeout(recarregar, 600);
+            });
+        }).catch(function () { if (vivo.current) setEst('falhou'); });
+    }
+    var dtAtual = dataDoBuild(cfg.build);
+    var btn = { background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 8, padding: '8px 10px', cursor: 'pointer', fontWeight: 700, fontSize: 13, width: '100%', marginTop: 8 };
+    var btnLeve = { background: 'transparent', color: COLORS.ink, border: '1px solid ' + COLORS.line, borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontWeight: 600, fontSize: 12.5, width: '100%', marginTop: 8 };
+    var linha = { fontSize: 12, lineHeight: 1.35, marginTop: 6, color: COLORS.inkSoft };
+    var corpo;
+    if (est === 'checando') corpo = React.createElement('div', { style: linha }, 'Verificando se há versão nova…');
+    else if (est === 'atual') corpo = React.createElement(React.Fragment, null, React.createElement('div', { style: Object.assign({}, linha, { color: COLORS.green, fontWeight: 700 }) }, '✓ Você está na versão mais recente'), React.createElement('button', { type: 'button', onClick: verificar, style: btnLeve }, 'Verificar de novo'));
+    else if (est === 'nova') corpo = React.createElement(React.Fragment, null, React.createElement('div', { style: Object.assign({}, linha, { color: COLORS.ink, fontWeight: 700 }) }, 'Nova versão disponível: ' + (nova ? nova.label : '') + (nova && dataDoBuild(nova.build) ? ' (' + dataDoBuild(nova.build) + ')' : '')), React.createElement('button', { type: 'button', onClick: atualizar, style: btn }, 'Atualizar agora'), React.createElement('div', { style: linha }, 'O app reinicia sozinho. Seus dados não são alterados.'));
+    else if (est === 'aplicando') corpo = React.createElement('div', { style: Object.assign({}, linha, { color: COLORS.ink, fontWeight: 700 }) }, 'Salvando e atualizando… o app vai reiniciar.');
+    else if (est === 'aguarde') corpo = React.createElement(React.Fragment, null, React.createElement('div', { style: Object.assign({}, linha, { color: '#8a5a00', fontWeight: 700 }) }, 'Aguarde terminar de salvar e toque de novo.'), React.createElement('button', { type: 'button', onClick: atualizar, style: btn }, 'Atualizar agora'));
+    else if (est === 'falhou') corpo = React.createElement(React.Fragment, null, React.createElement('div', { style: Object.assign({}, linha, { color: COLORS.red, fontWeight: 700 }) }, 'Não consegui atualizar agora. Seu app continua como estava.'), React.createElement('button', { type: 'button', onClick: verificar, style: btnLeve }, 'Tentar de novo'));
+    else corpo = React.createElement(React.Fragment, null, React.createElement('div', { style: linha }, 'Não consegui verificar agora (sem internet?).'), React.createElement('button', { type: 'button', onClick: verificar, style: btnLeve }, 'Verificar de novo'));
+    return React.createElement('div', { 'data-tdb-versao': '1', style: { borderTop: '1px solid ' + COLORS.line, marginTop: 4, padding: '10px 8px 6px' } },
+        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 } },
+            React.createElement('span', { style: { fontSize: 13.5, fontWeight: 700, color: COLORS.ink } }, 'Versão do app'),
+            React.createElement('span', { style: { fontSize: 13, fontWeight: 800, color: COLORS.ink, whiteSpace: 'nowrap' } }, rotulo(cfg.buildLabel || cfg.build || ''))),
+        dtAtual ? React.createElement('div', { style: linha }, 'Versão de ' + dtAtual) : null,
+        corpo);
 }
 function DropdownFlutuante(_a) {
     var aberto = _a.aberto, anchorRef = _a.anchorRef, onFechar = _a.onFechar, _b = _a.align, align = _b === void 0 ? 'left' : _b, _c = _a.width, width = _c === void 0 ? 220 : _c, children = _a.children;
@@ -14319,7 +14390,7 @@ function salvarTudoAgora() {
             display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
             background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
             cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: COLORS.ink,
-        } }, React.createElement(Lock, { size: 15, color: COLORS.ink }), " Alterar PIN")), React.createElement("button", { ref: refBotaoConfig, onClick: function () { setConfigMenuAberto(function (v) { return !v; }); setExercicioMenuAberto(false); setDadosMenuAberto(false); }, className: "mobile-config-btn busca-liquid-glass", title: "Mais op\u00E7\u00F5es", style: {
+        } }, React.createElement(Lock, { size: 15, color: COLORS.ink }), " Alterar PIN"), React.createElement(TDBVersaoApp, null)), React.createElement("button", { ref: refBotaoConfig, onClick: function () { setConfigMenuAberto(function (v) { return !v; }); setExercicioMenuAberto(false); setDadosMenuAberto(false); }, className: "mobile-config-btn busca-liquid-glass", title: "Mais op\u00E7\u00F5es", style: {
             display: 'flex', alignItems: 'center', gap: 4, borderRadius: 12, padding: '0 12px',
             height: 40, cursor: 'pointer', fontSize: 14.5, color: COLORS.ink, position: 'relative',
         } }, React.createElement(IconeEngrenagem, { size: 17, color: COLORS.inkSoft }), lixeira.length > 0 && (React.createElement("span", { style: { position: 'absolute', top: 2, right: 2, background: COLORS.red, color: '#FFF', borderRadius: 999, fontSize: 9.5, fontWeight: 700, padding: '1px 5px', minWidth: 15, textAlign: 'center' } }, lixeira.length)), React.createElement(ChevronDown, { size: 13, color: COLORS.inkSoft, style: { transform: configMenuAberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' } }))), React.createElement("button", { ref: refBotaoAvisos, onClick: function () { return setAvisosAbertos(function (v) { return !v; }); }, title: "Avisos", className: "busca-liquid-glass mobile-aviso-fixed", style: {
