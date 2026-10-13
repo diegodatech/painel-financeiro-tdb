@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261009-tdb-v1-4";
+    window.__TDB_BUILD = "tdb-20261013-tdb-v1-5";
   </script>
-  <script src="./config.js?build=tdb-20261009-tdb-v1-4"></script>
+  <script src="./config.js?build=tdb-20261013-tdb-v1-5"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1523,10 +1523,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261009-tdb-v1-4"></script>
+  <script src="./sync.js?build=tdb-20261013-tdb-v1-5"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261009-tdb-v1-4-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261013-tdb-v1-5-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9777,6 +9777,22 @@ function ContasPessoais(_a) {
         if (n && n.trim())
             salvar(contas.map(function (c) { return c.id === id ? __assign(__assign({}, c), { nome: n.trim().toUpperCase() }) : c; }));
     }
+    function renomearConta(id, nomeNovo) {
+        var lista = window.__tdbCPContas || contas || [];
+        var atual = lista.find(function (c) { return c.id === id; });
+        if (!atual) return false;
+        var n = String(nomeNovo || '').replace(/\s+/g, ' ').trim().toUpperCase();
+        if (!n) return false;
+        var dup = lista.some(function (c) { return c.id !== id && normalizarContaCP(c.nome) === normalizarContaCP(n); });
+        if (dup) return false;
+        var cat = categoriaDaContaCP(atual);
+        var next = lista.map(function (c) { return c.id === id ? __assign(__assign({}, c), { nome: n, categoria: cat }) : c; });
+        window.__tdbCPContas = next;
+        salvar(next);
+        return true;
+    }
+    window.__tdbCPContas = contas;
+    window.__tdbCPRenomear = renomearConta;
     function remover(id) {
         var atual = contas.find(function (c) { return c.id === id; }); if (!atual) return;
         if (!window.confirm('Mover a conta "' + atual.nome + '" para a lixeira?')) return;
@@ -20140,6 +20156,9 @@ body.dark-mode .tcal-time,#tcal-modal.dk .tcal-time{background-image:url("data:i
 .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th.tdbm-cp-extra-data{width:20%!important;text-align:center!important;}
 .contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll thead th:last-child{width:10%!important;}
 .contas-pessoais-raiz .tdbm-cp-extra{padding:3px 4px!important;vertical-align:middle;text-align:center;}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdb2-nome-ed:first-child{font-size:0!important;overflow:visible!important;text-overflow:clip!important;white-space:nowrap!important}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdb2-nome-ed input.tdbm-cp-nome{font-size:14px!important;font-weight:700!important;font-family:inherit!important;vertical-align:middle;width:calc(100% - 38px);min-width:90px;box-sizing:border-box;border:1px solid color-mix(in srgb,#3E7ACC 55%,transparent)!important;border-radius:8px;padding:5px 8px!important;background:color-mix(in srgb,var(--c-paperCard) 85%,transparent)!important;color:var(--c-ink);text-transform:uppercase;text-align:left;text-overflow:ellipsis;background-image:none!important}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td.tdb2-nome-ed:not([data-ini]) input.tdbm-cp-nome{width:100%}
 .contas-pessoais-raiz .tdbm-cp-status{width:100%;min-width:86px;box-sizing:border-box;border:1px solid color-mix(in srgb,var(--c-line) 70%,transparent);border-radius:999px;padding:7px 9px;background:color-mix(in srgb,var(--c-paperCard) 72%,transparent);font-size:12px;font-weight:900;text-align:center;color:var(--c-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.55);}
 .contas-pessoais-raiz .tdbm-cp-status.is-paid{color:#087A3E;background:linear-gradient(135deg,rgba(214,248,226,.92),rgba(255,255,255,.58));border-color:rgba(28,158,143,.28)}
 .contas-pessoais-raiz .tdbm-cp-status.is-pending{color:#C1272D;background:linear-gradient(135deg,rgba(255,231,235,.92),rgba(255,255,255,.58));border-color:rgba(193,39,45,.22)}
@@ -20186,8 +20205,8 @@ body.dark-mode .contas-pessoais-raiz{
 /* círculo com iniciais (conteúdo do texto da célula não muda) */
 .contas-pessoais-raiz .contas-pessoais-scroll tbody td[data-ini]::before{content:attr(data-ini);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;margin-right:9px;vertical-align:middle;background:var(--tdb2-l55);color:var(--c-inkSoft);font-size:10px;font-weight:700;letter-spacing:0}
 /* valor: texto em destaque, borda só ao passar/editar */
-.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date):not(#tdb1x){border-color:transparent!important;background-color:transparent!important;box-shadow:none!important;text-align:left!important;font-weight:700!important;font-size:13px!important;padding-left:34px!important;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='20'><text x='4' y='14' font-family='monospace' font-size='12' font-weight='700' fill='%23808998'>R$</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 4px center!important}
-.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date):not(#tdb1x):is(:hover,:focus){border-color:var(--c-line)!important;background-color:rgba(255,255,255,.85)!important}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date,.tdbm-cp-nome):not(#tdb1x){border-color:transparent!important;background-color:transparent!important;box-shadow:none!important;text-align:left!important;font-weight:700!important;font-size:13px!important;padding-left:34px!important;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='20'><text x='4' y='14' font-family='monospace' font-size='12' font-weight='700' fill='%23808998'>R$</text></svg>")!important;background-repeat:no-repeat!important;background-position:left 4px center!important}
+.contas-pessoais-raiz[data-tdbl-cp-view="month"] .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date,.tdbm-cp-nome):not(#tdb1x):is(:hover,:focus){border-color:var(--c-line)!important;background-color:rgba(255,255,255,.85)!important}
 
 /* ---------- Pago: etiqueta arredondada (igual Mensalidade) ---------- */
 html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:not(#tdb1x):not([multiple]):not([size]){appearance:none!important;-webkit-appearance:none!important;-moz-appearance:none!important;background-image:none!important;background-color:rgba(255,255,255,.72)!important;opacity:1!important;border:1px solid #d7dce5!important;border-radius:20px!important;padding:4px 12px!important;min-width:84px;width:auto;max-width:140px;font-size:11px!important;font-weight:700!important;text-transform:uppercase;text-align:center;text-align-last:center;cursor:pointer;box-shadow:none!important;backdrop-filter:none}
@@ -20309,7 +20328,7 @@ html body .tcal .tcal-year .tcal-mini-t:not(#tdb1x){min-height:0!important;min-w
 /* TDB 3 — texto de Pessoais com a mesma fonte/cor da Mensalidade + seleção azul (1 clique marca, 2 cliques desmarca) em todas as abas. Só aparência. */
 .contas-pessoais-raiz select.tdbm-cp-status,.contas-pessoais-raiz input.tdbm-cp-date{font-family:inherit!important}
 html[data-tdb-aurora] body .contas-pessoais-raiz select.tdbm-cp-status:not(#tdb1x):not([multiple]):not([size]){font-family:inherit!important}
-.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date){font-family:'IBM Plex Mono',monospace!important}
+.contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td input:not(.tdbm-cp-date,.tdbm-cp-nome){font-family:'IBM Plex Mono',monospace!important}
 .contas-pessoais-raiz .contas-pessoais-scroll tbody tr:not(:has(td[colspan])) td:first-child{font-size:13.5px!important;color:var(--c-ink)!important}
 /* data sempre escura e legível */
 .contas-pessoais-raiz input.tdbm-cp-date:disabled:not(#tdb1x),.contas-pessoais-raiz input.tdbm-cp-date:not(#tdb1x){color:var(--c-ink)!important;-webkit-text-fill-color:var(--c-ink)!important;opacity:1!important;font-weight:600!important;font-size:13px!important}
@@ -22286,6 +22305,30 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
   function realCells(row){return Array.prototype.filter.call(row.cells,function(c){return !c.classList.contains('tdbm-cp-extra');});}
   var editing={};
   function ekey(nome,idx){return norm(nome)+'|'+idx;}
+  var nomeDraft={};
+  // Salva o nome digitado no modo edição. Retorna false só quando deve continuar editando (nome já existe).
+  function salvarNome(cs,nomeAtual,idx){
+    var k=ekey(nomeAtual,idx);
+    var inp=cs[0]&&cs[0].querySelector('input.tdbm-cp-nome');
+    var bruto=inp?inp.value:(nomeDraft[k]!=null?nomeDraft[k]:null);
+    if(bruto==null){ delete nomeDraft[k]; return true; }
+    var novo=String(bruto).replace(/\s+/g,' ').trim().toUpperCase();
+    if(!novo||novo===String(nomeAtual).toUpperCase()){ delete nomeDraft[k]; return true; }
+    var antigoNk=norm(nomeAtual), id=contasMap[antigoNk];
+    if(!id||typeof window.__tdbCPRenomear!=='function'){ delete nomeDraft[k]; return true; }
+    var novoNk=norm(novo);
+    if(contasMap[novoNk]&&contasMap[novoNk]!==id){
+      nomeDraft[k]=bruto;
+      try{ window.alert('Já existe uma conta chamada "'+novo+'". Escolha outro nome.'); }catch(e){}
+      return false;
+    }
+    try{ migrarMeta(); }catch(e){}
+    delete contasMap[antigoNk]; contasMap[novoNk]=id;
+    var ok=false; try{ ok=window.__tdbCPRenomear(id,novo)!==false; }catch(e){ ok=false; }
+    if(!ok){ delete contasMap[novoNk]; contasMap[antigoNk]=id; }
+    delete nomeDraft[k];
+    return true;
+  }
   function inserirExtras(root,table,idx){
     loadMeta(function(){
       try{
@@ -22314,6 +22357,21 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
           var m=peekM(nome,idx); var st=m.pago || (valor>0?'PAGO':'PENDENTE'); var data=m.data || '';
           var ed=!!editing[ekey(nome,idx)];
           row.classList.toggle('tdb2-editing',ed);
+          try{
+            var tdn=cs[0], kk=ekey(nome,idx), oldI=tdn.querySelector('input.tdbm-cp-nome');
+            if(ed){
+              tdn.classList.add('tdb2-nome-ed');
+              if(!oldI){
+                var ni=document.createElement('input'); ni.type='text'; ni.className='tdbm-cp-extra tdbm-cp-nome'; ni.maxLength=40;
+                ni.setAttribute('autocomplete','off'); ni.setAttribute('aria-label','Nome da conta');
+                ni.value=(nomeDraft[kk]!=null?nomeDraft[kk]:nome);
+                ni.addEventListener('click',function(ev){ev.stopPropagation();});
+                ni.addEventListener('input',function(){nomeDraft[kk]=ni.value;});
+                ni.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); var pb=row.querySelector('td:last-child button:first-child'); if(pb) pb.click(); } });
+                tdn.appendChild(ni);
+              }
+            } else { tdn.classList.remove('tdb2-nome-ed'); if(oldI) oldI.remove(); }
+          }catch(e){}
           var lapis=cs[cs.length-1]&&cs[cs.length-1].querySelector('button'); if(lapis){ lapis.classList.toggle('tdb2-on',ed); lapis.title=ed?'Salvar e fechar a edição':'Editar esta linha'; }
           var tdPago=document.createElement('td'); tdPago.className='tdbm-cp-extra tdbm-cp-extra-pago';
           var sel=document.createElement('select'); sel.className='tdbm-cp-status '+(st==='PAGO'?'is-paid':'is-pending');
@@ -22386,7 +22444,7 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
           var row=btn.closest('tr'); if(!row||row.cells.length===1) return;
           ev.stopPropagation(); ev.preventDefault();
           var cs=realCells(row); var idx=Math.max(0,Math.min(11,parseInt(sessionStorage.getItem(storageKey),10)||0)); var k=ekey((cs[0]&&cs[0].textContent||'').trim(),idx);
-          if(editing[k]) delete editing[k]; else editing[k]=1;
+          if(editing[k]){ if(!salvarNome(cs,(cs[0]&&cs[0].textContent||'').trim(),idx)) return; delete editing[k]; } else editing[k]=1;
           apply(root); return;
         }
         var td=t.closest('.contas-pessoais-scroll tbody tr.tdb2-editing td:first-child');
