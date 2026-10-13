@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261013-tdb-v1-5";
+    window.__TDB_BUILD = "tdb-20261013-tdb-v1-6";
   </script>
-  <script src="./config.js?build=tdb-20261013-tdb-v1-5"></script>
+  <script src="./config.js?build=tdb-20261013-tdb-v1-6"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1980,10 +1980,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261013-tdb-v1-5"></script>
+  <script src="./sync.js?build=tdb-20261013-tdb-v1-6"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261013-tdb-v1-5-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261013-tdb-v1-6-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -15772,6 +15772,7 @@ function Lancamentos(props) {
     var _l = useState(''), categoriaEdit = _l[0], setCategoriaEdit = _l[1];
     var _l2 = useState(''), dataLancEdit = _l2[0], setDataLancEdit = _l2[1];
     var _recFim = useState(false), projecaoEncerradaEdit = _recFim[0], setProjecaoEncerradaEdit = _recFim[1];
+    var _tipoEd = useState(null), tipoEdit = _tipoEd[0], setTipoEdit = _tipoEd[1];
     var _m = useState(null), linhaSelecionada = _m[0], setLinhaSelecionada = _m[1];
     useEffect(function () {
         function aoReceberBusca(e) {
@@ -15805,6 +15806,7 @@ function Lancamentos(props) {
         setCategoriaEdit(t.categoria);
         setDataLancEdit(t.data || '');
         setProjecaoEncerradaEdit(t.projecaoEncerrada === true);
+        setTipoEdit(t.tipo === 'Fixa' || t.tipo === 'Variável' ? t.tipo : null);
     }
     function cancelarEdicao() {
         setEditandoId(null);
@@ -15820,7 +15822,9 @@ function Lancamentos(props) {
             historico = "".concat(base).concat(termo, "=").concat(formatBRLNumber(valorFinal));
         }
         var categoriaFinal = categoriaEdit.trim() || null;
-        editarLancamento(id, __assign({ valor: valorFinal, status: statusEdit, historico: historico, data: dataLancEdit || null, projecaoEncerrada: projecaoEncerradaEdit }, (categoriaFinal ? { categoria: categoriaFinal } : {})));
+        var __orig = transacoes.find(function (x) { return x.id === id; });
+        var __tipoTroca = (__orig && (__orig.tipo === 'Fixa' || __orig.tipo === 'Variável') && (tipoEdit === 'Fixa' || tipoEdit === 'Variável') && tipoEdit !== __orig.tipo) ? tipoEdit : null;
+        editarLancamento(id, __assign(__assign({ valor: valorFinal, status: statusEdit, historico: historico, data: dataLancEdit || null, projecaoEncerrada: (__tipoTroca === 'Variável' ? false : projecaoEncerradaEdit) }, (__tipoTroca ? { tipo: __tipoTroca } : {})), (categoriaFinal ? { categoria: categoriaFinal } : {})));
         setEditandoId(null);
     }
     var inputStyle = {
@@ -15829,10 +15833,12 @@ function Lancamentos(props) {
     };
     var inputForm = __assign(__assign({}, inputStyle), { width: '100%', minWidth: 0, boxSizing: 'border-box', height: 39 });
     var itemEmEdicao=transacoes.find(function(t){return t.id===editandoId;});
-    var controleRecorrencia=itemEmEdicao&&itemEmEdicao.tipo==='Fixa'?React.createElement('label',{'data-export-ignore':true,style:{gridColumn:'1 / -1',display:'flex',gap:8,alignItems:'flex-start',padding:10,border:'1px solid '+COLORS.line,borderRadius:8,fontSize:12}},React.createElement('input',{type:'checkbox',checked:projecaoEncerradaEdit,onChange:function(e){setProjecaoEncerradaEdit(e.target.checked);}}),React.createElement('span',null,'Encerrar repetição na projeção após '+TDBFinance.monthShort(itemEmEdicao.mes)+'.',' Lançamentos já preenchidos continuam considerados. Salve para aplicar.')):null;
+    var __tipoEfetivo=itemEmEdicao?((itemEmEdicao.tipo==='Fixa'||itemEmEdicao.tipo==='Variável')?(tipoEdit||itemEmEdicao.tipo):itemEmEdicao.tipo):null;
+    var controleRecorrencia=itemEmEdicao&&__tipoEfetivo==='Fixa'?React.createElement('label',{'data-export-ignore':true,style:{gridColumn:'1 / -1',display:'flex',gap:8,alignItems:'flex-start',padding:10,border:'1px solid '+COLORS.line,borderRadius:8,fontSize:12}},React.createElement('input',{type:'checkbox',checked:projecaoEncerradaEdit,onChange:function(e){setProjecaoEncerradaEdit(e.target.checked);}}),React.createElement('span',null,'Encerrar repetição na projeção após '+TDBFinance.monthShort(itemEmEdicao.mes)+'.',' Lançamentos já preenchidos continuam considerados. Salve para aplicar.')):null;
     return (React.createElement("div", { className: "export-pagina-lancamentos", style: { display: 'grid', gap: 22 } }, editandoId && React.createElement(TDBMobileEditSheet, { titulo: "Editar lançamento", subtitulo: "As alterações só são gravadas ao tocar em Salvar.", onSalvar: function () { return salvarEdicao(editandoId); }, onCancelar: cancelarEdicao }, controleRecorrencia,
         React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 } },
             React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "CATEGORIA"), React.createElement("input", { value: categoriaEdit, onChange: function (e) { return setCategoriaEdit(e.target.value); }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
+            (itemEmEdicao && (itemEmEdicao.tipo === 'Fixa' || itemEmEdicao.tipo === 'Variável')) ? React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "TIPO"), React.createElement("select", { 'data-tdb-tipo-edit': '1', value: (tipoEdit || itemEmEdicao.tipo), onChange: function (e) { return setTipoEdit(e.target.value); }, style: __assign(__assign({}, inputStyle), { width: '100%' }) }, React.createElement("option", { value: "Fixa" }, "Fixa"), React.createElement("option", { value: "Variável" }, "Vari\u00E1vel"))) : null,
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "VALOR"), React.createElement("input", { value: valorEdit, onChange: function (e) { return setValorEdit(e.target.value); }, onBlur: function () { if (valorEdit && /[\\+\\-\\*\\/]/.test(valorEdit)) setContaDigitada(true); onBlurCalc(valorEdit, setValorEdit); }, inputMode: "decimal", className: "mono", placeholder: "0,00", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "STATUS"), React.createElement("select", { value: statusEdit, onChange: function (e) { return setStatusEdit(e.target.value); }, style: __assign(__assign({}, inputStyle), { width: '100%' }) }, React.createElement("option", null, "Pago"), React.createElement("option", null, "Pendente"))),
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "DATA"), React.createElement("input", { type: "date", value: dataLancEdit, onChange: function (e) { return setDataLancEdit(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) {} }, style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
@@ -15907,10 +15913,10 @@ function Lancamentos(props) {
                         salvarEdicao(t.id);
                     if (e.key === 'Escape')
                         cancelarEdicao();
-                }, placeholder: "extrato da conta (pode apagar)", style: __assign(__assign({}, inputStyle), { fontSize: 12, padding: '3px 6px', fontFamily: 'monospace', width: 200 }) }), React.createElement("button", { type: "button", onClick: function () { return setHistoricoEdit(''); }, title: "Apagar hist\u00F3rico", style: { background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.6 } }, React.createElement(X, { size: 13, color: COLORS.red }))))) : t.historico && (React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontFamily: 'monospace', marginTop: 2 } }, t.historico))), React.createElement("span", { className: "busca-liquid-glass", style: {
+                }, placeholder: "extrato da conta (pode apagar)", style: __assign(__assign({}, inputStyle), { fontSize: 12, padding: '3px 6px', fontFamily: 'monospace', width: 200 }) }), React.createElement("button", { type: "button", onClick: function () { return setHistoricoEdit(''); }, title: "Apagar hist\u00F3rico", style: { background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.6 } }, React.createElement(X, { size: 13, color: COLORS.red }))))) : t.historico && (React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontFamily: 'monospace', marginTop: 2 } }, t.historico))), ((emEdicao && (t.tipo === 'Fixa' || t.tipo === 'Variável')) ? React.createElement("select", { 'data-tdb-tipo-edit': '1', value: (tipoEdit || t.tipo), onChange: function (e) { return setTipoEdit(e.target.value); }, onKeyDown: function (e) { if (e.key === 'Enter') salvarEdicao(t.id); if (e.key === 'Escape') cancelarEdicao(); }, title: "Trocar entre Fixa e Vari\u00E1vel", style: __assign(__assign({}, inputStyle), { padding: '4px 6px', fontSize: 11.5, fontWeight: 700, justifySelf: 'start', cursor: 'pointer', color: TIPO_COR[(tipoEdit || t.tipo)] }) }, React.createElement("option", { value: "Fixa" }, "Fixa"), React.createElement("option", { value: "Variável" }, "Vari\u00E1vel")) : React.createElement("span", { className: "busca-liquid-glass", style: {
                     fontSize: 11, fontWeight: 700, letterSpacing: '0.03em', color: TIPO_COR[t.tipo],
                     padding: '3px 8px', borderRadius: 20, textTransform: 'uppercase', justifySelf: 'start',
-                } }, t.tipo), (emEdicao ? React.createElement("input", { type: "date", value: dataLancEdit, onChange: function (e) { return setDataLancEdit(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, onKeyDown: function (e) { if (e.key === 'Enter') salvarEdicao(t.id); if (e.key === 'Escape') cancelarEdicao(); }, style: __assign(__assign({}, inputStyle), { padding: '5px 8px', fontSize: 13.5, width: 124, cursor: 'pointer' }) }) : React.createElement("span", { className: "mono", style: { fontSize: 13.5, fontWeight: 600, color: COLORS.inkSoft, whiteSpace: 'nowrap' } }, formatarData(t.data))), emEdicao ? (React.createElement("select", { value: statusEdit, onChange: function (e) { return setStatusEdit(e.target.value); }, onKeyDown: function (e) {
+                } }, t.tipo)), (emEdicao ? React.createElement("input", { type: "date", value: dataLancEdit, onChange: function (e) { return setDataLancEdit(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, onKeyDown: function (e) { if (e.key === 'Enter') salvarEdicao(t.id); if (e.key === 'Escape') cancelarEdicao(); }, style: __assign(__assign({}, inputStyle), { padding: '5px 8px', fontSize: 13.5, width: 124, cursor: 'pointer' }) }) : React.createElement("span", { className: "mono", style: { fontSize: 13.5, fontWeight: 600, color: COLORS.inkSoft, whiteSpace: 'nowrap' } }, formatarData(t.data))), emEdicao ? (React.createElement("select", { value: statusEdit, onChange: function (e) { return setStatusEdit(e.target.value); }, onKeyDown: function (e) {
                     if (e.key === 'Enter')
                         salvarEdicao(t.id);
                     if (e.key === 'Escape')
