@@ -9,7 +9,8 @@
   "display": "standalone",
   "orientation": "any",
   "background_color": "#FFFDF8",
-  "theme_color": "#651B58",
+  "theme_color": "#EAF4F2",
+  "display_override": ["window-controls-overlay"],
   "categories": [
     "finance",
     "business"
