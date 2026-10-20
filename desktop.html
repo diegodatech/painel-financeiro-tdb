@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261019-tdb-v1-14";
+    window.__TDB_BUILD = "tdb-20261019-tdb-v1-15";
   </script>
-  <script src="./config.js?build=tdb-20261019-tdb-v1-14"></script>
+  <script src="./config.js?build=tdb-20261019-tdb-v1-15"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1541,10 +1541,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261019-tdb-v1-14"></script>
+  <script src="./sync.js?build=tdb-20261019-tdb-v1-15"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261019-tdb-v1-14-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261019-tdb-v1-15-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -5292,6 +5292,8 @@ function Recibos(_a) {
     var _f = useState({}), criancasExpandidas = _f[0], setCriancasExpandidas = _f[1];
     var _g = useState({}), empresasSelecionadas = _g[0], setEmpresasSelecionadas = _g[1];
     var _h = useState(false), revisandoTitulo = _h[0], setRevisandoTitulo = _h[1];
+    var _rn = useState(null), renomeandoAba = _rn[0], setRenomeandoAba = _rn[1];
+    var ultimoCliqueAba = useRef({ k: null, t: 0 });
     useEffect(function () {
         (function () { return __awaiter(_this, void 0, void 0, function () {
             var r_1, carregado, faltouAlgo, mesclado, _i, _a, chave, primeiraComValor2, e_2;
@@ -5375,11 +5377,51 @@ function Recibos(_a) {
     // Recibos criados pelo botão "Adicionar" (chaves que não vêm do modelo original).
     function rotuloRecibo(k) {
         var d = dados[k];
-        if (SEED_RECIBOS[k]) return (d && d.label) || SEED_RECIBOS[k].label;
-        var t = String((d && d.titulo) || '').split('\n')[0].replace(/^\s*RECIBO\s+/i, '').trim();
-        return t || (d && d.label) || 'Novo recibo';
+        var apelido = d && typeof d.rotuloAba === 'string' ? d.rotuloAba.trim() : '';
+        if (apelido) return apelido.toLocaleUpperCase('pt-BR');
+        var base;
+        if (SEED_RECIBOS[k]) base = (d && d.label) || SEED_RECIBOS[k].label;
+        else {
+            var t = String((d && d.titulo) || '').split('\n')[0].replace(/^\s*RECIBO\s+/i, '').trim();
+            base = t || (d && d.label) || 'Novo recibo';
+        }
+        return String(base).toLocaleUpperCase('pt-BR');
     }
-    var categoriasRecibos = CATEGORIAS_RECIBOS.concat(Object.keys(dados).filter(function (k) { return !SEED_RECIBOS[k] && dados[k] && Array.isArray(dados[k].rows); }).map(function (k) { return { key: k, label: rotuloRecibo(k) }; }));
+    function salvarRotuloAba(k, texto) {
+        var _a;
+        var base = dados[k] || SEED_RECIBOS[k];
+        if (!base) return;
+        var t = String(texto || '').replace(/\s+/g, ' ').trim().toLocaleUpperCase('pt-BR');
+        var atual = typeof base.rotuloAba === 'string' ? base.rotuloAba : '';
+        if (t === atual) return;
+        var novo = __assign({}, base);
+        if (t) novo.rotuloAba = t; else delete novo.rotuloAba;
+        salvar(__assign(__assign({}, dados), (_a = {}, _a[k] = novo, _a)));
+    }
+    function clicarAbaRecibo(k) {
+        var agora = Date.now();
+        var u = ultimoCliqueAba.current;
+        setSubTab(k);
+        if (u.k === k && agora - u.t < 450) { ultimoCliqueAba.current = { k: null, t: 0 }; setRenomeandoAba(k); return; }
+        ultimoCliqueAba.current = { k: k, t: agora };
+    }
+    function editorAbaRecibo(c) {
+        return React.createElement("input", { key: c.key, "data-rec-aba-input": "1", autoFocus: true, defaultValue: c.label, maxLength: 40,
+            title: "Enter salva, Esc cancela. Deixe vazio para voltar ao nome padrão.",
+            onFocus: function (e) { e.target.select(); },
+            onKeyDown: function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+                else if (e.key === 'Escape') { e.target.setAttribute('data-cancelar', '1'); e.target.blur(); }
+            },
+            onBlur: function (e) {
+                var cancelar = e.target.getAttribute('data-cancelar') === '1';
+                var v = e.target.value;
+                setRenomeandoAba(null);
+                if (!cancelar) salvarRotuloAba(c.key, v);
+            },
+            style: { padding: '8px 14px', borderRadius: 8, border: "2px solid ".concat(COLORS.inkButton), fontWeight: 700, fontSize: 13.5, textTransform: 'uppercase', background: COLORS.paperCard, color: COLORS.ink, outline: 'none', width: Math.max(130, Math.min(320, String(c.label).length * 11 + 40)) } });
+    }
+    var categoriasRecibos = CATEGORIAS_RECIBOS.map(function (c) { return { key: c.key, label: rotuloRecibo(c.key) }; }).concat(Object.keys(dados).filter(function (k) { return !SEED_RECIBOS[k] && dados[k] && Array.isArray(dados[k].rows); }).map(function (k) { return { key: k, label: rotuloRecibo(k) }; }));
     function adicionarRecibo() {
         var _a;
         var modelo = dados[subTab] || r;
@@ -5839,7 +5881,7 @@ function Recibos(_a) {
             ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$'], ['valor2', 'Valor R$']]
             : [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$']];
     var colsPrev = (r.temSegundaColuna && !tdbUsaSegundaColuna(r)) ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Auxílio R$']] : (r.temSegundaColuna ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Auxílio R$'], ['valor2', 'Compl. R$']] : cols);
-    return (React.createElement("div", { className: "recibos-view", style: { display: 'grid', gap: 20 } }, React.createElement(Toast, { mensagem: toastMsg }), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, categoriasRecibos.map(function (c) { return (React.createElement("button", { key: c.key, className: "subtab-btn selection-card ".concat(subTab === c.key ? 'subtab-ativa selection-card-ativa' : ''), onClick: function () { return setSubTab(c.key); }, style: {
+    return (React.createElement("div", { className: "recibos-view", style: { display: 'grid', gap: 20 } }, React.createElement(Toast, { mensagem: toastMsg }), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, categoriasRecibos.map(function (c) { if (renomeandoAba === c.key) return editorAbaRecibo(c); return (React.createElement("button", { key: c.key, "data-rec-aba": c.key, title: "Dois cliques para renomear a aba", className: "subtab-btn selection-card ".concat(subTab === c.key ? 'subtab-ativa selection-card-ativa' : ''), onClick: function () { return clicarAbaRecibo(c.key); }, style: {
             padding: '9px 16px', borderRadius: 8, border: "1px solid ".concat(COLORS.line), cursor: 'pointer',
             fontWeight: 700, fontSize: 13.5,
             background: subTab === c.key ? COLORS.inkButton : COLORS.paperCard,
@@ -5923,7 +5965,7 @@ function Recibos(_a) {
         } }, "Gerar PDF s\u00F3 desta empresa"), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.4 } }, "A assinatura da diretora j\u00E1 sai como imagem de verdade no PDF, em cima da linha.")), React.createElement("div", { className: "recibo-preview", style: {
             background: '#FFFFFF', borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
             border: '3px solid #1C9E8F', padding: 3,
-        } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } }, React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain' } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), recCnpjOk(r.cnpj) ? React.createElement("div", { "data-rec-cnpj-prev": "1", style: { fontSize: 12.5, marginTop: 6, color: '#333' } }, "CNPJ: " + recCnpjFmt(r.cnpj)) : null, React.createElement("div", { style: { fontSize: r.modeloSemValores ? 14.5 : 13.5, marginTop: r.modeloSemValores ? 16 : 10, color: '#222', textDecoration: r.modeloSemValores ? 'underline' : 'none' } }, recFraseTexto_(r).split('\n').reduce(function (acc, ln, i) { if (i) acc.push(React.createElement("br", { key: 'br' + i })); acc.push(ln); return acc; }, []))), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, colsPrev.map(function (_a, i) {
+        } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'nowrap' } }, React.createElement("div", { style: { minWidth: 0 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain', flexShrink: 0 } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), recCnpjOk(r.cnpj) ? React.createElement("div", { "data-rec-cnpj-prev": "1", style: { fontSize: 12.5, marginTop: 6, color: '#333' } }, "CNPJ: " + recCnpjFmt(r.cnpj)) : null, React.createElement("div", { style: { fontSize: r.modeloSemValores ? 14.5 : 13.5, marginTop: r.modeloSemValores ? 16 : 10, color: '#222', textDecoration: r.modeloSemValores ? 'underline' : 'none' } }, recFraseTexto_(r).split('\n').reduce(function (acc, ln, i) { if (i) acc.push(React.createElement("br", { key: 'br' + i })); acc.push(ln); return acc; }, []))), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, colsPrev.map(function (_a, i) {
         var campo = _a[0], label = _a[1];
         return (React.createElement("th", { key: campo + i, style: { background: COLORS.gold, color: '#FFF', padding: '7px 6px', fontWeight: 700, fontSize: 12 } }, label));
     }))), React.createElement("tbody", null, r.rows.map(function (row, idx) { return (React.createElement("tr", { key: idx }, colsPrev.map(function (_a, ci) {
