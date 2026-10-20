@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261019-tdb-v1-15";
+    window.__TDB_BUILD = "tdb-20261020-tdb-v1-16";
   </script>
-  <script src="./config.js?build=tdb-20261019-tdb-v1-15"></script>
+  <script src="./config.js?build=tdb-20261020-tdb-v1-16"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1541,10 +1541,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261019-tdb-v1-15"></script>
+  <script src="./sync.js?build=tdb-20261020-tdb-v1-16"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261019-tdb-v1-15-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261020-tdb-v1-16-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -3782,6 +3782,9 @@ function TelaBloqueio(_a) {
         }
     }, []);
     function apertarDigito(d) {
+        var agoraPin = Date.now(), ultPin = window.__tdbPinUlt;
+        if (ultPin && ultPin.d === d && agoraPin - ultPin.t < 120) return;
+        window.__tdbPinUlt = { d: d, t: agoraPin };
         setDigitado(function (atual) {
             if (atual.length >= limitePin)
                 return atual;
@@ -3884,7 +3887,7 @@ function TelaBloqueio(_a) {
             border: '2.5px solid ' + (digitado.length > i ? '#18B9AD' : 'rgba(76,142,139,0.52)'),
             background: digitado.length > i ? '#18B9AD' : 'rgba(255,255,255,0.48)',
             boxShadow: digitado.length > i ? '0 4px 14px rgba(24,185,173,0.28), inset 0 1px 0 rgba(255,255,255,0.55)' : 'none'
-        } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 700, lineHeight: 1.35 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, auto)', gap: 16, justifyItems: 'center' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-tecla", onPointerDown: function (e) { if (e.pointerType === 'touch' || e.pointerType === 'pen') { e.preventDefault(); apertarDigito(d); } }, onClick: function (e) { if (e.detail === 0 || !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) apertarDigito(d); } }, d)); }), ((modo === 'entrar' && bioAtiva) ? React.createElement("button", { key: 'bio', type: "button", className: "pin-tecla pin-bio", title: "Entrar com biometria", "aria-label": "Entrar com biometria", onClick: function () { tentarBio(false); }, style: { display: 'flex', alignItems: 'center', justifyContent: 'center' } }, React.createElement(TDBIconeBio, null)) : React.createElement("div", { className: "pin-tecla-placeholder" })), React.createElement("button", { className: "pin-tecla", onPointerDown: function (e) { if (e.pointerType === 'touch' || e.pointerType === 'pen') { e.preventDefault(); apertarDigito('0'); } }, onClick: function (e) { if (e.detail === 0 || !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) apertarDigito('0'); } }, "0"), React.createElement("button", { className: "pin-tecla pin-apagar", onPointerDown: function (e) { if (e.pointerType === 'touch' || e.pointerType === 'pen') { e.preventDefault(); apagar(); } }, onClick: function (e) { if (e.detail === 0 || !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) apagar(); }, title: "Apagar" }, "⌫")), modo === 'escolher' && (React.createElement("button", { onClick: onDesbloquear, style: { background: 'none', border: 'none', color: '#8A5C81', fontSize: 12.5, textDecoration: 'underline', cursor: 'pointer', marginTop: 2 } }, "Pular, não quero usar PIN")), modo === 'entrar' && tentativasErradas >= 3 && (React.createElement("button", { onClick: function () {
+        } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 700, lineHeight: 1.35 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, auto)', gap: 16, justifyItems: 'center' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-tecla", onPointerDown: function (e) { if (e.pointerType === 'touch' || e.pointerType === 'pen') { e.preventDefault(); window.__tdbPinTs = Date.now(); apertarDigito(d); } }, onClick: function (e) { if (e.detail !== 0 && Date.now() - (window.__tdbPinTs || 0) < 700) return; if (e.detail === 0 || !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) apertarDigito(d); } }, d)); }), ((modo === 'entrar' && bioAtiva) ? React.createElement("button", { key: 'bio', type: "button", className: "pin-tecla pin-bio", title: "Entrar com biometria", "aria-label": "Entrar com biometria", onClick: function () { tentarBio(false); }, style: { display: 'flex', alignItems: 'center', justifyContent: 'center' } }, React.createElement(TDBIconeBio, null)) : React.createElement("div", { className: "pin-tecla-placeholder" })), React.createElement("button", { className: "pin-tecla", onPointerDown: function (e) { if (e.pointerType === 'touch' || e.pointerType === 'pen') { e.preventDefault(); window.__tdbPinTs = Date.now(); apertarDigito('0'); } }, onClick: function (e) { if (e.detail !== 0 && Date.now() - (window.__tdbPinTs || 0) < 700) return; if (e.detail === 0 || !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) apertarDigito('0'); } }, "0"), React.createElement("button", { className: "pin-tecla pin-apagar", onPointerDown: function (e) { if (e.pointerType === 'touch' || e.pointerType === 'pen') { e.preventDefault(); window.__tdbPinTs = Date.now(); apagar(); } }, onClick: function (e) { if (e.detail !== 0 && Date.now() - (window.__tdbPinTs || 0) < 700) return; if (e.detail === 0 || !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) apagar(); }, title: "Apagar" }, "⌫")), modo === 'escolher' && (React.createElement("button", { onClick: onDesbloquear, style: { background: 'none', border: 'none', color: '#8A5C81', fontSize: 12.5, textDecoration: 'underline', cursor: 'pointer', marginTop: 2 } }, "Pular, não quero usar PIN")), modo === 'entrar' && tentativasErradas >= 3 && (React.createElement("button", { onClick: function () {
             if (window.confirm('Isso remove a proteção por PIN completamente. Confirma?'))
                 onRemoverPin();
         }, style: {
