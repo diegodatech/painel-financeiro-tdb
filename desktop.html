@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261020-tdb-v1-16";
+    window.__TDB_BUILD = "tdb-20261020-tdb-v1-17";
   </script>
-  <script src="./config.js?build=tdb-20261020-tdb-v1-16"></script>
+  <script src="./config.js?build=tdb-20261020-tdb-v1-17"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1541,10 +1541,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261020-tdb-v1-16"></script>
+  <script src="./sync.js?build=tdb-20261020-tdb-v1-17"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261020-tdb-v1-16-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261020-tdb-v1-17-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -17983,6 +17983,18 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-num] body .kpi-card:not
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-num] body .painel-main :is([style*="IBM Plex Mono"],[style*="monospace"]) {font-weight:700!important;}
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body:not(.dark-mode) .painel-main table tbody tr:nth-child(even) {background:rgba(23,103,207,.06);}
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .painel-main table tbody tr:nth-child(even) {background:rgba(255,255,255,.08);}
+/* Festas TDB — tablet: linha em edição com coluna DATA mais larga (o calendário não cobre o ano) */
+@media (min-width:761px) and (max-width:1366px){
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x) table.festas-tdb-tabela:has(tbody input[type=date]) col:nth-child(1){width:20%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x) table.festas-tdb-tabela:has(tbody input[type=date]) col:nth-child(2){width:8%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x) table.festas-tdb-tabela:has(tbody input[type=date]) col:nth-child(3){width:12%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x) table.festas-tdb-tabela:has(tbody input[type=date]) col:nth-child(4){width:11%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x) table.festas-tdb-tabela:has(tbody input[type=date]) col:nth-child(5){width:20%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x) table.festas-tdb-tabela:has(tbody input[type=date]) col:nth-child(6){width:13%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x) table.festas-tdb-tabela:has(tbody input[type=date]) col:nth-child(7){width:16%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x) table.festas-tdb-tabela:has(tbody input[type=date]) td input[type=date]{padding-left:6px!important;padding-right:2px!important;font-size:11px!important}
+}
+
 /* ===== TDB v1.11 — estilo Nítido (usa as mesmas bases do Modo trabalho: tamanho do texto, números e listras) ===== */
 html[data-tdb-aurora][data-aurora-nit]:not(.dark-mode) {--c-paperCard:#fff;--aurora-layers:none;--nit-bw:1.5px;--aurora-edge:#8b98a5;--aurora-shadow:none;--aurora-blur:0px;--aurora-sat:1;--c-ink:#0a1420;--c-inkSoft:#33414d;--c-line:#aab5bf;--c-lineSoft:#e3e8ec;--c-green:#0f55b5;--aurora-num:#0f55b5;}
 html[data-tdb-aurora][data-aurora-nit][data-aurora-nit-borda="suave"]:not(.dark-mode) {--nit-bw:1px;--aurora-edge:#c3ccd4;--c-line:#d3dae0;}
