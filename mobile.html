@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261019-tdb-v1-13";
+    window.__TDB_BUILD = "tdb-20261019-tdb-v1-14";
   </script>
-  <script src="./config.js?build=tdb-20261019-tdb-v1-13"></script>
+  <script src="./config.js?build=tdb-20261019-tdb-v1-14"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1998,10 +1998,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261019-tdb-v1-13"></script>
+  <script src="./sync.js?build=tdb-20261019-tdb-v1-14"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261019-tdb-v1-13-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261019-tdb-v1-14-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -5353,8 +5353,15 @@ var CATEGORIAS_COMPRAS = [
     { key: 'limpeza', label: 'Limpeza', emoji: '🧴', unidades: ['UN', 'KG', 'PCT', 'L', 'FD'], temEstoque: false, categorias: [], modeloPdf: 'limpeza' },
 ];
 var BANCO_PADRAO_RECIBOS = ['756 - BANCO DO SICOOB', 'AGÊNCIA: 3039', 'CONTA CORRENTE: 88.220-8', 'NOME:JESSICKA E DIEGO ESCOLA INFANTIL LTDA'];
+function recConvenioPadrao_(r) {
+    var m = String((r && r.data) || '').match(/de\s+([A-Za-zÀ-ÿçÇ]+)\s+de\s+(\d{4})/);
+    var mes, ano;
+    if (m) { mes = m[1].toUpperCase(); ano = m[2]; } else { var h = new Date(); mes = MESES[h.getMonth()].toUpperCase(); ano = String(h.getFullYear()); }
+    return 'CONVÊNIO REFERENTE A ' + mes + ' DE ' + ano + '.';
+}
 function recFraseTexto_(r) {
     if (r && typeof r.subtitulo === 'string') return r.subtitulo;
+    if (r && r.modeloSemValores) return recConvenioPadrao_(r);
     var v = recValorFrase_(r);
     return 'LISTA DE CRIANÇAS QUE RECEBEM AUXÍLIO\n' + (v ? ('CRECHE NO VALOR DE R$ ' + v) : 'CRECHE');
 }
@@ -5863,6 +5870,15 @@ function Recibos(_a) {
     if (!r) {
         return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Modelo de recibo n\u00E3o encontrado.");
     }
+    function criarReciboSemValores() {
+        var _a;
+        var chave = 'novo_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+        var novo = { label: 'Convênio sem valores', titulo: '', cnpj: '', modeloSemValores: true, semColunaValor: true, semDadosBancarios: true, valorPadrao: '', banco: [], data: dataDeHojeFormatada(), rows: [{ pai: '', crianca: '', nascimento: '', valor: '', valor2: '' }] };
+        novo.subtitulo = recConvenioPadrao_(novo);
+        salvar(__assign(__assign({}, dados), (_a = {}, _a[chave] = novo, _a)));
+        setSubTab(chave);
+        mostrarToast('✓ Novo recibo "Convênio sem valores" criado. Escreva o título da empresa e as crianças.');
+    }
     function atualizarCampo(campo, valor) {
         var _a, _b;
         salvar(__assign(__assign({}, dados), (_a = {}, _a[subTab] = __assign(__assign({}, r), (_b = {}, _b[campo] = valor, _b)), _a)));
@@ -6066,12 +6082,20 @@ function Recibos(_a) {
                 y += 16;
             }
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(12.2);
+            doc.setFontSize(rEmp.modeloSemValores ? 13.6 : 12.2);
             doc.setTextColor(38, 43, 51);
             var subtitulo = recFraseTexto_(rEmp);
             var linhasSub = String(subtitulo).split('\n');
-            linhasSub.forEach(function (linhaTxt, idx) { centeredText(linhaTxt, W / 2, y + idx * 17); });
-            y += linhasSub.length * 17 + 16;
+            linhasSub.forEach(function (linhaTxt, idx) {
+                centeredText(linhaTxt, W / 2, y + idx * 17);
+                if (rEmp.modeloSemValores && String(linhaTxt).trim()) {
+                    var wTxt = doc.getTextWidth(linhaTxt);
+                    doc.setDrawColor(38, 43, 51);
+                    doc.setLineWidth(0.7);
+                    doc.line(W / 2 - wTxt / 2, y + idx * 17 + 2.4, W / 2 + wTxt / 2, y + idx * 17 + 2.4);
+                }
+            });
+            y += linhasSub.length * 17 + (rEmp.modeloSemValores ? 30 : 16);
             var colunas = rEmp.semColunaValor
                 ? [{ t: 'Nome Mãe ou Pai', w: 182 }, { t: 'Nome da Criança', w: 190 }, { t: 'Nascimento', w: 95 }]
                 : temSeg
@@ -6081,7 +6105,9 @@ function Recibos(_a) {
             // A tabela ocupa sempre a mesma largura (cabe entre as bordas depois da ampliação de 10%).
             (function () { var f = 470 / larguraTabela; colunas.forEach(function (c) { c.w = c.w * f; }); larguraTabela = 470; })();
             var xTabela = (W - larguraTabela) / 2;
-            roundedFill(xTabela - 6, y - 8, larguraTabela + 12, 42 + Math.max(1, (rEmp.rows || []).length) * 30, 18, [252, 253, 255]);
+            var nLinTab = Math.max(1, (rEmp.rows || []).length);
+            var altLinhaTab = rEmp.modeloSemValores ? (nLinTab <= 5 ? 44 : (nLinTab <= 8 ? 36 : 28)) : 28;
+            roundedFill(xTabela - 6, y - 8, larguraTabela + 12, 42 + nLinTab * (altLinhaTab + 2), 18, [252, 253, 255]);
             var x = xTabela;
             var altCab = 28;
             doc.setFont('helvetica', 'bold');
@@ -6104,7 +6130,7 @@ function Recibos(_a) {
                     : temSeg
                         ? [row.pai, row.crianca, row.nascimento, row.valor, row.valor2]
                         : [row.pai, row.crianca, row.nascimento, row.valor];
-                var alturaLinha = 28;
+                var alturaLinha = altLinhaTab;
                 x = xTabela;
                 if (idx % 2 === 0) {
                     doc.setFillColor(251, 252, 254);
@@ -6115,7 +6141,7 @@ function Recibos(_a) {
                     doc.roundedRect(x, y, c.w, alturaLinha, 4, 4);
                     doc.setTextColor(24, 28, 38);
                     var texto = doc.splitTextToSize(String(valores[i] || '—'), c.w - 10);
-                    doc.text(texto, x + c.w / 2, y + 17, { align: 'center', maxWidth: c.w - 10 });
+                    doc.text(texto, x + c.w / 2, (alturaLinha > 28 ? (y + alturaLinha / 2 - (texto.length - 1) * 5.75 + 3.4) : y + 17), { align: 'center', maxWidth: c.w - 10 });
                     x += c.w;
                 });
                 y += alturaLinha + 2;
@@ -6263,7 +6289,10 @@ function Recibos(_a) {
         } }, c.label)); })), React.createElement("div", { className: "recibos-toolbar-acoes", style: { display: 'flex', gap: 8 } }, React.createElement("button", { type: 'button', onClick: adicionarRecibo, title: "Cria um recibo igual aos outros, com o nome da empresa e das crianças em branco", style: {
             background: COLORS.gold, color: '#FFF', border: 'none', borderRadius: 8, padding: '10px 16px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-        } }, React.createElement(Plus, { size: 14 }), " Adicionar"), React.createElement("button", { type: 'button', onClick: excluirReciboSelecionado, title: "Move este recibo adicionado para a lixeira (pede confirmação). Os recibos originais não podem ser excluídos.", style: {
+        } }, React.createElement(Plus, { size: 14 }), " Adicionar"), React.createElement("button", { type: 'button', onClick: criarReciboSemValores, "data-rec-sem-valores": "1", title: "Cria um recibo sem valores: só mãe/pai, criança e nascimento, com a linha do convênio sublinhada", style: {
+            background: 'transparent', color: '#A23F84', border: '1.5px solid #C15CA0', borderRadius: 8, padding: '9px 14px',
+            fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+        } }, React.createElement(Plus, { size: 14 }), " Conv\u00EAnio sem valores"), React.createElement("button", { type: 'button', onClick: excluirReciboSelecionado, title: "Move este recibo adicionado para a lixeira (pede confirmação). Os recibos originais não podem ser excluídos.", style: {
             opacity: (subTabAdicionado ? 1 : .45), background: 'transparent', color: COLORS.red, border: '1.5px solid ' + COLORS.red, borderRadius: 8, padding: '9px 14px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
         } }, React.createElement(Trash2, { size: 14 }), " Excluir"), React.createElement("button", { type: 'button', onClick: excluirTodosRecibosAdicionados, title: "Move todos os recibos adicionados para a lixeira (pede confirmação). Os originais não são afetados.", style: {
@@ -6311,10 +6340,10 @@ function Recibos(_a) {
             color: COLORS.ink, border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 10px',
             cursor: revisandoTitulo ? 'default' : 'pointer', fontWeight: 700, fontSize: 12.5, alignSelf: 'flex-start',
             opacity: revisandoTitulo ? 0.7 : 1,
-        } }, React.createElement(IconeGemini, { size: 13 }), " ", revisandoTitulo ? 'Revisando...' : 'Revisar texto com IA'))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "CNPJ DA EMPRESA (sai no recibo, abaixo do t\u00EDtulo)"), React.createElement("input", { "data-rec-cnpj": "1", value: r.cnpj || '', inputMode: 'numeric', placeholder: "00.000.000/0000-00", onChange: function (e) { return atualizarCampo('cnpj', recCnpjFmt(e.target.value)); }, style: { border: "1px solid ".concat((r.cnpj && !recCnpjOk(r.cnpj)) ? COLORS.red : COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), (r.cnpj && !recCnpjOk(r.cnpj)) ? React.createElement("div", { "data-rec-cnpj-aviso": "1", style: { fontSize: 11, color: COLORS.red } }, "CNPJ inv\u00E1lido \u2014 confira os n\u00FAmeros (n\u00E3o sai no recibo at\u00E9 corrigir)") : null), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "VALOR PADR\u00C3O DAS CRIAN\u00C7AS (deixe vazio se cada linha tem um valor diferente)"), React.createElement("input", { value: r.valorPadrao, onChange: function (e) { return atualizarValorPadrao(e.target.value); }, placeholder: "Ex: 458,07", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft } }, "Muda o valor de cada crian\u00E7a (coluna de valor). Ao alterar, atualiza as crian\u00E7as que ainda usam o valor padr\u00E3o anterior; valores personalizados s\u00E3o mantidos.")), React.createElement("div", { "data-rec-frase": "1", style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "FRASE DO RECIBO (abaixo do t\u00EDtulo) \u2014 texto e valor edit\u00E1veis"), React.createElement("textarea", { value: recFraseTexto_(r), rows: 2, onChange: function (e) { return atualizarCampo('subtitulo', e.target.value); }, placeholder: "LISTA DE CRIAN\u00C7AS QUE RECEBEM AUX\u00CDLIO\nCRECHE NO VALOR DE R$ 0,00", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical', lineHeight: 1.4 } }), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } }, React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, flex: 1, minWidth: 160 } }, "Use quebra de linha para a 2\u00AA linha. Mudar o valor aqui n\u00E3o muda o valor das crian\u00E7as."), (typeof r.subtitulo === 'string') && React.createElement("button", { type: "button", "data-rec-frase-restaurar": "1", onClick: function () { return atualizarCampo('subtitulo', undefined); }, style: { fontSize: 11.5, fontWeight: 700, color: COLORS.inkButton || '#1767cf', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' } }, "Restaurar frase padr\u00E3o"))), r.temSegundaColuna && (React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "VALOR PADR\u00C3O \u2014 2\u00AA COLUNA"), React.createElement("input", { value: r.valorPadrao2 || '', onChange: function (e) { return atualizarValorPadrao2(e.target.value); }, placeholder: "Ex: 23,67", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft } }, "Ao alterar, atualiza as crian\u00E7as que ainda usam o valor padr\u00E3o anterior. Valores personalizados s\u00E3o mantidos."))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DATA DO DOCUMENTO"), React.createElement("div", { style: { display: 'flex', gap: 6 } }, React.createElement("input", { value: r.data, onChange: function (e) { return atualizarCampo('data', e.target.value); }, placeholder: "01 de setembro de 2026", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', flex: 1 } }), React.createElement("button", { onClick: function () { return atualizarCampo('data', dataDeHojeFormatada()); }, title: "Preencher com a data de hoje", style: {
+        } }, React.createElement(IconeGemini, { size: 13 }), " ", revisandoTitulo ? 'Revisando...' : 'Revisar texto com IA'))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "CNPJ DA EMPRESA (sai no recibo, abaixo do t\u00EDtulo)"), React.createElement("input", { "data-rec-cnpj": "1", value: r.cnpj || '', inputMode: 'numeric', placeholder: "00.000.000/0000-00", onChange: function (e) { return atualizarCampo('cnpj', recCnpjFmt(e.target.value)); }, style: { border: "1px solid ".concat((r.cnpj && !recCnpjOk(r.cnpj)) ? COLORS.red : COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), (r.cnpj && !recCnpjOk(r.cnpj)) ? React.createElement("div", { "data-rec-cnpj-aviso": "1", style: { fontSize: 11, color: COLORS.red } }, "CNPJ inv\u00E1lido \u2014 confira os n\u00FAmeros (n\u00E3o sai no recibo at\u00E9 corrigir)") : null), r.modeloSemValores ? null : React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "VALOR PADR\u00C3O DAS CRIAN\u00C7AS (deixe vazio se cada linha tem um valor diferente)"), React.createElement("input", { value: r.valorPadrao, onChange: function (e) { return atualizarValorPadrao(e.target.value); }, placeholder: "Ex: 458,07", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft } }, "Muda o valor de cada crian\u00E7a (coluna de valor). Ao alterar, atualiza as crian\u00E7as que ainda usam o valor padr\u00E3o anterior; valores personalizados s\u00E3o mantidos.")), React.createElement("div", { "data-rec-frase": "1", style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, (r.modeloSemValores ? "LINHA DO CONV\u00CANIO (sai sublinhada) \u2014 texto livre" : "FRASE DO RECIBO (abaixo do t\u00EDtulo) \u2014 texto e valor edit\u00E1veis")), React.createElement("textarea", { value: recFraseTexto_(r), rows: 2, onChange: function (e) { return atualizarCampo('subtitulo', e.target.value); }, placeholder: "LISTA DE CRIAN\u00C7AS QUE RECEBEM AUX\u00CDLIO\nCRECHE NO VALOR DE R$ 0,00", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical', lineHeight: 1.4 } }), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } }, React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft, flex: 1, minWidth: 160 } }, (r.modeloSemValores ? "Troque o m\u00EAs, o ano ou qualquer palavra. Aparece sublinhada no recibo." : "Use quebra de linha para a 2\u00AA linha. Mudar o valor aqui n\u00E3o muda o valor das crian\u00E7as.")), (typeof r.subtitulo === 'string') && React.createElement("button", { type: "button", "data-rec-frase-restaurar": "1", onClick: function () { return atualizarCampo('subtitulo', undefined); }, style: { fontSize: 11.5, fontWeight: 700, color: COLORS.inkButton || '#1767cf', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' } }, "Restaurar frase padr\u00E3o"))), r.temSegundaColuna && (React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "VALOR PADR\u00C3O \u2014 2\u00AA COLUNA"), React.createElement("input", { value: r.valorPadrao2 || '', onChange: function (e) { return atualizarValorPadrao2(e.target.value); }, placeholder: "Ex: 23,67", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }), React.createElement("div", { style: { fontSize: 11, color: COLORS.inkSoft } }, "Ao alterar, atualiza as crian\u00E7as que ainda usam o valor padr\u00E3o anterior. Valores personalizados s\u00E3o mantidos."))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DATA DO DOCUMENTO"), React.createElement("div", { style: { display: 'flex', gap: 6 } }, React.createElement("input", { value: r.data, onChange: function (e) { return atualizarCampo('data', e.target.value); }, placeholder: "01 de setembro de 2026", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', flex: 1 } }), React.createElement("button", { onClick: function () { return atualizarCampo('data', dataDeHojeFormatada()); }, title: "Preencher com a data de hoje", style: {
             background: COLORS.goldSoft, color: COLORS.gold, border: 'none', borderRadius: 7, padding: '8px 12px',
             cursor: 'pointer', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
-        } }, "\uD83D\uDCC5 Hoje"))), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DADOS BANC\u00C1RIOS (uma linha cada)"), r.banco.map(function (linha, i) { return (React.createElement("input", { key: i, value: linha, onChange: function (e) { return atualizarBanco(i, e.target.value); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 10px', fontSize: 13, boxSizing: 'border-box' } })); })), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "CRIAN\u00C7AS / VALORES (", r.rows.length, ")"), React.createElement("button", { onClick: adicionarRow, style: {
+        } }, "\uD83D\uDCC5 Hoje"))), r.semDadosBancarios ? null : React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "DADOS BANC\u00C1RIOS (uma linha cada)"), r.banco.map(function (linha, i) { return (React.createElement("input", { key: i, value: linha, onChange: function (e) { return atualizarBanco(i, e.target.value); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '7px 10px', fontSize: 13, boxSizing: 'border-box' } })); })), React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, (r.modeloSemValores ? "CRIAN\u00C7AS (" : "CRIAN\u00C7AS / VALORES ("), r.rows.length, ")"), React.createElement("button", { onClick: adicionarRow, style: {
             background: COLORS.gold, color: '#FFF', border: 'none', borderRadius: 7, padding: '7px 12px',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 700,
         } }, React.createElement(Plus, { size: 13 }), " Adicionar crian\u00E7a")), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Clique numa crian\u00E7a pra abrir e editar os campos."), React.createElement("div", { style: { display: 'grid', gap: 6 } }, r.rows.map(function (row, idx) {
@@ -6336,13 +6365,13 @@ function Recibos(_a) {
         } }, "Gerar PDF s\u00F3 desta empresa"), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, lineHeight: 1.4 } }, "A assinatura da diretora j\u00E1 sai como imagem de verdade no PDF, em cima da linha.")), React.createElement("div", { className: "recibo-preview", style: {
             background: '#FFFFFF', borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
             border: '3px solid #1C9E8F', padding: 3,
-        } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } }, React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain' } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), recCnpjOk(r.cnpj) ? React.createElement("div", { "data-rec-cnpj-prev": "1", style: { fontSize: 12.5, marginTop: 6, color: '#333' } }, "CNPJ: " + recCnpjFmt(r.cnpj)) : null, React.createElement("div", { style: { fontSize: 13.5, marginTop: 10, color: '#222' } }, recFraseTexto_(r).split('\n').reduce(function (acc, ln, i) { if (i) acc.push(React.createElement("br", { key: 'br' + i })); acc.push(ln); return acc; }, []))), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, colsPrev.map(function (_a, i) {
+        } }, React.createElement("div", { style: { border: '2px solid #C15CA0' } }, React.createElement("div", { style: { padding: '24px 28px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' } }, React.createElement("div", null, React.createElement("div", { style: { fontWeight: 800, fontSize: 14.5, color: '#222' } }, "JESSICKA E DIEGO ESCOLA INFANTIL"), React.createElement("div", { style: { fontSize: 11.5, color: '#333', marginTop: 3, lineHeight: 1.5 } }, "CNPJ: 22.978.931/0001-00", React.createElement("br", null), "Rua: Amp\u00E9lio Carlotto, 380 \u2013 Aurora  Carlos Barbosa \u2013 RS", React.createElement("br", null), "Telefone: 54 3461.6393", React.createElement("br", null), "Email: escolatempodebrincarcb@gmail.com")), React.createElement("img", { src: LOGO_B64, alt: "logo", style: { height: 60, objectFit: 'contain' } })), React.createElement("div", { style: { textAlign: 'center', marginTop: 18 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 18, whiteSpace: 'pre-line', color: '#111' } }, r.titulo.toUpperCase()), recCnpjOk(r.cnpj) ? React.createElement("div", { "data-rec-cnpj-prev": "1", style: { fontSize: 12.5, marginTop: 6, color: '#333' } }, "CNPJ: " + recCnpjFmt(r.cnpj)) : null, React.createElement("div", { style: { fontSize: r.modeloSemValores ? 14.5 : 13.5, marginTop: r.modeloSemValores ? 16 : 10, color: '#222', textDecoration: r.modeloSemValores ? 'underline' : 'none' } }, recFraseTexto_(r).split('\n').reduce(function (acc, ln, i) { if (i) acc.push(React.createElement("br", { key: 'br' + i })); acc.push(ln); return acc; }, []))), React.createElement("div", { style: { padding: '18px 28px' } }, React.createElement("table", { style: { width: '100%', borderCollapse: 'collapse', fontSize: 12.5 } }, React.createElement("thead", null, React.createElement("tr", null, colsPrev.map(function (_a, i) {
         var campo = _a[0], label = _a[1];
         return (React.createElement("th", { key: campo + i, style: { background: COLORS.gold, color: '#FFF', padding: '7px 6px', fontWeight: 700, fontSize: 12 } }, label));
     }))), React.createElement("tbody", null, r.rows.map(function (row, idx) { return (React.createElement("tr", { key: idx }, colsPrev.map(function (_a, ci) {
         var campo = _a[0];
-        return (React.createElement("td", { key: campo + ci, style: { border: "1px solid ".concat(COLORS.line), padding: '8px 6px', textAlign: 'center', color: '#222' } }, row[campo] || '—'));
-    }))); })))), tdbTotalRecibo(r, true), React.createElement("div", { style: { textAlign: 'center', fontSize: 12, color: '#222', marginTop: 6 } }, React.createElement("div", { style: { fontWeight: 700 } }, "DADOS BANC\u00C1RIOS PARA DEP\u00D3SITO DO CONV\u00CANIO"), r.banco.map(function (linha, i) { return React.createElement("div", { key: i }, linha); })), React.createElement("div", { style: { textAlign: 'center', fontWeight: 700, fontSize: 15.5, marginTop: 22 } }, "Carlos Barbosa, ", r.data), React.createElement("div", { style: { textAlign: 'center', fontSize: 11, marginTop: 20, color: '#333', position: 'relative' } }, React.createElement("div", { style: { width: 160, borderTop: '1px solid #333', margin: '0 auto 6px' } }), "ESCOLA INFANTIL TEMPO DE BRINCAR", React.createElement("br", null), "CNPJ: 22.978.931/0001-00", React.createElement("br", null), React.createElement("strong", null, "J\u00E9ssicka Gomes"), React.createElement("br", null), "Diretora", React.createElement("img", { src: ASSINATURA_B64, alt: "Assinatura", style: {
+        return (React.createElement("td", { key: campo + ci, style: { border: "1px solid ".concat(COLORS.line), padding: r.modeloSemValores ? '18px 6px' : '8px 6px', textAlign: 'center', color: '#222' } }, row[campo] || '—'));
+    }))); })))), tdbTotalRecibo(r, true), r.semDadosBancarios ? null : React.createElement("div", { style: { textAlign: 'center', fontSize: 12, color: '#222', marginTop: 6 } }, React.createElement("div", { style: { fontWeight: 700 } }, "DADOS BANC\u00C1RIOS PARA DEP\u00D3SITO DO CONV\u00CANIO"), r.banco.map(function (linha, i) { return React.createElement("div", { key: i }, linha); })), React.createElement("div", { style: { textAlign: 'center', fontWeight: 700, fontSize: 15.5, marginTop: 22 } }, "Carlos Barbosa, ", r.data), React.createElement("div", { style: { textAlign: 'center', fontSize: 11, marginTop: 20, color: '#333', position: 'relative' } }, React.createElement("div", { style: { width: 160, borderTop: '1px solid #333', margin: '0 auto 6px' } }), "ESCOLA INFANTIL TEMPO DE BRINCAR", React.createElement("br", null), "CNPJ: 22.978.931/0001-00", React.createElement("br", null), React.createElement("strong", null, "J\u00E9ssicka Gomes"), React.createElement("br", null), "Diretora", React.createElement("img", { src: ASSINATURA_B64, alt: "Assinatura", style: {
             position: 'absolute', top: -36, left: '50%', transform: 'translateX(-50%)',
             height: 82, pointerEvents: 'none',
         } })), React.createElement("div", { style: { height: 40 } }))))));
