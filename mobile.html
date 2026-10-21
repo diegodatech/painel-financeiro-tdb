@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261021-tdb-v1-21";
+    window.__TDB_BUILD = "tdb-20261021-tdb-v1-24";
   </script>
-  <script src="./config.js?build=tdb-20261021-tdb-v1-21"></script>
+  <script src="./config.js?build=tdb-20261021-tdb-v1-24"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1998,10 +1998,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261021-tdb-v1-21"></script>
+  <script src="./sync.js?build=tdb-20261021-tdb-v1-24"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261021-tdb-v1-21-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261021-tdb-v1-24-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4317,7 +4317,7 @@ function TelaBloqueio(_a) {
             background: 'linear-gradient(180deg, #eef8f6 0%, #eef7f4 55%, #f4eef6 100%)',
             fontFamily: 'Inter, -apple-system, sans-serif', padding: 18,
             position: 'relative', overflow: 'hidden', outline: 'none',
-        } }, React.createElement("div", { style: { position: 'absolute', top: '-10%', left: '-10%', width: 250, height: 250, borderRadius: '50%', background: '#9BE0D5', opacity: 0.62, filter: 'blur(42px)' } }), React.createElement("div", { style: { position: 'absolute', bottom: '-12%', right: '-8%', width: 280, height: 280, borderRadius: '50%', background: '#F3D6E7', opacity: 0.75, filter: 'blur(48px)' } }), React.createElement("div", { style: { position: 'absolute', top: '18%', right: '10%', width: 130, height: 130, borderRadius: '50%', background: '#D9F1EB', opacity: 0.72, filter: 'blur(34px)' } }), React.createElement("div", { className: "pin-card", style: {
+        } }, React.createElement("div", { style: { position: 'absolute', top: '-14%', left: '-9%', width: 288, height: 288, borderRadius: '50%', background: '#bdeee6', opacity: 0.55, filter: 'blur(47px)' } }), React.createElement("div", { style: { position: 'absolute', bottom: '-16%', right: '-9%', width: 302, height: 302, borderRadius: '50%', background: '#f6d3e8', opacity: 0.6, filter: 'blur(50px)' } }), React.createElement("div", { style: { position: 'absolute', top: '-12%', right: '16%', width: 216, height: 216, borderRadius: '50%', background: '#fff0c4', opacity: 0.62, filter: 'blur(41px)' } }), React.createElement("div", { style: { position: 'absolute', bottom: '-14%', left: '10%', width: 216, height: 216, borderRadius: '50%', background: '#cfe6fb', opacity: 0.55, filter: 'blur(41px)' } }), React.createElement('div', { className: 'pin-data', style: { position: 'absolute', top: 14, right: 14, zIndex: 2, fontSize: '11.5px', fontWeight: 700, color: '#2c7f7a', background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.85)', padding: '7px 13px', borderRadius: 999, WebkitBackdropFilter: 'blur(12px)', backdropFilter: 'blur(12px)' } }, (function () { try { return new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) { return ''; } })()), React.createElement("div", { className: "pin-card", style: {
             position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, textAlign: 'center',
             background: 'rgba(255,255,255,0.52)', backdropFilter: 'blur(18px) saturate(1.55)', WebkitBackdropFilter: 'blur(18px) saturate(1.55)',
             border: '1px solid rgba(255,255,255,0.70)', borderRadius: 30, padding: '28px 22px 24px',
@@ -14458,6 +14458,17 @@ function salvarTudoAgora() {
         persist(prox);
         return true;
     }
+    function marcarConferidos(mapa) {
+        var atual = __transLatestRef.current;
+        if (!Array.isArray(atual) || !mapa)
+            return false;
+        if (bloquearEdicaoSeEncerrado_())
+            return false;
+        var prox = atual.map(function (t) { return Object.prototype.hasOwnProperty.call(mapa, t.id) ? __assign(__assign({}, t), { conferido: mapa[t.id] }) : t; });
+        __transLatestRef.current = prox;
+        persist(prox);
+        return true;
+    }
     function definirFoto(id, fotoBase64) {
         if (bloquearEdicaoSeEncerrado_())
             return;
@@ -14749,7 +14760,7 @@ function salvarTudoAgora() {
             { label: 'Saídas (com dados)', valor: kpis.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
             { label: 'Resultado', valor: kpis.resultado, icon: kpis.resultado >= 0 ? TrendingUp : TrendingDown, cor: '#4A5A58', bg: COLORS.lineSoft, destaque: true },
             { label: 'A receber', valor: aReceber.valor, icon: Receipt, cor: '#2878de', bg: COLORS.paperCard, detalhe: aReceber.mes ? (MESES_ABREV[aReceber.mes] + ' · ' + ((modoPrivado || privadoTotais) ? 'mensalidades em aberto' : aReceber.qtd + (aReceber.qtd === 1 ? ' mensalidade em aberto' : ' mensalidades em aberto'))) : 'Sem mensalidades cadastradas' },
-        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, mesesSel: mesesSel, setMesesSel: setMesesSel, copiarParaMesSeguinte: copiarParaMesSeguinte, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : tab === 'municipioCb' ? (React.createElement(MunicipioCbTDB, null)) : tab === 'notasFiscais' ? (React.createElement(NotasFiscaisTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual, marcarNotasEnviadas: marcarNotasEnviadas })) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
+        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, mesesSel: mesesSel, setMesesSel: setMesesSel, copiarParaMesSeguinte: copiarParaMesSeguinte, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { marcarConferidos: marcarConferidos, transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : tab === 'municipioCb' ? (React.createElement(MunicipioCbTDB, null)) : tab === 'notasFiscais' ? (React.createElement(NotasFiscaisTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual, marcarNotasEnviadas: marcarNotasEnviadas })) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
 }
 function ModalExercicioEncerrado(_a) {
     var ano = _a.ano, onFechar = _a.onFechar;
@@ -16189,13 +16200,13 @@ function TabelaMensalidades(_a) {
     var td = { padding: '9px 8px', fontSize: 12.5, color: COLORS.ink, borderTop: "1px solid ".concat(COLORS.lineSoft), verticalAlign: 'middle' };
     var inputCell = __assign(__assign({}, inputStyle), { padding: '5px 7px', fontSize: 12.5, width: '100%', minWidth: 70, boxSizing: 'border-box' });
     var _f = useState(null), linhaSelecionada = _f[0], setLinhaSelecionada = _f[1];
-    return (React.createElement("div", { className: "mensalidades-tabela-card", style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("div", { className: "mensalidades-tabela-header", style: { padding: '13px 18px', background: COLORS.paperCard, borderBottom: "1px solid ".concat(COLORS.line), fontSize: 13.5, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }, React.createElement("span", null, titulo, " ", React.createElement("span", { style: { fontWeight: 500, color: COLORS.inkSoft } }, "(", modoPrivado ? '••' : (titulo === 'Alunos' ? (contagemAlunos != null ? contagemAlunos.alunos : TDBFinance.listed(itens).alunos) : itens.length), ")"), titulo === 'Alunos' && !modoPrivado && (function () { var c = contagemAlunos != null ? contagemAlunos : TDBFinance.listed(itens); return c.linhas !== c.alunos ? React.createElement("span", { className: "tdb-contagem-linhas", title: "Cada linha de irm\u00E3os conta 2 alunos", style: {whiteSpace:"nowrap", fontWeight: 500, color: COLORS.inkSoft, fontSize: 11.5, marginLeft: 8 } }, "\u00B7 ", c.linhas, " linhas") : null; })())), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '28px 0', fontSize: 14 } }, "Nenhum registro encontrado.")) : (React.createElement("div", { className: "mensalidades-table-scroll", style: { overflowX: 'auto' } }, React.createElement("table", { className: mostrarDetalhes ? "tabela-mensalidades mensalidades-detalhes" : "tabela-mensalidades mensalidades-resumida", style: { width: '100%', minWidth: mostrarDetalhes ? 1180 : 760, borderCollapse: 'collapse', tableLayout: 'fixed' } }, React.createElement("colgroup", null, React.createElement("col", { style: { width: mostrarDetalhes ? '17%' : '30%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '6%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '9%' : '18%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '7%' : '12%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '7%' : '12%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '13%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '12%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '10%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '9%' : '12%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '10%' : '16%' } })), React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Nome"), mostrarDetalhes && React.createElement("th", { style: th }, "Nota"), React.createElement("th", { style: th }, "Valor"), React.createElement("th", { style: th }, "Status"), React.createElement("th", { style: th }, "Banco"), mostrarDetalhes && React.createElement("th", { style: th }, "Pai / Respons\u00E1vel"), mostrarDetalhes && React.createElement("th", { style: th }, "Tirar nota"), mostrarDetalhes && React.createElement("th", { style: th }, "Conv\u00EAnio"), React.createElement("th", { style: th }, "Data"), React.createElement("th", { style: __assign(__assign({}, th), { textAlign: 'center' }) }, "A\u00E7\u00F5es"))), React.createElement("tbody", null, itens.map(function (t) {
+    return (React.createElement("div", { className: "mensalidades-tabela-card", style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("div", { className: "mensalidades-tabela-header", style: { padding: '13px 18px', background: COLORS.paperCard, borderBottom: "1px solid ".concat(COLORS.line), fontSize: 13.5, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }, React.createElement("span", null, titulo, " ", React.createElement("span", { style: { fontWeight: 500, color: COLORS.inkSoft } }, "(", modoPrivado ? '••' : (titulo === 'Alunos' ? (contagemAlunos != null ? contagemAlunos.alunos : TDBFinance.listed(itens).alunos) : itens.length), ")"), titulo === 'Alunos' && !modoPrivado && (function () { var c = contagemAlunos != null ? contagemAlunos : TDBFinance.listed(itens); return c.linhas !== c.alunos ? React.createElement("span", { className: "tdb-contagem-linhas", title: "Cada linha de irm\u00E3os conta 2 alunos", style: {whiteSpace:"nowrap", fontWeight: 500, color: COLORS.inkSoft, fontSize: 11.5, marginLeft: 8 } }, "\u00B7 ", c.linhas, " linhas") : null; })(), titulo === 'Alunos' && !modoPrivado && tdbCfResumo(itens))), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '28px 0', fontSize: 14 } }, "Nenhum registro encontrado.")) : (React.createElement("div", { className: "mensalidades-table-scroll", style: { overflowX: 'auto' } }, React.createElement("table", { className: mostrarDetalhes ? "tabela-mensalidades mensalidades-detalhes" : "tabela-mensalidades mensalidades-resumida", style: { width: '100%', minWidth: mostrarDetalhes ? 1180 : 760, borderCollapse: 'collapse', tableLayout: 'fixed' } }, React.createElement("colgroup", null, React.createElement("col", { style: { width: mostrarDetalhes ? '17%' : '30%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '6%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '9%' : '18%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '7%' : '12%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '7%' : '12%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '13%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '12%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '10%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '9%' : '12%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '10%' : '16%' } })), React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Nome"), mostrarDetalhes && React.createElement("th", { style: th }, "Nota"), React.createElement("th", { style: th }, "Valor"), React.createElement("th", { style: th }, "Status"), React.createElement("th", { style: th }, "Banco"), mostrarDetalhes && React.createElement("th", { style: th }, "Pai / Respons\u00E1vel"), mostrarDetalhes && React.createElement("th", { style: th }, "Tirar nota"), mostrarDetalhes && React.createElement("th", { style: th }, "Conv\u00EAnio"), React.createElement("th", { style: th }, "Data"), React.createElement("th", { style: __assign(__assign({}, th), { textAlign: 'center' }) }, "A\u00E7\u00F5es"))), React.createElement("tbody", null, itens.map(function (t) {
         var emEdicao = editandoId === t.id && !(typeof window !== 'undefined' && window.innerWidth <= 760);
-        return (React.createElement(React.Fragment, { key: t.id }, React.createElement("tr", { className: emEdicao ? "mensalidades-row-editando" : "mensalidades-row", onClick: function () { return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
+        return (React.createElement(React.Fragment, { key: t.id }, React.createElement("tr", { className: emEdicao ? "mensalidades-row-editando" : "mensalidades-row", "data-cf": t.conferido ? t.conferido.st : undefined, onClick: function () { return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
                 cursor: emEdicao ? 'default' : 'pointer',
                 background: linhaSelecionada === t.id
                     ? 'rgba(184, 92, 163, 0.12)'
-                    : (emEdicao ? 'color-mix(in srgb, var(--c-goldSoft) 55%, var(--c-paperCard))' : 'transparent'),
+                    : (emEdicao ? 'color-mix(in srgb, var(--c-goldSoft) 55%, var(--c-paperCard))' : (t.conferido && t.conferido.st === 'olhar' ? 'rgba(240, 180, 41, 0.16)' : (t.conferido && t.conferido.st === 'nao' ? 'rgba(217, 58, 74, 0.12)' : 'transparent'))),
                 transition: 'background 0.15s ease',
             } }, React.createElement("td", { colSpan: emEdicao && mostrarDetalhes ? 2 : 1, style: __assign(__assign({}, td), { background: linhaSelecionada === t.id ? 'rgba(184, 92, 163, 0.08)' : 'transparent', fontWeight: 700, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.35, padding: '9px 10px', boxSizing: 'border-box', borderLeft: linhaSelecionada === t.id ? "3px solid ".concat(COLORS.gold) : '3px solid transparent' }) }, emEdicao ? (React.createElement("input", { value: nomeEdit, onChange: function (e) { return setNomeEdit(e.target.value); }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { padding: '5px 8px', fontSize: 13.5, width: '100%', minWidth: 140, boxSizing: 'border-box' }) })) : (React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } }, React.createElement("label", { title: "Clique para adicionar/trocar a foto", style: {
                 width: 26, height: 26, borderRadius: '50%',
@@ -16210,7 +16221,7 @@ function TabelaMensalidades(_a) {
                 var leitor = new FileReader();
                 leitor.onload = function () { return definirFoto(t.id, leitor.result); };
                 leitor.readAsDataURL(arquivo);
-            }, style: { position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' } })), React.createElement("span", null, nomeExibicao(t.categoria))))), mostrarDetalhes && !emEdicao && (React.createElement("td", { style: td }, t.nota !== undefined && (React.createElement("button", { onClick: function (e) { e.stopPropagation(); return darNota(t.id); }, title: "Clique para alternar Nota enviada/pendente", className: "busca-liquid-glass", style: {
+            }, style: { position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' } })), React.createElement("span", null, nomeExibicao(t.categoria)), tdbCfBadge(t, 'tdb-cf-nm')))), mostrarDetalhes && !emEdicao && (React.createElement("td", { style: td }, t.nota !== undefined && (React.createElement("button", { onClick: function (e) { e.stopPropagation(); return darNota(t.id); }, title: "Clique para alternar Nota enviada/pendente", className: "busca-liquid-glass", style: {
                 borderRadius: 20, padding: '3px 8px',
                 fontSize: 10.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
                 color: t.nota === 'Enviada' ? COLORS.green : COLORS.gold,
@@ -16251,7 +16262,7 @@ function TabelaMensalidades(_a) {
             }, style: inputCell }, React.createElement("option", null, "Pago"), React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"))) : (React.createElement("button", { onClick: function (e) { e.stopPropagation(); }, title: "Edite a linha pelo lápis para alterar o status", className: "busca-liquid-glass", style: {
                 borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'default', whiteSpace: 'nowrap',
                 color: t.status === 'Pago' ? COLORS.green : COLORS.red,
-            } }, t.status === 'Pago' ? 'PAGO' : t.status==='Parcial'?'PARCIAL':'PENDENTE'))), React.createElement("td", { style: td }, emEdicao ? (React.createElement("select", { value: bancoEdit, onChange: function (e) { return setBancoEdit(e.target.value); }, onKeyDown: function (e) {
+            } }, t.status === 'Pago' ? 'PAGO' : t.status==='Parcial'?'PARCIAL':'PENDENTE')), !emEdicao && tdbCfBadge(t, 'tdb-cf-st')), React.createElement("td", { style: td }, emEdicao ? (React.createElement("select", { value: bancoEdit, onChange: function (e) { return setBancoEdit(e.target.value); }, onKeyDown: function (e) {
                 if (e.key === 'Enter')
                     salvarEdicao(t.id);
                 if (e.key === 'Escape')
@@ -16260,12 +16271,12 @@ function TabelaMensalidades(_a) {
                 fontSize: 11, fontWeight: 700, color: corBanco(t.banco),
                 padding: '4px 6px', borderRadius: 20, whiteSpace: 'nowrap', display: 'inline-block',
                 width: 66, textAlign: 'center', boxSizing: 'border-box',
-            } }, abrevBanco(t.banco))) : '—'), mostrarDetalhes && (React.createElement("td", { style: __assign(__assign({}, td), { whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3 }) }, emEdicao ? React.createElement("input", { value: paiEdit, onChange: function (e) { return setPaiEdit(e.target.value); }, onKeyDown: function (e) {
+            } }, abrevBanco(t.banco))) : '—'), mostrarDetalhes && (React.createElement("td", { style: __assign(__assign({}, td), { whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3 }) }, emEdicao ? tdbPaiCampos(paiEdit, setPaiEdit, function (e) {
                 if (e.key === 'Enter')
                     salvarEdicao(t.id);
                 if (e.key === 'Escape')
                     cancelarEdicao();
-            }, style: inputCell }) : (t.pai || '—'))), mostrarDetalhes && (React.createElement("td", { style: __assign(__assign({}, td), { whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3 }) }, emEdicao ? React.createElement("input", { value: tirarNotaEdit, onChange: function (e) { return setTirarNotaEdit(e.target.value); }, onKeyDown: function (e) {
+            }, inputCell, null, { spellCheck: "true", lang: "pt-BR" }) : tdbPaiVer(t.pai))), mostrarDetalhes && (React.createElement("td", { style: __assign(__assign({}, td), { whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3 }) }, emEdicao ? React.createElement("input", { value: tirarNotaEdit, onChange: function (e) { return setTirarNotaEdit(e.target.value); }, onKeyDown: function (e) {
                 if (e.key === 'Enter')
                     salvarEdicao(t.id);
                 if (e.key === 'Escape')
@@ -16484,8 +16495,260 @@ function ContaProporcionalBolhaTDB(p) {
                     React.createElement("button", { type: "button", onClick: copiar, disabled: !(valor > 0), style: { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink, borderRadius: 10, padding: '9px 12px', fontWeight: 700, fontSize: 12.5, cursor: valor > 0 ? 'pointer' : 'default', opacity: valor > 0 ? 1 : .5 } }, copiado ? "Copiado ✓" : "Copiar valor"),
                     React.createElement("button", { type: "button", onClick: usar, disabled: !(valor > 0), style: { border: 'none', background: COLORS.inkButton, color: '#fff', borderRadius: 10, padding: '9px 14px', fontWeight: 800, fontSize: 12.5, cursor: valor > 0 ? 'pointer' : 'default', opacity: valor > 0 ? 1 : .5 } }, "Usar no Novo registro")))));
 }
+/* TDB v1.22 — Pai/Responsável com 2 nomes + Conferir extrato (funções puras; nada sai do aparelho) */
+var TDB_CF_STOP = { DE: 1, DA: 1, DO: 1, DAS: 1, DOS: 1, E: 1 };
+function tdbNorm(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim(); }
+function tdbPaiPartes(s) { return String(s == null ? '' : s).split(/\s*(?:\/|\n)\s*/).map(function (x) { return x.trim(); }).filter(Boolean); }
+function tdbPaiNorm(s) { return tdbPaiPartes(s).join(' / '); }
+function tdbMoneyList(str) {
+    var re = /(^|[^\d.,])((?:R\$\s*)?-?)(\d{1,3}(?:\.\d{3})+|\d+),(\d{2})(?!\d)/g, m, out = [];
+    while ((m = re.exec(str)) !== null) {
+        out.push({ v: parseFloat(m[3].replace(/\./g, '') + '.' + m[4]), neg: m[2].indexOf('-') >= 0, i: m.index + m[1].length, fim: re.lastIndex });
+    }
+    return out;
+}
+var TDB_CF_DATA = /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/;
+function tdbParseExtrato(texto) {
+    texto = String(texto || '');
+    var linhas = texto.split(/\r?\n/).map(function (l) { return l.replace(/\t+/g, '  ').trim(); }).filter(Boolean);
+    var temData = TDB_CF_DATA.test(texto);
+    var regs = [], cur = null;
+    linhas.forEach(function (l) {
+        var tdata = TDB_CF_DATA.test(l);
+        if (temData && cur === null && !tdata) return;
+        var inicia = cur === null || ((temData ? tdata : true) && cur.dinheiro);
+        if (inicia) { cur = { linhas: [], dinheiro: false }; regs.push(cur); }
+        cur.linhas.push(l);
+        if (tdbMoneyList(l).length) cur.dinheiro = true;
+    });
+    var out = [];
+    regs.forEach(function (r) {
+        var txt = r.linhas.join(' ');
+        var din = tdbMoneyList(txt);
+        if (!din.length) return;
+        var deb = din[0].neg || /^\s*D\b/.test(txt.slice(din[0].fim)) || /\b(ENVIAD[OA]|DEBITO|TARIFA|COMPRA|SAQUE|SAIDA)\b/.test(tdbNorm(txt));
+        if (deb) return;
+        var md = txt.match(TDB_CF_DATA);
+        var limpo = txt.replace(/(?:R\$\s*)?-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}/g, ' ').replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, ' ');
+        out.push({
+            data: md ? md[0] : '',
+            texto: limpo.replace(/\s+/g, ' ').trim().slice(0, 90),
+            valores: din.map(function (d) { return d.v; }),
+            tokens: tdbNorm(limpo).split(' ').filter(Boolean)
+        });
+    });
+    return out;
+}
+function tdbTokNome(s) { return tdbNorm(s).split(' ').filter(function (x) { return x.length > 1 && !TDB_CF_STOP[x]; }); }
+function tdbTokCasa(p, e) { return p === e || (e.length >= 5 && p.length - e.length >= 2 && p.indexOf(e) === 0); }
+/* 2 = nome completo bate · 1 = só parte do nome bate · 0 = não bate */
+function tdbNomeCasa(parte, ent) {
+    var tp = tdbTokNome(parte);
+    if (!tp.length) return 0;
+    var ok = tp.filter(function (p) { return ent.tokens.some(function (e) { return tdbTokCasa(p, e); }); }).length;
+    if (tp.length >= 2 && ok === tp.length) return 2;
+    if (tp.length === 1 && ok === 1) return 1;
+    if (tp.length >= 3 && ok >= tp.length - 1) return 1;
+    return 0;
+}
+function tdbTemValor(ent, v) { return ent.valores.some(function (x) { return Math.abs(x - v) < 0.005; }); }
+/* lancs: [{id, nome, partes:[...], valor}] · entradas: saída de tdbParseExtrato */
+function tdbConferir(entradas, lancs) {
+    var usada = entradas.map(function () { return false; });
+    var res = {};
+    function nivel(l, ent) { var m = 0; l.partes.forEach(function (p) { var n = tdbNomeCasa(p, ent); if (n > m) m = n; }); return m; }
+    function acha(l, cond) { for (var i = 0; i < entradas.length; i++) { if (!usada[i] && cond(entradas[i], i)) return i; } return -1; }
+    function fmt(v) { return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+    lancs.forEach(function (l) {
+        if (!l.partes.length) return;
+        var i = acha(l, function (e) { return tdbTemValor(e, l.valor) && nivel(l, e) === 2; });
+        if (i >= 0) { usada[i] = true; res[l.id] = { st: 'ok', entrada: i, motivo: 'Nome e valor batem' }; }
+    });
+    lancs.forEach(function (l) {
+        if (res[l.id] || !l.partes.length) return;
+        var cand = [];
+        entradas.forEach(function (e, i) { if (!usada[i] && nivel(l, e) === 2) cand.push(i); });
+        cand = cand.slice(0, 8);
+        var ach = null, n = cand.length, a, b, c;
+        for (a = 0; a < n && !ach; a++) for (b = a + 1; b < n && !ach; b++) {
+            if (Math.abs(entradas[cand[a]].valores[0] + entradas[cand[b]].valores[0] - l.valor) < 0.005) ach = [cand[a], cand[b]];
+            else for (c = b + 1; c < n && !ach; c++) if (Math.abs(entradas[cand[a]].valores[0] + entradas[cand[b]].valores[0] + entradas[cand[c]].valores[0] - l.valor) < 0.005) ach = [cand[a], cand[b], cand[c]];
+        }
+        if (ach) { ach.forEach(function (i) { usada[i] = true; }); res[l.id] = { st: 'ok', entrada: ach[0], motivo: 'Soma de ' + ach.length + ' entradas do mesmo nome' }; }
+    });
+    lancs.forEach(function (l) {
+        if (res[l.id] || !l.partes.length) return;
+        var i = acha(l, function (e) { return tdbTemValor(e, l.valor) && nivel(l, e) === 1; });
+        if (i >= 0) { usada[i] = true; res[l.id] = { st: 'olhar', entrada: i, motivo: 'Valor bate, mas só parte do nome confere — cadastre o nome completo' }; }
+    });
+    lancs.forEach(function (l) {
+        if (res[l.id] || !l.partes.length) return;
+        var i = acha(l, function (e) { return nivel(l, e) >= 1; });
+        if (i >= 0) { usada[i] = true; res[l.id] = { st: 'olhar', entrada: i, motivo: 'Achei ' + fmt(entradas[i].valores[0]) + ' no extrato, esperado ' + fmt(l.valor) }; }
+    });
+    lancs.forEach(function (l) {
+        if (res[l.id]) return;
+        res[l.id] = l.partes.length
+            ? { st: 'nao', entrada: -1, motivo: 'Não achei esse nome nem esse valor no extrato' }
+            : { st: 'olhar', entrada: -1, motivo: 'Sem Pai/Responsável cadastrado — preencha o nome para conferir' };
+    });
+    return { res: res, sobras: entradas.filter(function (e, i) { return !usada[i]; }) };
+}
+/* ---- Pai/Responsável: 1 ou 2 nomes (guardados no mesmo campo, separados por " / ") ---- */
+function tdbPaiVer(pai) {
+    var p = tdbPaiPartes(pai);
+    if (!p.length) return '—';
+    if (p.length === 1) return p[0];
+    return React.createElement('span', { className: 'tdb-pai-lista', style: { display: 'flex', flexDirection: 'column', gap: 2 } }, p.map(function (n, i) { return React.createElement('span', { key: i }, n); }));
+}
+function tdbPaiCampos(valor, setValor, onKey, estilo, transf, extra) {
+    var s = String(valor || ''), i = s.indexOf(' / ');
+    var a = i < 0 ? s : s.slice(0, i), b = i < 0 ? '' : s.slice(i + 3);
+    function junta(a2, b2) { return b2 === '' ? a2 : a2 + ' / ' + b2; }
+    var tf = transf || function (x) { return x; };
+    return React.createElement('div', { className: 'tdb-pai-campos', style: { display: 'grid', gap: 5, width: '100%' } },
+        React.createElement('input', Object.assign({ value: a, onChange: function (e) { setValor(junta(tf(e.target.value), b)); }, onKeyDown: onKey, placeholder: '1º nome', 'aria-label': 'Pai/Responsável', style: estilo }, extra || {})),
+        React.createElement('input', Object.assign({ value: b, onChange: function (e) { setValor(junta(a, tf(e.target.value))); }, onKeyDown: onKey, placeholder: '2º nome (opcional)', 'aria-label': 'Segundo responsável', style: estilo }, extra || {})));
+}
+/* ---- Selos da conferência na lista ---- */
+function tdbCfBadge(t, cls) {
+    var c = t && t.conferido;
+    if (!c || !c.st) return null;
+    var txt = c.st === 'ok' ? '✓' : (c.st === 'olhar' ? '!' : '✕');
+    var tit = c.st === 'ok' ? 'Conferido no extrato' : (c.st === 'olhar' ? 'Olhar: ' : 'Não achei no extrato');
+    if (c.st === 'olhar') tit += (c.motivo || '');
+    if (c.st === 'ok' && c.motivo) tit += ' — ' + c.motivo;
+    return React.createElement('span', { className: 'tdb-cf-b ' + cls, 'data-st': c.st, title: tit, 'aria-label': tit }, txt);
+}
+function tdbCfResumo(itens) {
+    var n = { ok: 0, olhar: 0, nao: 0 }, ult = null;
+    (itens || []).forEach(function (t) {
+        var c = t && t.conferido;
+        if (c && n[c.st] != null) { n[c.st]++; if (!ult || String(c.em || '') > String(ult.em || '')) ult = c; }
+    });
+    if (!n.ok && !n.olhar && !n.nao) return null;
+    function chip(st, txt) { return React.createElement('span', { key: st, className: 'tdb-cf-chip', 'data-st': st }, txt); }
+    var kids = [];
+    if (n.ok) kids.push(chip('ok', '✓ ' + n.ok + (n.ok === 1 ? ' conferido' : ' conferidos')));
+    if (n.olhar) kids.push(chip('olhar', '! ' + n.olhar + ' para olhar'));
+    if (n.nao) kids.push(chip('nao', '✕ ' + n.nao + ' sem entrada'));
+    var d = ult && ult.em ? String(ult.em).split('-').reverse().slice(0, 2).join('/') : '';
+    if (ult && d) kids.push(React.createElement('span', { key: 'em', className: 'tdb-cf-quando' }, 'extrato conferido em ' + d + (ult.banco ? ' · ' + ult.banco : '')));
+    return React.createElement('span', { className: 'tdb-cf-resumo' }, kids);
+}
+/* ---- Janela "Conferir extrato" ---- */
+function ConferirExtratoTDB(p) {
+    var h = React.createElement;
+    var bancos = BANCOS.filter(function (b) { return b !== 'Outro' && b !== 'DINHEIRO'; });
+    var _t = useState(''), texto = _t[0], setTexto = _t[1];
+    var _m = useState(p.mesInicial), mes = _m[0], setMes = _m[1];
+    var _b = useState(function () {
+        var cont = {};
+        (p.entradas || []).forEach(function (t) { if (t.mes === p.mesInicial && t.banco && String(t.categoria || '').indexOf('Mensalidade - ') === 0 && TDBFinance.received(t) > 0) cont[t.banco] = (cont[t.banco] || 0) + 1; });
+        var melhor = null;
+        Object.keys(cont).forEach(function (k) { if (bancos.some(function (x) { return tdbNorm(x) === tdbNorm(k); }) && (melhor === null || cont[k] > cont[melhor])) melhor = k; });
+        return melhor ? bancos.filter(function (x) { return tdbNorm(x) === tdbNorm(melhor); })[0] : bancos[0];
+    }), banco = _b[0], setBanco = _b[1];
+    var _r = useState(null), resultado = _r[0], setResultado = _r[1];
+    var _k = useState({}), marc = _k[0], setMarc = _k[1];
+    var _e = useState(''), erro = _e[0], setErro = _e[1];
+    useEffect(function () {
+        var ant = document.body.style.overflow; document.body.style.overflow = 'hidden';
+        var tecla = function (e) { if (e.key === 'Escape') p.onFechar(); };
+        document.addEventListener('keydown', tecla);
+        return function () { document.body.style.overflow = ant; document.removeEventListener('keydown', tecla); };
+    }, []);
+    function brl(v) { return formatBRL(v); }
+    function lancamentos() {
+        return (p.entradas || []).filter(function (t) {
+            return String(t.categoria || '').indexOf('Mensalidade - ') === 0 && t.mes === mes && tdbNorm(t.banco) === tdbNorm(banco) && TDBFinance.received(t) > 0;
+        }).map(function (t) { return { id: t.id, nome: nomeExibicao(t.categoria), pai: t.pai || '', partes: tdbPaiPartes(t.pai), valor: TDBFinance.received(t) }; });
+    }
+    function conferir() {
+        setErro('');
+        var ls = lancamentos();
+        if (!ls.length) { setErro('Não há mensalidades pagas de ' + mes + ' no ' + banco + ' para conferir. Confira o mês e o banco.'); return; }
+        var ents = tdbParseExtrato(texto);
+        if (!ents.length) { setErro('Não encontrei entradas no texto colado. Cole o extrato com as linhas de data, nome e valor.'); return; }
+        var r = tdbConferir(ents, ls);
+        var m = {};
+        ls.forEach(function (l) { if (r.res[l.id].st === 'ok') m[l.id] = true; });
+        setMarc(m);
+        setResultado({ lancs: ls, res: r.res, sobras: r.sobras, entradas: ents });
+    }
+    function contar(st) { return resultado.lancs.filter(function (l) { return resultado.res[l.id].st === st; }).length; }
+    function salvar() {
+        var hoje = new Date(), em = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+        var mapa = {};
+        resultado.lancs.forEach(function (l) {
+            var r = resultado.res[l.id], st = r.st;
+            if (st !== 'nao') st = marc[l.id] ? 'ok' : 'olhar';
+            var motivo = r.motivo;
+            if (st === 'ok' && r.st !== 'ok') motivo = 'Confirmado por você';
+            if (st === 'olhar' && r.st === 'ok') motivo = 'Você desmarcou a conferência';
+            mapa[l.id] = { st: st, em: em, banco: banco, motivo: motivo };
+        });
+        var ok = p.onSalvar(mapa);
+        if (ok === false) { setErro('Não consegui salvar agora (o ano pode estar encerrado).'); return; }
+        if (typeof mostrarToast === 'function') mostrarToast('Conferência salva na lista de mensalidades.');
+        p.onFechar();
+    }
+    var inp = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, background: COLORS.paper, color: COLORS.ink, borderRadius: 10, padding: '9px 11px', fontSize: 14, fontFamily: 'inherit' };
+    var cores = { ok: '#1fa86b', olhar: '#d99a00', nao: '#d93a4a' };
+    function chip(st, txt) { return h('span', { key: st, style: { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 11px', borderRadius: 999, fontSize: 12.5, fontWeight: 800, color: cores[st], background: 'color-mix(in srgb, ' + cores[st] + ' 15%, transparent)', border: '1px solid color-mix(in srgb, ' + cores[st] + ' 40%, transparent)' } }, txt); }
+    var btnBase = { borderRadius: 10, padding: '10px 16px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' };
+    function linha(l) {
+        var r = resultado.res[l.id], st = r.st;
+        var ent = r.entrada >= 0 ? resultado.entradas[r.entrada] : null;
+        return h('div', { key: l.id, className: 'tdb-cf-linha', 'data-st': st, style: { display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 12px', borderBottom: '1px solid ' + COLORS.lineSoft } },
+            st === 'nao'
+                ? h('span', { style: { width: 18, flex: 'none', textAlign: 'center', fontWeight: 900, color: cores.nao, marginTop: 1 } }, '✕')
+                : h('input', { type: 'checkbox', 'aria-label': 'Marcar ' + l.nome + ' como conferido', checked: !!marc[l.id], onChange: function () { var o = Object.assign({}, marc); o[l.id] = !o[l.id]; setMarc(o); }, style: { width: 18, height: 18, accentColor: '#1fa86b', flex: 'none', marginTop: 1 } }),
+            h('div', { style: { flex: 1, minWidth: 0 } },
+                h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 14, fontWeight: 700, color: COLORS.ink } }, h('span', { style: { minWidth: 0, wordBreak: 'break-word' } }, l.nome), h('span', { className: 'mono', style: { whiteSpace: 'nowrap' } }, brl(l.valor))),
+                h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 2 } }, 'Resp.: ' + (l.partes.length ? l.partes.join(' / ') : '—')),
+                h('div', { style: { fontSize: 12, color: cores[st], fontWeight: 700, marginTop: 2 } }, (st === 'ok' ? '✓ ' : st === 'olhar' ? '! ' : '✕ ') + r.motivo),
+                ent && h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 2, wordBreak: 'break-word' } }, 'Extrato: ' + (ent.data ? ent.data + ' · ' : '') + ent.texto + ' · ' + brl(ent.valores[0]))));
+    }
+    var corpo;
+    if (!resultado) {
+        corpo = h(React.Fragment, null,
+            h('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 } },
+                h('label', { style: { display: 'grid', gap: 4, flex: '1 1 140px', fontSize: 11.5, fontWeight: 700, color: COLORS.inkSoft } }, 'MÊS', h('select', { value: mes, onChange: function (e) { setMes(e.target.value); }, style: inp }, MESES.map(function (m) { return h('option', { key: m, value: m }, m); }))),
+                h('label', { style: { display: 'grid', gap: 4, flex: '1 1 140px', fontSize: 11.5, fontWeight: 700, color: COLORS.inkSoft } }, 'BANCO DO EXTRATO', h('select', { value: banco, onChange: function (e) { setBanco(e.target.value); }, style: inp }, bancos.map(function (b) { return h('option', { key: b, value: b }, b); })))),
+            h('label', { style: { display: 'grid', gap: 4, marginTop: 12, fontSize: 11.5, fontWeight: 700, color: COLORS.inkSoft } }, 'COLE AQUI O EXTRATO',
+                h('textarea', { value: texto, onChange: function (e) { setTexto(e.target.value); setErro(''); }, rows: 9, placeholder: 'Copie as linhas do extrato no site ou app do banco e cole aqui.\nEx.: 03/08/2026  PIX RECEBIDO  ANTHONY MELERE SEIMETZ GEDOZ  1.483,00', style: Object.assign({}, inp, { resize: 'vertical', fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 12.5, lineHeight: 1.4 }) })),
+            h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 8, lineHeight: 1.45 } }, 'Confere pelo nome do Pai/Responsável (completo), pelo valor e pelo mês. Só as entradas do extrato são lidas e tudo fica no seu aparelho — nada é enviado para fora.'),
+            erro && h('div', { role: 'alert', style: { marginTop: 10, padding: '9px 12px', borderRadius: 10, background: COLORS.redBg, color: COLORS.red, fontSize: 13, fontWeight: 600 } }, erro),
+            h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14, flexWrap: 'wrap' } },
+                h('button', { type: 'button', onClick: p.onFechar, style: Object.assign({}, btnBase, { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink }) }, 'Cancelar'),
+                h('button', { type: 'button', onClick: conferir, disabled: !texto.trim(), style: Object.assign({}, btnBase, { border: 'none', background: COLORS.inkButton, color: '#FFFFFF', opacity: texto.trim() ? 1 : 0.5 }) }, 'Conferir')));
+    } else {
+        var nOk = Object.keys(marc).filter(function (k) { return marc[k]; }).length;
+        corpo = h(React.Fragment, null,
+            h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap', margin: '12px 0 8px', alignItems: 'center' } },
+                chip('ok', '✓ ' + contar('ok') + (contar('ok') === 1 ? ' bateu' : ' bateram')), chip('olhar', '! ' + contar('olhar') + ' para olhar'), chip('nao', '✕ ' + contar('nao') + ' não achei'),
+                h('span', { style: { fontSize: 12, color: COLORS.inkSoft } }, mes + ' · ' + banco)),
+            h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginBottom: 6 } }, 'Marque os que você quer confirmar e toque em Salvar. Os marcados ganham o ✓ na lista.'),
+            h('div', { style: { overflowY: 'auto', border: '1px solid ' + COLORS.line, borderRadius: 12, maxHeight: '44vh' } },
+                ['olhar', 'nao', 'ok'].map(function (st) { return resultado.lancs.filter(function (l) { return resultado.res[l.id].st === st; }).map(linha); }),
+                resultado.sobras.length > 0 && h('div', { style: { padding: '9px 12px', background: COLORS.lineSoft } },
+                    h('div', { style: { fontSize: 12, fontWeight: 800, color: COLORS.inkSoft, marginBottom: 4 } }, 'ENTRADAS DO EXTRATO SEM LANÇAMENTO (' + resultado.sobras.length + ')'),
+                    resultado.sobras.slice(0, 30).map(function (e, i) { return h('div', { key: i, style: { fontSize: 12, color: COLORS.ink, padding: '2px 0', wordBreak: 'break-word' } }, (e.data ? e.data + ' · ' : '') + e.texto + ' · ' + brl(e.valores[0])); }))),
+            erro && h('div', { role: 'alert', style: { marginTop: 10, padding: '9px 12px', borderRadius: 10, background: COLORS.redBg, color: COLORS.red, fontSize: 13, fontWeight: 600 } }, erro),
+            h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14, flexWrap: 'wrap' } },
+                h('button', { type: 'button', onClick: function () { setResultado(null); setErro(''); }, style: Object.assign({}, btnBase, { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink }) }, 'Voltar'),
+                h('button', { type: 'button', onClick: salvar, style: Object.assign({}, btnBase, { border: 'none', background: '#1fa86b', color: '#FFFFFF' }) }, 'Salvar conferência (' + nOk + ' ✓)')));
+    }
+    return ReactDOM.createPortal(h('div', { className: 'tdb-cf-modal', style: { position: 'fixed', inset: 0, zIndex: 2147483600, background: 'rgba(10,22,20,.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }, onMouseDown: function (e) { if (e.target === e.currentTarget && !texto.trim() && !resultado) p.onFechar(); } },
+        h('div', { className: 'busca-liquid-glass', role: 'dialog', 'aria-label': 'Conferir extrato', onMouseDown: function (e) { e.stopPropagation(); }, style: { width: 'min(640px,94vw)', maxHeight: '90vh', overflowY: 'auto', borderRadius: 20, background: COLORS.paperCard, padding: 20, boxShadow: '0 24px 80px rgba(0,0,0,.38)', border: '1px solid ' + COLORS.line, boxSizing: 'border-box' } },
+            h('div', { style: { fontSize: 19, fontWeight: 800, color: COLORS.ink } }, 'Conferir extrato'),
+            h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 4 } }, resultado ? 'Veja o que bateu com as mensalidades lançadas.' : 'Depois que todos pagaram, cole o extrato do banco para conferir de uma vez.'),
+            corpo)), document.body);
+}
 function Mensalidades(_a) {
     var _this = this;
+    var marcarConferidos = _a.marcarConferidos;
     var transacoes = _a.transacoes, darBaixa = _a.darBaixa, darNota = _a.darNota, definirFoto = _a.definirFoto, editarLancamento = _a.editarLancamento, removerLancamento = _a.removerLancamento, adicionarEntrada = _a.adicionarEntrada, privadoTotais = _a.privadoTotais, setPrivadoTotais = _a.setPrivadoTotais, privadoDetalhes = _a.privadoDetalhes, setPrivadoDetalhes = _a.setPrivadoDetalhes, chamarIA = _a.chamarIA, _b = _a.exercicioAtual, exercicioAtual = _b === void 0 ? 2026 : _b;
     var _c = useState(function () {
         try {
@@ -16664,6 +16927,7 @@ function Mensalidades(_a) {
     var _17 = useState(''), formErro = _17[0], setFormErro = _17[1];
     var _18 = useState(false), gravandoMens = _18[0], setGravandoMens = _18[1];
     var _19 = useState(false), interpretandoMens = _19[0], setInterpretandoMens = _19[1];
+    var _cfx = useState(false), conferirAberto = _cfx[0], setConferirAberto = _cfx[1];
     var reconhecimentoMensRef = useRef(null);
     var suportaVozMens = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
     function alternarDitadoMensalidade() {
@@ -16801,7 +17065,7 @@ function Mensalidades(_a) {
         setValorCheioEdit(t.valorCheio != null ? formatBRLNumber(t.valorCheio) : '');
         setStatusEdit(t.status);
         setBancoEdit(t.banco || '');
-        setPaiEdit(t.pai || '');
+        setPaiEdit(tdbPaiNorm(t.pai || ''));
         setTirarNotaEdit(t.tirarNota || '');
         setConvenioEdit(t.convenio || 'PARTICULAR');
         setDataEdit(t.data || '');
@@ -16820,7 +17084,7 @@ function Mensalidades(_a) {
         var categoriaFinal = nomeFinal ? (prefixoEdit + nomeFinal.toUpperCase()) : null;
         var __origEdit = transacoes.find(function (t) { return t.id === id; });
         var __qtdAposEdicao = Number(quantidadeEdit);
-        editarLancamento(id, __assign({ quantidadeAlunos: __qtdAposEdicao, valor: valorFinal, valorCheio: valorCheioFinal, status: statusEdit, banco: bancoEdit, pai: paiEdit, tirarNota: tirarNotaEdit, convenio: convenioEdit, data: dataEdit || null, ok: okEdit || null }, (categoriaFinal ? { categoria: categoriaFinal } : {})));
+        editarLancamento(id, __assign({ quantidadeAlunos: __qtdAposEdicao, valor: valorFinal, valorCheio: valorCheioFinal, status: statusEdit, banco: bancoEdit, pai: tdbPaiNorm(paiEdit), tirarNota: tirarNotaEdit, convenio: convenioEdit, data: dataEdit || null, ok: okEdit || null }, (categoriaFinal ? { categoria: categoriaFinal } : {}), (__origEdit && __origEdit.conferido && (valorFinal !== __origEdit.valor || tdbPaiNorm(paiEdit) !== tdbPaiNorm(__origEdit.pai)) ? { conferido: null } : {})));
         setEditandoId(null);
     }
     function submeterNovo(e) {
@@ -16848,7 +17112,7 @@ function Mensalidades(_a) {
             valor: num,
             valorCheio: numCheio,
             status: novoStatus, banco: novoBanco,
-            pai: novoTipoOrigem === 'Aluno' ? (novoPai.trim() || null) : null,
+            pai: novoTipoOrigem === 'Aluno' ? (tdbPaiNorm(novoPai) || null) : null,
             convenio: novoTipoOrigem === 'Aluno' ? (novoConvenio.trim() || 'PARTICULAR') : null,
             tirarNota: novoTirarNota.trim() || null,
             nota: novoTipoOrigem === 'Aluno' ? 'Pendente' : undefined,
@@ -16903,7 +17167,7 @@ function Mensalidades(_a) {
         React.createElement("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 } },
             React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "NOME"), React.createElement("input", { value: nomeEdit, onChange: function (e) { var __v = e.target.value; setNomeEdit(__v); var __n = String(__v).trim(); if (__n) setQuantidadeEdit(String(TDBFinance.children({ categoria: prefixoEdit + __n.toUpperCase() }))); }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
             React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "CRIANÇAS NESTA COBRANÇA"), React.createElement("input", { type: "number", min: 1, step: 1, inputMode: "numeric", "aria-label": "Crianças nesta cobrança", value: quantidadeEdit, onChange: function (e) { return setQuantidadeEdit(e.target.value); }, style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
-            React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "RESPONSÁVEL / PAI"), React.createElement("input", { value: paiEdit, onChange: function (e) { return setPaiEdit(e.target.value); }, style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
+            React.createElement("div", { style: { gridColumn: '1/-1', display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "RESPONSÁVEL / PAI"), tdbPaiCampos(paiEdit, setPaiEdit, undefined, __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }), null, { spellCheck: "true", lang: "pt-BR" })),
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "CONVÊNIO"), React.createElement("input", { value: convenioEdit, onChange: function (e) { return setConvenioEdit(e.target.value); }, list: "convenios-edicao-mobile", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) }), React.createElement("datalist", { id: "convenios-edicao-mobile" }, conveniosDisponiveis.map(function (c) { return React.createElement("option", { key: c, value: c }); }))),
             React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "BANCO"), React.createElement("select", { value: bancoEdit, onChange: function (e) { return setBancoEdit(e.target.value); }, style: __assign(__assign({}, inputStyle), { width: '100%', color: bancoEdit ? corBanco(bancoEdit) : COLORS.ink, fontWeight: bancoEdit ? 800 : 500 }) }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))),
             statusEdit === 'Parcial' && React.createElement("div", { style: { display: 'grid', gap: 4 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "TOTAL DEVIDO"), React.createElement("input", { value: valorCheioEdit, onChange: function (e) { return setValorCheioEdit(e.target.value); }, onBlur: function () { return onBlurCalc(valorCheioEdit, setValorCheioEdit); }, inputMode: "decimal", className: "mono", placeholder: "0,00", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box' }) })),
@@ -16921,7 +17185,7 @@ function Mensalidades(_a) {
             background: gravandoMens ? COLORS.red : (interpretandoMens ? COLORS.inkSoft : COLORS.inkButton),
             color: '#FFF', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12.5, fontWeight: 700,
             cursor: interpretandoMens ? 'default' : 'pointer', animation: gravandoMens ? 'pulsarMic 1s ease-in-out infinite' : 'none',
-        } }, React.createElement(Mic, { size: 14, color: "#FFF" }), gravandoMens ? 'Ouvindo...' : (interpretandoMens ? 'Interpretando...' : 'Ditar registro')))), React.createElement("form", { className: "mobile-mens-form", onSubmit: submeterNovo, style: { display: 'flex', flexDirection: 'column', gap: 12 } }, React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10 } }, React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 110px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "TIPO"), React.createElement("select", { value: novoTipoOrigem, onChange: function (e) { return setNovoTipoOrigem(e.target.value); }, style: inputStyle }, React.createElement("option", null, "Aluno"), React.createElement("option", null, "Conv\u00EAnio"), React.createElement("option", null, "Outra"))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '2 1 200px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "NOME"), React.createElement("input", { value: novoNome, onChange: function (e) { return setNovoNome(e.target.value); }, placeholder: "Nome do aluno/empresa", style: inputStyle, spellCheck: "true", lang: "pt-BR" })), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "PAI/RESPONS\u00C1VEL"), React.createElement("input", { value: novoPai, onChange: function (e) { return setNovoPai(capitalizarPalavras(e.target.value)); }, placeholder: "Opcional", disabled: novoTipoOrigem !== 'Aluno', style: inputStyle, spellCheck: "true", lang: "pt-BR" })), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "CONV\u00CANIO"), React.createElement("select", { value: tabelaValores && Object.values(tabelaValores).some(function (g) { return g.nome.toUpperCase() === novoConvenio.toUpperCase(); }) ? novoConvenio.toUpperCase() : (novoConvenio ? 'OUTRO' : ''), onChange: function (e) {
+        } }, React.createElement(Mic, { size: 14, color: "#FFF" }), gravandoMens ? 'Ouvindo...' : (interpretandoMens ? 'Interpretando...' : 'Ditar registro')))), React.createElement("form", { className: "mobile-mens-form", onSubmit: submeterNovo, style: { display: 'flex', flexDirection: 'column', gap: 12 } }, React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 10 } }, React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 110px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "TIPO"), React.createElement("select", { value: novoTipoOrigem, onChange: function (e) { return setNovoTipoOrigem(e.target.value); }, style: inputStyle }, React.createElement("option", null, "Aluno"), React.createElement("option", null, "Conv\u00EAnio"), React.createElement("option", null, "Outra"))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '2 1 200px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "NOME"), React.createElement("input", { value: novoNome, onChange: function (e) { return setNovoNome(e.target.value); }, placeholder: "Nome do aluno/empresa", style: inputStyle, spellCheck: "true", lang: "pt-BR" })), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "PAI/RESPONS\u00C1VEL"), tdbPaiCampos(novoPai, setNovoPai, undefined, inputStyle, capitalizarPalavras, { disabled: novoTipoOrigem !== 'Aluno', spellCheck: "true", lang: "pt-BR" })), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 160px', opacity: novoTipoOrigem === 'Aluno' ? 1 : 0.4 } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "CONV\u00CANIO"), React.createElement("select", { value: tabelaValores && Object.values(tabelaValores).some(function (g) { return g.nome.toUpperCase() === novoConvenio.toUpperCase(); }) ? novoConvenio.toUpperCase() : (novoConvenio ? 'OUTRO' : ''), onChange: function (e) {
             if (e.target.value !== 'OUTRO')
                 setNovoConvenio(e.target.value);
             else
@@ -16957,7 +17221,10 @@ function Mensalidades(_a) {
         }, style: inputStyle }, React.createElement("option", { value: "" }, "\u2014 nenhum \u2014"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })), bancoOutroModo && (React.createElement("input", { value: novoBanco, onChange: function (e) { return setNovoBanco(e.target.value.toUpperCase()); }, placeholder: "Nome do banco", style: inputStyle }))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 100px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "STATUS"), React.createElement("select", { value: novoStatus, onChange: function (e) { return setNovoStatus(e.target.value); }, style: inputStyle }, React.createElement("option", null, "Pago"), React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"))), React.createElement("button", { type: "submit", style: {
             background: COLORS.inkButton, color: '#FFFFFF', border: 'none', borderRadius: 7, padding: '10px 16px',
             fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, height: 39, justifyContent: 'center',
-        } }, React.createElement(Plus, { size: 15 }), " Adicionar"))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement(ContaProporcionalBolhaTDB, { transacoes: transacoes, tabelaValores: tabelaValores, diasLetivos: diasLetivos, mes: novoMes, onUsar: function (valor, base) { if (novoStatus === 'Parcial' && !novoValorCheio) setNovoValorCheio(formatBRLNumber(base)); setNovoValor(formatBRLNumber(valor)); if (ehMobileNovoMens) setNovoMensMobileAberto(true); } }), React.createElement("div", { className: "mobile-mens-filtros", style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { className: "tdb-mens-data-filtro", style: { position: 'relative', flex: '0 1 190px' } }, React.createElement("input", { type: "date", value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, "aria-label": "Filtrar por data do pagamento", title: "Mostra só quem pagou na data escolhida", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box', cursor: 'pointer', paddingRight: filtroData ? 62 : undefined, boxShadow: filtroData ? 'inset 0 0 0 2px ' + COLORS.inkButton : undefined }) }), filtroData ? React.createElement("button", { type: "button", onClick: function () { return setFiltroData(''); }, "aria-label": "Limpar data", title: "Limpar data", style: { position: 'absolute', right: 34, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, border: 'none', borderRadius: 9, background: 'transparent', color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 13 })) : null), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por banco", valor: filtroBanco, onChange: setFiltroBanco, opcoes: bancosDisponiveis, rotuloTodos: "Todos os bancos", rotuloSem: "Sem banco", valSem: "SEM_BANCO", estilo: inputStyle, colunaCheia: true }), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por conv\u00EAnio", valor: filtroConvenio, onChange: setFiltroConvenio, opcoes: conveniosDisponiveis, rotuloTodos: "Todos os conv\u00EAnios", rotuloSem: "Sem conv\u00EAnio", valSem: "SEM_CONVENIO", estilo: inputStyle, colunaCheia: true }), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
+        } }, React.createElement(Plus, { size: 15 }), " Adicionar"))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement(ContaProporcionalBolhaTDB, { transacoes: transacoes, tabelaValores: tabelaValores, diasLetivos: diasLetivos, mes: novoMes, onUsar: function (valor, base) { if (novoStatus === 'Parcial' && !novoValorCheio) setNovoValorCheio(formatBRLNumber(base)); setNovoValor(formatBRLNumber(valor)); if (ehMobileNovoMens) setNovoMensMobileAberto(true); } }), React.createElement("div", { className: "mobile-mens-filtros", style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { className: "tdb-mens-data-filtro", style: { position: 'relative', flex: '0 1 190px' } }, React.createElement("input", { type: "date", value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, "aria-label": "Filtrar por data do pagamento", title: "Mostra só quem pagou na data escolhida", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box', cursor: 'pointer', paddingRight: filtroData ? 62 : undefined, boxShadow: filtroData ? 'inset 0 0 0 2px ' + COLORS.inkButton : undefined }) }), filtroData ? React.createElement("button", { type: "button", onClick: function () { return setFiltroData(''); }, "aria-label": "Limpar data", title: "Limpar data", style: { position: 'absolute', right: 34, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, border: 'none', borderRadius: 9, background: 'transparent', color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 13 })) : null), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por banco", valor: filtroBanco, onChange: setFiltroBanco, opcoes: bancosDisponiveis, rotuloTodos: "Todos os bancos", rotuloSem: "Sem banco", valSem: "SEM_BANCO", estilo: inputStyle, colunaCheia: true }), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por conv\u00EAnio", valor: filtroConvenio, onChange: setFiltroConvenio, opcoes: conveniosDisponiveis, rotuloTodos: "Todos os conv\u00EAnios", rotuloSem: "Sem conv\u00EAnio", valSem: "SEM_CONVENIO", estilo: inputStyle, colunaCheia: true }), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirAberto(true); }, title: "Conferir o extrato do banco com as mensalidades pagas", style: {
+            background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
+            display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
+        } }, React.createElement(Check, { size: 14 }), "Conferir extrato"), conferirAberto && React.createElement(ConferirExtratoTDB, { entradas: entradas, mesInicial: filtroMes !== 'TODOS' ? filtroMes : (MESES[new Date().getMonth()] || 'SETEMBRO'), onFechar: function () { setConferirAberto(false); }, onSalvar: function (mapa) { return marcarConferidos ? marcarConferidos(mapa) : false; } }), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
         } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), semFiltroNenhum && filtradasCompleto.length > 100 && (React.createElement("div", { style: { fontSize: 13, color: COLORS.gold, background: COLORS.goldSoft, borderRadius: 8, padding: '8px 12px' } }, "Mostrando s\u00F3 os 100 primeiros de ", filtradasCompleto.length, " registros \u2014 escolha um m\u00EAs ou busque um nome pra ver o resto (evita travar a tela).")), React.createElement("datalist", { id: "convenios-lista" }, CONVENIOS_CONHECIDOS.map(function (c) { return React.createElement("option", { key: c, value: c }); })), React.createElement("datalist", { id: "valores-fotos-lista" }, valoresConhecidos.map(function (v, i) { return (React.createElement("option", { key: i, value: formatBRLNumber(v) })); })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Alunos", itens: alunosLista, contagemAlunos: contagemAlunosLista, mostrarDetalhes: true }, linhaHandlers), { modoPrivado: privadoDetalhes })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Empresas / Conv\u00EAnios", itens: empresasLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes })), outrosLista.length > 0 && React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Outros", itens: outrosLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes }))));
@@ -20317,6 +20584,30 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-num] body .kpi-card:not
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-num] body .painel-main :is([style*="IBM Plex Mono"],[style*="monospace"]) {font-weight:700!important;}
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body:not(.dark-mode) .painel-main table tbody tr:nth-child(even) {background:rgba(23,103,207,.06);}
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .painel-main table tbody tr:nth-child(even) {background:rgba(255,255,255,.08);}
+/* TDB v1.22 — selos da conferência de extrato + Pai/Responsável com 2 nomes */
+.tdb-cf-b{display:inline-flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;border-radius:999px;font:800 12px/1 Inter,system-ui,sans-serif;margin-left:6px;vertical-align:middle;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.tdb-cf-b[data-st="ok"]{background:#1fa86b}.tdb-cf-b[data-st="olhar"]{background:#e0a21b}.tdb-cf-b[data-st="nao"]{background:#d93a4a}
+.tdb-cf-nm{display:none!important}
+.tdb-cf-st{width:18px;height:18px;font-size:10.5px;margin-left:4px}
+td:has(>.tdb-cf-st){white-space:nowrap!important}
+.tdb-cf-resumo{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:12px;vertical-align:middle}
+.tdb-cf-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font:800 11.5px/1.2 Inter,system-ui,sans-serif;white-space:nowrap;border:1px solid transparent}
+.tdb-cf-chip[data-st="ok"]{color:#1fa86b;background:rgba(31,168,107,.15);border-color:rgba(31,168,107,.4)}
+.tdb-cf-chip[data-st="olhar"]{color:#c98a00;background:rgba(240,180,41,.18);border-color:rgba(240,180,41,.5)}
+.tdb-cf-chip[data-st="nao"]{color:#d93a4a;background:rgba(217,58,74,.13);border-color:rgba(217,58,74,.4)}
+.tdb-cf-quando{font:600 12px Inter,system-ui,sans-serif;color:var(--c-inkSoft);white-space:nowrap}
+.tdb-pai-campos input{min-width:0}
+@media print{.tdb-cf-b,.tdb-cf-resumo{display:none!important}}
+html.tdb-aurora-pdf .tdb-cf-b,html.tdb-aurora-pdf .tdb-cf-resumo{display:none!important}
+
+/* celular: o selo vai ao lado do nome e o resumo desce para baixo do título */
+.tdb-cf-st{display:none!important}
+.tdb-cf-nm{display:inline-flex!important;margin-left:2px;width:20px;height:20px;font-size:11px}
+.tdb-cf-resumo{display:flex;margin:8px 0 0 0}
+.tdb-cf-quando{white-space:normal;width:100%}
+html body tr.mensalidades-row[data-cf="olhar"]:not(#tdb3x){background-image:linear-gradient(rgba(240,180,41,.16),rgba(240,180,41,.16))!important}
+html body tr.mensalidades-row[data-cf="nao"]:not(#tdb3x){background-image:linear-gradient(rgba(217,58,74,.13),rgba(217,58,74,.13))!important}
+
 /* Festas TDB — tablet: linha em edição com coluna DATA mais larga (o calendário não cobre o ano) */
 @media (min-width:761px) and (max-width:1366px){
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x) table.festas-tdb-tabela:has(tbody input[type=date]) col:nth-child(1){width:20%!important}
