@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261021-tdb-v1-24";
+    window.__TDB_BUILD = "tdb-20261021-tdb-v1-27";
   </script>
-  <script src="./config.js?build=tdb-20261021-tdb-v1-24"></script>
+  <script src="./config.js?build=tdb-20261021-tdb-v1-27"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1541,10 +1541,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261021-tdb-v1-24"></script>
+  <script src="./sync.js?build=tdb-20261021-tdb-v1-27"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261021-tdb-v1-24-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261021-tdb-v1-27-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -15697,7 +15697,7 @@ function tdbMoneyList(str) {
     return out;
 }
 var TDB_CF_DATA = /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/;
-function tdbParseExtrato(texto) {
+function tdbParseExtrato(texto, banco) {
     texto = String(texto || '');
     var linhas = texto.split(/\r?\n/).map(function (l) { return l.replace(/\t+/g, '  ').trim(); }).filter(Boolean);
     var temData = TDB_CF_DATA.test(texto);
@@ -15720,6 +15720,7 @@ function tdbParseExtrato(texto) {
         var md = txt.match(TDB_CF_DATA);
         var limpo = txt.replace(/(?:R\$\s*)?-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}/g, ' ').replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, ' ');
         out.push({
+            banco: banco || null,
             data: md ? md[0] : '',
             texto: limpo.replace(/\s+/g, ' ').trim().slice(0, 90),
             valores: din.map(function (d) { return d.v; }),
@@ -15740,18 +15741,37 @@ function tdbNomeCasa(parte, ent) {
     if (tp.length >= 3 && ok >= tp.length - 1) return 1;
     return 0;
 }
-function tdbTemValor(ent, v) { return ent.valores.some(function (x) { return Math.abs(x - v) < 0.005; }); }
-/* lancs: [{id, nome, partes:[...], valor}] · entradas: saída de tdbParseExtrato */
-function tdbConferir(entradas, lancs) {
+function tdbTemValor(ent, v, tol) { return ent.valores.some(function (x) { return Math.abs(x - v) <= (tol || 0) + 0.004; }); }
+/* Reconhece o banco pelo cabeçalho do extrato (primeiras linhas). Devolve o nome para exibir, ou null. */
+var TDB_CF_BANCOS = [['SICOOB', 'Sicoob'], ['SICREDI', 'Sicredi'], ['ITAU', 'Ita\u00FA'], ['BTG', 'BTG Pactual'], ['NUBANK', 'Nubank'], ['NU PAGAMENTOS', 'Nubank'], ['BRADESCO', 'Bradesco'], ['BANCO DO BRASIL', 'Banco do Brasil'], ['CAIXA ECONOMICA', 'Caixa'], ['CAIXA', 'Caixa'], ['SANTANDER', 'Santander'], ['BANCO INTER', 'Inter'], ['MERCADO PAGO', 'Mercado Pago'], ['PICPAY', 'PicPay'], ['C6 BANK', 'C6 Bank']];
+function tdbBancoDoTexto(texto) {
+    var n = ' ' + tdbNorm(String(texto || '').slice(0, 2500)) + ' ';
+    for (var i = 0; i < TDB_CF_BANCOS.length; i++) { if (n.indexOf(' ' + TDB_CF_BANCOS[i][0] + ' ') >= 0 || (TDB_CF_BANCOS[i][0].indexOf(' ') < 0 && n.indexOf(TDB_CF_BANCOS[i][0]) >= 0 && TDB_CF_BANCOS[i][0].length >= 5)) return TDB_CF_BANCOS[i][1]; }
+    return null;
+}
+/* lancs: [{id, nome, partes:[...], valor, banco}] · entradas: saída de tdbParseExtrato · tol: tolerância de valor em R$ */
+function tdbConferir(entradas, lancs, tol) {
+    tol = tol || 0;
     var usada = entradas.map(function () { return false; });
     var res = {};
     function nivel(l, ent) { var m = 0; l.partes.forEach(function (p) { var n = tdbNomeCasa(p, ent); if (n > m) m = n; }); return m; }
-    function acha(l, cond) { for (var i = 0; i < entradas.length; i++) { if (!usada[i] && cond(entradas[i], i)) return i; } return -1; }
+    function mesmoBanco(l, e) { return !l.banco || !e.banco || tdbNorm(l.banco) === tdbNorm(e.banco); }
+    function acha(l, cond) {
+        var i;
+        for (i = 0; i < entradas.length; i++) { if (!usada[i] && mesmoBanco(l, entradas[i]) && cond(entradas[i], i)) return i; }
+        for (i = 0; i < entradas.length; i++) { if (!usada[i] && cond(entradas[i], i)) return i; }
+        return -1;
+    }
     function fmt(v) { return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+    function valorMaisPerto(e, v) { var b = e.valores[0]; e.valores.forEach(function (x) { if (Math.abs(x - v) < Math.abs(b - v)) b = x; }); return b; }
     lancs.forEach(function (l) {
         if (!l.partes.length) return;
-        var i = acha(l, function (e) { return tdbTemValor(e, l.valor) && nivel(l, e) === 2; });
-        if (i >= 0) { usada[i] = true; res[l.id] = { st: 'ok', entrada: i, motivo: 'Nome e valor batem' }; }
+        var i = acha(l, function (e) { return tdbTemValor(e, l.valor, tol) && nivel(l, e) === 2; });
+        if (i >= 0) {
+            usada[i] = true;
+            var dif = valorMaisPerto(entradas[i], l.valor) - l.valor;
+            res[l.id] = { st: 'ok', tipo: 'ok', entrada: i, motivo: Math.abs(dif) < 0.005 ? 'Nome e valor batem' : 'Nome bate; valor com diferen\u00E7a de ' + fmt(Math.abs(dif)) + ' (dentro da toler\u00E2ncia)' };
+        }
     });
     lancs.forEach(function (l) {
         if (res[l.id] || !l.partes.length) return;
@@ -15760,26 +15780,26 @@ function tdbConferir(entradas, lancs) {
         cand = cand.slice(0, 8);
         var ach = null, n = cand.length, a, b, c;
         for (a = 0; a < n && !ach; a++) for (b = a + 1; b < n && !ach; b++) {
-            if (Math.abs(entradas[cand[a]].valores[0] + entradas[cand[b]].valores[0] - l.valor) < 0.005) ach = [cand[a], cand[b]];
-            else for (c = b + 1; c < n && !ach; c++) if (Math.abs(entradas[cand[a]].valores[0] + entradas[cand[b]].valores[0] + entradas[cand[c]].valores[0] - l.valor) < 0.005) ach = [cand[a], cand[b], cand[c]];
+            if (Math.abs(entradas[cand[a]].valores[0] + entradas[cand[b]].valores[0] - l.valor) <= tol + 0.004) ach = [cand[a], cand[b]];
+            else for (c = b + 1; c < n && !ach; c++) if (Math.abs(entradas[cand[a]].valores[0] + entradas[cand[b]].valores[0] + entradas[cand[c]].valores[0] - l.valor) <= tol + 0.004) ach = [cand[a], cand[b], cand[c]];
         }
-        if (ach) { ach.forEach(function (i) { usada[i] = true; }); res[l.id] = { st: 'ok', entrada: ach[0], motivo: 'Soma de ' + ach.length + ' entradas do mesmo nome' }; }
+        if (ach) { ach.forEach(function (i) { usada[i] = true; }); res[l.id] = { st: 'ok', tipo: 'soma', entrada: ach[0], motivo: 'Soma de ' + ach.length + ' entradas do mesmo nome' }; }
     });
     lancs.forEach(function (l) {
         if (res[l.id] || !l.partes.length) return;
-        var i = acha(l, function (e) { return tdbTemValor(e, l.valor) && nivel(l, e) === 1; });
-        if (i >= 0) { usada[i] = true; res[l.id] = { st: 'olhar', entrada: i, motivo: 'Valor bate, mas só parte do nome confere — cadastre o nome completo' }; }
+        var i = acha(l, function (e) { return tdbTemValor(e, l.valor, tol) && nivel(l, e) === 1; });
+        if (i >= 0) { usada[i] = true; res[l.id] = { st: 'olhar', tipo: 'nome', entrada: i, motivo: 'Valor bate, mas s\u00F3 parte do nome confere \u2014 cadastre o nome completo' }; }
     });
     lancs.forEach(function (l) {
         if (res[l.id] || !l.partes.length) return;
         var i = acha(l, function (e) { return nivel(l, e) >= 1; });
-        if (i >= 0) { usada[i] = true; res[l.id] = { st: 'olhar', entrada: i, motivo: 'Achei ' + fmt(entradas[i].valores[0]) + ' no extrato, esperado ' + fmt(l.valor) }; }
+        if (i >= 0) { usada[i] = true; var vv = valorMaisPerto(entradas[i], l.valor); res[l.id] = { st: 'olhar', tipo: 'valor', dif: vv - l.valor, entrada: i, motivo: 'Achei ' + fmt(vv) + ' no extrato, esperado ' + fmt(l.valor) }; }
     });
     lancs.forEach(function (l) {
         if (res[l.id]) return;
         res[l.id] = l.partes.length
-            ? { st: 'nao', entrada: -1, motivo: 'Não achei esse nome nem esse valor no extrato' }
-            : { st: 'olhar', entrada: -1, motivo: 'Sem Pai/Responsável cadastrado — preencha o nome para conferir' };
+            ? { st: 'nao', tipo: 'nao', entrada: -1, motivo: 'N\u00E3o achei esse nome nem esse valor no extrato' }
+            : { st: 'olhar', tipo: 'semnome', entrada: -1, motivo: 'Sem Pai/Respons\u00E1vel cadastrado \u2014 preencha o nome para conferir' };
     });
     return { res: res, sobras: entradas.filter(function (e, i) { return !usada[i]; }) };
 }
@@ -15825,21 +15845,36 @@ function tdbCfResumo(itens) {
     if (ult && d) kids.push(React.createElement('span', { key: 'em', className: 'tdb-cf-quando' }, 'extrato conferido em ' + d + (ult.banco ? ' · ' + ult.banco : '')));
     return React.createElement('span', { className: 'tdb-cf-resumo' }, kids);
 }
-/* ---- Janela "Conferir extrato" ---- */
+/* Lê o texto de um PDF de extrato (PDF com texto; não serve para foto/escaneado). Agrupa as palavras por linha. */
+function tdbPdfTexto(file) {
+    return window.__ensurePDFJS().then(function () { return file.arrayBuffer(); }).then(function (buf) {
+        return window.pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+    }).then(function (pdf) {
+        var out = [], seq = Promise.resolve();
+        for (var i = 1; i <= pdf.numPages; i++) (function (n) {
+            seq = seq.then(function () { return pdf.getPage(n); }).then(function (pg) { return pg.getTextContent(); }).then(function (c) {
+                var its = c.items.filter(function (it) { return it.str && it.str.trim() !== ''; }).map(function (it) { return { s: it.str, x: it.transform[4], y: it.transform[5] }; });
+                its.sort(function (a, b) { return (b.y - a.y) || (a.x - b.x); });
+                var linhas = [], cur = null;
+                its.forEach(function (it) { if (cur && Math.abs(cur.y - it.y) <= 3) cur.its.push(it); else { cur = { y: it.y, its: [it] }; linhas.push(cur); } });
+                linhas.forEach(function (l) { l.its.sort(function (a, b) { return a.x - b.x; }); out.push(l.its.map(function (x) { return x.s; }).join(' ').replace(/\s+/g, ' ').trim()); });
+            });
+        })(i);
+        return seq.then(function () { return { texto: out.join('\n'), paginas: pdf.numPages }; });
+    });
+}
+/* ---- Tela "Conferir extrato" (página cheia dentro de Mensalidades) ---- */
 function ConferirExtratoTDB(p) {
     var h = React.createElement;
-    var bancos = BANCOS.filter(function (b) { return b !== 'Outro' && b !== 'DINHEIRO'; });
-    var _t = useState(''), texto = _t[0], setTexto = _t[1];
     var _m = useState(p.mesInicial), mes = _m[0], setMes = _m[1];
-    var _b = useState(function () {
-        var cont = {};
-        (p.entradas || []).forEach(function (t) { if (t.mes === p.mesInicial && t.banco && String(t.categoria || '').indexOf('Mensalidade - ') === 0 && TDBFinance.received(t) > 0) cont[t.banco] = (cont[t.banco] || 0) + 1; });
-        var melhor = null;
-        Object.keys(cont).forEach(function (k) { if (bancos.some(function (x) { return tdbNorm(x) === tdbNorm(k); }) && (melhor === null || cont[k] > cont[melhor])) melhor = k; });
-        return melhor ? bancos.filter(function (x) { return tdbNorm(x) === tdbNorm(melhor); })[0] : bancos[0];
-    }), banco = _b[0], setBanco = _b[1];
+    var _tol = useState('0'), tolStr = _tol[0], setTolStr = _tol[1];
+    var _fs = useState([]), arquivos = _fs[0], setArquivos = _fs[1];
+    var _tx = useState(''), texto = _tx[0], setTexto = _tx[1];
+    var _vt = useState(false), verTexto = _vt[0], setVerTexto = _vt[1];
+    var _ld = useState(false), lendo = _ld[0], setLendo = _ld[1];
     var _r = useState(null), resultado = _r[0], setResultado = _r[1];
     var _k = useState({}), marc = _k[0], setMarc = _k[1];
+    var _fl = useState('atencao'), filtro = _fl[0], setFiltro = _fl[1];
     var _e = useState(''), erro = _e[0], setErro = _e[1];
     useEffect(function () {
         var ant = document.body.style.overflow; document.body.style.overflow = 'hidden';
@@ -15848,22 +15883,50 @@ function ConferirExtratoTDB(p) {
         return function () { document.body.style.overflow = ant; document.removeEventListener('keydown', tecla); };
     }, []);
     function brl(v) { return formatBRL(v); }
+    function brlSinal(v) { return (v < 0 ? '−' : '+') + Math.abs(v).toFixed(2).replace('.', ','); }
+    function carregarPdfs(files) {
+        var arr = Array.prototype.slice.call(files || []);
+        if (!arr.length) return;
+        setErro(''); setLendo(true);
+        var novos = [], seq = Promise.resolve();
+        arr.forEach(function (f) {
+            seq = seq.then(function () { return tdbPdfTexto(f); }).then(function (r) {
+                var banco = tdbBancoDoTexto(r.texto);
+                var ents = tdbParseExtrato(r.texto, banco);
+                novos.push({ nome: f.name, banco: banco, paginas: r.paginas, entradas: ents, temTexto: /\d,\d{2}/.test(r.texto) });
+            });
+        });
+        seq.then(function () {
+            setLendo(false);
+            var bons = novos.filter(function (n) { return n.temTexto; });
+            if (novos.length && !bons.length) { setErro('Esse PDF não tem texto legível (parece foto ou escaneado). Baixe o extrato em PDF pelo app ou site do banco, sem tirar foto.'); return; }
+            if (bons.length < novos.length) setErro('Um dos PDFs não tem texto legível (foto ou escaneado) e foi ignorado.');
+            setArquivos(function (ant) { return ant.concat(bons); });
+        }).catch(function (e) {
+            setLendo(false);
+            setErro(e && e.name === 'PasswordException' ? 'Um PDF tem senha. Abra no leitor de PDF, salve sem senha e anexe de novo.' : 'Não consegui abrir o PDF (' + ((e && e.message) || 'erro') + '). Tente de novo ou cole o texto do extrato.');
+        });
+    }
+    var entradasPdf = [];
+    arquivos.forEach(function (a) { entradasPdf = entradasPdf.concat(a.entradas); });
+    var entradasTexto = texto.trim() ? tdbParseExtrato(texto, tdbBancoDoTexto(texto)) : [];
+    var todasEntradas = entradasPdf.concat(entradasTexto);
+    var totalPaginas = arquivos.reduce(function (s, a) { return s + a.paginas; }, 0);
     function lancamentos() {
         return (p.entradas || []).filter(function (t) {
-            return String(t.categoria || '').indexOf('Mensalidade - ') === 0 && t.mes === mes && tdbNorm(t.banco) === tdbNorm(banco) && TDBFinance.received(t) > 0;
-        }).map(function (t) { return { id: t.id, nome: nomeExibicao(t.categoria), pai: t.pai || '', partes: tdbPaiPartes(t.pai), valor: TDBFinance.received(t) }; });
+            return String(t.categoria || '').indexOf('Mensalidade - ') === 0 && t.mes === mes && tdbNorm(t.banco) !== 'DINHEIRO' && TDBFinance.received(t) > 0;
+        }).map(function (t) { return { id: t.id, nome: nomeExibicao(t.categoria), pai: t.pai || '', partes: tdbPaiPartes(t.pai), valor: TDBFinance.received(t), banco: t.banco || '' }; });
     }
     function conferir() {
         setErro('');
         var ls = lancamentos();
-        if (!ls.length) { setErro('Não há mensalidades pagas de ' + mes + ' no ' + banco + ' para conferir. Confira o mês e o banco.'); return; }
-        var ents = tdbParseExtrato(texto);
-        if (!ents.length) { setErro('Não encontrei entradas no texto colado. Cole o extrato com as linhas de data, nome e valor.'); return; }
-        var r = tdbConferir(ents, ls);
+        if (!ls.length) { setErro('Não há mensalidades pagas (fora dinheiro) em ' + mes + ' para conferir. Confira o mês.'); return; }
+        if (!todasEntradas.length) { setErro('Anexe o PDF do extrato (ou cole o texto) antes de conferir.'); return; }
+        var r = tdbConferir(todasEntradas, ls, parseFloat(tolStr) || 0);
         var m = {};
         ls.forEach(function (l) { if (r.res[l.id].st === 'ok') m[l.id] = true; });
-        setMarc(m);
-        setResultado({ lancs: ls, res: r.res, sobras: r.sobras, entradas: ents });
+        setMarc(m); setFiltro('atencao');
+        setResultado({ lancs: ls, res: r.res, sobras: r.sobras, entradas: todasEntradas, nArq: arquivos.length, bancos: arquivos.map(function (a) { return a.banco; }).filter(function (b, i, s) { return b && s.indexOf(b) === i; }) });
     }
     function contar(st) { return resultado.lancs.filter(function (l) { return resultado.res[l.id].st === st; }).length; }
     function salvar() {
@@ -15875,65 +15938,124 @@ function ConferirExtratoTDB(p) {
             var motivo = r.motivo;
             if (st === 'ok' && r.st !== 'ok') motivo = 'Confirmado por você';
             if (st === 'olhar' && r.st === 'ok') motivo = 'Você desmarcou a conferência';
-            mapa[l.id] = { st: st, em: em, banco: banco, motivo: motivo };
+            var ent = r.entrada >= 0 ? resultado.entradas[r.entrada] : null;
+            mapa[l.id] = { st: st, em: em, banco: (ent && ent.banco) || l.banco || '', motivo: motivo };
         });
         var ok = p.onSalvar(mapa);
         if (ok === false) { setErro('Não consegui salvar agora (o ano pode estar encerrado).'); return; }
         if (typeof mostrarToast === 'function') mostrarToast('Conferência salva na lista de mensalidades.');
         p.onFechar();
     }
-    var inp = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, background: COLORS.paper, color: COLORS.ink, borderRadius: 10, padding: '9px 11px', fontSize: 14, fontFamily: 'inherit' };
+    function novaConferencia() { setResultado(null); setArquivos([]); setTexto(''); setVerTexto(false); setErro(''); setMarc({}); }
     var cores = { ok: '#1fa86b', olhar: '#d99a00', nao: '#d93a4a' };
-    function chip(st, txt) { return h('span', { key: st, style: { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 11px', borderRadius: 999, fontSize: 12.5, fontWeight: 800, color: cores[st], background: 'color-mix(in srgb, ' + cores[st] + ' 15%, transparent)', border: '1px solid color-mix(in srgb, ' + cores[st] + ' 40%, transparent)' } }, txt); }
-    var btnBase = { borderRadius: 10, padding: '10px 16px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer' };
-    function linha(l) {
-        var r = resultado.res[l.id], st = r.st;
-        var ent = r.entrada >= 0 ? resultado.entradas[r.entrada] : null;
-        return h('div', { key: l.id, className: 'tdb-cf-linha', 'data-st': st, style: { display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 12px', borderBottom: '1px solid ' + COLORS.lineSoft } },
-            st === 'nao'
-                ? h('span', { style: { width: 18, flex: 'none', textAlign: 'center', fontWeight: 900, color: cores.nao, marginTop: 1 } }, '✕')
-                : h('input', { type: 'checkbox', 'aria-label': 'Marcar ' + l.nome + ' como conferido', checked: !!marc[l.id], onChange: function () { var o = Object.assign({}, marc); o[l.id] = !o[l.id]; setMarc(o); }, style: { width: 18, height: 18, accentColor: '#1fa86b', flex: 'none', marginTop: 1 } }),
-            h('div', { style: { flex: 1, minWidth: 0 } },
-                h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 14, fontWeight: 700, color: COLORS.ink } }, h('span', { style: { minWidth: 0, wordBreak: 'break-word' } }, l.nome), h('span', { className: 'mono', style: { whiteSpace: 'nowrap' } }, brl(l.valor))),
-                h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 2 } }, 'Resp.: ' + (l.partes.length ? l.partes.join(' / ') : '—')),
-                h('div', { style: { fontSize: 12, color: cores[st], fontWeight: 700, marginTop: 2 } }, (st === 'ok' ? '✓ ' : st === 'olhar' ? '! ' : '✕ ') + r.motivo),
-                ent && h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 2, wordBreak: 'break-word' } }, 'Extrato: ' + (ent.data ? ent.data + ' · ' : '') + ent.texto + ' · ' + brl(ent.valores[0]))));
+    var card = {};
+    var inp = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', fontSize: 14, fontWeight: 600, fontFamily: 'inherit' };
+    var lab = { fontSize: 11.5, fontWeight: 700, color: COLORS.inkSoft, margin: '14px 0 5px', display: 'block' };
+    var btn = { padding: '11px 18px', fontWeight: 700, fontSize: 14, cursor: 'pointer' };
+    var btnMain = Object.assign({}, btn, { fontSize: 15, padding: '12px 22px' });
+    function tag(tipo, dif) {
+        var map = { ok: ['✓ Bateu', 'ok'], soma: ['✓ Bateu (soma)', 'ok'], nome: ['⚠ Nome parecido', 'olhar'], valor: ['⚠ Valor diferente (' + brlSinal(dif || 0) + ')', 'olhar'], semnome: ['⚠ Sem responsável', 'olhar'], nao: ['✕ Não achei', 'nao'] };
+        var m = map[tipo] || map.nao, c = cores[m[1]];
+        return h('span', { style: { display: 'inline-block', padding: '4px 11px', borderRadius: 999, fontWeight: 800, fontSize: 12, whiteSpace: 'nowrap', color: c, background: 'color-mix(in srgb, ' + c + ' 16%, transparent)', border: '1px solid color-mix(in srgb, ' + c + ' 35%, transparent)' } }, m[0]);
     }
+    function bancoTag(b) { return b ? h('span', { style: { background: 'color-mix(in srgb, #4a63d6 14%, transparent)', color: '#4a63d6', fontWeight: 800, fontSize: 10.5, padding: '2px 7px', borderRadius: 999, marginRight: 6, whiteSpace: 'nowrap' } }, b) : null; }
+    function achado(r) {
+        var ent = r.entrada >= 0 ? ENTS[r.entrada] : null;
+        if (!ent) return h('span', { style: { color: COLORS.inkSoft, fontSize: 12.5 } }, '— não encontrei no extrato');
+        return h('span', { style: { fontSize: 12.5 } }, bancoTag(ent.banco), (ent.data ? ent.data + ' · ' : '') + ent.texto.slice(0, 48) + ' · ' + ent.valores[0].toFixed(2).replace('.', ','));
+    }
+    var ENTS = resultado ? resultado.entradas : [];
     var corpo;
     if (!resultado) {
-        corpo = h(React.Fragment, null,
-            h('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 } },
-                h('label', { style: { display: 'grid', gap: 4, flex: '1 1 140px', fontSize: 11.5, fontWeight: 700, color: COLORS.inkSoft } }, 'MÊS', h('select', { value: mes, onChange: function (e) { setMes(e.target.value); }, style: inp }, MESES.map(function (m) { return h('option', { key: m, value: m }, m); }))),
-                h('label', { style: { display: 'grid', gap: 4, flex: '1 1 140px', fontSize: 11.5, fontWeight: 700, color: COLORS.inkSoft } }, 'BANCO DO EXTRATO', h('select', { value: banco, onChange: function (e) { setBanco(e.target.value); }, style: inp }, bancos.map(function (b) { return h('option', { key: b, value: b }, b); })))),
-            h('label', { style: { display: 'grid', gap: 4, marginTop: 12, fontSize: 11.5, fontWeight: 700, color: COLORS.inkSoft } }, 'COLE AQUI O EXTRATO',
-                h('textarea', { value: texto, onChange: function (e) { setTexto(e.target.value); setErro(''); }, rows: 9, placeholder: 'Copie as linhas do extrato no site ou app do banco e cole aqui.\nEx.: 03/08/2026  PIX RECEBIDO  ANTHONY MELERE SEIMETZ GEDOZ  1.483,00', style: Object.assign({}, inp, { resize: 'vertical', fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 12.5, lineHeight: 1.4 }) })),
-            h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 8, lineHeight: 1.45 } }, 'Confere pelo nome do Pai/Responsável (completo), pelo valor e pelo mês. Só as entradas do extrato são lidas e tudo fica no seu aparelho — nada é enviado para fora.'),
-            erro && h('div', { role: 'alert', style: { marginTop: 10, padding: '9px 12px', borderRadius: 10, background: COLORS.redBg, color: COLORS.red, fontSize: 13, fontWeight: 600 } }, erro),
-            h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14, flexWrap: 'wrap' } },
-                h('button', { type: 'button', onClick: p.onFechar, style: Object.assign({}, btnBase, { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink }) }, 'Cancelar'),
-                h('button', { type: 'button', onClick: conferir, disabled: !texto.trim(), style: Object.assign({}, btnBase, { border: 'none', background: COLORS.inkButton, color: '#FFFFFF', opacity: texto.trim() ? 1 : 0.5 }) }, 'Conferir')));
+        corpo = h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '24px 26px' }) },
+            h('div', { style: { fontSize: 22, fontWeight: 800, color: COLORS.ink } }, 'Conferir extrato do banco'),
+            h('div', { style: { fontSize: 13.5, color: COLORS.inkSoft, margin: '4px 0 18px', lineHeight: 1.45 } }, 'Anexe os PDFs dos extratos — pode ser mais de um, de bancos diferentes, tudo de uma vez. O programa lê, reconhece o banco e compara com as mensalidades lançadas.'),
+            h('div', { className: 'tdb-cfp-grid' },
+                h('div', null,
+                    h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B' } }, '1 · Qual mês conferir'),
+                    h('select', { value: mes, onChange: function (e) { setMes(e.target.value); }, className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8 }), 'aria-label': 'Mês' }, MESES.map(function (m) { return h('option', { key: m, value: m }, m); })),
+                    h('span', { style: lab }, '2 · Bancos'),
+                    h('div', { style: { padding: '11px 14px', borderRadius: 12, background: 'color-mix(in srgb, #18B9AD 10%, transparent)', border: '1px solid color-mix(in srgb, #18B9AD 30%, transparent)', fontSize: 13, color: COLORS.ink, lineHeight: 1.45 } }, h('b', null, 'Automático. '), 'O banco é reconhecido em cada PDF; as mensalidades pagas em dinheiro ficam de fora.'),
+                    h('span', { style: lab }, '3 · Tolerância de valor'),
+                    h('select', { value: tolStr, onChange: function (e) { setTolStr(e.target.value); }, className: 'tdb-cfp-inp', style: inp, 'aria-label': 'Tolerância de valor' }, h('option', { value: '0' }, 'Exato (R$ 0,00)'), h('option', { value: '1' }, 'Até R$ 1,00'), h('option', { value: '5' }, 'Até R$ 5,00')),
+                    h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 16, lineHeight: 1.45 } }, '🔒 A leitura é feita neste aparelho. Os PDFs não são enviados para lugar nenhum e não ficam salvos.')),
+                h('div', null,
+                    h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, '4 · Anexe os PDFs'),
+                    h('label', { className: 'tdb-cf-pdf', style: { display: 'block', textAlign: 'center', border: '2px dashed #18B9AD', background: 'color-mix(in srgb, #18B9AD 7%, transparent)', borderRadius: 16, padding: '26px 14px', color: '#106E6B', fontWeight: 800, fontSize: 15, cursor: lendo ? 'wait' : 'pointer' } },
+                        lendo ? 'Lendo os PDFs…' : '📄 Anexar os PDFs dos extratos',
+                        h('div', { style: { color: COLORS.inkSoft, fontWeight: 600, fontSize: 12.5, marginTop: 4 } }, 'escolha todos de uma vez (Sicoob, Itaú, BTG…)'),
+                        h('input', { type: 'file', accept: 'application/pdf,.pdf', multiple: true, disabled: lendo, 'aria-label': 'Anexar os PDFs dos extratos', onChange: function (e) { var fs = e.target.files; carregarPdfs(fs); e.target.value = ''; }, style: { display: 'none' } })),
+                    arquivos.map(function (a, i) {
+                        return h('div', { key: i, className: 'tdb-cfp-arq tdb-cfp-g', style: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 18, marginTop: 8 } },
+                            h('span', { style: { background: 'color-mix(in srgb, #d93a4a 15%, transparent)', color: '#d93a4a', fontWeight: 800, fontSize: 11, padding: '7px 8px', borderRadius: 8 } }, 'PDF'),
+                            h('div', { style: { flex: '1 1 150px', minWidth: 0 } }, h('div', { style: { fontWeight: 700, color: COLORS.ink, fontSize: 14, wordBreak: 'break-word' } }, a.nome), h('div', { style: { fontSize: 12, color: COLORS.inkSoft } }, a.paginas + (a.paginas === 1 ? ' página' : ' páginas') + ' · ' + a.entradas.length + (a.entradas.length === 1 ? ' entrada' : ' entradas'))),
+                            h('span', { style: { fontWeight: 800, fontSize: 12, padding: '4px 10px', borderRadius: 999, whiteSpace: 'nowrap', color: a.banco ? '#1fa86b' : '#d99a00', background: a.banco ? 'color-mix(in srgb, #1fa86b 15%, transparent)' : 'color-mix(in srgb, #d99a00 18%, transparent)' } }, a.banco ? '✓ ' + a.banco + ' reconhecido' : 'Banco não identificado'),
+                            h('button', { type: 'button', 'aria-label': 'Remover ' + a.nome, onClick: function () { setArquivos(function (ant) { return ant.filter(function (x, j) { return j !== i; }); }); }, style: { background: 'none', border: 'none', color: COLORS.inkSoft, cursor: 'pointer', fontSize: 16, padding: 4 } }, '✕'));
+                    }),
+                    h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 10 } },
+                        arquivos.length ? arquivos.length + (arquivos.length === 1 ? ' PDF lido' : ' PDFs lidos') + ' · ' + totalPaginas + (totalPaginas === 1 ? ' página' : ' páginas') + ' · ' + todasEntradas.length + ' entradas (créditos) · ' : (todasEntradas.length ? todasEntradas.length + ' entradas (créditos) · ' : ''),
+                        h('span', { role: 'button', tabIndex: 0, onClick: function () { setVerTexto(function (v) { return !v; }); }, style: { textDecoration: 'underline', cursor: 'pointer' } }, verTexto ? 'esconder o texto colado' : 'ou colar o texto do extrato')),
+                    verTexto && h('textarea', { value: texto, onChange: function (e) { setTexto(e.target.value); setErro(''); }, rows: 6, 'aria-label': 'Texto do extrato', placeholder: 'Cole aqui as linhas do extrato (data, nome e valor).', className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8, resize: 'vertical', fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 12.5, fontWeight: 400 }) }),
+                    erro && h('div', { role: 'alert', style: { marginTop: 10, padding: '9px 12px', borderRadius: 10, background: COLORS.redBg, color: COLORS.red, fontSize: 13, fontWeight: 600 } }, erro),
+                    h('div', { style: { display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' } },
+                        h('button', { type: 'button', onClick: conferir, disabled: lendo || !todasEntradas.length, className: 'tdb-cfp-btn tdb-cfp-main', style: Object.assign({}, btnMain, { opacity: (lendo || !todasEntradas.length) ? 0.5 : 1 }) }, 'Conferir agora'),
+                        h('button', { type: 'button', onClick: novaConferencia, className: 'tdb-cfp-btn', style: btn }, 'Limpar'),
+                        h('button', { type: 'button', onClick: p.onFechar, className: 'tdb-cfp-btn', style: btn }, 'Cancelar')))));
     } else {
         var nOk = Object.keys(marc).filter(function (k) { return marc[k]; }).length;
-        corpo = h(React.Fragment, null,
-            h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap', margin: '12px 0 8px', alignItems: 'center' } },
-                chip('ok', '✓ ' + contar('ok') + (contar('ok') === 1 ? ' bateu' : ' bateram')), chip('olhar', '! ' + contar('olhar') + ' para olhar'), chip('nao', '✕ ' + contar('nao') + ' não achei'),
-                h('span', { style: { fontSize: 12, color: COLORS.inkSoft } }, mes + ' · ' + banco)),
-            h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginBottom: 6 } }, 'Marque os que você quer confirmar e toque em Salvar. Os marcados ganham o ✓ na lista.'),
-            h('div', { style: { overflowY: 'auto', border: '1px solid ' + COLORS.line, borderRadius: 12, maxHeight: '44vh' } },
-                ['olhar', 'nao', 'ok'].map(function (st) { return resultado.lancs.filter(function (l) { return resultado.res[l.id].st === st; }).map(linha); }),
-                resultado.sobras.length > 0 && h('div', { style: { padding: '9px 12px', background: COLORS.lineSoft } },
-                    h('div', { style: { fontSize: 12, fontWeight: 800, color: COLORS.inkSoft, marginBottom: 4 } }, 'ENTRADAS DO EXTRATO SEM LANÇAMENTO (' + resultado.sobras.length + ')'),
-                    resultado.sobras.slice(0, 30).map(function (e, i) { return h('div', { key: i, style: { fontSize: 12, color: COLORS.ink, padding: '2px 0', wordBreak: 'break-word' } }, (e.data ? e.data + ' · ' : '') + e.texto + ' · ' + brl(e.valores[0])); }))),
+        var ordem = { olhar: 0, nao: 1, ok: 2 };
+        var linhasTodas = resultado.lancs.slice().sort(function (a, b) { return ordem[resultado.res[a.id].st] - ordem[resultado.res[b.id].st]; });
+        var linhasVis = filtro === 'atencao' ? linhasTodas.filter(function (l) { return resultado.res[l.id].st !== 'ok'; }) : linhasTodas;
+        function caixa(l) {
+            var st = resultado.res[l.id].st;
+            return st === 'nao' ? h('span', { style: { color: cores.nao, fontWeight: 900 } }, '✕')
+                : h('input', { type: 'checkbox', 'aria-label': 'Confirmar ' + l.nome, checked: !!marc[l.id], onChange: function () { var o = Object.assign({}, marc); o[l.id] = !o[l.id]; setMarc(o); }, style: { width: 18, height: 18, accentColor: '#1fa86b' } });
+        }
+        function cartao(n, st, rot, extra) { var c = extra || cores[st]; return h('div', { className: 'tdb-cfp-sum', style: { '--c': c, padding: '14px 16px' } }, h('div', { style: { fontSize: 28, fontWeight: 800, lineHeight: 1, color: c } }, n), h('div', { style: { fontSize: 12.5, fontWeight: 700, color: c, marginTop: 6 } }, rot)); }
+        var nomesBancos = resultado.bancos.length ? ' (' + resultado.bancos.join(', ') + ')' : '';
+        corpo = h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '24px 26px' }) },
+            h('div', { style: { fontSize: 22, fontWeight: 800, color: COLORS.ink } }, 'Conferência de ' + mes),
+            h('div', { style: { fontSize: 13.5, color: COLORS.inkSoft, margin: '4px 0 16px', lineHeight: 1.45 } }, (resultado.nArq ? resultado.nArq + (resultado.nArq === 1 ? ' PDF lido' : ' PDFs lidos') + nomesBancos + ' · ' : '') + resultado.entradas.length + ' entradas. Marque o que está certo e salve para aparecer o ✓ na lista de mensalidades.'),
+            h('div', { className: 'tdb-cfp-cards' }, cartao(contar('ok'), 'ok', '✓ Bateram (nome e valor)'), cartao(contar('olhar'), 'olhar', '⚠ Para você olhar'), cartao(contar('nao'), 'nao', '✕ Lançado, mas não está no extrato'), cartao(resultado.sobras.length, 'x', 'Entrada sem lançamento', '#4a63d6')),
+            h('div', { style: { display: 'flex', gap: 8, margin: '16px 0 10px', flexWrap: 'wrap' } },
+                [['atencao', 'Só os que precisam de atenção'], ['todos', 'Todos (' + linhasTodas.length + ')']].map(function (o) { var on = filtro === o[0]; return h('button', { key: o[0], type: 'button', onClick: function () { setFiltro(o[0]); }, className: 'tdb-cfp-pill' + (on ? ' on' : ''), style: { padding: '9px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer' } }, o[1]); })),
+            h('div', { className: 'tdb-cfp-dois' },
+                h('div', null,
+                    h('table', { className: 'tdb-cfp-tabela', style: { width: '100%', borderCollapse: 'collapse', fontSize: 13 } },
+                        h('thead', null, h('tr', null, ['', 'Aluno / Responsável', 'Lançado', 'Encontrado no extrato', 'Situação'].map(function (c, i) { return h('th', { key: i, style: { textAlign: 'left', fontSize: 10.5, letterSpacing: '.06em', color: COLORS.inkSoft, padding: '9px 10px', background: 'color-mix(in srgb, #18B9AD 9%, transparent)', textTransform: 'uppercase' } }, c); }))),
+                        h('tbody', null, linhasVis.map(function (l) {
+                            var r = resultado.res[l.id];
+                            return h('tr', { key: l.id, 'data-st': r.st }, h('td', { style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft, width: 30 } }, caixa(l)),
+                                h('td', { style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft } }, h('b', { style: { color: COLORS.ink } }, l.nome), h('div', { style: { fontSize: 12, color: COLORS.inkSoft } }, l.partes.length ? l.partes.join(' / ') : '—')),
+                                h('td', { className: 'mono', style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft, whiteSpace: 'nowrap', color: COLORS.ink } }, brl(l.valor)),
+                                h('td', { style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft, color: COLORS.ink } }, achado(r)),
+                                h('td', { style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft } }, tag(r.tipo, r.dif)));
+                        }))),
+                    h('div', { className: 'tdb-cfp-lista' }, linhasVis.map(function (l) {
+                        var r = resultado.res[l.id];
+                        return h('div', { key: l.id, style: { display: 'flex', gap: 10, alignItems: 'center', padding: '11px 0', borderTop: '1px solid ' + COLORS.lineSoft } }, caixa(l),
+                            h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { style: { fontWeight: 800, color: COLORS.ink, fontSize: 14, wordBreak: 'break-word' } }, l.nome), h('div', { style: { fontSize: 12, color: COLORS.inkSoft } }, brl(l.valor) + ' · ' + (r.entrada >= 0 ? ((ENTS[r.entrada].banco || '') + (ENTS[r.entrada].data ? ' · ' + ENTS[r.entrada].data : '')) : 'sem entrada'))),
+                            tag(r.tipo, r.dif));
+                    })),
+                    h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 10 } }, 'Mostrando ' + linhasVis.length + ' de ' + linhasTodas.length + ' · os ✓ salvos aparecem na lista de mensalidades')),
+                h('div', null,
+                    h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20 }) }, h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, 'Entrada no extrato sem lançamento'),
+                        resultado.sobras.length === 0 ? h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Todas as entradas do extrato foram encaixadas.') : resultado.sobras.slice(0, 12).map(function (e, i) { return h('div', { key: i, style: { padding: '8px 0', borderTop: i ? '1px solid ' + COLORS.lineSoft : 'none', fontSize: 12.5, color: COLORS.ink, wordBreak: 'break-word' } }, h('b', null, (e.data ? e.data + ' · ' : '') + e.texto.slice(0, 40) + ' · ' + brl(e.valores[0])), h('div', { style: { color: COLORS.inkSoft } }, e.banco || '')); }),
+                        resultado.sobras.length > 12 && h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 6 } }, '+ ' + (resultado.sobras.length - 12) + ' outras')),
+                    h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20, marginTop: 16 }) }, h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, 'Como ler'),
+                        [['ok', '✓ Bateu', 'nome completo e valor iguais'], ['olhar', '⚠ Olhar', 'nome parecido ou valor diferente'], ['nao', '✕ Não achei', 'não há entrada para esse responsável']].map(function (x) { var c = cores[x[0]]; return h('div', { key: x[0], style: { padding: '7px 0', borderTop: x[0] === 'ok' ? 'none' : '1px solid ' + COLORS.lineSoft, fontSize: 12.5, color: COLORS.ink } }, h('span', { style: { fontWeight: 800, color: c, background: 'color-mix(in srgb, ' + c + ' 16%, transparent)', borderRadius: 999, padding: '3px 10px', marginRight: 8 } }, x[1]), x[2]); })))),
             erro && h('div', { role: 'alert', style: { marginTop: 10, padding: '9px 12px', borderRadius: 10, background: COLORS.redBg, color: COLORS.red, fontSize: 13, fontWeight: 600 } }, erro),
-            h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14, flexWrap: 'wrap' } },
-                h('button', { type: 'button', onClick: function () { setResultado(null); setErro(''); }, style: Object.assign({}, btnBase, { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink }) }, 'Voltar'),
-                h('button', { type: 'button', onClick: salvar, style: Object.assign({}, btnBase, { border: 'none', background: '#1fa86b', color: '#FFFFFF' }) }, 'Salvar conferência (' + nOk + ' ✓)')));
+            h('div', { style: { display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' } },
+                h('button', { type: 'button', onClick: salvar, className: 'tdb-cfp-btn tdb-cfp-main', style: btnMain }, 'Salvar conferência (' + nOk + ' ✓)'),
+                h('button', { type: 'button', onClick: novaConferencia, className: 'tdb-cfp-btn', style: btn }, 'Conferir outro extrato'),
+                h('button', { type: 'button', onClick: p.onFechar, className: 'tdb-cfp-btn', style: btn }, 'Fechar')));
     }
-    return ReactDOM.createPortal(h('div', { className: 'tdb-cf-modal', style: { position: 'fixed', inset: 0, zIndex: 2147483600, background: 'rgba(10,22,20,.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }, onMouseDown: function (e) { if (e.target === e.currentTarget && !texto.trim() && !resultado) p.onFechar(); } },
-        h('div', { className: 'busca-liquid-glass', role: 'dialog', 'aria-label': 'Conferir extrato', onMouseDown: function (e) { e.stopPropagation(); }, style: { width: 'min(640px,94vw)', maxHeight: '90vh', overflowY: 'auto', borderRadius: 20, background: COLORS.paperCard, padding: 20, boxShadow: '0 24px 80px rgba(0,0,0,.38)', border: '1px solid ' + COLORS.line, boxSizing: 'border-box' } },
-            h('div', { style: { fontSize: 19, fontWeight: 800, color: COLORS.ink } }, 'Conferir extrato'),
-            h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 4 } }, resultado ? 'Veja o que bateu com as mensalidades lançadas.' : 'Depois que todos pagaram, cole o extrato do banco para conferir de uma vez.'),
-            corpo)), document.body);
+    return ReactDOM.createPortal(h('div', { className: 'tdb-cfp', role: 'dialog', 'aria-label': 'Conferir extrato', style: { position: 'fixed', inset: 0, zIndex: 2147483100, overflowY: 'auto', background: 'linear-gradient(180deg, color-mix(in srgb, #18B9AD 12%, color-mix(in srgb, ' + COLORS.paper + ' 78%, transparent)), color-mix(in srgb, ' + COLORS.paper + ' 80%, transparent))', backdropFilter: 'blur(26px) saturate(1.1)', WebkitBackdropFilter: 'blur(26px) saturate(1.1)', fontFamily: 'Inter, -apple-system, sans-serif' } },
+        h('style', null, '.tdb-cfp-grid{display:grid;grid-template-columns:1fr 1.6fr;gap:24px}.tdb-cfp-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.tdb-cfp-dois{display:grid;grid-template-columns:1.9fr 1fr;gap:20px}.tdb-cfp-lista{display:none}.tdb-cfp-bar{display:flex;align-items:center;gap:14px;padding:12px 20px;margin:16px 0 18px;box-sizing:border-box}@media (max-width:760px){.tdb-cfp-grid,.tdb-cfp-dois{grid-template-columns:1fr}.tdb-cfp-cards{grid-template-columns:1fr 1fr}.tdb-cfp-tabela{display:none}.tdb-cfp-lista{display:block}.tdb-cfp-bar{padding:10px 14px;margin:12px 0 14px}.tdb-cfp-corpo{padding:0 12px 24px!important}}html:not(.tdb-aurora-pdf) .tdb-cfp .tdb-cfp-g{background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08));-webkit-backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08))}.tdb-cfp .tdb-cfp-btn,.tdb-cfp .tdb-cfp-pill{font-family:inherit;color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:999px;background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);box-shadow:var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}.tdb-cfp .tdb-cfp-btn:hover,.tdb-cfp .tdb-cfp-pill:hover{transform:translateY(-1px)}.tdb-cfp .tdb-cfp-pill.on{border-color:#18B9AD;color:#106E6B;box-shadow:0 0 0 3px rgba(24,185,173,.18),var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07))}.tdb-cfp .tdb-cfp-main{border:1px solid rgba(255,255,255,.5);color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 55%),#18B9AD;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 6px 16px rgba(24,185,173,.32)}.tdb-cfp .tdb-cfp-main:disabled{box-shadow:none}.tdb-cfp .tdb-cfp-inp{color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:16px;background:var(--c-paperCard,#fff);box-shadow:inset 0 1px 2px rgba(30,40,60,.05)}.tdb-cfp .tdb-cfp-sum{border-radius:20px;border:1px solid color-mix(in srgb,var(--c) 38%,transparent);background:var(--aurora-layers,linear-gradient(transparent,transparent)),color-mix(in srgb,var(--c) 11%,var(--c-paperCard,#fff));box-shadow:var(--aurora-shadow,0 6px 20px rgba(30,40,60,.06));backdrop-filter:blur(var(--aurora-blur,14px));-webkit-backdrop-filter:blur(var(--aurora-blur,14px))}'),
+        h('div', { className: 'tdb-cfp-corpo', style: { maxWidth: 1400, margin: '0 auto', padding: '0 28px 32px', boxSizing: 'border-box' } }, h('div', { className: 'tdb-cfp-bar tdb-cfp-g' },
+            h('img', { src: LOGO_B64, alt: 'Escola Infantil Tempo de Brincar', style: { height: 44, maxWidth: 150, objectFit: 'contain' } }),
+            h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { style: { fontSize: 17, fontWeight: 800, color: COLORS.ink } }, 'Mensalidades'), h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Conferir extrato')),
+            h('button', { type: 'button', onClick: p.onFechar, className: 'tdb-cfp-btn', style: btn }, 'Voltar')), corpo)), document.body);
 }
 function Mensalidades(_a) {
     var _this = this;
