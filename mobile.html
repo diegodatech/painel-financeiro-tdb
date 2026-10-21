@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261020-tdb-v1-18";
+    window.__TDB_BUILD = "tdb-20261020-tdb-v1-19";
   </script>
-  <script src="./config.js?build=tdb-20261020-tdb-v1-18"></script>
+  <script src="./config.js?build=tdb-20261020-tdb-v1-19"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1998,10 +1998,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261020-tdb-v1-18"></script>
+  <script src="./sync.js?build=tdb-20261020-tdb-v1-19"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261020-tdb-v1-18-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261020-tdb-v1-19-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4772,7 +4772,7 @@ function ModalAlterarPin(_a) {
             textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
             fontFamily: 'Inter, -apple-system, sans-serif', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box',
         } }, React.createElement("div", { style: { fontSize: 15.5, fontWeight: 700, color: COLORS.ink } }, "🔒 ", titulo), !sucesso && (React.createElement(React.Fragment, null,
-        etapa === 'novo' && React.createElement("div", { style: { display: 'grid', gap: 8 } }, React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 700 } }, "Escolha o tamanho da nova senha"), React.createElement("div", { style: { display: 'flex', gap: 8, justifyContent: 'center' } }, [4, 6, 8].map(function (n) { return React.createElement("button", { key: n, onClick: function () { return escolherTamanho(n); }, style: { border: tamanhoNovo === n ? '1.5px solid #18B9AD' : '1px solid #E8D9E5', background: tamanhoNovo === n ? 'rgba(24,185,173,.12)' : '#FFFFFF', color: tamanhoNovo === n ? '#106E6B' : COLORS.inkSoft, borderRadius: 10, padding: '9px 15px', fontSize: 13, fontWeight: 800, cursor: 'pointer' } }, n + ' dígitos'); }))),
+        etapa === 'novo' && React.createElement("div", { style: { display: 'grid', gap: 8 } }, React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 700 } }, "Escolha o tamanho da nova senha"), React.createElement("div", { style: { display: 'flex', gap: 8, justifyContent: 'center' } }, [4, 6].map(function (n) { return React.createElement("button", { key: n, onClick: function () { return escolherTamanho(n); }, style: { border: tamanhoNovo === n ? '1.5px solid #18B9AD' : '1px solid #E8D9E5', background: tamanhoNovo === n ? 'rgba(24,185,173,.12)' : '#FFFFFF', color: tamanhoNovo === n ? '#106E6B' : COLORS.inkSoft, borderRadius: 10, padding: '9px 15px', fontSize: 13, fontWeight: 800, cursor: 'pointer' } }, n + ' dígitos'); }))),
         React.createElement("div", { style: { display: 'flex', gap: limiteEtapa === 8 ? 7 : (limiteEtapa === 6 ? 9 : 14), justifyContent: 'center' } }, pontos.map(function (i) { return (React.createElement("div", { key: i, style: { width: 16, height: 16, borderRadius: '50%', border: '2.5px solid #C15CA0', background: digitado.length > i ? '#C15CA0' : 'transparent', flexShrink: 0 } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 600 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, justifyContent: 'center', maxWidth: 220, margin: '0 auto', width: '100%' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-modal-key", onClick: function () { return apertar(d); }, style: {
             aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
             fontWeight: 600, fontSize: 18, color: COLORS.ink, cursor: 'pointer', boxSizing: 'border-box',
