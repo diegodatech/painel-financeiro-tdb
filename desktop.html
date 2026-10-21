@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261020-tdb-v1-17";
+    window.__TDB_BUILD = "tdb-20261020-tdb-v1-18";
   </script>
-  <script src="./config.js?build=tdb-20261020-tdb-v1-17"></script>
+  <script src="./config.js?build=tdb-20261020-tdb-v1-18"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1541,10 +1541,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261020-tdb-v1-17"></script>
+  <script src="./sync.js?build=tdb-20261020-tdb-v1-18"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261020-tdb-v1-17-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261020-tdb-v1-18-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -3742,7 +3742,7 @@ function validarPinSeguro(pin, registro) {
                 case 0:
                     if (!registro)
                         return [2 /*return*/, false];
-                    if (/^\d{4,6}$/.test(String(registro)))
+                    if (/^\d{4,8}$/.test(String(registro)))
                         return [2 /*return*/, String(pin) === String(registro)];
                     _b.label = 1;
                 case 1:
@@ -3765,7 +3765,7 @@ function validarPinSeguro(pin, registro) {
 }
 function TelaBloqueio(_a) {
     var pinConfigurado = _a.pinConfigurado, onDesbloquear = _a.onDesbloquear, onDefinirPin = _a.onDefinirPin, onRemoverPin = _a.onRemoverPin, valorInicial = _a.valorInicial, tamanhoPin = _a.tamanhoPin, bioAtiva = _a.bioAtiva;
-    var limitePin = tamanhoPin === 6 ? 6 : 4;
+    var limitePin = tamanhoPin === 8 ? 8 : (tamanhoPin === 6 ? 6 : 4);
     var _b = useState(pinConfigurado ? 'entrar' : 'escolher'), modo = _b[0], setModo = _b[1];
     var _c = useState((valorInicial || '').slice(0, limitePin)), digitado = _c[0], setDigitado = _c[1];
     var _d = useState(''), primeiroPin = _d[0], setPrimeiroPin = _d[1];
@@ -3883,7 +3883,7 @@ function TelaBloqueio(_a) {
             background: 'rgba(255,255,255,0.50)', backdropFilter: 'blur(22px) saturate(1.6)', WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
             border: '1px solid rgba(255,255,255,0.78)', borderRadius: 38, padding: '34px 34px 30px',
             boxShadow: '0 18px 48px rgba(16,110,107,0.12), inset 0 1px 0 rgba(255,255,255,0.92)',
-        } }, React.createElement("img", { src: LOGO_B64, alt: "Escola Infantil Tempo de Brincar", style: { height: 118, maxWidth: '78%', objectFit: 'contain' } }), React.createElement("div", null, React.createElement("div", { style: { fontSize: 20, fontWeight: 800, color: COLORS.ink, marginBottom: 6 } }, titulo), React.createElement("div", { style: { fontSize: 14, color: '#6C8482', lineHeight: 1.35 } }, subtitulo)), React.createElement("div", { style: { display: 'flex', gap: limitePin === 6 ? 10 : 14, marginTop: 3 } }, Array.from({ length: limitePin }, function (_, i) { return i; }).map(function (i) { return (React.createElement("div", { key: i, className: "pin-bolinha", style: {
+        } }, React.createElement("img", { src: LOGO_B64, alt: "Escola Infantil Tempo de Brincar", style: { height: 118, maxWidth: '78%', objectFit: 'contain' } }), React.createElement("div", null, React.createElement("div", { style: { fontSize: 20, fontWeight: 800, color: COLORS.ink, marginBottom: 6 } }, titulo), React.createElement("div", { style: { fontSize: 14, color: '#6C8482', lineHeight: 1.35 } }, subtitulo)), React.createElement("div", { style: { display: 'flex', gap: limitePin === 8 ? 8 : (limitePin === 6 ? 10 : 14), marginTop: 3 } }, Array.from({ length: limitePin }, function (_, i) { return i; }).map(function (i) { return (React.createElement("div", { key: i, className: "pin-bolinha", style: {
             border: '2.5px solid ' + (digitado.length > i ? '#18B9AD' : 'rgba(76,142,139,0.52)'),
             background: digitado.length > i ? '#18B9AD' : 'rgba(255,255,255,0.48)',
             boxShadow: digitado.length > i ? '0 4px 14px rgba(24,185,173,0.28), inset 0 1px 0 rgba(255,255,255,0.55)' : 'none'
@@ -4243,8 +4243,8 @@ function ModalAlterarPin(_a) {
     var _d = useState(''), novoPinTemp = _d[0], setNovoPinTemp = _d[1];
     var _e = useState(''), erro = _e[0], setErro = _e[1];
     var _f = useState(false), sucesso = _f[0], setSucesso = _f[1];
-    var _g = useState(tamanhoAtual === 6 ? 6 : 4), tamanhoNovo = _g[0], setTamanhoNovo = _g[1];
-    var limiteEtapa = etapa === 'atual' ? (tamanhoAtual === 6 ? 6 : 4) : tamanhoNovo;
+    var _g = useState(tamanhoAtual === 8 ? 8 : (tamanhoAtual === 6 ? 6 : 4)), tamanhoNovo = _g[0], setTamanhoNovo = _g[1];
+    var limiteEtapa = etapa === 'atual' ? (tamanhoAtual === 8 ? 8 : (tamanhoAtual === 6 ? 6 : 4)) : tamanhoNovo;
     function apertar(d) {
         setDigitado(function (atual) {
             if (atual.length >= limiteEtapa)
@@ -4315,7 +4315,7 @@ function ModalAlterarPin(_a) {
         }
     }
     function escolherTamanho(n) {
-        setTamanhoNovo(n === 6 ? 6 : 4);
+        setTamanhoNovo(n === 8 ? 8 : (n === 6 ? 6 : 4));
         setDigitado('');
         setNovoPinTemp('');
         setErro('');
@@ -4333,8 +4333,8 @@ function ModalAlterarPin(_a) {
             textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
             fontFamily: 'Inter, -apple-system, sans-serif', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box',
         } }, React.createElement("div", { style: { fontSize: 15.5, fontWeight: 700, color: COLORS.ink } }, "🔒 ", titulo), !sucesso && (React.createElement(React.Fragment, null,
-        etapa === 'novo' && React.createElement("div", { style: { display: 'grid', gap: 8 } }, React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 700 } }, "Escolha o tamanho da nova senha"), React.createElement("div", { style: { display: 'flex', gap: 8, justifyContent: 'center' } }, [4, 6].map(function (n) { return React.createElement("button", { key: n, onClick: function () { return escolherTamanho(n); }, style: { border: tamanhoNovo === n ? '1.5px solid #18B9AD' : '1px solid #E8D9E5', background: tamanhoNovo === n ? 'rgba(24,185,173,.12)' : '#FFFFFF', color: tamanhoNovo === n ? '#106E6B' : COLORS.inkSoft, borderRadius: 10, padding: '9px 15px', fontSize: 13, fontWeight: 800, cursor: 'pointer' } }, n + ' dígitos'); }))),
-        React.createElement("div", { style: { display: 'flex', gap: limiteEtapa === 6 ? 9 : 14, justifyContent: 'center' } }, pontos.map(function (i) { return (React.createElement("div", { key: i, style: { width: 16, height: 16, borderRadius: '50%', border: '2.5px solid #C15CA0', background: digitado.length > i ? '#C15CA0' : 'transparent', flexShrink: 0 } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 600 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, justifyContent: 'center', maxWidth: 220, margin: '0 auto', width: '100%' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-modal-key", onClick: function () { return apertar(d); }, style: {
+        etapa === 'novo' && React.createElement("div", { style: { display: 'grid', gap: 8 } }, React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontWeight: 700 } }, "Escolha o tamanho da nova senha"), React.createElement("div", { style: { display: 'flex', gap: 8, justifyContent: 'center' } }, [4, 6, 8].map(function (n) { return React.createElement("button", { key: n, onClick: function () { return escolherTamanho(n); }, style: { border: tamanhoNovo === n ? '1.5px solid #18B9AD' : '1px solid #E8D9E5', background: tamanhoNovo === n ? 'rgba(24,185,173,.12)' : '#FFFFFF', color: tamanhoNovo === n ? '#106E6B' : COLORS.inkSoft, borderRadius: 10, padding: '9px 15px', fontSize: 13, fontWeight: 800, cursor: 'pointer' } }, n + ' dígitos'); }))),
+        React.createElement("div", { style: { display: 'flex', gap: limiteEtapa === 8 ? 7 : (limiteEtapa === 6 ? 9 : 14), justifyContent: 'center' } }, pontos.map(function (i) { return (React.createElement("div", { key: i, style: { width: 16, height: 16, borderRadius: '50%', border: '2.5px solid #C15CA0', background: digitado.length > i ? '#C15CA0' : 'transparent', flexShrink: 0 } })); })), erro && React.createElement("div", { style: { color: '#C1272D', fontSize: 13, fontWeight: 600 } }, erro), React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, justifyContent: 'center', maxWidth: 220, margin: '0 auto', width: '100%' } }, ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(function (d) { return (React.createElement("button", { key: d, className: "pin-modal-key", onClick: function () { return apertar(d); }, style: {
             aspectRatio: '1 / 1', width: '100%', borderRadius: '50%', border: '1px solid #E8D9E5', background: '#FFFFFF',
             fontWeight: 600, fontSize: 18, color: COLORS.ink, cursor: 'pointer', boxSizing: 'border-box',
         } }, d)); }), React.createElement("div", null), React.createElement("button", { className: "pin-modal-key", onClick: function () { return apertar('0'); }, style: {
@@ -11187,7 +11187,7 @@ function PainelFinanceiro() {
     var pinAntecipadoRef = useRef('');
     useEffect(function () {
         function capturarCedo(e) {
-            if (e.key >= '0' && e.key <= '9' && pinAntecipadoRef.current.length < 6) {
+            if (e.key >= '0' && e.key <= '9' && pinAntecipadoRef.current.length < 8) {
                 pinAntecipadoRef.current += e.key;
             }
         }
@@ -11928,7 +11928,7 @@ function salvarTudoAgora() {
             try {
                 var rTam = await window.storage.get('painel_pin_tamanho', false);
                 var nTam = Number(rTam && rTam.value);
-                setTamanhoPin(nTam === 6 ? 6 : 4);
+                setTamanhoPin(nTam === 8 ? 8 : (nTam === 6 ? 6 : 4));
             }
             catch (e) {
                 setTamanhoPin(4);
@@ -11950,7 +11950,7 @@ function salvarTudoAgora() {
                     case 1:
                         r = _a.sent();
                         valorPin = r && r.value ? r.value : '';
-                        if (!/^\d{4,6}$/.test(String(valorPin))) return [3 /*break*/, 6];
+                        if (!/^\d{4,8}$/.test(String(valorPin))) return [3 /*break*/, 6];
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 5, , 6]);
@@ -11987,7 +11987,7 @@ function salvarTudoAgora() {
         }
     }, [loading, pinConfigurado, tamanhoPin]);
     async function definirPin(novoPin, tamanhoEscolhido) {
-        var tamanho = tamanhoEscolhido === 6 || String(novoPin).length === 6 ? 6 : 4;
+        var tamanho = (tamanhoEscolhido === 8 || String(novoPin).length === 8) ? 8 : ((tamanhoEscolhido === 6 || String(novoPin).length === 6) ? 6 : 4);
         var registro = novoPin;
         try {
             registro = await criarRegistroPin(novoPin);
