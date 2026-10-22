@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261021-tdb-v1-28";
+    window.__TDB_BUILD = "tdb-20261021-tdb-v1-30";
   </script>
-  <script src="./config.js?build=tdb-20261021-tdb-v1-28"></script>
+  <script src="./config.js?build=tdb-20261021-tdb-v1-30"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1541,10 +1541,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261021-tdb-v1-28"></script>
+  <script src="./sync.js?build=tdb-20261021-tdb-v1-30"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261021-tdb-v1-28-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261021-tdb-v1-30-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10511,6 +10511,7 @@ function FestasTDB(_a) {
     var _fbFestas = useState(''), filtroBancoFestas = _fbFestas[0], setFiltroBancoFestas = _fbFestas[1];
     var _fpFestas = useState(''), filtroPagoFestas = _fpFestas[0], setFiltroPagoFestas = _fpFestas[1];
     var _fdFestas = useState(''), filtroDataFestas = _fdFestas[0], setFiltroDataFestas = _fdFestas[1];
+    var _cfFe = useState(false), conferirFestasAberto = _cfFe[0], setConferirFestasAberto = _cfFe[1];
     useEffect(function () {
         (async function () {
             try {
@@ -10651,6 +10652,8 @@ function FestasTDB(_a) {
             valor: nValor ? nValor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '',
             banco: editRow.banco || '', data: editRow.data || '', pago: _festasPagoValor(editRow.pago)
         });
+        var __orig = rows.find(function (r) { return r.id === editandoId; });
+        if (__orig && __orig.conferido && _festasNumero(__orig.valor) !== nValor) atualizado.conferido = null;
         var nextRows = rows.map(function (r) { return r.id === editandoId ? atualizado : r; });
         var next = __assign({}, dados); next[subTab] = nextRows; salvar(next);
         setEditandoId(null); setEditRow(null);
@@ -10808,7 +10811,7 @@ function FestasTDB(_a) {
                     React.createElement("td", { style: tdPrimeiro }, emEdicao ? React.createElement("div", { style: { display: 'grid', gap: 5 } },
                         React.createElement("input", { value: editRow.nome || '', onChange: function (e) { return alterarEdit('nome', e.target.value); }, spellCheck: "true", lang: "pt-BR", style: inp }),
                         React.createElement("select", { value: editRow.tipo || 'PARTICULAR', onChange: function (e) { return alterarEdit('tipo', e.target.value); }, style: __assign(__assign({}, inp), { fontSize: 10.5, fontWeight: 700 }) }, React.createElement("option", { value: "PARTICULAR" }, "Particular"), React.createElement("option", { value: "PREFEITURA" }, "Prefeitura"))
-                    ) : React.createElement("span", null, r.nome || '—')),
+                    ) : React.createElement("span", null, r.nome || '—', tdbCfBadge(r, 'tdb-cf-st'), tdbCfBadge(r, 'tdb-cf-nm'))),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { type: "number", min: "0", step: "1", inputMode: "numeric", value: editRow.pessoas || '', onChange: function (e) { return alterarEdit('pessoas', e.target.value.replace(/[^0-9]/g, '')); }, style: __assign(__assign({}, inp), { textAlign: 'center' }) }) : React.createElement("span", { className: "mono", style: { display: 'block', textAlign: 'center', fontWeight: 700 } }, r.pessoas || '—')),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement(CampoDinheiroTDB, { value: editRow.valor || '', onChange: function (v) { return alterarEdit('valor', v); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", style: inp } }) : React.createElement("span", { className: "mono", style: { fontWeight: 700, color: _festasNumero(r.valor) > 0 ? COLORS.green : COLORS.inkSoft } }, _festasNumero(r.valor) > 0 ? formatBRL(_festasNumero(r.valor)) : '—')),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.banco || '', onChange: function (e) { return alterarEdit('banco', e.target.value); }, className: "busca-liquid-glass", style: bancoStyle }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })) : (r.banco ? React.createElement("span", { className: "busca-liquid-glass", style: { display: 'inline-flex', minWidth: 74, justifyContent: 'center', borderRadius: 20, padding: '5px 8px', fontSize: 10.5, fontWeight: 800, color: corBanco(r.banco), border: '1px solid ' + corBanco(r.banco) + '55' } }, r.banco) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—'))),
@@ -10900,6 +10903,16 @@ function FestasTDB(_a) {
             React.createElement("input", { type: "search", value: buscaFestas, onChange: function (e) { return setBuscaFestas(e.target.value); }, placeholder: "Pesquisar nome, valor, data, banco, pago ou não pago...", autoComplete: "off", spellCheck: "false", 'aria-label': "Pesquisar participantes da festa", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 14, fontFamily: 'Inter, sans-serif', padding: '7px 4px' } }),
             filtrosFestasAtivos ? React.createElement("button", { type: "button", onClick: limparFiltrosFestas, title: "Limpar pesquisa e filtros", 'aria-label': "Limpar pesquisa e filtros", style: { width: 36, height: 36, flex: '0 0 36px', border: '1px solid ' + COLORS.line, borderRadius: 12, background: COLORS.paperCard, color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 15 })) : null,
             filtrosFestasAtivos ? React.createElement("span", { className: "mono", style: { flex: '0 0 auto', fontSize: 11.5, fontWeight: 800, color: COLORS.inkButton, whiteSpace: 'nowrap' } }, rowsFiltradosFestas.length + " de " + rows.length) : null),
+        React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirFestasAberto(true); }, title: "Conferir o extrato do banco com os pagamentos desta festa", style: {
+            background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
+            display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
+        } }, React.createElement(Check, { size: 14 }), "Conferir extrato")),
+        conferirFestasAberto && React.createElement(ConferirExtratoTDB, { modo: 'festas', tituloFesta: (abaAtual && abaAtual.label) || 'Festa', linhasFesta: rows, transacoes: transacoes, onFechar: function () { setConferirFestasAberto(false); }, onSalvar: function (mapa) {
+            var next = __assign({}, dados);
+            next[subTab] = (dados[subTab] || []).map(function (r) { return Object.prototype.hasOwnProperty.call(mapa, r.id) ? __assign(__assign({}, r), { conferido: mapa[r.id] }) : r; });
+            salvar(next);
+            return true;
+        } }),
         filtrosFestasAtivos && rowsFiltradosFestas.length === 0 ? React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '16px 14px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13 } }, termoBuscaFestas ? "Nenhum participante encontrado para ‘" + buscaFestas + "’." : "Nenhum participante encontrado com esses filtros.") : null,
         blocoGrupo('PARTICULAR', 'Particulares'),
         blocoGrupo('PREFEITURA', 'Prefeitura'));
@@ -13694,6 +13707,47 @@ function salvarTudoAgora() {
         persist(prox);
         return true;
     }
+    function copiarNomesParaProximos(aplicar) {
+        var atual = __transLatestRef.current;
+        if (!Array.isArray(atual))
+            return null;
+        var norm = TDBFinance.norm, destinos = ['NOVEMBRO', 'DEZEMBRO'];
+        var vazio = function (v) { return v == null || String(v).trim() === ''; };
+        var origem = atual.filter(function (t) { return t && t.mes === 'OUTUBRO' && /^(Mensalidade|Convênio) - /.test(String(t.categoria || '')) && !vazio(t.pai); });
+        var idx = new Map();
+        atual.forEach(function (t) { if (t && destinos.indexOf(t.mes) >= 0) idx.set(norm(t.categoria) + '|' + t.mes, t); });
+        var maxId = atual.reduce(function (m, t) { return Math.max(m, Number(t && t.id) || 0); }, 0);
+        var patchPorId = {}, novos = [], preenchidos = 0, jaTinham = 0;
+        origem.forEach(function (ref) {
+            var k = norm(ref.categoria);
+            destinos.forEach(function (mes) {
+                var ex = idx.get(k + '|' + mes);
+                if (ex) {
+                    if (vazio(ex.pai)) {
+                        var p = { pai: ref.pai };
+                        if (vazio(ex.tirarNota) && !vazio(ref.tirarNota)) p.tirarNota = ref.tirarNota;
+                        if (vazio(ex.convenio) && !vazio(ref.convenio)) p.convenio = ref.convenio;
+                        patchPorId[ex.id] = p; preenchidos++;
+                    } else jaTinham++;
+                } else if (String(ref.categoria).indexOf('Mensalidade - ') === 0) {
+                    var d = TDBFinance.due(ref);
+                    var devido = d > 0 ? d : (TDBFinance.num(ref.valorCheio) > 0 ? ref.valorCheio : null);
+                    novos.push({ id: ++maxId, mes: mes, categoria: ref.categoria, tipo: 'Entrada', valor: null, valorCheio: devido, quantidadeAlunos: TDBFinance.children(ref), status: 'Pendente', data: null, banco: null, nota: 'Pendente', pai: ref.pai, tirarNota: ref.tirarNota != null ? ref.tirarNota : null, convenio: ref.convenio != null ? ref.convenio : null, foto: ref.foto || null, exercicio: exercicioAtual });
+                }
+            });
+        });
+        var previa = { preenchidos: preenchidos, criados: novos.length, jaTinham: jaTinham, alunos: origem.length };
+        if (!aplicar)
+            return previa;
+        if (bloquearEdicaoSeEncerrado_())
+            return false;
+        if (!preenchidos && !novos.length)
+            return previa;
+        var prox = atual.map(function (t) { return Object.prototype.hasOwnProperty.call(patchPorId, t.id) ? __assign(__assign({}, t), patchPorId[t.id]) : t; }).concat(novos);
+        __transLatestRef.current = prox;
+        persist(prox);
+        return previa;
+    }
     function definirFoto(id, fotoBase64) {
         if (bloquearEdicaoSeEncerrado_())
             return;
@@ -13985,7 +14039,7 @@ function salvarTudoAgora() {
             { label: 'Entradas (com dados)', valor: kpis.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
             { label: 'Saídas (com dados)', valor: kpis.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
             { label: 'Resultado', valor: kpis.resultado, icon: kpis.resultado >= 0 ? TrendingUp : TrendingDown, cor: '#4A5A58', bg: COLORS.lineSoft, destaque: true },
-        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, mesesSel: mesesSel, setMesesSel: setMesesSel, copiarParaMesSeguinte: copiarParaMesSeguinte, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { marcarConferidos: marcarConferidos, transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : tab === 'municipioCb' ? (React.createElement(MunicipioCbTDB, null)) : tab === 'notasFiscais' ? (React.createElement(NotasFiscaisTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual, marcarNotasEnviadas: marcarNotasEnviadas })) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
+        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, mesesSel: mesesSel, setMesesSel: setMesesSel, copiarParaMesSeguinte: copiarParaMesSeguinte, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { copiarNomes: copiarNomesParaProximos, marcarConferidos: marcarConferidos, transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : tab === 'municipioCb' ? (React.createElement(MunicipioCbTDB, null)) : tab === 'notasFiscais' ? (React.createElement(NotasFiscaisTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual, marcarNotasEnviadas: marcarNotasEnviadas })) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
 }
 function ModalExercicioEncerrado(_a) {
     var ano = _a.ano, onFechar = _a.onFechar;
@@ -15685,59 +15739,144 @@ function ContaProporcionalBolhaTDB(p) {
                     React.createElement("button", { type: "button", onClick: usar, disabled: !(valor > 0), style: { border: 'none', background: COLORS.inkButton, color: '#fff', borderRadius: 10, padding: '9px 14px', fontWeight: 800, fontSize: 12.5, cursor: valor > 0 ? 'pointer' : 'default', opacity: valor > 0 ? 1 : .5 } }, "Usar no Novo registro")))));
 }
 /* TDB v1.22 — Pai/Responsável com 2 nomes + Conferir extrato (funções puras; nada sai do aparelho) */
-var TDB_CF_STOP = { DE: 1, DA: 1, DO: 1, DAS: 1, DOS: 1, E: 1 };
+var TDB_CF_STOP = { DE: 1, DA: 1, DO: 1, DAS: 1, DOS: 1, E: 1, LTDA: 1, ME: 1, EPP: 1, EIRELI: 1, SA: 1, CIA: 1, MEI: 1 };
 function tdbNorm(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim(); }
 function tdbPaiPartes(s) { return String(s == null ? '' : s).split(/\s*(?:\/|\n)\s*/).map(function (x) { return x.trim(); }).filter(Boolean); }
 function tdbPaiNorm(s) { return tdbPaiPartes(s).join(' / '); }
 function tdbMoneyList(str) {
     var re = /(^|[^\d.,])((?:R\$\s*)?-?)(\d{1,3}(?:\.\d{3})+|\d+),(\d{2})(?!\d)/g, m, out = [];
     while ((m = re.exec(str)) !== null) {
-        out.push({ v: parseFloat(m[3].replace(/\./g, '') + '.' + m[4]), neg: m[2].indexOf('-') >= 0, i: m.index + m[1].length, fim: re.lastIndex });
+        out.push({ v: parseFloat(m[3].replace(/\./g, '') + '.' + m[4]), neg: m[2].indexOf('-') >= 0 || (m[1] === '-' && /^R/.test(m[2])), i: m.index + m[1].length, fim: re.lastIndex });
     }
     return out;
 }
 var TDB_CF_DATA = /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/;
-function tdbParseExtrato(texto, banco) {
-    texto = String(texto || '');
-    var linhas = texto.split(/\r?\n/).map(function (l) { return l.replace(/\t+/g, '  ').trim(); }).filter(Boolean);
-    var temData = TDB_CF_DATA.test(texto);
-    var regs = [], cur = null;
+var TDB_CF_DATA2 = /\b\d{1,2}\s*(?:DE\s+)?(?:JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)[A-Z]*\.?(?:\s*(?:DE\s+)?\d{2,4})?\b/;
+function tdbDataLinha(l) { var m = l.match(TDB_CF_DATA); if (m) return m[0]; var m2 = tdbNorm(l).match(TDB_CF_DATA2); return m2 ? m2[0] : ''; }
+var TDB_CF_CRED = /\b(RECEBID[OA]S?|CREDITO|CRED|DEPOSITO|RECEBIMENTO)\b/;
+var TDB_CF_DEB = /\b(ENVIAD[OA]S?|DEBITO|TARIFA|COMPRA|SAQUE|SAIDA|PAGTO|PAGAMENTO EFETUADO)\b/;
+/* Lê o extrato como uma sequência de linhas: cada linha com valor em dinheiro vira uma entrada; o nome pode estar na mesma linha,
+   nas linhas de cima ou nas de baixo (até a próxima linha com valor). Funciona com extratos que agrupam por data, quebram o nome em linhas
+   ou usam colunas. */
+/* Extratos em que cada lançamento começa numa linha com data (ex.: Sicoob, Itaú): o lançamento vai da linha da data até a próxima data.
+   O valor pode estar na própria linha, na linha de cima da data, e o C/D (crédito/débito) pode estar colado no valor ou sozinho na linha. */
+var TDB_CF_INI = /^\d{1,2}\/\d{1,2}(?:\/\d{2,4})?(?=\s|$)/;
+function tdbSoValor(l) { return /^(?:R\$\s*)?[+-]?\s*(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}\s*[CD]?\*?$/.test(l.trim()); }
+function tdbParseBlocos(linhas, banco) {
+    var blocos = [], cur = null;
     linhas.forEach(function (l) {
-        var tdata = TDB_CF_DATA.test(l);
-        if (temData && cur === null && !tdata) return;
-        var inicia = cur === null || ((temData ? tdata : true) && cur.dinheiro);
-        if (inicia) { cur = { linhas: [], dinheiro: false }; regs.push(cur); }
-        cur.linhas.push(l);
-        if (tdbMoneyList(l).length) cur.dinheiro = true;
+        if (TDB_CF_INI.test(l)) { cur = { linhas: [l] }; blocos.push(cur); }
+        else if (cur && cur.linhas.length < 14 && !cur.fim) { if (/^(Saldo|Limite|Taxa|Vencimento|Custo|SAC|Ouvidoria|Sicredi Fone|Lan\u00E7amentos a conferir|Total|Os dados|Pagina|P\u00E1gina)/i.test(l)) cur.fim = true; else cur.linhas.push(l); }
+    });
+    /* valor que vem sozinho na linha de cima da data: pertence ao lançamento seguinte */
+    blocos.forEach(function (b, i) {
+        b.antes = [];
+        var prev = blocos[i - 1];
+        if (!prev) return;
+        var head = b.linhas[0].replace(TDB_CF_INI, '').trim();
+        if (tdbMoneyList(head).length) return;
+        while (prev.linhas.length > 1 && tdbSoValor(prev.linhas[prev.linhas.length - 1])) b.antes.unshift(prev.linhas.pop());
     });
     var out = [];
-    regs.forEach(function (r) {
-        var txt = r.linhas.join(' ');
-        var din = tdbMoneyList(txt);
-        if (!din.length) return;
-        var deb = din[0].neg || /^\s*D\b/.test(txt.slice(din[0].fim)) || /\b(ENVIAD[OA]|DEBITO|TARIFA|COMPRA|SAQUE|SAIDA)\b/.test(tdbNorm(txt));
-        if (deb) return;
-        var md = txt.match(TDB_CF_DATA);
-        var limpo = txt.replace(/(?:R\$\s*)?-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}/g, ' ').replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, ' ');
+    blocos.forEach(function (b) {
+        var head = b.linhas[0], dm = head.match(TDB_CF_INI), data = dm ? dm[0] : '';
+        var corpo = [head.replace(TDB_CF_INI, '').trim()].concat(b.linhas.slice(1));
+        var hn = tdbNorm(corpo[0]);
+        if (/\bSALDO\b/.test(hn) || /\b(REND|RENDIMENTO|JSCP|DIVIDENDO)\b/.test(hn)) return;
+        var todas = b.antes.concat(corpo);
+        var linhaVal = -1, k;
+        for (k = 0; k < todas.length; k++) { if (tdbMoneyList(todas[k]).length) { linhaVal = k; break; } }
+        if (linhaVal < 0) return;
+        var din = tdbMoneyList(todas[linhaVal]);
+        var resto = todas[linhaVal].slice(din[0].fim);
+        var marca = (resto.match(/^\s*([CD])\b/) || [])[1];
+        if (!marca) { for (k = linhaVal + 1; k < Math.min(todas.length, linhaVal + 4); k++) { if (/^[CD]$/.test(todas[k].trim())) { marca = todas[k].trim(); break; } } }
+        if (!marca && /^\s*-/.test(resto) && !/^\s*-\s*\w/.test(resto)) marca = 'D';
+        if (din[0].neg) marca = 'D';
+        var nb = tdbNorm(b.linhas.join(' '));
+        if (!marca) marca = (TDB_CF_DEB.test(tdbNorm(corpo[0])) && !TDB_CF_CRED.test(nb)) ? 'D' : 'C';
+        if (marca === 'D') return;
+        var nomes = [];
+        corpo.forEach(function (l, idx) {
+            if (tdbSoValor(l) || /^[CD]$/.test(l.trim()) || /^(?:DOC|CODIGO|CÓDIGO)\b/i.test(l.trim())) return;
+            var lt = l.replace(/(?:R\$\s*)?-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}\s*[CD]?\*?/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!/[A-Za-zÀ-ÿ]{2}/.test(lt)) return;
+            if (idx === 0) return;
+            if (/^(Recebimento|Pagamento|Transfer[eê]ncia|Solicita[cç][aã]o)\s+Pix$/i.test(lt)) return;
+            nomes.push(lt.replace(/^REM\.?:?\s*/i, ''));
+        });
+        var rotulo = corpo[0].replace(/(?:R\$\s*)?-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}\s*[CD]?\*?/g, ' ').replace(/\s+/g, ' ').trim();
+        rotulo = rotulo.replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, ' ').replace(/\b\d{1,2}[h:]\d{2}(?::\d{2})?\b/gi, ' ').replace(/\s+/g, ' ').trim();
+        var seg = nomes.length ? nomes : [rotulo.replace(/^(?:(?:PIX|TRANSF|QRS|DEV|DEVOLU[C\u00C7][A\u00C3]O|RECEB|RECEBIDO|RECEBIMENTO|TED|DOC|CRED|TRANSFER[E\u00CA]NCIA)\b\.?\s*)+/i, '')];
+        var nomeTok = [], ult = [];
+        seg.forEach(function (s) { var tk = tdbNorm(s).split(' ').filter(Boolean); nomeTok = nomeTok.concat(tk); if (tk.length) ult.push(tk[tk.length - 1]); });
+        var txt = (nomes.join(' ') || rotulo).replace(/\s+/g, ' ').trim();
         out.push({
             banco: banco || null,
-            data: md ? md[0] : '',
-            texto: limpo.replace(/\s+/g, ' ').trim().slice(0, 90),
-            valores: din.map(function (d) { return d.v; }),
-            tokens: tdbNorm(limpo).split(' ').filter(Boolean)
+            data: data,
+            texto: txt.slice(0, 90),
+            valores: din.map(function (d) { return d.v; }).slice(0, 1),
+            tokens: tdbNorm(rotulo + ' ' + nomes.join(' ')).split(' ').filter(Boolean),
+            nomeTok: nomeTok,
+            ult: ult
+        });
+    });
+    return out;
+}
+function tdbParseExtrato(texto, banco) {
+    texto = String(texto || '');
+    var linhas = texto.split(/\r?\n/).map(function (l) { return l.replace(/\t+/g, '  ').replace(/([A-Za-z\u00C0-\u00FF.])(\d{1,2}\/\d{1,2}(?=\s|$))/g, '$1 $2').replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+    if (linhas.filter(function (l) { return TDB_CF_INI.test(l); }).length >= 3) return tdbParseBlocos(linhas, banco);
+    var info = linhas.map(function (l) { return { l: l, din: tdbMoneyList(l), data: tdbDataLinha(l) }; });
+    function limpa(l) { return l.replace(/(?:R\$\s*)?-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}/g, ' ').replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, ' ').replace(/\b\d{1,2}\s*(?:de\s+)?(?:jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z\u00E7]*\.?(?:\s*(?:de\s+)?\d{2,4})?\b/gi, ' ').replace(/\s+/g, ' ').trim(); }
+    var out = [], dataAtual = '';
+    /* orientação: se a maioria das linhas com valor traz o texto junto, o nome fica na linha e nas de baixo; se o valor vem sozinho, o nome está nas linhas de cima */
+    var comTexto = 0, soValor = 0;
+    info.forEach(function (x) { if (!x.din.length) return; if (limpa(x.l).replace(/[^A-Za-z\u00C0-\u00FF]/g, '').length >= 6) comTexto++; else soValor++; });
+    var modo = soValor > comTexto ? 'acima' : 'abaixo';
+    info.forEach(function (x, i) {
+        if (x.data) dataAtual = x.data;
+        if (!x.din.length) return;
+        var d0 = x.din[0], resto = x.l.slice(d0.fim), nl = tdbNorm(x.l);
+        if (/\bSALDO\b/.test(nl) || /\bTOTAL\b/.test(nl)) return;
+        if (d0.neg || /^\s*D\b/.test(resto) || /^-(?!\d)/.test(resto)) return;
+        if (/^[-\u2212\u2013]\s*(?:R\$)?\s*$/.test(x.l.slice(0, d0.i).replace(/\s+/g, ' ').trim()) && limpa(x.l).replace(/[^A-Za-z]/g, '').length < 3) return;
+        if (TDB_CF_DEB.test(nl) && !TDB_CF_CRED.test(nl)) return;
+        var ini = i, fim = i;
+        if (modo === 'acima') { var a = i - 1, lim = Math.max(0, i - 3); while (a >= lim && !info[a].din.length) a--; ini = a + 1; }
+        else { var b = i + 1, lim2 = Math.min(info.length - 1, i + 3); while (b <= lim2 && !info[b].din.length && !info[b].data) b++; fim = b - 1; }
+        var partes = [];
+        for (var k = ini; k <= fim; k++) partes.push(limpa(info[k].l));
+        var txt = partes.join(' ').replace(/\s+/g, ' ').trim();
+        out.push({
+            banco: banco || null,
+            data: x.data || dataAtual,
+            texto: txt.slice(0, 90),
+            valores: x.din.map(function (d) { return d.v; }),
+            tokens: tdbNorm(txt).split(' ').filter(Boolean)
         });
     });
     return out;
 }
 function tdbTokNome(s) { return tdbNorm(s).split(' ').filter(function (x) { return x.length > 1 && !TDB_CF_STOP[x]; }); }
-function tdbTokCasa(p, e) { return p === e || (e.length >= 5 && p.length - e.length >= 2 && p.indexOf(e) === 0); }
+function tdbTokCasa(p, e) { return p === e || (e.length >= 3 && p.length - e.length >= 2 && p.indexOf(e) === 0); }
+/* o banco corta o nome no fim do campo: o último pedaço pode vir incompleto ("Diane S", "JESSICK") */
+function tdbTokTrunc(p, e) { return e.length >= 1 && p.length > e.length && p.indexOf(e) === 0; }
 /* 2 = nome completo bate · 1 = só parte do nome bate · 0 = não bate */
 function tdbNomeCasa(parte, ent) {
     var tp = tdbTokNome(parte);
     if (!tp.length) return 0;
-    var ok = tp.filter(function (p) { return ent.tokens.some(function (e) { return tdbTokCasa(p, e); }); }).length;
+    var ult = ent.ult || [];
+    var ok = tp.filter(function (p) { return ent.tokens.some(function (e) { return tdbTokCasa(p, e) || (ult.indexOf(e) >= 0 && tdbTokTrunc(p, e)); }); }).length;
     if (tp.length >= 2 && ok === tp.length) return 2;
     if (tp.length === 1 && ok === 1) return 1;
+    if (tp.length >= 2 && ok === 1 && ent.nomeTok && ent.nomeTok.length <= 2 && ent.tokens.some(function (e) { return tdbTokCasa(tp[0], e) || (ult.indexOf(e) >= 0 && tdbTokTrunc(tp[0], e)); })) return 1;
+    if (tp.length >= 3 && ok >= 3) {
+        /* o banco corta nomes longos: vale se só faltam os últimos nomes (sobrenomes do final) */
+        var falta = false, achou = false;
+        tp.forEach(function (p) { var c = ent.tokens.some(function (e) { return tdbTokCasa(p, e); }); if (c) { if (falta) achou = true; } else falta = true; });
+        if (!achou) return 2;
+    }
     if (tp.length >= 3 && ok >= tp.length - 1) return 1;
     return 0;
 }
@@ -15747,6 +15886,7 @@ var TDB_CF_BANCOS = [['SICOOB', 'Sicoob'], ['SICREDI', 'Sicredi'], ['ITAU', 'Ita
 function tdbBancoDoTexto(texto) {
     var n = ' ' + tdbNorm(String(texto || '').slice(0, 2500)) + ' ';
     for (var i = 0; i < TDB_CF_BANCOS.length; i++) { if (n.indexOf(' ' + TDB_CF_BANCOS[i][0] + ' ') >= 0 || (TDB_CF_BANCOS[i][0].indexOf(' ') < 0 && n.indexOf(TDB_CF_BANCOS[i][0]) >= 0 && TDB_CF_BANCOS[i][0].length >= 5)) return TDB_CF_BANCOS[i][1]; }
+    if (/ LIMITE DA CONTA /.test(n) && / LANCAMENTOS /.test(n)) return 'Ita\u00FA';
     return null;
 }
 /* lancs: [{id, nome, partes:[...], valor, banco}] · entradas: saída de tdbParseExtrato · tol: tolerância de valor em R$ */
@@ -15808,16 +15948,30 @@ function tdbPaiVer(pai) {
     var p = tdbPaiPartes(pai);
     if (!p.length) return '—';
     if (p.length === 1) return p[0];
-    return React.createElement('span', { className: 'tdb-pai-lista', style: { display: 'flex', flexDirection: 'column', gap: 2 } }, p.map(function (n, i) { return React.createElement('span', { key: i }, n); }));
+    return React.createElement('span', { className: 'tdb-pai-lista', style: { display: 'flex', flexDirection: 'column', gap: 2, lineHeight: '17px' } }, p.map(function (n, i) { return React.createElement('span', { key: i }, n); }));
 }
 function tdbPaiCampos(valor, setValor, onKey, estilo, transf, extra) {
-    var s = String(valor || ''), i = s.indexOf(' / ');
-    var a = i < 0 ? s : s.slice(0, i), b = i < 0 ? '' : s.slice(i + 3);
-    function junta(a2, b2) { return b2 === '' ? a2 : a2 + ' / ' + b2; }
+    var h = React.createElement, s = String(valor || '');
+    var partes = s === '' ? [''] : s.split(' / ');
     var tf = transf || function (x) { return x; };
-    return React.createElement('div', { className: 'tdb-pai-campos', style: { display: 'grid', gap: 5, width: '100%' } },
-        React.createElement('input', Object.assign({ value: a, onChange: function (e) { setValor(junta(tf(e.target.value), b)); }, onKeyDown: onKey, placeholder: '1º nome', 'aria-label': 'Pai/Responsável', style: estilo }, extra || {})),
-        React.createElement('input', Object.assign({ value: b, onChange: function (e) { setValor(junta(a, tf(e.target.value))); }, onKeyDown: onKey, placeholder: '2º nome (opcional)', 'aria-label': 'Segundo responsável', style: estilo }, extra || {})));
+    function grava(arr) { setValor(arr.length === 1 ? arr[0] : arr.join(' / ')); }
+    return h('div', { className: 'tdb-pai-campos', style: { display: 'grid', gap: 6, width: '100%' } }, partes.map(function (n, i) {
+        return h('div', { key: i, className: 'tdb-pai-linha' },
+            h('input', Object.assign({ value: n, onChange: function (e) { var a = partes.slice(); a[i] = tf(e.target.value); grava(a); }, onKeyDown: onKey, placeholder: (i + 1) + '\u00BA nome' + (i ? ' (opcional)' : ''), 'aria-label': i ? (i + 1) + '\u00BA respons\u00E1vel' : 'Pai/Respons\u00E1vel', style: Object.assign({}, estilo, { flex: '1 1 0', width: 'auto', minWidth: 0 }) }, extra || {})),
+            partes.length < 4 ? h('button', { type: 'button', className: 'tdb-pai-mais', title: 'Adicionar outro nome', 'aria-label': 'Adicionar outro nome', onClick: function (e) { e.stopPropagation(); var a = partes.slice(); a.splice(i + 1, 0, ''); grava(a); } }, '+') : null,
+            i > 0 ? h('button', { type: 'button', className: 'tdb-pai-menos', title: 'Remover este nome', 'aria-label': 'Remover este nome', onClick: function (e) { e.stopPropagation(); var a = partes.slice(); a.splice(i, 1); grava(a); } }, '\u00D7') : null);
+    }));
+}
+/* nomes dos pais de um aluno, vindos das Mensalidades (usado na conferência da aba Festas) */
+function tdbPaisDoAluno(trs, nome) {
+    var alvo = tdbNorm(nome), out = [], vis = {};
+    (trs || []).forEach(function (t) {
+        var c = String(t.categoria || '');
+        if (c.indexOf('Mensalidade - ') !== 0 || !t.pai) return;
+        if (tdbNorm(c.slice(14)) !== alvo) return;
+        tdbPaiPartes(t.pai).forEach(function (x) { var k = tdbNorm(x); if (k && !vis[k]) { vis[k] = 1; out.push(x); } });
+    });
+    return out;
 }
 /* ---- Selos da conferência na lista ---- */
 function tdbCfBadge(t, cls) {
@@ -15866,7 +16020,9 @@ function tdbPdfTexto(file) {
 /* ---- Tela "Conferir extrato" (página cheia dentro de Mensalidades) ---- */
 function ConferirExtratoTDB(p) {
     var h = React.createElement;
+    var festas = p.modo === 'festas';
     var _m = useState(p.mesInicial), mes = _m[0], setMes = _m[1];
+    var tituloConf = festas ? (p.tituloFesta || 'Festa') : mes;
     var _tol = useState('0'), tolStr = _tol[0], setTolStr = _tol[1];
     var _fs = useState([]), arquivos = _fs[0], setArquivos = _fs[1];
     var _tx = useState(''), texto = _tx[0], setTexto = _tx[1];
@@ -15913,14 +16069,23 @@ function ConferirExtratoTDB(p) {
     var todasEntradas = entradasPdf.concat(entradasTexto);
     var totalPaginas = arquivos.reduce(function (s, a) { return s + a.paginas; }, 0);
     function lancamentos() {
+        if (festas) return (p.linhasFesta || []).filter(function (r) {
+            var st = _festasStatus(r);
+            return (st === 'Pago' || st === 'Parcial') && _festasNumero(r.valor) > 0 && tdbNorm(r.banco) !== 'DINHEIRO';
+        }).map(function (r) { var pt = tdbPaisDoAluno(p.transacoes, r.nome); return { id: r.id, nome: r.nome, pai: pt.join(' / '), partes: pt, valor: _festasNumero(r.valor), banco: r.banco || '' }; });
         return (p.entradas || []).filter(function (t) {
-            return String(t.categoria || '').indexOf('Mensalidade - ') === 0 && t.mes === mes && tdbNorm(t.banco) !== 'DINHEIRO' && TDBFinance.received(t) > 0;
-        }).map(function (t) { return { id: t.id, nome: nomeExibicao(t.categoria), pai: t.pai || '', partes: tdbPaiPartes(t.pai), valor: TDBFinance.received(t), banco: t.banco || '' }; });
+            var c = String(t.categoria || '');
+            return (c.indexOf('Mensalidade - ') === 0 || c.indexOf('Conv\u00EAnio - ') === 0) && t.mes === mes && tdbNorm(t.banco) !== 'DINHEIRO' && TDBFinance.received(t) > 0;
+        }).map(function (t) {
+            var emp = String(t.categoria || '').indexOf('Conv\u00EAnio - ') === 0, nome = nomeExibicao(t.categoria), partes = tdbPaiPartes(t.pai);
+            if (emp) partes = [nome].concat(partes);
+            return { id: t.id, nome: nome, pai: t.pai || '', partes: partes, valor: TDBFinance.received(t), banco: t.banco || '' };
+        });
     }
     function conferir() {
         setErro('');
         var ls = lancamentos();
-        if (!ls.length) { setErro('Não há mensalidades pagas (fora dinheiro) em ' + mes + ' para conferir. Confira o mês.'); return; }
+        if (!ls.length) { setErro(festas ? 'Não há pagamentos marcados como Pago (fora dinheiro) nesta festa para conferir.' : 'Não há mensalidades pagas (fora dinheiro) em ' + mes + ' para conferir. Confira o mês.'); return; }
         if (!todasEntradas.length) { setErro('Anexe o PDF do extrato (ou cole o texto) antes de conferir.'); return; }
         var r = tdbConferir(todasEntradas, ls, parseFloat(tolStr) || 0);
         var m = {};
@@ -15943,7 +16108,7 @@ function ConferirExtratoTDB(p) {
         });
         var ok = p.onSalvar(mapa);
         if (ok === false) { setErro('Não consegui salvar agora (o ano pode estar encerrado).'); return; }
-        if (typeof mostrarToast === 'function') mostrarToast('Conferência salva na lista de mensalidades.');
+        if (typeof mostrarToast === 'function') mostrarToast(festas ? 'Conferência salva na lista da festa.' : 'Conferência salva na lista de mensalidades.');
         p.onFechar();
     }
     function novaConferencia() { setResultado(null); setArquivos([]); setTexto(''); setVerTexto(false); setErro(''); setMarc({}); }
@@ -15965,15 +16130,23 @@ function ConferirExtratoTDB(p) {
         return h('span', { style: { fontSize: 12.5 } }, bancoTag(ent.banco), (ent.data ? ent.data + ' · ' : '') + ent.texto.slice(0, 48) + ' · ' + ent.valores[0].toFixed(2).replace('.', ','));
     }
     var ENTS = resultado ? resultado.entradas : [];
+    var sobrasVis = resultado ? resultado.sobras : [];
+    if (festas && resultado) {
+        var baseF = (p.linhasFesta || []).map(function (r) { return { nome: r.nome, partes: tdbPaisDoAluno(p.transacoes, r.nome) }; });
+        sobrasVis = resultado.sobras.map(function (e) {
+            var q = baseF.filter(function (b) { return b.partes.some(function (pt) { return tdbNomeCasa(pt, e) >= 1; }); }).map(function (b) { return b.nome; });
+            return q.length ? Object.assign({}, e, { _quem: q.slice(0, 2).join(' ou ') }) : null;
+        }).filter(Boolean);
+    }
     var corpo;
     if (!resultado) {
         corpo = h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '24px 26px' }) },
             h('div', { style: { fontSize: 22, fontWeight: 800, color: COLORS.ink } }, 'Conferir extrato do banco'),
-            h('div', { style: { fontSize: 13.5, color: COLORS.inkSoft, margin: '4px 0 18px', lineHeight: 1.45 } }, 'Anexe os PDFs dos extratos — pode ser mais de um, de bancos diferentes, tudo de uma vez. O programa lê, reconhece o banco e compara com as mensalidades lançadas.'),
+            h('div', { style: { fontSize: 13.5, color: COLORS.inkSoft, margin: '4px 0 18px', lineHeight: 1.45 } }, 'Anexe os PDFs dos extratos — pode ser mais de um, de bancos diferentes, tudo de uma vez. O programa lê, reconhece o banco e compara com ' + (festas ? 'os pagamentos desta festa (o nome vem do Pai/Responsável das Mensalidades).' : 'as mensalidades lançadas.')),
             h('div', { className: 'tdb-cfp-grid' },
                 h('div', null,
-                    h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B' } }, '1 · Qual mês conferir'),
-                    h('select', { value: mes, onChange: function (e) { setMes(e.target.value); }, className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8 }), 'aria-label': 'Mês' }, MESES.map(function (m) { return h('option', { key: m, value: m }, m); })),
+                    h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B' } }, festas ? '1 · Festa' : '1 · Qual mês conferir'),
+                    festas ? h('div', { className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8 }) }, p.tituloFesta || 'Festa') : h('select', { value: mes, onChange: function (e) { setMes(e.target.value); }, className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8 }), 'aria-label': 'Mês' }, MESES.map(function (m) { return h('option', { key: m, value: m }, m); })),
                     h('span', { style: lab }, '2 · Bancos'),
                     h('div', { style: { padding: '11px 14px', borderRadius: 12, background: 'color-mix(in srgb, #18B9AD 10%, transparent)', border: '1px solid color-mix(in srgb, #18B9AD 30%, transparent)', fontSize: 13, color: COLORS.ink, lineHeight: 1.45 } }, h('b', null, 'Automático. '), 'O banco é reconhecido em cada PDF; as mensalidades pagas em dinheiro ficam de fora.'),
                     h('span', { style: lab }, '3 · Tolerância de valor'),
@@ -16014,9 +16187,9 @@ function ConferirExtratoTDB(p) {
         function cartao(n, st, rot, extra) { var c = extra || cores[st]; return h('div', { className: 'tdb-cfp-sum', style: { '--c': c, padding: '14px 16px' } }, h('div', { style: { fontSize: 28, fontWeight: 800, lineHeight: 1, color: c } }, n), h('div', { style: { fontSize: 12.5, fontWeight: 700, color: c, marginTop: 6 } }, rot)); }
         var nomesBancos = resultado.bancos.length ? ' (' + resultado.bancos.join(', ') + ')' : '';
         corpo = h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '24px 26px' }) },
-            h('div', { style: { fontSize: 22, fontWeight: 800, color: COLORS.ink } }, 'Conferência de ' + mes),
-            h('div', { style: { fontSize: 13.5, color: COLORS.inkSoft, margin: '4px 0 16px', lineHeight: 1.45 } }, (resultado.nArq ? resultado.nArq + (resultado.nArq === 1 ? ' PDF lido' : ' PDFs lidos') + nomesBancos + ' · ' : '') + resultado.entradas.length + ' entradas. Marque o que está certo e salve para aparecer o ✓ na lista de mensalidades.'),
-            h('div', { className: 'tdb-cfp-cards' }, cartao(contar('ok'), 'ok', '✓ Bateram (nome e valor)'), cartao(contar('olhar'), 'olhar', '⚠ Para você olhar'), cartao(contar('nao'), 'nao', '✕ Lançado, mas não está no extrato'), cartao(resultado.sobras.length, 'x', 'Entrada sem lançamento', '#4a63d6')),
+            h('div', { style: { fontSize: 22, fontWeight: 800, color: COLORS.ink } }, 'Conferência de ' + tituloConf),
+            h('div', { style: { fontSize: 13.5, color: COLORS.inkSoft, margin: '4px 0 16px', lineHeight: 1.45 } }, (resultado.nArq ? resultado.nArq + (resultado.nArq === 1 ? ' PDF lido' : ' PDFs lidos') + nomesBancos + ' · ' : '') + resultado.entradas.length + ' entradas. Marque o que está certo e salve para aparecer o ✓ na lista ' + (festas ? 'da festa.' : 'de mensalidades.')),
+            h('div', { className: 'tdb-cfp-cards' }, cartao(contar('ok'), 'ok', '✓ Bateram (nome e valor)'), cartao(contar('olhar'), 'olhar', '⚠ Para você olhar'), cartao(contar('nao'), 'nao', '✕ Lançado, mas não está no extrato'), cartao(sobrasVis.length, 'x', festas ? 'Pagou no extrato, sem marcar na festa' : 'Entrada sem lançamento', '#4a63d6')),
             h('div', { style: { display: 'flex', gap: 8, margin: '16px 0 10px', flexWrap: 'wrap' } },
                 [['atencao', 'Só os que precisam de atenção'], ['todos', 'Todos (' + linhasTodas.length + ')']].map(function (o) { var on = filtro === o[0]; return h('button', { key: o[0], type: 'button', onClick: function () { setFiltro(o[0]); }, className: 'tdb-cfp-pill' + (on ? ' on' : ''), style: { padding: '9px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer' } }, o[1]); })),
             h('div', { className: 'tdb-cfp-dois' },
@@ -16037,11 +16210,18 @@ function ConferirExtratoTDB(p) {
                             h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { style: { fontWeight: 800, color: COLORS.ink, fontSize: 14, wordBreak: 'break-word' } }, l.nome), h('div', { style: { fontSize: 12, color: COLORS.inkSoft } }, brl(l.valor) + ' · ' + (r.entrada >= 0 ? ((ENTS[r.entrada].banco || '') + (ENTS[r.entrada].data ? ' · ' + ENTS[r.entrada].data : '')) : 'sem entrada'))),
                             tag(r.tipo, r.dif));
                     })),
-                    h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 10 } }, 'Mostrando ' + linhasVis.length + ' de ' + linhasTodas.length + ' · os ✓ salvos aparecem na lista de mensalidades')),
+                    h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 10 } }, 'Mostrando ' + linhasVis.length + ' de ' + linhasTodas.length + ' · os ✓ salvos aparecem na lista ' + (festas ? 'da festa' : 'de mensalidades'))),
                 h('div', null,
-                    h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20 }) }, h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, 'Entrada no extrato sem lançamento'),
-                        resultado.sobras.length === 0 ? h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Todas as entradas do extrato foram encaixadas.') : resultado.sobras.slice(0, 12).map(function (e, i) { return h('div', { key: i, style: { padding: '8px 0', borderTop: i ? '1px solid ' + COLORS.lineSoft : 'none', fontSize: 12.5, color: COLORS.ink, wordBreak: 'break-word' } }, h('b', null, (e.data ? e.data + ' · ' : '') + e.texto.slice(0, 40) + ' · ' + brl(e.valores[0])), h('div', { style: { color: COLORS.inkSoft } }, e.banco || '')); }),
-                        resultado.sobras.length > 12 && h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 6 } }, '+ ' + (resultado.sobras.length - 12) + ' outras')),
+                    h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20 }) }, h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, festas ? 'Pagou no extrato, mas sem pagamento marcado na festa' : 'Entrada no extrato sem lançamento'),
+                        sobrasVis.length === 0 ? h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Todas as entradas do extrato foram encaixadas.') : sobrasVis.slice(0, 12).map(function (e, i) { return h('div', { key: i, style: { padding: '8px 0', borderTop: i ? '1px solid ' + COLORS.lineSoft : 'none', fontSize: 12.5, color: COLORS.ink, wordBreak: 'break-word' } }, h('b', null, (e.data ? e.data + ' · ' : '') + e.texto.slice(0, 40) + ' · ' + brl(e.valores[0])), h('div', { style: { color: COLORS.inkSoft } }, (e.banco || '') + (e._quem ? (e.banco ? ' · ' : '') + 'pode ser: ' + e._quem : ''))); }),
+                        sobrasVis.length > 12 && h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 6 } }, '+ ' + (sobrasVis.length - 12) + ' outras')),
+                    h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20, marginTop: 16 }) },
+                        h('details', null, h('summary', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', cursor: 'pointer' } }, 'O que li no extrato (' + resultado.entradas.length + ' entradas)'),
+                            h('div', { style: { fontSize: 12, color: COLORS.inkSoft, margin: '6px 0' } }, 'Se faltar algum pagamento aqui, o PDF foi lido incompleto. Os marcados com \u2713 foram encaixados em um lan\u00E7amento.'),
+                            h('div', { style: { maxHeight: 260, overflowY: 'auto' } }, resultado.entradas.map(function (e, i) {
+                                var usada = Object.keys(resultado.res).some(function (k) { return resultado.res[k].entrada === i; });
+                                return h('div', { key: i, style: { padding: '6px 0', borderTop: i ? '1px solid ' + COLORS.lineSoft : 'none', fontSize: 12, color: COLORS.ink, wordBreak: 'break-word' } }, h('span', { style: { color: usada ? '#1fa86b' : COLORS.inkSoft, fontWeight: 800, marginRight: 6 } }, usada ? '\u2713' : '\u2022'), (e.banco ? e.banco + ' \u00B7 ' : '') + (e.data ? e.data + ' \u00B7 ' : '') + (e.texto || '(sem texto)').slice(0, 60) + ' \u00B7 ' + e.valores.map(function (v) { return brl(v); }).join(' / '));
+                            })))),
                     h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20, marginTop: 16 }) }, h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, 'Como ler'),
                         [['ok', '✓ Bateu', 'nome completo e valor iguais'], ['olhar', '⚠ Olhar', 'nome parecido ou valor diferente'], ['nao', '✕ Não achei', 'não há entrada para esse responsável']].map(function (x) { var c = cores[x[0]]; return h('div', { key: x[0], style: { padding: '7px 0', borderTop: x[0] === 'ok' ? 'none' : '1px solid ' + COLORS.lineSoft, fontSize: 12.5, color: COLORS.ink } }, h('span', { style: { fontWeight: 800, color: c, background: 'color-mix(in srgb, ' + c + ' 16%, transparent)', borderRadius: 999, padding: '3px 10px', marginRight: 8 } }, x[1]), x[2]); })))),
             erro && h('div', { role: 'alert', style: { marginTop: 10, padding: '9px 12px', borderRadius: 10, background: COLORS.redBg, color: COLORS.red, fontSize: 13, fontWeight: 600 } }, erro),
@@ -16054,12 +16234,35 @@ function ConferirExtratoTDB(p) {
         h('style', null, '.tdb-cfp-grid{display:grid;grid-template-columns:1fr 1.6fr;gap:24px}.tdb-cfp-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.tdb-cfp-dois{display:grid;grid-template-columns:1.9fr 1fr;gap:20px}.tdb-cfp-lista{display:none}.tdb-cfp-bar{display:flex;align-items:center;gap:14px;box-sizing:border-box}html:not(.tdb-aurora-pdf) .tdb-cfp{padding:28px}.tdb-cfp .tdb-cfp-corpo{position:relative;width:100%;max-width:1400px;max-height:100%;overflow:auto;margin:0;padding:18px 22px 22px;border-radius:32px;background:radial-gradient(520px 160px at 8% -4%,rgba(255,255,255,.7),rgba(255,255,255,0) 62%),radial-gradient(420px 200px at 100% 100%,rgba(128,214,211,.34),rgba(128,214,211,0) 70%),linear-gradient(160deg,color-mix(in srgb,var(--c-paperCard,#fff) 95%,transparent),color-mix(in srgb,var(--c-paperCard,#fff) 91%,transparent) 50%,color-mix(in srgb,var(--c-paperCard,#fff) 94%,transparent));border:1px solid var(--aurora-edge,rgba(255,255,255,.95));box-shadow:0 36px 90px rgba(20,40,80,.38),0 10px 26px rgba(20,40,80,.18),inset 0 1px 0 rgba(255,255,255,.9);backdrop-filter:blur(40px) saturate(1.3);-webkit-backdrop-filter:blur(40px) saturate(1.3)}.tdb-cfp .tdb-cfp-bar{margin:0 0 12px;padding:6px 4px;background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important}.tdb-cfp .tdb-cfp-corpo>.tdb-cfp-g{background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:4px 4px 0!important}.tdb-cfp .tdb-cfp-sum{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 22px rgba(30,40,60,.07);border-radius:22px}.tdb-cfp .tdb-cfp-pill,.tdb-cfp .tdb-cfp-btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 6px 16px rgba(30,40,60,.09)}@media (max-width:760px){.tdb-cfp-grid,.tdb-cfp-dois{grid-template-columns:1fr}.tdb-cfp-cards{grid-template-columns:1fr 1fr}.tdb-cfp-tabela{display:none}.tdb-cfp-lista{display:block}.tdb-cfp{padding:10px!important}.tdb-cfp .tdb-cfp-corpo{padding:12px 12px 16px!important;border-radius:28px!important}}html:not(.tdb-aurora-pdf) .tdb-cfp .tdb-cfp-g{background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08));-webkit-backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08))}.tdb-cfp .tdb-cfp-btn,.tdb-cfp .tdb-cfp-pill{font-family:inherit;color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:999px;background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);box-shadow:var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}.tdb-cfp .tdb-cfp-btn:hover,.tdb-cfp .tdb-cfp-pill:hover{transform:translateY(-1px)}.tdb-cfp .tdb-cfp-pill.on{border-color:#18B9AD;color:#106E6B;box-shadow:0 0 0 3px rgba(24,185,173,.18),var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07))}.tdb-cfp .tdb-cfp-main{border:1px solid rgba(255,255,255,.5);color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 55%),#18B9AD;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 6px 16px rgba(24,185,173,.32)}.tdb-cfp .tdb-cfp-main:disabled{box-shadow:none}.tdb-cfp .tdb-cfp-inp{color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:16px;background:var(--c-paperCard,#fff);box-shadow:inset 0 1px 2px rgba(30,40,60,.05)}.tdb-cfp .tdb-cfp-sum{border-radius:20px;border:1px solid color-mix(in srgb,var(--c) 38%,transparent);background:var(--aurora-layers,linear-gradient(transparent,transparent)),color-mix(in srgb,var(--c) 11%,var(--c-paperCard,#fff));box-shadow:var(--aurora-shadow,0 6px 20px rgba(30,40,60,.06));backdrop-filter:blur(var(--aurora-blur,14px));-webkit-backdrop-filter:blur(var(--aurora-blur,14px))}'),
         h('div', { className: 'tdb-cfp-corpo', role: 'document', style: { boxSizing: 'border-box' } }, h('div', { className: 'tdb-cfp-bar tdb-cfp-g' },
             h('img', { src: LOGO_B64, alt: 'Escola Infantil Tempo de Brincar', style: { height: 44, maxWidth: 150, objectFit: 'contain' } }),
-            h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { style: { fontSize: 17, fontWeight: 800, color: COLORS.ink } }, 'Mensalidades'), h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Conferir extrato')),
+            h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { style: { fontSize: 17, fontWeight: 800, color: COLORS.ink } }, festas ? 'Festas TDB' : 'Mensalidades'), h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Conferir extrato')),
             h('button', { type: 'button', onClick: p.onFechar, className: 'tdb-cfp-btn', style: btn }, '✕  Fechar')), corpo)), document.body);
+}
+function CopiarNomesTDB(p) {
+    var _s = useState(null), feito = _s[0], setFeito = _s[1];
+    var previa = React.useMemo(function () { return p.copiar(false); }, []);
+    useEffect(function () { var f = function (e) { if (e.key === 'Escape') p.onFechar(); }; document.addEventListener('keydown', f); return function () { document.removeEventListener('keydown', f); }; }, []);
+    var n = previa ? previa.preenchidos + previa.criados : 0;
+    var base = { background: 'none', border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 12, cursor: 'pointer', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'inherit' };
+    return ReactDOM.createPortal(React.createElement("div", { className: "tdb-cfp", role: "dialog", "aria-label": "Copiar nomes", style: { position: 'fixed', inset: 0, zIndex: 2147483100, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', fontFamily: 'Inter, -apple-system, sans-serif' }, onClick: function (e) { if (e.target === e.currentTarget) p.onFechar(); } },
+        React.createElement("style", null, '.tdb-cfp-grid{display:grid;grid-template-columns:1fr 1.6fr;gap:24px}.tdb-cfp-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.tdb-cfp-dois{display:grid;grid-template-columns:1.9fr 1fr;gap:20px}.tdb-cfp-lista{display:none}.tdb-cfp-bar{display:flex;align-items:center;gap:14px;box-sizing:border-box}html:not(.tdb-aurora-pdf) .tdb-cfp{padding:28px}.tdb-cfp .tdb-cfp-corpo{position:relative;width:100%;max-width:1400px;max-height:100%;overflow:auto;margin:0;padding:18px 22px 22px;border-radius:32px;background:radial-gradient(520px 160px at 8% -4%,rgba(255,255,255,.7),rgba(255,255,255,0) 62%),radial-gradient(420px 200px at 100% 100%,rgba(128,214,211,.34),rgba(128,214,211,0) 70%),linear-gradient(160deg,color-mix(in srgb,var(--c-paperCard,#fff) 95%,transparent),color-mix(in srgb,var(--c-paperCard,#fff) 91%,transparent) 50%,color-mix(in srgb,var(--c-paperCard,#fff) 94%,transparent));border:1px solid var(--aurora-edge,rgba(255,255,255,.95));box-shadow:0 36px 90px rgba(20,40,80,.38),0 10px 26px rgba(20,40,80,.18),inset 0 1px 0 rgba(255,255,255,.9);backdrop-filter:blur(40px) saturate(1.3);-webkit-backdrop-filter:blur(40px) saturate(1.3)}.tdb-cfp .tdb-cfp-bar{margin:0 0 12px;padding:6px 4px;background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important}.tdb-cfp .tdb-cfp-corpo>.tdb-cfp-g{background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:4px 4px 0!important}.tdb-cfp .tdb-cfp-sum{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 22px rgba(30,40,60,.07);border-radius:22px}.tdb-cfp .tdb-cfp-pill,.tdb-cfp .tdb-cfp-btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 6px 16px rgba(30,40,60,.09)}@media (max-width:760px){.tdb-cfp-grid,.tdb-cfp-dois{grid-template-columns:1fr}.tdb-cfp-cards{grid-template-columns:1fr 1fr}.tdb-cfp-tabela{display:none}.tdb-cfp-lista{display:block}.tdb-cfp{padding:10px!important}.tdb-cfp .tdb-cfp-corpo{padding:12px 12px 16px!important;border-radius:28px!important}}html:not(.tdb-aurora-pdf) .tdb-cfp .tdb-cfp-g{background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08));-webkit-backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08))}.tdb-cfp .tdb-cfp-btn,.tdb-cfp .tdb-cfp-pill{font-family:inherit;color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:999px;background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);box-shadow:var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}.tdb-cfp .tdb-cfp-btn:hover,.tdb-cfp .tdb-cfp-pill:hover{transform:translateY(-1px)}.tdb-cfp .tdb-cfp-pill.on{border-color:#18B9AD;color:#106E6B;box-shadow:0 0 0 3px rgba(24,185,173,.18),var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07))}.tdb-cfp .tdb-cfp-main{border:1px solid rgba(255,255,255,.5);color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 55%),#18B9AD;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 6px 16px rgba(24,185,173,.32)}.tdb-cfp .tdb-cfp-main:disabled{box-shadow:none}.tdb-cfp .tdb-cfp-inp{color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:16px;background:var(--c-paperCard,#fff);box-shadow:inset 0 1px 2px rgba(30,40,60,.05)}.tdb-cfp .tdb-cfp-sum{border-radius:20px;border:1px solid color-mix(in srgb,var(--c) 38%,transparent);background:var(--aurora-layers,linear-gradient(transparent,transparent)),color-mix(in srgb,var(--c) 11%,var(--c-paperCard,#fff));box-shadow:var(--aurora-shadow,0 6px 20px rgba(30,40,60,.06));backdrop-filter:blur(var(--aurora-blur,14px));-webkit-backdrop-filter:blur(var(--aurora-blur,14px))}'),
+        React.createElement("div", { className: "tdb-cfp-corpo", style: { maxWidth: 520, height: 'auto', padding: '26px 26px 22px' }, onClick: function (e) { e.stopPropagation(); } }, React.createElement("div", { style: { padding: '4px 10px 2px' } },
+            React.createElement("div", { style: { fontSize: 19, fontWeight: 800, marginBottom: 6 } }, "Copiar nomes para Novembro e Dezembro"),
+            React.createElement("div", { style: { fontSize: 13.5, opacity: .8, marginBottom: 16, lineHeight: 1.45 } }, "Leva o que você cadastrou em Outubro (Pai/Responsável, Tirar nota e Convênio) para Novembro e Dezembro. Só preenche onde estiver vazio: valores, status, datas e o que você já digitou não mudam."),
+            !previa ? React.createElement("div", null, "Os dados ainda estão carregando.") :
+            feito ? React.createElement("div", { style: { fontWeight: 700, fontSize: 15, margin: '6px 0 4px' } }, "Pronto: ", feito.preenchidos, (feito.preenchidos === 1 ? " cadastro preenchido" : " cadastros preenchidos"), feito.criados ? " e " + feito.criados + " mensalidades criadas (pendentes)" : "", ".") :
+            React.createElement("div", { style: { fontSize: 14.5, lineHeight: 1.6 } },
+                React.createElement("div", null, previa.alunos, " cadastros com nome em Outubro"),
+                React.createElement("div", null, "\u2022 ", previa.preenchidos, (previa.preenchidos === 1 ? " campo vazio" : " campos vazios") + " em Nov/Dez ", (previa.preenchidos === 1 ? "será preenchido" : "serão preenchidos")),
+                React.createElement("div", null, "\u2022 ", previa.criados, (previa.criados === 1 ? " mensalidade de aluno ainda não existe" : " mensalidades de aluno ainda não existem"), " em Nov/Dez e serão criadas como pendentes"),
+                React.createElement("div", { style: { opacity: .7 } }, "\u2022 ", previa.jaTinham, " já preenchidos ficam como estão")),
+            React.createElement("div", { style: { display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20, flexWrap: 'wrap' } },
+                !feito && previa && n > 0 && React.createElement("button", { type: "button", className: "tdb-cfp-btn tdb-cfp-main", style: Object.assign({}, base, { background: 'linear-gradient(135deg,#2bb7a4,#1d9a8a)', color: '#fff', border: 'none' }), onClick: function () { var r = p.copiar(true); if (r) setFeito(r); } }, "Copiar agora"),
+                React.createElement("button", { type: "button", className: "tdb-cfp-btn", style: base, onClick: p.onFechar }, feito ? "Fechar" : "Cancelar"))))), document.body);
 }
 function Mensalidades(_a) {
     var _this = this;
     var marcarConferidos = _a.marcarConferidos;
+    var copiarNomes = _a.copiarNomes;
     var transacoes = _a.transacoes, darBaixa = _a.darBaixa, darNota = _a.darNota, definirFoto = _a.definirFoto, editarLancamento = _a.editarLancamento, removerLancamento = _a.removerLancamento, adicionarEntrada = _a.adicionarEntrada, privadoTotais = _a.privadoTotais, setPrivadoTotais = _a.setPrivadoTotais, privadoDetalhes = _a.privadoDetalhes, setPrivadoDetalhes = _a.setPrivadoDetalhes, chamarIA = _a.chamarIA, _b = _a.exercicioAtual, exercicioAtual = _b === void 0 ? 2026 : _b;
     var _c = useState(function () {
         try {
@@ -16237,6 +16440,7 @@ function Mensalidades(_a) {
     var _18 = useState(false), gravandoMens = _18[0], setGravandoMens = _18[1];
     var _19 = useState(false), interpretandoMens = _19[0], setInterpretandoMens = _19[1];
     var _cfx = useState(false), conferirAberto = _cfx[0], setConferirAberto = _cfx[1];
+    var _cpn = useState(false), copiarAberto = _cpn[0], setCopiarAberto = _cpn[1];
     var reconhecimentoMensRef = useRef(null);
     var suportaVozMens = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
     function alternarDitadoMensalidade() {
@@ -16515,7 +16719,10 @@ function Mensalidades(_a) {
         }, style: inputStyle }, React.createElement("option", { value: "" }, "\u2014 nenhum \u2014"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })), bancoOutroModo && (React.createElement("input", { autoFocus: true, value: novoBanco, onChange: function (e) { return setNovoBanco(e.target.value.toUpperCase()); }, placeholder: "Nome do banco", style: inputStyle }))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 100px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "STATUS"), React.createElement("select", { value: novoStatus, onChange: function (e) { return setNovoStatus(e.target.value); }, style: inputStyle }, React.createElement("option", null, "Pago"), React.createElement("option", null, "Pendente"), React.createElement("option", null, "Parcial"))), React.createElement("button", { type: "submit", style: {
             background: COLORS.inkButton, color: '#FFFFFF', border: 'none', borderRadius: 7, padding: '10px 16px',
             fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, height: 39, justifyContent: 'center',
-        } }, React.createElement(Plus, { size: 15 }), " Adicionar"))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement(ContaProporcionalBolhaTDB, { transacoes: transacoes, tabelaValores: tabelaValores, diasLetivos: diasLetivos, mes: novoMes, onUsar: function (valor, base) { if (novoStatus === 'Parcial' && !novoValorCheio) setNovoValorCheio(formatBRLNumber(base)); setNovoValor(formatBRLNumber(valor)); } }), React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { className: "tdb-mens-data-filtro", style: { position: 'relative', flex: '0 1 190px' } }, React.createElement("input", { type: "date", value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, "aria-label": "Filtrar por data do pagamento", title: "Mostra só quem pagou na data escolhida", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box', cursor: 'pointer', paddingRight: filtroData ? 62 : undefined, boxShadow: filtroData ? 'inset 0 0 0 2px ' + COLORS.inkButton : undefined }) }), filtroData ? React.createElement("button", { type: "button", onClick: function () { return setFiltroData(''); }, "aria-label": "Limpar data", title: "Limpar data", style: { position: 'absolute', right: 34, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, border: 'none', borderRadius: 9, background: 'transparent', color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 13 })) : null), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por banco", valor: filtroBanco, onChange: setFiltroBanco, opcoes: bancosDisponiveis, rotuloTodos: "Todos os bancos", rotuloSem: "Sem banco", valSem: "SEM_BANCO", estilo: inputStyle, colunaCheia: true }), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por conv\u00EAnio", valor: filtroConvenio, onChange: setFiltroConvenio, opcoes: conveniosDisponiveis, rotuloTodos: "Todos os conv\u00EAnios", rotuloSem: "Sem conv\u00EAnio", valSem: "SEM_CONVENIO", estilo: inputStyle, colunaCheia: true }), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirAberto(true); }, title: "Conferir o extrato do banco com as mensalidades pagas", style: {
+        } }, React.createElement(Plus, { size: 15 }), " Adicionar"))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement(ContaProporcionalBolhaTDB, { transacoes: transacoes, tabelaValores: tabelaValores, diasLetivos: diasLetivos, mes: novoMes, onUsar: function (valor, base) { if (novoStatus === 'Parcial' && !novoValorCheio) setNovoValorCheio(formatBRLNumber(base)); setNovoValor(formatBRLNumber(valor)); } }), React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { className: "tdb-mens-data-filtro", style: { position: 'relative', flex: '0 1 190px' } }, React.createElement("input", { type: "date", value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, "aria-label": "Filtrar por data do pagamento", title: "Mostra só quem pagou na data escolhida", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box', cursor: 'pointer', paddingRight: filtroData ? 62 : undefined, boxShadow: filtroData ? 'inset 0 0 0 2px ' + COLORS.inkButton : undefined }) }), filtroData ? React.createElement("button", { type: "button", onClick: function () { return setFiltroData(''); }, "aria-label": "Limpar data", title: "Limpar data", style: { position: 'absolute', right: 34, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, border: 'none', borderRadius: 9, background: 'transparent', color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 13 })) : null), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por banco", valor: filtroBanco, onChange: setFiltroBanco, opcoes: bancosDisponiveis, rotuloTodos: "Todos os bancos", rotuloSem: "Sem banco", valSem: "SEM_BANCO", estilo: inputStyle, colunaCheia: true }), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por conv\u00EAnio", valor: filtroConvenio, onChange: setFiltroConvenio, opcoes: conveniosDisponiveis, rotuloTodos: "Todos os conv\u00EAnios", rotuloSem: "Sem conv\u00EAnio", valSem: "SEM_CONVENIO", estilo: inputStyle, colunaCheia: true }), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setCopiarAberto(true); }, title: "Levar o cadastro de Pai/Responsável de Outubro para Novembro e Dezembro", style: {
+            background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
+            display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
+        } }, "Copiar nomes p/ Nov e Dez"), copiarAberto && React.createElement(CopiarNomesTDB, { copiar: function (a) { return copiarNomes ? copiarNomes(a) : null; }, onFechar: function () { setCopiarAberto(false); } }), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirAberto(true); }, title: "Conferir o extrato do banco com as mensalidades pagas", style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
         } }, React.createElement(Check, { size: 14 }), "Conferir extrato"), conferirAberto && React.createElement(ConferirExtratoTDB, { entradas: entradas, mesInicial: filtroMes !== 'TODOS' ? filtroMes : (MESES[new Date().getMonth()] || 'SETEMBRO'), onFechar: function () { setConferirAberto(false); }, onSalvar: function (mapa) { return marcarConferidos ? marcarConferidos(mapa) : false; } }), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
@@ -18372,6 +18579,22 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-num] body .kpi-card:not
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-num] body .painel-main :is([style*="IBM Plex Mono"],[style*="monospace"]) {font-weight:700!important;}
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body:not(.dark-mode) .painel-main table tbody tr:nth-child(even) {background:rgba(23,103,207,.06);}
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .painel-main table tbody tr:nth-child(even) {background:rgba(255,255,255,.08);}
+/* TDB v1.30 — Pai/Responsável: botão + em cada nome e × para tirar */
+.tdb-pai-linha{display:flex;align-items:center;gap:6px;width:100%;min-width:0}
+.tdb-pai-mais,.tdb-pai-menos{display:inline-flex;align-items:center;justify-content:center;flex:none;width:26px;height:26px;border-radius:50%;border:1px solid var(--aurora-edge,var(--c-line));background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),var(--aurora-shadow,0 3px 10px rgba(30,40,60,.12));color:#106E6B;font:800 16px/1 Inter,system-ui,sans-serif;padding:0;cursor:pointer;transition:transform .12s ease}
+.tdb-pai-mais:hover,.tdb-pai-menos:hover{transform:scale(1.08)}
+.tdb-pai-menos{color:#d93a4a;font-size:15px}
+@media (max-width:760px){.tdb-pai-mais,.tdb-pai-menos{width:36px;height:36px;font-size:21px}.tdb-pai-menos{font-size:19px}.tdb-pai-linha{gap:8px}}
+@media print{.tdb-pai-mais,.tdb-pai-menos{display:none!important}}
+html.tdb-aurora-pdf .tdb-pai-mais,html.tdb-aurora-pdf .tdb-pai-menos{display:none!important}
+/* TDB v1.30 — Mensalidades (lista de alunos): coluna Pai/Responsável mais larga; Data e Ações mais juntas */
+@media (min-width:1367px){
+.tabela-mensalidades.mensalidades-detalhes col:nth-child(6){width:16%!important}
+.tabela-mensalidades.mensalidades-detalhes col:nth-child(7){width:11%!important}
+.tabela-mensalidades.mensalidades-detalhes col:nth-child(9){width:8%!important}
+.tabela-mensalidades.mensalidades-detalhes col:nth-child(10){width:9%!important}
+}
+
 /* TDB v1.22 — selos da conferência de extrato + Pai/Responsável com 2 nomes */
 .tdb-cf-b{display:inline-flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;border-radius:999px;font:800 12px/1 Inter,system-ui,sans-serif;margin-left:6px;vertical-align:middle;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .tdb-cf-b[data-st="ok"]{background:#1fa86b}.tdb-cf-b[data-st="olhar"]{background:#e0a21b}.tdb-cf-b[data-st="nao"]{background:#d93a4a}
