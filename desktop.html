@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261022-tdb-v1-34";
+    window.__TDB_BUILD = "tdb-20261022-tdb-v1-35";
   </script>
-  <script src="./config.js?build=tdb-20261022-tdb-v1-34"></script>
+  <script src="./config.js?build=tdb-20261022-tdb-v1-35"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1542,10 +1542,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261022-tdb-v1-34"></script>
+  <script src="./sync.js?build=tdb-20261022-tdb-v1-35"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261022-tdb-v1-34-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261022-tdb-v1-35-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10703,7 +10703,7 @@ function FestasTDB(_a) {
     }
     function marcarFestaConf(mapa) {
         var next = __assign({}, dados);
-        next[subTab] = (dados[subTab] || []).map(function (r) { return Object.prototype.hasOwnProperty.call(mapa, r.id) ? __assign(__assign({}, r), { conferido: mapa[r.id] }) : r; });
+        next[subTab] = (dados[subTab] || []).map(function (r) { return Object.prototype.hasOwnProperty.call(mapa, r.id) ? (mapa[r.id] === null ? (function () { var c = __assign({}, r); delete c.conferido; return c; })() : __assign(__assign({}, r), { conferido: mapa[r.id] })) : r; });
         salvar(next);
         return true;
     }
@@ -16251,30 +16251,37 @@ function tdbPaisDoAluno(trs, nome) {
     return out;
 }
 /* ---- Selos da conferência na lista ---- */
+function tdbCfPago(t) {
+    if (!t) return false;
+    if (t.status === 'Pago' || t.status === 'Parcial') return true;
+    if (typeof t.pago !== 'undefined' && typeof _festasStatus === 'function') { var s = _festasStatus(t); return s === 'Pago' || s === 'Parcial'; }
+    return false;
+}
 function tdbCfManual(t) {
-    var c = t.conferido, hoje = new Date(), em = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+    var c = t.conferido || {}, hoje = new Date(), em = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
     var o = {};
-    if (c.st === 'ok' && c.manual) o[t.id] = { st: c.antes || 'nao', em: c.em, banco: c.banco || '', motivo: c.motivoAntes || '' };
+    if (c.st === 'ok' && c.manual) o[t.id] = c.antes ? { st: c.antes, em: c.em, banco: c.banco || '', motivo: c.motivoAntes || '' } : null;
     else o[t.id] = { st: 'ok', em: em, banco: c.banco || t.banco || '', motivo: 'Confirmado por você (baixa manual)', manual: true, antes: c.st, motivoAntes: c.motivo || '' };
     return o;
 }
+/* Selo ✓ ! ✕ da lista. Linha paga sem selo (nunca conferida) mostra um círculo vazio clicável: clique = ✓ manual. */
 function tdbCfBadge(t, cls, onMarcar) {
-    var c = t && t.conferido;
-    if (!c || !c.st) return null;
-    var manual = c.st === 'ok' && !!c.manual;
-    var txt = c.st === 'ok' ? '✓' : (c.st === 'olhar' ? '!' : '✕');
-    var tit = c.st === 'ok' ? (manual ? 'Confirmado por você (baixa manual)' : 'Conferido no extrato') : (c.st === 'olhar' ? 'Olhar: ' : 'Não achei no extrato');
-    if (c.st === 'olhar') tit += (c.motivo || '');
-    if (c.st === 'ok' && c.motivo && !manual) tit += ' — ' + c.motivo;
-    var clicavel = !!onMarcar && (c.st !== 'ok' || manual);
-    if (clicavel) tit += manual ? ' — clique para desfazer' : ' — clique para dar o ✓ (baixa manual)';
+    var c = t && t.conferido, vazio = !c || !c.st;
+    if (vazio && (!onMarcar || !tdbCfPago(t))) return null;
+    var manual = !vazio && c.st === 'ok' && !!c.manual;
+    var txt = vazio ? '' : (c.st === 'ok' ? '✓' : (c.st === 'olhar' ? '!' : '✕'));
+    var tit = vazio ? 'Sem conferência — clique para dar o ✓ (baixa manual)' : (c.st === 'ok' ? (manual ? 'Confirmado por você (baixa manual)' : 'Conferido no extrato') : (c.st === 'olhar' ? 'Olhar: ' : 'Não achei no extrato'));
+    if (!vazio && c.st === 'olhar') tit += (c.motivo || '');
+    if (!vazio && c.st === 'ok' && c.motivo && !manual) tit += ' — ' + c.motivo;
+    var clicavel = !!onMarcar && (vazio || c.st !== 'ok' || manual);
+    if (clicavel && !vazio) tit += manual ? ' — clique para desfazer' : ' — clique para dar o ✓ (baixa manual)';
     function marcar(e) {
         e.stopPropagation(); e.preventDefault();
         var novo = tdbCfManual(t);
         var r = onMarcar(novo);
-        if (r !== false && typeof mostrarToast === 'function') mostrarToast(novo[t.id].st === 'ok' ? 'Confirmado por você: ✓ (baixa manual).' : 'Confirmação manual desfeita.');
+        if (r !== false && typeof mostrarToast === 'function') mostrarToast(novo[t.id] && novo[t.id].st === 'ok' ? 'Confirmado por você: ✓ (baixa manual).' : 'Confirmação manual desfeita.');
     }
-    var props = { className: 'tdb-cf-b ' + cls, 'data-st': c.st, title: tit, 'aria-label': tit };
+    var props = { className: 'tdb-cf-b ' + cls, 'data-st': vazio ? 'vazio' : c.st, title: tit, 'aria-label': tit };
     if (manual) props['data-manual'] = '1';
     if (clicavel) { props['data-click'] = '1'; props.role = 'button'; props.tabIndex = 0; props.onClick = marcar; props.onKeyDown = function (e) { if (e.key === 'Enter' || e.key === ' ') marcar(e); }; }
     return React.createElement('span', props, txt);
@@ -18938,8 +18945,10 @@ html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody 
 .tdb-cf-b[data-click="1"]{cursor:pointer;position:relative;transition:transform .12s ease}
 .tdb-cf-b[data-click="1"]:hover{transform:scale(1.18)}
 .tdb-cf-b[data-click="1"]::after{content:"";position:absolute;inset:-7px}
-.tdb-cf-b[data-manual="1"]{box-shadow:0 0 0 2px #fff,0 0 0 4px #1fa86b}
+.tdb-cf-b[data-manual="1"]{box-shadow:0 0 0 2px #fff,0 0 0 4px #1fa86b;margin-left:10px}
 @media (max-width:760px){.tdb-cf-b[data-click="1"]::after{inset:-11px}}
+.tdb-cf-b[data-st="vazio"]{box-sizing:border-box;background:transparent;box-shadow:none;border:1.5px solid rgba(110,124,140,.55);color:transparent;opacity:.8}
+.tdb-cf-b[data-st="vazio"]:hover{border-color:#1fa86b;opacity:1}
 
 /* TDB v1.30 — Pai/Responsável: botão + em cada nome e × para tirar */
 .tdb-pai-linha{display:flex;align-items:center;gap:6px;width:100%;min-width:0}
