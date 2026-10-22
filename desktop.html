@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261022-tdb-v1-33";
+    window.__TDB_BUILD = "tdb-20261022-tdb-v1-34";
   </script>
-  <script src="./config.js?build=tdb-20261022-tdb-v1-33"></script>
+  <script src="./config.js?build=tdb-20261022-tdb-v1-34"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1542,10 +1542,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261022-tdb-v1-33"></script>
+  <script src="./sync.js?build=tdb-20261022-tdb-v1-34"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261022-tdb-v1-33-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261022-tdb-v1-34-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10680,6 +10680,27 @@ function FestasTDB(_a) {
     var _cfFe = useState(false), conferirFestasAberto = _cfFe[0], setConferirFestasAberto = _cfFe[1];
         function festaPaiDe(r) { return r && r.pai != null ? tdbPaiNorm(r.pai) : tdbPaisDoAluno(transacoes, r ? r.nome : '').join(' / '); }
     function dadosParaPdf() { var o = {}; Object.keys(dados || {}).forEach(function (k) { o[k] = (dados[k] || []).map(function (r) { return __assign(__assign({}, r), { paiPdf: festaPaiDe(r) }); }); }); return o; }
+    var nomesDiferentes = useMemo(function () {
+        var l = [];
+        Object.keys(dados || {}).forEach(function (k) { (dados[k] || []).forEach(function (r) { if (r.pai == null) return; var ref = tdbPaisDoAluno(transacoes, r.nome); if (ref.length && tdbPaiNorm(r.pai) !== tdbPaiNorm(ref.join(' / '))) l.push(k + '|' + r.id); }); });
+        return l;
+    }, [dados, transacoes]);
+    var selosFesta = ((dados && dados[subTab]) || []).filter(function (r) { return r.conferido && r.conferido.st; }).length;
+    function atualizarNomesFestas() {
+        if (!nomesDiferentes.length) return;
+        var mt = MESES[new Date().getMonth()] || 'OUTUBRO'; mt = mt.charAt(0) + mt.slice(1).toLowerCase();
+        if (!window.confirm('Atualizar o Pai/Responsável de ' + nomesDiferentes.length + (nomesDiferentes.length === 1 ? ' linha' : ' linhas') + ' das festas com os nomes completos das Mensalidades de ' + mt + '? Nomes digitados à mão nas Festas serão substituídos.')) return;
+        var set = {}; nomesDiferentes.forEach(function (k) { set[k] = 1; });
+        var next = {}; Object.keys(dados).forEach(function (k) { next[k] = (dados[k] || []).map(function (r) { if (!set[k + '|' + r.id]) return r; var c = __assign({}, r); delete c.pai; return c; }); });
+        salvar(next);
+    }
+    function limparCertinhosFesta() {
+        if (!selosFesta) return;
+        if (!window.confirm('Remover os ' + selosFesta + ' certinhos desta festa? Depois você pode conferir de novo com outro extrato.')) return;
+        var next = __assign({}, dados);
+        next[subTab] = (dados[subTab] || []).map(function (r) { if (!r.conferido) return r; var c = __assign({}, r); delete c.conferido; return c; });
+        salvar(next);
+    }
     function marcarFestaConf(mapa) {
         var next = __assign({}, dados);
         next[subTab] = (dados[subTab] || []).map(function (r) { return Object.prototype.hasOwnProperty.call(mapa, r.id) ? __assign(__assign({}, r), { conferido: mapa[r.id] }) : r; });
@@ -11104,7 +11125,13 @@ function FestasTDB(_a) {
         React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirFestasAberto(true); }, title: "Conferir o extrato do banco com os pagamentos desta festa", style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
-        } }, React.createElement(Check, { size: 14 }), "Conferir extrato")),
+        } }, React.createElement(Check, { size: 14 }), "Conferir extrato"), selosFesta > 0 && React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: limparCertinhosFesta, title: "Tirar todos os certinhos desta festa para conferir de novo com outro extrato", style: {
+            background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
+            display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
+        } }, "Limpar certinhos (" + selosFesta + ")"), nomesDiferentes.length > 0 && React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: atualizarNomesFestas, title: "Copiar das Mensalidades os nomes completos de Pai/Responsável", style: {
+            background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
+            display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
+        } }, "Atualizar nomes (" + nomesDiferentes.length + ")")),
         conferirFestasAberto && React.createElement(ConferirExtratoTDB, { modo: 'festas', tituloFesta: (abaAtual && abaAtual.label) || 'Festa', linhasFesta: rows, transacoes: transacoes, onFechar: function () { setConferirFestasAberto(false); }, onSalvar: function (mapa) {
             var next = __assign({}, dados);
             next[subTab] = (dados[subTab] || []).map(function (r) { return Object.prototype.hasOwnProperty.call(mapa, r.id) ? __assign(__assign({}, r), { conferido: mapa[r.id] }) : r; });
@@ -13900,7 +13927,7 @@ function salvarTudoAgora() {
             return false;
         if (bloquearEdicaoSeEncerrado_())
             return false;
-        var prox = atual.map(function (t) { return Object.prototype.hasOwnProperty.call(mapa, t.id) ? __assign(__assign({}, t), { conferido: mapa[t.id] }) : t; });
+        var prox = atual.map(function (t) { return Object.prototype.hasOwnProperty.call(mapa, t.id) ? (mapa[t.id] === null ? (function () { var c = __assign({}, t); delete c.conferido; return c; })() : __assign(__assign({}, t), { conferido: mapa[t.id] })) : t; });
         __transLatestRef.current = prox;
         persist(prox);
         return true;
@@ -13915,7 +13942,7 @@ function salvarTudoAgora() {
         var idx = new Map();
         atual.forEach(function (t) { if (t && destinos.indexOf(t.mes) >= 0) idx.set(norm(t.categoria) + '|' + t.mes, t); });
         var maxId = atual.reduce(function (m, t) { return Math.max(m, Number(t && t.id) || 0); }, 0);
-        var patchPorId = {}, novos = [], preenchidos = 0, jaTinham = 0;
+        var patchPorId = {}, novos = [], preenchidos = 0, jaTinham = 0, corrigidos = 0;
         origem.forEach(function (ref) {
             var k = norm(ref.categoria);
             destinos.forEach(function (mes) {
@@ -13926,7 +13953,7 @@ function salvarTudoAgora() {
                         if (vazio(ex.tirarNota) && !vazio(ref.tirarNota)) p.tirarNota = ref.tirarNota;
                         if (vazio(ex.convenio) && !vazio(ref.convenio)) p.convenio = ref.convenio;
                         patchPorId[ex.id] = p; preenchidos++;
-                    } else jaTinham++;
+                    } else if (tdbPaiNorm(ex.pai) !== tdbPaiNorm(ref.pai)) { patchPorId[ex.id] = { pai: ref.pai }; corrigidos++; } else jaTinham++;
                 } else if (String(ref.categoria).indexOf('Mensalidade - ') === 0) {
                     var d = TDBFinance.due(ref);
                     var devido = d > 0 ? d : (TDBFinance.num(ref.valorCheio) > 0 ? ref.valorCheio : null);
@@ -13934,12 +13961,12 @@ function salvarTudoAgora() {
                 }
             });
         });
-        var previa = { preenchidos: preenchidos, criados: novos.length, jaTinham: jaTinham, alunos: origem.length };
+        var previa = { preenchidos: preenchidos, corrigidos: corrigidos, criados: novos.length, jaTinham: jaTinham, alunos: origem.length };
         if (!aplicar)
             return previa;
         if (bloquearEdicaoSeEncerrado_())
             return false;
-        if (!preenchidos && !novos.length)
+        if (!preenchidos && !corrigidos && !novos.length)
             return previa;
         var prox = atual.map(function (t) { return Object.prototype.hasOwnProperty.call(patchPorId, t.id) ? __assign(__assign({}, t), patchPorId[t.id]) : t; }).concat(novos);
         __transLatestRef.current = prox;
@@ -16205,17 +16232,20 @@ function tdbPaiCampos(valor, setValor, onKey, estilo, transf, extra) {
 }
 /* nomes dos pais de um aluno, vindos das Mensalidades (usado na conferência da aba Festas) */
 function tdbPaisDoAluno(trs, nome) {
-    /* usa o cadastro do mês mais recente em que o aluno tem Pai/Responsável (nomes de meses antigos não entram) */
-    var alvo = tdbNorm(nome), out = [], vis = {}, melhor = -1, linhas = [];
+    /* nomes cadastrados nas Mensalidades do MÊS ATUAL (Outubro agora); se o aluno não tem nesse mês, usa o mês mais recente até ele; nunca mistura meses */
+    var alvo = tdbNorm(nome), porMes = {}, vis = {}, out = [];
     (trs || []).forEach(function (t) {
         var c = String(t.categoria || '');
         if (c.indexOf('Mensalidade - ') !== 0 || !t.pai) return;
         if (tdbNorm(c.slice(14)) !== alvo) return;
         var ix = MESES.indexOf(t.mes);
-        if (ix > melhor) { melhor = ix; linhas = []; }
-        if (ix === melhor) linhas.push(t);
+        if (ix < 0) return;
+        (porMes[ix] = porMes[ix] || []).push(t);
     });
-    linhas.forEach(function (t) {
+    var atual = new Date().getMonth(), melhor = -1, maior = -1;
+    Object.keys(porMes).forEach(function (k) { k = +k; if (k <= atual && k > melhor) melhor = k; if (k > maior) maior = k; });
+    var ix2 = melhor >= 0 ? melhor : maior;
+    (porMes[ix2] || []).forEach(function (t) {
         tdbPaiPartes(t.pai).forEach(function (x) { var k = tdbNorm(x); if (k && !vis[k]) { vis[k] = 1; out.push(x); } });
     });
     return out;
@@ -16526,20 +16556,21 @@ function CopiarNomesTDB(p) {
     var _s = useState(null), feito = _s[0], setFeito = _s[1];
     var previa = React.useMemo(function () { return p.copiar(false); }, []);
     useEffect(function () { var f = function (e) { if (e.key === 'Escape') p.onFechar(); }; document.addEventListener('keydown', f); return function () { document.removeEventListener('keydown', f); }; }, []);
-    var n = previa ? previa.preenchidos + previa.criados : 0;
+    var n = previa ? previa.preenchidos + previa.criados + previa.corrigidos : 0;
     var base = { background: 'none', border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 12, cursor: 'pointer', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'inherit' };
     return ReactDOM.createPortal(React.createElement("div", { className: "tdb-cfp", role: "dialog", "aria-label": "Copiar nomes", style: { position: 'fixed', inset: 0, zIndex: 2147483100, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', fontFamily: 'Inter, -apple-system, sans-serif' }, onClick: function (e) { if (e.target === e.currentTarget) p.onFechar(); } },
         React.createElement("style", null, '.tdb-cfp-grid{display:grid;grid-template-columns:1fr 1.6fr;gap:24px}.tdb-cfp-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.tdb-cfp-dois{display:grid;grid-template-columns:1.9fr 1fr;gap:20px}.tdb-cfp-lista{display:none}.tdb-cfp-bar{display:flex;align-items:center;gap:14px;box-sizing:border-box}html:not(.tdb-aurora-pdf) .tdb-cfp{padding:28px}.tdb-cfp .tdb-cfp-corpo{position:relative;width:100%;max-width:1400px;max-height:100%;overflow:auto;margin:0;padding:18px 22px 22px;border-radius:32px;background:radial-gradient(520px 160px at 8% -4%,rgba(255,255,255,.7),rgba(255,255,255,0) 62%),radial-gradient(420px 200px at 100% 100%,rgba(128,214,211,.34),rgba(128,214,211,0) 70%),linear-gradient(160deg,color-mix(in srgb,var(--c-paperCard,#fff) 95%,transparent),color-mix(in srgb,var(--c-paperCard,#fff) 91%,transparent) 50%,color-mix(in srgb,var(--c-paperCard,#fff) 94%,transparent));border:1px solid var(--aurora-edge,rgba(255,255,255,.95));box-shadow:0 36px 90px rgba(20,40,80,.38),0 10px 26px rgba(20,40,80,.18),inset 0 1px 0 rgba(255,255,255,.9);backdrop-filter:blur(40px) saturate(1.3);-webkit-backdrop-filter:blur(40px) saturate(1.3)}.tdb-cfp .tdb-cfp-bar{margin:0 0 12px;padding:6px 4px;background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important}.tdb-cfp .tdb-cfp-corpo>.tdb-cfp-g{background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:4px 4px 0!important}.tdb-cfp .tdb-cfp-sum{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 22px rgba(30,40,60,.07);border-radius:22px}.tdb-cfp .tdb-cfp-pill,.tdb-cfp .tdb-cfp-btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 6px 16px rgba(30,40,60,.09)}@media (max-width:760px){.tdb-cfp-grid,.tdb-cfp-dois{grid-template-columns:1fr}.tdb-cfp-cards{grid-template-columns:1fr 1fr}.tdb-cfp-tabela{display:none}.tdb-cfp-lista{display:block}.tdb-cfp{padding:10px!important}.tdb-cfp .tdb-cfp-corpo{padding:12px 12px 16px!important;border-radius:28px!important}}html:not(.tdb-aurora-pdf) .tdb-cfp .tdb-cfp-g{background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08));-webkit-backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08))}.tdb-cfp .tdb-cfp-btn,.tdb-cfp .tdb-cfp-pill{font-family:inherit;color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:999px;background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);box-shadow:var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}.tdb-cfp .tdb-cfp-btn:hover,.tdb-cfp .tdb-cfp-pill:hover{transform:translateY(-1px)}.tdb-cfp .tdb-cfp-pill.on{border-color:#18B9AD;color:#106E6B;box-shadow:0 0 0 3px rgba(24,185,173,.18),var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07))}.tdb-cfp .tdb-cfp-main{border:1px solid rgba(255,255,255,.5);color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 55%),#18B9AD;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 6px 16px rgba(24,185,173,.32)}.tdb-cfp .tdb-cfp-main:disabled{box-shadow:none}.tdb-cfp .tdb-cfp-inp{color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:16px;background:var(--c-paperCard,#fff);box-shadow:inset 0 1px 2px rgba(30,40,60,.05)}.tdb-cfp .tdb-cfp-sum{border-radius:20px;border:1px solid color-mix(in srgb,var(--c) 38%,transparent);background:var(--aurora-layers,linear-gradient(transparent,transparent)),color-mix(in srgb,var(--c) 11%,var(--c-paperCard,#fff));box-shadow:var(--aurora-shadow,0 6px 20px rgba(30,40,60,.06));backdrop-filter:blur(var(--aurora-blur,14px));-webkit-backdrop-filter:blur(var(--aurora-blur,14px))}'),
         React.createElement("div", { className: "tdb-cfp-corpo", style: { maxWidth: 520, height: 'auto', padding: '26px 26px 22px' }, onClick: function (e) { e.stopPropagation(); } }, React.createElement("div", { style: { padding: '4px 10px 2px' } },
             React.createElement("div", { style: { fontSize: 19, fontWeight: 800, marginBottom: 6 } }, "Copiar nomes para Novembro e Dezembro"),
-            React.createElement("div", { style: { fontSize: 13.5, opacity: .8, marginBottom: 16, lineHeight: 1.45 } }, "Leva o que você cadastrou em Outubro (Pai/Responsável, Tirar nota e Convênio) para Novembro e Dezembro. Só preenche onde estiver vazio: valores, status, datas e o que você já digitou não mudam."),
+            React.createElement("div", { style: { fontSize: 13.5, opacity: .8, marginBottom: 16, lineHeight: 1.45 } }, "Leva o que você cadastrou em Outubro (Pai/Responsável, Tirar nota e Convênio) para Novembro e Dezembro. Preenche o que estiver vazio e corrige nomes de Pai/Responsável diferentes dos de Outubro. Valores, status e datas não mudam."),
             !previa ? React.createElement("div", null, "Os dados ainda estão carregando.") :
-            feito ? React.createElement("div", { style: { fontWeight: 700, fontSize: 15, margin: '6px 0 4px' } }, "Pronto: ", feito.preenchidos, (feito.preenchidos === 1 ? " cadastro preenchido" : " cadastros preenchidos"), feito.criados ? " e " + feito.criados + " mensalidades criadas (pendentes)" : "", ".") :
+            feito ? React.createElement("div", { style: { fontWeight: 700, fontSize: 15, margin: '6px 0 4px' } }, "Pronto: ", feito.preenchidos, (feito.preenchidos === 1 ? " cadastro preenchido" : " cadastros preenchidos"), feito.corrigidos ? ", " + feito.corrigidos + (feito.corrigidos === 1 ? " nome corrigido" : " nomes corrigidos") : "", feito.criados ? " e " + feito.criados + " mensalidades criadas (pendentes)" : "", ".") :
             React.createElement("div", { style: { fontSize: 14.5, lineHeight: 1.6 } },
                 React.createElement("div", null, previa.alunos, " cadastros com nome em Outubro"),
                 React.createElement("div", null, "\u2022 ", previa.preenchidos, (previa.preenchidos === 1 ? " campo vazio" : " campos vazios") + " em Nov/Dez ", (previa.preenchidos === 1 ? "será preenchido" : "serão preenchidos")),
                 React.createElement("div", null, "\u2022 ", previa.criados, (previa.criados === 1 ? " mensalidade de aluno ainda não existe" : " mensalidades de aluno ainda não existem"), " em Nov/Dez e serão criadas como pendentes"),
-                React.createElement("div", { style: { opacity: .7 } }, "\u2022 ", previa.jaTinham, " já preenchidos ficam como estão")),
+                React.createElement("div", null, "\u2022 ", previa.corrigidos, (previa.corrigidos === 1 ? " nome diferente de Outubro será corrigido" : " nomes diferentes de Outubro serão corrigidos"), " em Nov/Dez"),
+                React.createElement("div", { style: { opacity: .7 } }, "\u2022 ", previa.jaTinham, " já iguais ficam como estão")),
             React.createElement("div", { style: { display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20, flexWrap: 'wrap' } },
                 !feito && previa && n > 0 && React.createElement("button", { type: "button", className: "tdb-cfp-btn tdb-cfp-main", style: Object.assign({}, base, { background: 'linear-gradient(135deg,#2bb7a4,#1d9a8a)', color: '#fff', border: 'none' }), onClick: function () { var r = p.copiar(true); if (r) setFeito(r); } }, "Copiar agora"),
                 React.createElement("button", { type: "button", className: "tdb-cfp-btn", style: base, onClick: p.onFechar }, feito ? "Fechar" : "Cancelar"))))), document.body);
@@ -16873,6 +16904,15 @@ function Mensalidades(_a) {
         return {qtdPendente:pendencias.length,valorPendente:TDBFinance.sum(pendencias),qtdPago:rows.filter(function(t){return TDBFinance.received(t)>0;}).length,valorPago:TDBFinance.sum(rows,TDBFinance.received)};
     }, [filtradasCompleto, entradas]);
     window.__tdbMensPdf = { mes: filtroMes, rows: filtradasCompleto, resumo: resumo };
+    var cfSelos = entradas.filter(function (t) { return (filtroMes === 'TODOS' || t.mes === filtroMes) && t.conferido && t.conferido.st; });
+    function limparCertinhos() {
+        if (!cfSelos.length || !marcarConferidos) return;
+        var man = cfSelos.filter(function (t) { return t.conferido.manual; }).length;
+        var mesTxt = filtroMes === 'TODOS' ? 'de todos os meses' : 'de ' + filtroMes.charAt(0) + filtroMes.slice(1).toLowerCase();
+        if (!window.confirm('Remover os ' + cfSelos.length + ' certinhos ' + mesTxt + (man ? ' (' + man + ' dados manualmente)' : '') + '? Depois você pode conferir de novo com outro extrato.')) return;
+        var m = {}; cfSelos.forEach(function (t) { m[t.id] = null; });
+        if (marcarConferidos(m) !== false) mostrarToast('Certinhos removidos.');
+    }
     function iniciarEdicao(t) {
         setEditandoId(t.id);
         setQuantidadeEdit(String(TDBFinance.children(t))); 
@@ -17028,7 +17068,10 @@ function Mensalidades(_a) {
         } }, "Copiar nomes p/ Nov e Dez"), copiarAberto && React.createElement(CopiarNomesTDB, { copiar: function (a) { return copiarNomes ? copiarNomes(a) : null; }, onFechar: function () { setCopiarAberto(false); } }), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirAberto(true); }, title: "Conferir o extrato do banco com as mensalidades pagas", style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
-        } }, React.createElement(Check, { size: 14 }), "Conferir extrato"), conferirAberto && React.createElement(ConferirExtratoTDB, { entradas: entradas, mesInicial: filtroMes !== 'TODOS' ? filtroMes : (MESES[new Date().getMonth()] || 'SETEMBRO'), onFechar: function () { setConferirAberto(false); }, onSalvar: function (mapa) { return marcarConferidos ? marcarConferidos(mapa) : false; } }), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
+        } }, React.createElement(Check, { size: 14 }), "Conferir extrato"), cfSelos.length > 0 && React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: limparCertinhos, title: "Tirar todos os certinhos para conferir de novo com outro extrato", style: {
+            background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
+            display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
+        } }, "Limpar certinhos (" + cfSelos.length + ")"), conferirAberto && React.createElement(ConferirExtratoTDB, { entradas: entradas, mesInicial: filtroMes !== 'TODOS' ? filtroMes : (MESES[new Date().getMonth()] || 'SETEMBRO'), onFechar: function () { setConferirAberto(false); }, onSalvar: function (mapa) { return marcarConferidos ? marcarConferidos(mapa) : false; } }), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
         } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), semFiltroNenhum && filtradasCompleto.length > 100 && (React.createElement("div", { style: { fontSize: 13, color: COLORS.gold, background: COLORS.goldSoft, borderRadius: 8, padding: '8px 12px' } }, "Mostrando s\u00F3 os 100 primeiros de ", filtradasCompleto.length, " registros \u2014 escolha um m\u00EAs ou busque um nome pra ver o resto (evita travar a tela).")), React.createElement("datalist", { id: "convenios-lista" }, CONVENIOS_CONHECIDOS.map(function (c) { return React.createElement("option", { key: c, value: c }); })), React.createElement("datalist", { id: "valores-fotos-lista" }, valoresConhecidos.map(function (v, i) { return (React.createElement("option", { key: i, value: formatBRLNumber(v) })); })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Alunos", itens: alunosLista, contagemAlunos: contagemAlunosLista, mostrarDetalhes: true }, linhaHandlers), { modoPrivado: privadoDetalhes })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Empresas / Conv\u00EAnios", itens: empresasLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes })), outrosLista.length > 0 && React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Outros", itens: outrosLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes }))));
