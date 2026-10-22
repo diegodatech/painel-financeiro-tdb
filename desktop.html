@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261021-tdb-v1-30";
+    window.__TDB_BUILD = "tdb-20261022-tdb-v1-31";
   </script>
-  <script src="./config.js?build=tdb-20261021-tdb-v1-30"></script>
+  <script src="./config.js?build=tdb-20261022-tdb-v1-31"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1541,10 +1541,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261021-tdb-v1-30"></script>
+  <script src="./sync.js?build=tdb-20261022-tdb-v1-31"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261021-tdb-v1-30-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261022-tdb-v1-31-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -15880,6 +15880,18 @@ function tdbNomeCasa(parte, ent) {
     if (tp.length >= 3 && ok >= tp.length - 1) return 1;
     return 0;
 }
+/* quantos nomes do cadastro aparecem no texto da entrada (para usar junto com valor e data) */
+function tdbCasaQtd(parte, ent) {
+    var tp = tdbTokNome(parte), ult = ent.ult || [];
+    return tp.filter(function (p) { return ent.tokens.some(function (e) { return tdbTokCasa(p, e) || (ult.indexOf(e) >= 0 && e.length >= 2 && tdbTokTrunc(p, e)); }); }).length;
+}
+/* data da entrada ("05/10/2026" ou "05/10") e do lançamento ("2026-10-05") no mesmo formato "05/10" */
+function tdbDiaMes(s) {
+    s = String(s || '');
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s); if (m) return m[3] + '/' + m[2];
+    m = /(\d{1,2})\/(\d{1,2})/.exec(s); if (m) return ('0' + m[1]).slice(-2) + '/' + ('0' + m[2]).slice(-2);
+    return '';
+}
 function tdbTemValor(ent, v, tol) { return ent.valores.some(function (x) { return Math.abs(x - v) <= (tol || 0) + 0.004; }); }
 /* Reconhece o banco pelo cabeçalho do extrato (primeiras linhas). Devolve o nome para exibir, ou null. */
 var TDB_CF_BANCOS = [['SICOOB', 'Sicoob'], ['SICREDI', 'Sicredi'], ['ITAU', 'Ita\u00FA'], ['BTG', 'BTG Pactual'], ['NUBANK', 'Nubank'], ['NU PAGAMENTOS', 'Nubank'], ['BRADESCO', 'Bradesco'], ['BANCO DO BRASIL', 'Banco do Brasil'], ['CAIXA ECONOMICA', 'Caixa'], ['CAIXA', 'Caixa'], ['SANTANDER', 'Santander'], ['BANCO INTER', 'Inter'], ['MERCADO PAGO', 'Mercado Pago'], ['PICPAY', 'PicPay'], ['C6 BANK', 'C6 Bank']];
@@ -15904,6 +15916,13 @@ function tdbConferir(entradas, lancs, tol) {
     }
     function fmt(v) { return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
     function valorMaisPerto(e, v) { var b = e.valores[0]; e.valores.forEach(function (x) { if (Math.abs(x - v) < Math.abs(b - v)) b = x; }); return b; }
+    var faixas = {};
+    entradas.forEach(function (e) {
+        var d = tdbDiaMes(e.data); if (!d) return;
+        var k = +d.slice(3) * 100 + +d.slice(0, 2), bk = tdbNorm(e.banco || ''), f = faixas[bk] || (faixas[bk] = [1e9, -1, '', '']);
+        if (k < f[0]) { f[0] = k; f[2] = d; } if (k > f[1]) { f[1] = k; f[3] = d; }
+    });
+    function faixaDe(l) { var f = faixas[tdbNorm(l.banco || '')]; return f && !(f[0] <= 200 && f[1] >= 1100) ? f : null; }
     lancs.forEach(function (l) {
         if (!l.partes.length) return;
         var i = acha(l, function (e) { return tdbTemValor(e, l.valor, tol) && nivel(l, e) === 2; });
@@ -15925,6 +15944,14 @@ function tdbConferir(entradas, lancs, tol) {
         }
         if (ach) { ach.forEach(function (i) { usada[i] = true; }); res[l.id] = { st: 'ok', tipo: 'soma', entrada: ach[0], motivo: 'Soma de ' + ach.length + ' entradas do mesmo nome' }; }
     });
+    /* valor igual + mesma data do pagamento + parte do nome (ou o banco só mostra o primeiro nome): conta como conferido */
+    lancs.forEach(function (l) {
+        if (res[l.id] || !l.partes.length) return;
+        var dl = tdbDiaMes(l.data); if (!dl) return;
+        function qtd(e) { var m = 0; l.partes.forEach(function (p) { var q = tdbCasaQtd(p, e); if (q > m) m = q; }); return m; }
+        var i = acha(l, function (e) { return tdbDiaMes(e.data) === dl && tdbTemValor(e, l.valor, tol) && (qtd(e) >= 2 || (qtd(e) === 1 && e.nomeTok && e.nomeTok.length === 1 && l.banco && e.banco && mesmoBanco(l, e))); });
+        if (i >= 0) { usada[i] = true; res[l.id] = { st: 'ok', tipo: 'data', entrada: i, motivo: qtd(entradas[i]) >= 2 ? 'Valor e data batem e o nome confere em parte' : 'Valor e data batem; o banco mostra s\u00F3 o primeiro nome' }; }
+    });
     lancs.forEach(function (l) {
         if (res[l.id] || !l.partes.length) return;
         var i = acha(l, function (e) { return tdbTemValor(e, l.valor, tol) && nivel(l, e) === 1; });
@@ -15932,13 +15959,28 @@ function tdbConferir(entradas, lancs, tol) {
     });
     lancs.forEach(function (l) {
         if (res[l.id] || !l.partes.length) return;
-        var i = acha(l, function (e) { return nivel(l, e) >= 1; });
+        var dl2 = tdbDiaMes(l.data), best = -1, bd = 1e9;
+        entradas.forEach(function (e, k) {
+            if (usada[k] || nivel(l, e) < 1) return;
+            var vv0 = valorMaisPerto(e, l.valor), r0 = vv0 / l.valor;
+            if (!(r0 >= 0.5 && r0 <= 2)) return;
+            var dd = Math.abs(vv0 - l.valor) - (dl2 && tdbDiaMes(e.data) === dl2 ? 0.5 : 0);
+            if (dd < bd) { bd = dd; best = k; }
+        });
+        var i = best;
         if (i >= 0) { usada[i] = true; var vv = valorMaisPerto(entradas[i], l.valor); res[l.id] = { st: 'olhar', tipo: 'valor', dif: vv - l.valor, entrada: i, motivo: 'Achei ' + fmt(vv) + ' no extrato, esperado ' + fmt(l.valor) }; }
     });
     lancs.forEach(function (l) {
         if (res[l.id]) return;
+        var fora = '';
+        var faixa = faixaDe(l);
+        if (l.partes.length && l.data && faixa) {
+            var kl = tdbDiaMes(l.data); kl = kl ? (+kl.slice(3) * 100 + +kl.slice(0, 2)) : 0;
+            if (kl && kl < faixa[0]) fora = 'O pagamento \u00E9 de ' + tdbDiaMes(l.data) + ', antes do per\u00EDodo do extrato (come\u00E7a em ' + faixa[2] + '). Anexe o extrato anterior.';
+            else if (kl && kl > faixa[1]) fora = 'O pagamento \u00E9 de ' + tdbDiaMes(l.data) + ', depois do per\u00EDodo do extrato (vai at\u00E9 ' + faixa[3] + ').';
+        }
         res[l.id] = l.partes.length
-            ? { st: 'nao', tipo: 'nao', entrada: -1, motivo: 'N\u00E3o achei esse nome nem esse valor no extrato' }
+            ? { st: 'nao', tipo: 'nao', entrada: -1, motivo: fora || 'N\u00E3o achei esse nome nem esse valor no extrato' }
             : { st: 'olhar', tipo: 'semnome', entrada: -1, motivo: 'Sem Pai/Respons\u00E1vel cadastrado \u2014 preencha o nome para conferir' };
     });
     return { res: res, sobras: entradas.filter(function (e, i) { return !usada[i]; }) };
@@ -16022,6 +16064,7 @@ function ConferirExtratoTDB(p) {
     var h = React.createElement;
     var festas = p.modo === 'festas';
     var _m = useState(p.mesInicial), mes = _m[0], setMes = _m[1];
+    var _mm = useState(false), mesManual = _mm[0], setMesManual = _mm[1];
     var tituloConf = festas ? (p.tituloFesta || 'Festa') : mes;
     var _tol = useState('0'), tolStr = _tol[0], setTolStr = _tol[1];
     var _fs = useState([]), arquivos = _fs[0], setArquivos = _fs[1];
@@ -16058,6 +16101,17 @@ function ConferirExtratoTDB(p) {
             if (novos.length && !bons.length) { setErro('Esse PDF não tem texto legível (parece foto ou escaneado). Baixe o extrato em PDF pelo app ou site do banco, sem tirar foto.'); return; }
             if (bons.length < novos.length) setErro('Um dos PDFs não tem texto legível (foto ou escaneado) e foi ignorado.');
             setArquivos(function (ant) { return ant.concat(bons); });
+            if (!festas && !mesManual) {
+                /* escolhe o mês pelas datas do extrato: o mês com mais pagamentos que batem em valor e dia */
+                var ents = []; bons.forEach(function (n) { ents = ents.concat(n.entradas); });
+                var melhor = null, mq = 0;
+                MESES.forEach(function (m) {
+                    var q = 0;
+                    lancamentos(m).forEach(function (l) { var dl = tdbDiaMes(l.data); if (dl && ents.some(function (e) { return tdbDiaMes(e.data) === dl && tdbTemValor(e, l.valor, 0); })) q++; });
+                    if (q > mq) { mq = q; melhor = m; }
+                });
+                if (melhor && melhor !== mes) setMes(melhor);
+            }
         }).catch(function (e) {
             setLendo(false);
             setErro(e && e.name === 'PasswordException' ? 'Um PDF tem senha. Abra no leitor de PDF, salve sem senha e anexe de novo.' : 'Não consegui abrir o PDF (' + ((e && e.message) || 'erro') + '). Tente de novo ou cole o texto do extrato.');
@@ -16068,18 +16122,19 @@ function ConferirExtratoTDB(p) {
     var entradasTexto = texto.trim() ? tdbParseExtrato(texto, tdbBancoDoTexto(texto)) : [];
     var todasEntradas = entradasPdf.concat(entradasTexto);
     var totalPaginas = arquivos.reduce(function (s, a) { return s + a.paginas; }, 0);
-    function lancamentos() {
+    function lancamentos(mm) {
+        mm = mm || mes;
         if (festas) return (p.linhasFesta || []).filter(function (r) {
             var st = _festasStatus(r);
             return (st === 'Pago' || st === 'Parcial') && _festasNumero(r.valor) > 0 && tdbNorm(r.banco) !== 'DINHEIRO';
-        }).map(function (r) { var pt = tdbPaisDoAluno(p.transacoes, r.nome); return { id: r.id, nome: r.nome, pai: pt.join(' / '), partes: pt, valor: _festasNumero(r.valor), banco: r.banco || '' }; });
+        }).map(function (r) { var pt = tdbPaisDoAluno(p.transacoes, r.nome); return { id: r.id, nome: r.nome, pai: pt.join(' / '), partes: pt, valor: _festasNumero(r.valor), banco: r.banco || '', data: r.data || '' }; });
         return (p.entradas || []).filter(function (t) {
             var c = String(t.categoria || '');
-            return (c.indexOf('Mensalidade - ') === 0 || c.indexOf('Conv\u00EAnio - ') === 0) && t.mes === mes && tdbNorm(t.banco) !== 'DINHEIRO' && TDBFinance.received(t) > 0;
+            return (c.indexOf('Mensalidade - ') === 0 || c.indexOf('Conv\u00EAnio - ') === 0) && t.mes === mm && tdbNorm(t.banco) !== 'DINHEIRO' && TDBFinance.received(t) > 0;
         }).map(function (t) {
             var emp = String(t.categoria || '').indexOf('Conv\u00EAnio - ') === 0, nome = nomeExibicao(t.categoria), partes = tdbPaiPartes(t.pai);
             if (emp) partes = [nome].concat(partes);
-            return { id: t.id, nome: nome, pai: t.pai || '', partes: partes, valor: TDBFinance.received(t), banco: t.banco || '' };
+            return { id: t.id, nome: nome, pai: t.pai || '', partes: partes, valor: TDBFinance.received(t), banco: t.banco || '', data: t.data || '' };
         });
     }
     function conferir() {
@@ -16119,7 +16174,7 @@ function ConferirExtratoTDB(p) {
     var btn = { padding: '11px 18px', fontWeight: 700, fontSize: 14, cursor: 'pointer' };
     var btnMain = Object.assign({}, btn, { fontSize: 15, padding: '12px 22px' });
     function tag(tipo, dif) {
-        var map = { ok: ['✓ Bateu', 'ok'], soma: ['✓ Bateu (soma)', 'ok'], nome: ['⚠ Nome parecido', 'olhar'], valor: ['⚠ Valor diferente (' + brlSinal(dif || 0) + ')', 'olhar'], semnome: ['⚠ Sem responsável', 'olhar'], nao: ['✕ Não achei', 'nao'] };
+        var map = { ok: ['✓ Bateu', 'ok'], soma: ['✓ Bateu (soma)', 'ok'], data: ['✓ Bateu (valor e data)', 'ok'], nome: ['⚠ Nome parecido', 'olhar'], valor: ['⚠ Valor diferente (' + brlSinal(dif || 0) + ')', 'olhar'], semnome: ['⚠ Sem responsável', 'olhar'], nao: ['✕ Não achei', 'nao'] };
         var m = map[tipo] || map.nao, c = cores[m[1]];
         return h('span', { style: { display: 'inline-block', padding: '4px 11px', borderRadius: 999, fontWeight: 800, fontSize: 12, whiteSpace: 'nowrap', color: c, background: 'color-mix(in srgb, ' + c + ' 16%, transparent)', border: '1px solid color-mix(in srgb, ' + c + ' 35%, transparent)' } }, m[0]);
     }
@@ -16146,7 +16201,7 @@ function ConferirExtratoTDB(p) {
             h('div', { className: 'tdb-cfp-grid' },
                 h('div', null,
                     h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B' } }, festas ? '1 · Festa' : '1 · Qual mês conferir'),
-                    festas ? h('div', { className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8 }) }, p.tituloFesta || 'Festa') : h('select', { value: mes, onChange: function (e) { setMes(e.target.value); }, className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8 }), 'aria-label': 'Mês' }, MESES.map(function (m) { return h('option', { key: m, value: m }, m); })),
+                    festas ? h('div', { className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8 }) }, p.tituloFesta || 'Festa') : h('select', { value: mes, onChange: function (e) { setMes(e.target.value); setMesManual(true); }, className: 'tdb-cfp-inp', style: Object.assign({}, inp, { marginTop: 8 }), 'aria-label': 'Mês' }, MESES.map(function (m) { return h('option', { key: m, value: m }, m); })),
                     h('span', { style: lab }, '2 · Bancos'),
                     h('div', { style: { padding: '11px 14px', borderRadius: 12, background: 'color-mix(in srgb, #18B9AD 10%, transparent)', border: '1px solid color-mix(in srgb, #18B9AD 30%, transparent)', fontSize: 13, color: COLORS.ink, lineHeight: 1.45 } }, h('b', null, 'Automático. '), 'O banco é reconhecido em cada PDF; as mensalidades pagas em dinheiro ficam de fora.'),
                     h('span', { style: lab }, '3 · Tolerância de valor'),
@@ -16189,7 +16244,7 @@ function ConferirExtratoTDB(p) {
         corpo = h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '24px 26px' }) },
             h('div', { style: { fontSize: 22, fontWeight: 800, color: COLORS.ink } }, 'Conferência de ' + tituloConf),
             h('div', { style: { fontSize: 13.5, color: COLORS.inkSoft, margin: '4px 0 16px', lineHeight: 1.45 } }, (resultado.nArq ? resultado.nArq + (resultado.nArq === 1 ? ' PDF lido' : ' PDFs lidos') + nomesBancos + ' · ' : '') + resultado.entradas.length + ' entradas. Marque o que está certo e salve para aparecer o ✓ na lista ' + (festas ? 'da festa.' : 'de mensalidades.')),
-            h('div', { className: 'tdb-cfp-cards' }, cartao(contar('ok'), 'ok', '✓ Bateram (nome e valor)'), cartao(contar('olhar'), 'olhar', '⚠ Para você olhar'), cartao(contar('nao'), 'nao', '✕ Lançado, mas não está no extrato'), cartao(sobrasVis.length, 'x', festas ? 'Pagou no extrato, sem marcar na festa' : 'Entrada sem lançamento', '#4a63d6')),
+            h('div', { className: 'tdb-cfp-cards', style: festas ? null : { gridTemplateColumns: 'repeat(3,1fr)' } }, cartao(contar('ok'), 'ok', '✓ Pagos e conferidos'), cartao(contar('olhar'), 'olhar', '⚠ Para você olhar'), cartao(contar('nao'), 'nao', '✕ Lançado, mas não está no extrato'), festas && cartao(sobrasVis.length, 'x', 'Pagou no extrato, sem marcar na festa', '#4a63d6')),
             h('div', { style: { display: 'flex', gap: 8, margin: '16px 0 10px', flexWrap: 'wrap' } },
                 [['atencao', 'Só os que precisam de atenção'], ['todos', 'Todos (' + linhasTodas.length + ')']].map(function (o) { var on = filtro === o[0]; return h('button', { key: o[0], type: 'button', onClick: function () { setFiltro(o[0]); }, className: 'tdb-cfp-pill' + (on ? ' on' : ''), style: { padding: '9px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer' } }, o[1]); })),
             h('div', { className: 'tdb-cfp-dois' },
@@ -16202,7 +16257,7 @@ function ConferirExtratoTDB(p) {
                                 h('td', { style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft } }, h('b', { style: { color: COLORS.ink } }, l.nome), h('div', { style: { fontSize: 12, color: COLORS.inkSoft } }, l.partes.length ? l.partes.join(' / ') : '—')),
                                 h('td', { className: 'mono', style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft, whiteSpace: 'nowrap', color: COLORS.ink } }, brl(l.valor)),
                                 h('td', { style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft, color: COLORS.ink } }, achado(r)),
-                                h('td', { style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft } }, tag(r.tipo, r.dif)));
+                                h('td', { style: { padding: 10, borderTop: '1px solid ' + COLORS.lineSoft } }, tag(r.tipo, r.dif), (r.tipo === 'nao' && /per\u00EDodo/.test(r.motivo)) || r.tipo === 'data' ? h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 4, maxWidth: 230, lineHeight: 1.35 } }, r.motivo) : null));
                         }))),
                     h('div', { className: 'tdb-cfp-lista' }, linhasVis.map(function (l) {
                         var r = resultado.res[l.id];
@@ -16212,9 +16267,13 @@ function ConferirExtratoTDB(p) {
                     })),
                     h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 10 } }, 'Mostrando ' + linhasVis.length + ' de ' + linhasTodas.length + ' · os ✓ salvos aparecem na lista ' + (festas ? 'da festa' : 'de mensalidades'))),
                 h('div', null,
-                    h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20 }) }, h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, festas ? 'Pagou no extrato, mas sem pagamento marcado na festa' : 'Entrada no extrato sem lançamento'),
+                    h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20 }) }, festas ? h('div', null, h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, 'Pagou no extrato, mas sem pagamento marcado na festa'),
+                        
                         sobrasVis.length === 0 ? h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Todas as entradas do extrato foram encaixadas.') : sobrasVis.slice(0, 12).map(function (e, i) { return h('div', { key: i, style: { padding: '8px 0', borderTop: i ? '1px solid ' + COLORS.lineSoft : 'none', fontSize: 12.5, color: COLORS.ink, wordBreak: 'break-word' } }, h('b', null, (e.data ? e.data + ' · ' : '') + e.texto.slice(0, 40) + ' · ' + brl(e.valores[0])), h('div', { style: { color: COLORS.inkSoft } }, (e.banco || '') + (e._quem ? (e.banco ? ' · ' : '') + 'pode ser: ' + e._quem : ''))); }),
-                        sobrasVis.length > 12 && h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 6 } }, '+ ' + (sobrasVis.length - 12) + ' outras')),
+                        sobrasVis.length > 12 && h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 6 } }, '+ ' + (sobrasVis.length - 12) + ' outras')) : h('details', null, h('summary', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', cursor: 'pointer' } }, 'Outras entradas do extrato (' + sobrasVis.length + ')'), h('div', { style: { fontSize: 12, color: COLORS.inkSoft, margin: '6px 0' } }, 'Entradas que não foram usadas em nenhuma mensalidade paga de ' + mes + '. Podem ser festas, vendas ou outros meses.'),
+                        
+                        sobrasVis.length === 0 ? h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Todas as entradas do extrato foram encaixadas.') : sobrasVis.slice(0, 12).map(function (e, i) { return h('div', { key: i, style: { padding: '8px 0', borderTop: i ? '1px solid ' + COLORS.lineSoft : 'none', fontSize: 12.5, color: COLORS.ink, wordBreak: 'break-word' } }, h('b', null, (e.data ? e.data + ' · ' : '') + e.texto.slice(0, 40) + ' · ' + brl(e.valores[0])), h('div', { style: { color: COLORS.inkSoft } }, (e.banco || '') + (e._quem ? (e.banco ? ' · ' : '') + 'pode ser: ' + e._quem : ''))); }),
+                        sobrasVis.length > 12 && h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 6 } }, '+ ' + (sobrasVis.length - 12) + ' outras'))),
                     h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20, marginTop: 16 }) },
                         h('details', null, h('summary', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', cursor: 'pointer' } }, 'O que li no extrato (' + resultado.entradas.length + ' entradas)'),
                             h('div', { style: { fontSize: 12, color: COLORS.inkSoft, margin: '6px 0' } }, 'Se faltar algum pagamento aqui, o PDF foi lido incompleto. Os marcados com \u2713 foram encaixados em um lan\u00E7amento.'),
@@ -16223,7 +16282,7 @@ function ConferirExtratoTDB(p) {
                                 return h('div', { key: i, style: { padding: '6px 0', borderTop: i ? '1px solid ' + COLORS.lineSoft : 'none', fontSize: 12, color: COLORS.ink, wordBreak: 'break-word' } }, h('span', { style: { color: usada ? '#1fa86b' : COLORS.inkSoft, fontWeight: 800, marginRight: 6 } }, usada ? '\u2713' : '\u2022'), (e.banco ? e.banco + ' \u00B7 ' : '') + (e.data ? e.data + ' \u00B7 ' : '') + (e.texto || '(sem texto)').slice(0, 60) + ' \u00B7 ' + e.valores.map(function (v) { return brl(v); }).join(' / '));
                             })))),
                     h('div', { className: 'tdb-cfp-g', style: Object.assign({}, card, { padding: '16px 18px', borderRadius: 20, marginTop: 16 }) }, h('div', { style: { fontSize: 14, fontWeight: 800, color: '#106E6B', marginBottom: 8 } }, 'Como ler'),
-                        [['ok', '✓ Bateu', 'nome completo e valor iguais'], ['olhar', '⚠ Olhar', 'nome parecido ou valor diferente'], ['nao', '✕ Não achei', 'não há entrada para esse responsável']].map(function (x) { var c = cores[x[0]]; return h('div', { key: x[0], style: { padding: '7px 0', borderTop: x[0] === 'ok' ? 'none' : '1px solid ' + COLORS.lineSoft, fontSize: 12.5, color: COLORS.ink } }, h('span', { style: { fontWeight: 800, color: c, background: 'color-mix(in srgb, ' + c + ' 16%, transparent)', borderRadius: 999, padding: '3px 10px', marginRight: 8 } }, x[1]), x[2]); })))),
+                        [['ok', '✓ Bateu', 'valor igual e o nome (ou a data do pagamento) confere'], ['olhar', '⚠ Olhar', 'nome parecido ou valor diferente'], ['nao', '✕ Não achei', 'não há entrada para esse responsável']].map(function (x) { var c = cores[x[0]]; return h('div', { key: x[0], style: { padding: '7px 0', borderTop: x[0] === 'ok' ? 'none' : '1px solid ' + COLORS.lineSoft, fontSize: 12.5, color: COLORS.ink } }, h('span', { style: { fontWeight: 800, color: c, background: 'color-mix(in srgb, ' + c + ' 16%, transparent)', borderRadius: 999, padding: '3px 10px', marginRight: 8 } }, x[1]), x[2]); })))),
             erro && h('div', { role: 'alert', style: { marginTop: 10, padding: '9px 12px', borderRadius: 10, background: COLORS.redBg, color: COLORS.red, fontSize: 13, fontWeight: 600 } }, erro),
             h('div', { style: { display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' } },
                 h('button', { type: 'button', onClick: salvar, className: 'tdb-cfp-btn tdb-cfp-main', style: btnMain }, 'Salvar conferência (' + nOk + ' ✓)'),
