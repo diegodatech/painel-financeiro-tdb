@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261022-tdb-v1-37";
+    window.__TDB_BUILD = "tdb-20261022-tdb-v1-38";
   </script>
-  <script src="./config.js?build=tdb-20261022-tdb-v1-37"></script>
+  <script src="./config.js?build=tdb-20261022-tdb-v1-38"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1999,10 +1999,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261022-tdb-v1-37"></script>
+  <script src="./sync.js?build=tdb-20261022-tdb-v1-38"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261022-tdb-v1-37-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261022-tdb-v1-38-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -21267,12 +21267,12 @@ html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-num] body .painel-main 
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body:not(.dark-mode) .painel-main table tbody tr:nth-child(even) {background:rgba(23,103,207,.06);}
 html[data-tdb-aurora][data-aurora-trab][data-aurora-trab-zebra] body.dark-mode .painel-main table tbody tr:nth-child(even) {background:rgba(255,255,255,.08);}
 /* TDB v1.36 — certinhos sempre na mesma posição (canto direito da célula) em Mensalidades, Empresas e Festas */
-html body table.festas-tdb-tabela tbody tr td:has(> span > .tdb-cf-b):not(#tdbz1){position:relative;padding-right:32px!important}
-html body table.festas-tdb-tabela td > span > .tdb-cf-b:not(#tdbz1){position:absolute;right:6px;top:calc(50% - 9px);margin:0!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela tbody tr td:has(> span > .tdb-cf-b){position:relative;padding-right:32px!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela td > span > .tdb-cf-b{position:absolute;right:6px;top:calc(50% - 9px);margin:0!important}
 html body table.tabela-mensalidades:not(.festas-tdb-tabela) tbody td:has(> .tdb-cf-st):not(#tdbz1){position:relative;padding-right:30px!important}
 html body table.tabela-mensalidades:not(.festas-tdb-tabela) tbody td > .tdb-cf-st:not(#tdbz1){position:absolute;right:6px;top:calc(50% - 9px);margin:0!important}
 @media (max-width:760px){
-html body table.festas-tdb-tabela td > span > .tdb-cf-b:not(#tdbz1){top:calc(50% - 11px)}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela td > span > .tdb-cf-b{top:calc(50% - 11px)}
 html body tr.mensalidades-row td > div:has(> .tdb-cf-nm) > span:not(.tdb-cf-b):not(#tdbz1){flex:1 1 auto!important;min-width:0}
 html body tr.mensalidades-row td > div:has(> .tdb-cf-nm) > .tdb-cf-nm:not(#tdbz1){margin-left:auto!important;flex:none}
 }
@@ -21285,10 +21285,10 @@ html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(2){width:20%!important}
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(3){width:8%!important}
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(4){width:10%!important}
-html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(5){width:9%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(5){width:11%!important}
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(6){width:11.5%!important}
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(7){width:10%!important}
-html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(8){width:11.5%!important}
+html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) col:nth-child(8){width:9.5%!important}
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) th:nth-child(3){font-size:8.6px!important;letter-spacing:0!important;padding-left:3px!important;padding-right:3px!important}
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) tbody td:nth-child(-n+2){overflow-wrap:anywhere!important}
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2) table.festas-tdb-tabela:not(:has(tbody input[type=date])) tbody td:nth-child(6){white-space:nowrap!important;font-size:11px!important;padding-left:4px!important;padding-right:4px!important}
