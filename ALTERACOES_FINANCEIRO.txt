@@ -1,0 +1,23 @@
+V1.44 (app TDB v1.44 + servidor 1.44)
+- Janela "Atualizar o programa": a lista "Voltar para uma versão anterior" agora fica recolhida (seta), com a quantidade de backups no título, e só abre quando você toca. A janela fica bem menor.
+
+V1.43 (app TDB v1.43 + servidor 1.43)
+- Tamanho da tela: agora o menu do topo (abas e cabeçalho) aumenta e diminui junto com o conteúdo, e a largura Estendida/Cheia também vale para ele.
+
+V1.42 (app TDB v1.42 + servidor 1.42)
+- Janela "Atualizar o programa": agora mostra "O que tem nesta atualização" antes de aplicar (como no Porteiro) e "O que mudou nesta atualização" depois de aplicar. Em "Versão em uso" tem "O que tem nesta versão".
+- Fim do erro 502 depois de atualizar: o servidor agora roda dentro de um vigia (--auto) que religa em cerca de 1 segundo, e a janela espera o servidor voltar antes de recarregar o app.
+- INICIAR FINANCEIRO.bat e a tarefa "ligar com o Windows" usam o vigia; ENCERRAR FINANCEIRO.bat encerra o vigia e o servidor.
+- A lista de mudanças (ALTERACOES_FINANCEIRO.txt) agora viaja junto com o app.
+
+V1.41 (app TDB v1.41 + servidor 1.41)
+- Engrenagem: novo item "Tamanho da tela" (so no computador), copiado do Porteiro: Ajustar a tela, - e +, Voltar ao padrao e Largura Normal / Estendida / Cheia. Vale so neste computador.
+- A versao do SERVIDOR agora aparece na janela "Atualizar o programa", abaixo da versao do app.
+- Regra daqui para frente: toda entrega sobe a versao (app e servidor), para saber sempre qual esta instalada.
+
+V1.40
+- Janela "Atualizar o programa" dentro do app (engrenagem), no vidro do projeto, com as cores do tema.
+- A janela aceita o zip do app e o zip do PC (se vier servidor novo, ele troca e reinicia sozinho).
+- Atualizar de primeira: depois de aplicar, o app pede a versao nova ao navegador antes de recarregar.
+- Envio opcional ao GitHub depois de aplicar (github.json + github-token.txt).
+- INICIAR / ENCERRAR FINANCEIRO.bat (como o Porteiro) e LIGAR COM O WINDOWS.bat (liga sem ninguem logar).
