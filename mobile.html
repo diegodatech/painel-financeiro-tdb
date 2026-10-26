@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261022-tdb-v1-38";
+    window.__TDB_BUILD = "tdb-20261026-tdb-v1-40";
   </script>
-  <script src="./config.js?build=tdb-20261022-tdb-v1-38"></script>
+  <script src="./config.js?build=tdb-20261026-tdb-v1-40"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1999,10 +1999,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261022-tdb-v1-38"></script>
+  <script src="./sync.js?build=tdb-20261026-tdb-v1-40"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261022-tdb-v1-38-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261026-tdb-v1-40-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4806,8 +4806,8 @@ function salvarPreferencia(chave, valor) {
 // permissão de microfone) e o texto volta pra cá em tempo real, mostrado num balão
 // flutuante. Se o lançador não responder (painel aberto direto pelo link do Apps Script),
 // cai no modo antigo: janela ditado.html — mas o balão continua visível no app.
-var ORIGEM_PONTE_VOZ = 'https://diegodatech.github.io';
-var URL_PONTE_VOZ = ORIGEM_PONTE_VOZ + '/painel-financeiro-tdb/ditado.html';
+var ORIGEM_PONTE_VOZ = (/script\.google\.com|googleusercontent\.com/i.test(location.hostname) ? 'https://diegodatech.github.io' : location.origin);
+var URL_PONTE_VOZ = ORIGEM_PONTE_VOZ + (ORIGEM_PONTE_VOZ === 'https://diegodatech.github.io' ? '/painel-financeiro-tdb/ditado.html' : '/ditado.html');
 var VOZ_LANCADOR = { suporta: null };
 (function detectarVozDoLancador() {
     if (typeof window === 'undefined')
