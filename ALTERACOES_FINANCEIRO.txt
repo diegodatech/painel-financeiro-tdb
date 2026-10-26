@@ -1,3 +1,7 @@
+V1.45 (app TDB v1.45 + servidor 1.45)
+- Contorno de vidro em todo o programa (a receita do Porteiro, no azul do projeto): anel fino ao redor de campos, listas, botões, abas e quadros, no computador, tablet e celular, no modo claro e no escuro. Nada muda de tamanho ou de lugar.
+- Engrenagem: novo item "Contorno de vidro" para escolher Desligado, Suave, Normal (padrão) ou Forte. Vale só no aparelho onde você escolher.
+
 V1.44 (app TDB v1.44 + servidor 1.44)
 - Janela "Atualizar o programa": a lista "Voltar para uma versão anterior" agora fica recolhida (seta), com a quantidade de backups no título, e só abre quando você toca. A janela fica bem menor.
 
