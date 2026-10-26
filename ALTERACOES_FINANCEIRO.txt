@@ -1,3 +1,8 @@
+V1.46 (app TDB v1.46 + servidor 1.46)
+- Menu de cima: os ícones das abas agora ficam dentro de um círculo com contorno de vidro.
+- Linhas entre os registros (tabelas e listas) com o traço um pouco mais forte, no mesmo azul do contorno. Segue o nível escolhido em "Contorno de vidro" na engrenagem.
+- Revisão das 15 abas: contorno também nos campos de busca em vidro (Festas TDB). Ficam sem anel de propósito só os status bloqueados (colorido por si) e as opções dentro de grupos que já têm contorno.
+
 V1.45 (app TDB v1.45 + servidor 1.45)
 - Contorno de vidro em todo o programa (a receita do Porteiro, no azul do projeto): anel fino ao redor de campos, listas, botões, abas e quadros, no computador, tablet e celular, no modo claro e no escuro. Nada muda de tamanho ou de lugar.
 - Engrenagem: novo item "Contorno de vidro" para escolher Desligado, Suave, Normal (padrão) ou Forte. Vale só no aparelho onde você escolher.
