@@ -1,3 +1,8 @@
+V1.56 (app TDB v1.56 + servidor 1.56)
+- Lançamentos: busca e botões do lado (Todos os meses, Todos/Pendente/Pago, Ocultar lista) em azul. Mês FECHADO fica roxo; ao ABRIR, texto preto e as linhas/botões de dentro em azul.
+- Compras e Festas TDB: textos de volta em PRETO; todas as linhas da página em azul (Festas não é mais rosa).
+- Notas Fiscais continua rosa com brilho azulado.
+
 V1.55 (app TDB v1.55 + servidor 1.55)
 - Lançamentos: os 4 cards de cima agora todos com contorno (o "Resultado do mês" estava sem). O quadro "Novo lançamento" (card, campos e botões) ficou todo azul.
 - Notas Fiscais (aba dos e-mails): contorno ROSA, com o brilho/contraste do vidro em azulado.
