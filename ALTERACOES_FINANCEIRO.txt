@@ -1,3 +1,7 @@
+V1.67 (app TDB v1.67 + servidor 1.67)
+- Menu do topo acompanha o "Tamanho da tela": ao escolher largura "Larga" ou "Total" (tela estendida, monitor largo ou segundo monitor), o conteúdo esticava mas o menu ficava parado em 1560 px no centro. Agora o menu estica junto e fica alinhado com os blocos, também com zoom. Só computador; tablet e celular não mudam.
+- Inclui tudo da v1.66 e anteriores.
+
 V1.66 (app TDB v1.66 + servidor 1.66)
 - INICIAR FINANCEIRO.bat não abre mais a página no navegador ao ligar (o uso é pelo link). Para abrir no PC, se precisar: http://127.0.0.1:8081
 - Inclui tudo da v1.65, v1.64, v1.63 e v1.62.
