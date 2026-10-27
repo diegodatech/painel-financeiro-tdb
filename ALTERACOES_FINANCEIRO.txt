@@ -1,3 +1,8 @@
+V1.52 (app TDB v1.52 + servidor 1.52)
+- Contorno agora em azul e VIOLETA (o violeta da logo); o verde saiu.
+- Cada página tem UMA cor só (sem alternar linha a linha): Visão geral, Mensalidades, Contratos, Recibos, Rematrícula, Arquivos, Calendário e Município CB em azul; Lançamentos, Notas Fiscais, Compras, Valores, Anotações, Festas TDB e Pessoais em violeta.
+- Menu (ícones das abas), cabeçalho, busca e botões de cima: sempre violeta, iguais em todas as páginas.
+
 V1.51 (app TDB v1.51 + servidor 1.51)
 - Contorno em DUAS cores, uma por quadro: turquesa e azul alternados e espalhados pela tela (abas do menu, quadros, botões e campos), em vez de tudo igual. Cada elemento mantém sempre a mesma cor.
 - Volta o anel de cor única (sem degradê) e a força um pouco menor que a v1.48. Os níveis Suave, Normal e Forte continuam valendo.
