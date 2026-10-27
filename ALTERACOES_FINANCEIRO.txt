@@ -1,3 +1,7 @@
+V1.58 (app TDB v1.58 + servidor 1.58)
+- Menu do topo alinhado com o conteúdo: em tela grande ele era 48 px mais estreito que o resto da página (e 4 px mais largo em tela menor). Agora as bordas esquerda e direita batem com os quadros abaixo em qualquer tamanho.
+- Os ícones das abas deixam de ficar fixos em 88 px e se esticam para ocupar toda a largura do menu (telas a partir de 1300 px), sem sobrar vão nas pontas.
+
 V1.57 (app TDB v1.57 + servidor 1.57)
 - Valores: a bolha de cima (título, Todos/Particular/Tramontina..., botões) toda em azul, e os contornos dos valores (Com desconto / Sem desconto / Nota / Integral / Meio turno) também em azul. Os quadros e textos abaixo ficam como estavam.
 
