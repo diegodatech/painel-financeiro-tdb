@@ -1,3 +1,23 @@
+V1.51 (app TDB v1.51 + servidor 1.51)
+- Contorno em DUAS cores, uma por quadro: turquesa e azul alternados e espalhados pela tela (abas do menu, quadros, botões e campos), em vez de tudo igual. Cada elemento mantém sempre a mesma cor.
+- Volta o anel de cor única (sem degradê) e a força um pouco menor que a v1.48. Os níveis Suave, Normal e Forte continuam valendo.
+
+V1.50 (app TDB v1.50 + servidor 1.50)
+- Contornos MISTOS: o anel agora vai do TURQUESA ao AZUL do projeto. Cabeçalho e quadros com degradê diagonal; abas, botões e campos com cima/esquerda turquesa e baixo/direita azul.
+- Conferido nas 15 abas: nada mudou de tamanho nem de lugar. Os níveis Suave, Normal e Forte continuam valendo.
+
+V1.49 (app TDB v1.49 + servidor 1.49)
+- Contorno de volta à força da v1.47 (a v1.48 tinha ficado forte demais).
+- Duas cores mescladas: contorno TURQUESA com o AZUL do projeto no brilho de fora, na linha de baixo dos quadros e campos, e no anel da aba aberta. Linhas entre registros também levam um toque de azul.
+
+V1.48 (app TDB v1.48 + servidor 1.48)
+- Contorno turquesa bem mais visível: anel de 2 px, cor mais viva, e agora também nos campos (nome, valor, mês, banco, busca, datas), que a regra antiga do programa deixava cinza.
+- Abas do menu, cabeçalho, botões, quadros e cartões com o mesmo turquesa. Os níveis Suave, Normal e Forte em "Contorno de vidro" continuam valendo.
+
+V1.47 (app TDB v1.47 + servidor 1.47)
+- Contorno de vidro agora no TURQUESA do projeto (antes era azul), em campos, botões, quadros, linhas e cabeçalho. Os botões de ação continuam azuis.
+- Menu de cima: o contorno agora circunda cada botão inteiro do menu (ícone + nome), com anel mais firme na aba aberta. Saiu o círculo pequeno ao redor do ícone.
+
 V1.46 (app TDB v1.46 + servidor 1.46)
 - Menu de cima: os ícones das abas agora ficam dentro de um círculo com contorno de vidro.
 - Linhas entre os registros (tabelas e listas) com o traço um pouco mais forte, no mesmo azul do contorno. Segue o nível escolhido em "Contorno de vidro" na engrenagem.
