@@ -1,3 +1,8 @@
+V1.61 (app TDB v1.61 + servidor 1.61)
+- Correção de lógica, sem mudança de visual. Vale para computador e celular.
+- Lançamentos: o total no cabeçalho de cada mês agora soma só o que foi efetivado (Pago e Parcial), igual ao card "Resultado do mês". O que está pendente aparece ao lado, em letra pequena ("pendente R$ ..."), e não entra no total.
+- Lixeira: Valores (avulsos, convênios multivaga, casos especiais, notas, convênios e linhas), Anotações, Contas Pessoais, Festas (registro e festa completa), Arquivos e Contratos só removem o item da lista depois que a lixeira confirma a gravação. Se a lixeira falhar, aparece o aviso "Não consegui mandar para a lixeira. Nada foi excluído." e o item permanece.
+
 V1.60 (app TDB v1.60 + servidor 1.60)
 - Menu do TABLET (a partir de 761 px, retrato e deitado) com a mesma regra do computador, mantendo todos os botões, cards e ícones: logo, título, status e busca na 1ª linha; Exercício, Salvar, Atualizar, Dados, avisos e engrenagem numa linha só; abas embaixo.
 - No tablet em pé as abas passam de 5 por linha (3 linhas) para 8 por linha (2 linhas). O menu cai de cerca de 530 px para cerca de 345 px de altura.

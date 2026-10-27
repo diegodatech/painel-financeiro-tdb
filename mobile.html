@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261026-tdb-v1-60";
+    window.__TDB_BUILD = "tdb-20261026-tdb-v1-61";
   </script>
-  <script src="./config.js?build=tdb-20261026-tdb-v1-60"></script>
+  <script src="./config.js?build=tdb-20261026-tdb-v1-61"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1999,10 +1999,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261026-tdb-v1-60"></script>
+  <script src="./sync.js?build=tdb-20261026-tdb-v1-61"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261026-tdb-v1-60-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261026-tdb-v1-61-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7740,8 +7740,9 @@ function Valores(_a) {
     function removerAvulso(idx) {
         var item = avulsos[idx];
         if (!item || !window.confirm("Mover \"".concat(rotuloPreset(item), "\" para a lixeira?"))) return;
-        window.__tdbLixeiraAdicionar({ rotulo: rotuloPreset(item), origem: 'Valores · Avulsos', restoreOps: [{ op:'insert', key:'valores_avulsos', path:[], index:idx, item:item }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: rotuloPreset(item), origem: 'Valores · Avulsos', restoreOps: [{ op:'insert', key:'valores_avulsos', path:[], index:idx, item:item }] }).then(function () {
         salvarAvulsos(avulsos.filter(function (_, i) { return i !== idx; }));
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function salvarDiasLetivosMes(mes, valor) {
         return __awaiter(this, void 0, void 0, function () {
@@ -7879,8 +7880,9 @@ function Valores(_a) {
     function removerMultivaga(idx) {
         var item = conveniosMultivaga[idx];
         if (!item || !window.confirm("Mover \"".concat(item.nome, "\" para a lixeira?"))) return;
-        window.__tdbLixeiraAdicionar({ rotulo: item.nome, origem: 'Valores · Convênios multivaga', restoreOps: [{ op:'insert', key:'convenios_multivaga', path:[], index:idx, item:item }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: item.nome, origem: 'Valores · Convênios multivaga', restoreOps: [{ op:'insert', key:'convenios_multivaga', path:[], index:idx, item:item }] }).then(function () {
         salvarConveniosMultivaga(conveniosMultivaga.filter(function (_, i) { return i !== idx; }));
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function diasDesdeAtualizacao(item) {
         if (!item.atualizadoEm)
@@ -7906,17 +7908,19 @@ function Valores(_a) {
     function removerCaso(casoIdx) {
         var item = casos[casoIdx];
         if (!item || !window.confirm("Mover \"".concat(item.nome, "\" para a lixeira?"))) return;
-        window.__tdbLixeiraAdicionar({ rotulo: item.nome, origem: 'Valores · Casos especiais', restoreOps: [{ op:'insert', key:'valores_casos_especiais', path:[], index:casoIdx, item:item }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: item.nome, origem: 'Valores · Casos especiais', restoreOps: [{ op:'insert', key:'valores_casos_especiais', path:[], index:casoIdx, item:item }] }).then(function () {
         salvarCasos(casos.filter(function (_, i) { return i !== casoIdx; }));
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function removerNotaCaso(casoIdx, notaIdx) {
         var caso = casos[casoIdx];
         var nota = caso && caso.notas ? caso.notas[notaIdx] : null;
         if (!nota || !window.confirm('Mover esta nota para a lixeira?')) return;
-        window.__tdbLixeiraAdicionar({ rotulo: (caso.nome || 'Caso especial') + ' · nota', origem: 'Valores · Casos especiais', restoreOps: [{ op:'insert', key:'valores_casos_especiais', path:[casoIdx,'notas'], index:notaIdx, item:nota }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: (caso.nome || 'Caso especial') + ' · nota', origem: 'Valores · Casos especiais', restoreOps: [{ op:'insert', key:'valores_casos_especiais', path:[casoIdx,'notas'], index:notaIdx, item:nota }] }).then(function () {
         var next = __spreadArray([], casos, true);
         next[casoIdx] = __assign(__assign({}, next[casoIdx]), { notas: next[casoIdx].notas.filter(function (_, i) { return i !== notaIdx; }) });
         salvarCasos(next);
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function mostrarToast(msg) {
         setToastMsg(msg);
@@ -8002,14 +8006,16 @@ function Valores(_a) {
     function removerConvenio(grupoKey) {
         var item = dados[grupoKey];
         if (!item || !window.confirm("Mover \"".concat(item.nome, "\" para a lixeira?"))) return;
-        window.__tdbLixeiraAdicionar({ rotulo: item.nome, origem: 'Valores · Convênio', restoreOps: [{ op:'set', key:'valores_mensalidade', path:[grupoKey], value:item }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: item.nome, origem: 'Valores · Convênio', restoreOps: [{ op:'set', key:'valores_mensalidade', path:[grupoKey], value:item }] }).then(function () {
         var next = __assign({}, dados); delete next[grupoKey]; salvar(next);
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function removerLinhaGrupo(grupoKey, idx) {
         var linha = dados[grupoKey] && dados[grupoKey].grupos ? dados[grupoKey].grupos[idx] : null;
         if (!linha || !window.confirm('Mover esta linha para a lixeira?')) return;
-        window.__tdbLixeiraAdicionar({ rotulo: (dados[grupoKey].nome || 'Convênio') + ' · ' + (linha.titulo || 'linha'), origem: 'Valores', restoreOps: [{ op:'insert', key:'valores_mensalidade', path:[grupoKey,'grupos'], index:idx, item:linha }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: (dados[grupoKey].nome || 'Convênio') + ' · ' + (linha.titulo || 'linha'), origem: 'Valores', restoreOps: [{ op:'insert', key:'valores_mensalidade', path:[grupoKey,'grupos'], index:idx, item:linha }] }).then(function () {
         var next = __assign({}, dados); var grupos = next[grupoKey].grupos.filter(function (_, i) { return i !== idx; }); next[grupoKey] = __assign(__assign({}, next[grupoKey]), { grupos: grupos }); salvar(next);
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function adicionarLinhaGrupo(grupoKey) {
         var next = __assign({}, dados);
@@ -8020,8 +8026,9 @@ function Valores(_a) {
     function removerNota(grupoKey) {
         var valorNota = dados[grupoKey] ? dados[grupoKey].nota : null;
         if (valorNota == null || !window.confirm('Mover a nota deste convênio para a lixeira?')) return;
-        window.__tdbLixeiraAdicionar({ rotulo: (dados[grupoKey].nome || 'Convênio') + ' · nota', origem: 'Valores', restoreOps: [{ op:'set', key:'valores_mensalidade', path:[grupoKey,'nota'], value:valorNota }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: (dados[grupoKey].nome || 'Convênio') + ' · nota', origem: 'Valores', restoreOps: [{ op:'set', key:'valores_mensalidade', path:[grupoKey,'nota'], value:valorNota }] }).then(function () {
         var next = __assign({}, dados); next[grupoKey] = __assign(__assign({}, next[grupoKey]), { nota: null }); salvar(next);
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function adicionarNota(grupoKey) {
         var next = __assign({}, dados);
@@ -10163,8 +10170,9 @@ function Anotacoes(_a) {
         var b = blocos.find(function (x) { return x.id === id; }); if (!b) return;
         if (!window.confirm("Mover o bloco \"".concat(b.titulo, "\" para a lixeira?\n\nO anexo ficará preservado até você excluir definitivamente."))) return;
         var idx = blocos.findIndex(function(x){ return x.id === id; });
-        window.__tdbLixeiraAdicionar({ rotulo: b.titulo || 'Bloco', origem: 'Anotações', restoreOps: [{ op:'insert', key:'anotacoes_internas', path:[], index:idx, item:b, uniqueField:'id' }], cleanupKeys: b.anexoNome ? ['anotacao_anexo_' + id] : [] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: b.titulo || 'Bloco', origem: 'Anotações', restoreOps: [{ op:'insert', key:'anotacoes_internas', path:[], index:idx, item:b, uniqueField:'id' }], cleanupKeys: b.anexoNome ? ['anotacao_anexo_' + id] : [] }).then(function () {
         salvar((blocosRef.current || blocos).filter(function (x) { return x.id !== id; })); mostrarToast('Bloco movido para a lixeira.');
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     var LIMITE_ANEXO = 25 * 1024 * 1024;
     function anexarArquivo(id, arquivo) {
@@ -10586,8 +10594,9 @@ function ContasPessoais(_a) {
         var atual = contas.find(function (c) { return c.id === id; }); if (!atual) return;
         if (!window.confirm('Mover a conta "' + atual.nome + '" para a lixeira?')) return;
         var idx = contas.findIndex(function(c){ return c.id === id; });
-        window.__tdbLixeiraAdicionar({ rotulo: atual.nome, origem: 'Contas Pessoais', restoreOps: [{ op:'insert', key:'contas_pessoais_v1', path:[], index:idx, item:atual, uniqueField:'id' }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: atual.nome, origem: 'Contas Pessoais', restoreOps: [{ op:'insert', key:'contas_pessoais_v1', path:[], index:idx, item:atual, uniqueField:'id' }] }).then(function () {
         salvar(contas.filter(function (c) { return c.id !== id; }));
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function adicionarConta() {
         if (!novaConta.trim())
@@ -11471,8 +11480,9 @@ function FestasTDB(_a) {
         var removida = rows.find(function(r){ return r.id === id; }); if (!removida) return;
         if (!window.confirm('Mover "' + (removida.nome || 'este registro') + '" para a lixeira?')) return;
         var idx = rows.findIndex(function(r){ return r.id === id; });
-        window.__tdbLixeiraAdicionar({ rotulo: removida.nome || 'Registro de festa', origem: 'Festas TDB · ' + (abaAtual ? abaAtual.label : subTab), restoreOps: [{ op:'insert', key:'festas_tdb', path:[subTab], index:idx, item:removida, uniqueField:'id' }] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: removida.nome || 'Registro de festa', origem: 'Festas TDB · ' + (abaAtual ? abaAtual.label : subTab), restoreOps: [{ op:'insert', key:'festas_tdb', path:[subTab], index:idx, item:removida, uniqueField:'id' }] }).then(function () {
         var next = __assign({}, dados); next[subTab] = rows.filter(function (r) { return r.id !== id; }); salvar(next);
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function adicionarRow(e) {
         if (e) e.preventDefault();
@@ -11513,9 +11523,10 @@ function FestasTDB(_a) {
         window.__tdbLixeiraAdicionar({ rotulo: nomeFesta, origem: 'Festas TDB · Festa completa', restoreOps: [
             { op:'insert', key:'festas_tdb_abas', path:[], index:indiceAtual, item:abaAtual, uniqueField:'key' },
             { op:'set', key:'festas_tdb', path:[subTab], value:dadosFesta }
-        ] }).catch(function(){});
+        ] }).then(function () {
         var nextAbas = abasFestas.filter(function (a) { return a.key !== subTab; }); var nextDados = __assign({}, dados); delete nextDados[subTab]; salvar(nextDados); salvarAbasFestas(nextAbas);
         var proximoIndice = Math.min(Math.max(indiceAtual, 0), nextAbas.length - 1); selecionarFesta(nextAbas[proximoIndice].key); setLinhaSelecionada(null); cancelarEdicaoRow(); cancelarRenomearFesta(); setCriandoFesta(false);
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function abrirNovaFesta() {
         cancelarRenomearFesta();
@@ -11883,8 +11894,9 @@ function Arquivos() {
         var item = itens.find(function (i) { return i.id === id; }); if (!item) return;
         if (!window.confirm("Mover \"".concat(item.titulo, "\" para a lixeira?\n\nO arquivo anexado ficará preservado até você excluir definitivamente."))) return;
         var idx = itens.findIndex(function(i){ return i.id === id; });
-        window.__tdbLixeiraAdicionar({ rotulo: item.titulo || 'Arquivo', origem: 'Arquivos', restoreOps: [{ op:'insert', key:'arquivos_galeria_lista', path:[], index:idx, item:item, uniqueField:'id' }], cleanupKeys: item.anexoNome ? ['galeria_item_anexo_' + id] : [] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: item.titulo || 'Arquivo', origem: 'Arquivos', restoreOps: [{ op:'insert', key:'arquivos_galeria_lista', path:[], index:idx, item:item, uniqueField:'id' }], cleanupKeys: item.anexoNome ? ['galeria_item_anexo_' + id] : [] }).then(function () {
         salvar((itensRef.current || itens).filter(function (i) { return i.id !== id; })); mostrarToast('Arquivo movido para a lixeira.');
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     var LIMITE_ANEXO = 25 * 1024 * 1024;
     var TIPOS_ACEITOS = ['application/pdf', 'image/'];
@@ -16384,11 +16396,12 @@ function Lancamentos(props) {
         } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), React.createElement("div", { style: { display: 'grid', gap: 14 } }, React.createElement(Toast, { mensagem: copiaMsg }), agrupadoPorMes.length === 0 && (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14.5 } }, "Nenhum lan\u00E7amento encontrado.")), agrupadoPorMes.map(function (_a) {
         var mes = _a.mes, itens = _a.itens;
         var aberto = mesesAbertos[mes] === true || (!!filtroTexto && itens.length > 0);
-        var totalMes = itens.reduce(function (s, t) { return s + (t.tipo === 'Entrada' ? t.valor : -t.valor); }, 0);
+        var totalMes = itens.reduce(function (s, t) { var v = TDBFinance.received(t); return s + (t.tipo === 'Entrada' ? v : -v); }, 0);
+        var pendMes = itens.reduce(function (s, t) { if (t.status === 'Pago' || t.status === 'Parcial') return s; var v = Math.max(0, TDBFinance.num(t.valor)); return s + (t.tipo === 'Entrada' ? v : -v); }, 0);
         return (React.createElement("div", { key: mes, className: "lancamentos-mes-card", style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("button", { onClick: function () { return toggleMes(mes); }, style: {
                 width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 padding: '13px 18px', background: COLORS.lineSoft, border: 'none', cursor: 'pointer',
-            } }, React.createElement("span", { className: "serif", style: { fontWeight: 600, fontSize: 15, color: COLORS.ink } }, mes.charAt(0) + mes.slice(1).toLowerCase(), " ", React.createElement("span", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontFamily: 'Inter, sans-serif', fontWeight: 500 } }, "(", itens.length, " lan\u00E7amentos)")), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12 } }, React.createElement("span", { className: "mono", style: { fontSize: 13.5, fontWeight: 600, color: totalMes >= 0 ? COLORS.green : COLORS.red } }, formatBRLPrivado(totalMes, privadoDetalhes)), React.createElement(ChevronDown, { size: 16, color: COLORS.inkSoft, style: { transform: aberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' } }))), aberto && (React.createElement("div", null, (function () {
+            } }, React.createElement("span", { className: "serif", style: { fontWeight: 600, fontSize: 15, color: COLORS.ink } }, mes.charAt(0) + mes.slice(1).toLowerCase(), " ", React.createElement("span", { style: { fontSize: 12.5, color: COLORS.inkSoft, fontFamily: 'Inter, sans-serif', fontWeight: 500 } }, "(", itens.length, " lan\u00E7amentos)")), React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12 } }, (Math.abs(pendMes) > 0.004 ? React.createElement("span", { title: "Valores ainda pendentes (n\u00E3o entram no total)", style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 500 } }, "pendente ", formatBRLPrivado(pendMes, privadoDetalhes)) : null), React.createElement("span", { className: "mono", style: { fontSize: 13.5, fontWeight: 600, color: totalMes >= 0 ? COLORS.green : COLORS.red } }, formatBRLPrivado(totalMes, privadoDetalhes)), React.createElement(ChevronDown, { size: 16, color: COLORS.inkSoft, style: { transform: aberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' } }))), aberto && (React.createElement("div", null, (function () {
             var idxM = MESES.indexOf(mes), fixasM = itens.filter(function (x) { return x.tipo === 'Fixa' && x.valor != null; });
             if (!copiarParaMesSeguinte || idxM < 0 || idxM >= MESES.length - 1 || !fixasM.length) return null;
             var prox = MESES[idxM + 1];
@@ -18435,8 +18448,9 @@ function Contratos(_a) {
         var c = contratos.find(function (x) { return x.id === id; }); if (!c) return;
         if (!window.confirm("Mover o contrato \"".concat(c.nome, "\" para a lixeira?\n\nO anexo ficará preservado até você excluir definitivamente."))) return;
         var idx = contratos.findIndex(function(x){ return x.id === id; });
-        window.__tdbLixeiraAdicionar({ rotulo: c.nome || 'Contrato', origem: 'Contratos', restoreOps: [{ op:'insert', key:'contratos_lista', path:[], index:idx, item:c, uniqueField:'id' }], cleanupKeys: c.anexoNome ? ['contrato_anexo_' + id] : [] }).catch(function(){});
+        window.__tdbLixeiraAdicionar({ rotulo: c.nome || 'Contrato', origem: 'Contratos', restoreOps: [{ op:'insert', key:'contratos_lista', path:[], index:idx, item:c, uniqueField:'id' }], cleanupKeys: c.anexoNome ? ['contrato_anexo_' + id] : [] }).then(function () {
         salvar(contratos.filter(function (x) { return x.id !== id; })); mostrarToast('Contrato movido para a lixeira.');
+        }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
     function analisarComIA(c) {
         return __awaiter(this, void 0, void 0, function () {
