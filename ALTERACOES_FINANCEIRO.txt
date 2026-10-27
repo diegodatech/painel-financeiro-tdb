@@ -1,3 +1,8 @@
+V1.60 (app TDB v1.60 + servidor 1.60)
+- Menu do TABLET (a partir de 761 px, retrato e deitado) com a mesma regra do computador, mantendo todos os botões, cards e ícones: logo, título, status e busca na 1ª linha; Exercício, Salvar, Atualizar, Dados, avisos e engrenagem numa linha só; abas embaixo.
+- No tablet em pé as abas passam de 5 por linha (3 linhas) para 8 por linha (2 linhas). O menu cai de cerca de 530 px para cerca de 345 px de altura.
+- Status e título numa linha só (status cortado com "…", texto completo ao passar o mouse).
+
 V1.59 (app TDB v1.59 + servidor 1.59)
 - Menu do topo reorganizado (modelo 2C), com o mesmo design de cards e botões: a primeira linha continua com logo, título, status e busca; os botões (Exercício, Salvar, Atualizar, Dados, avisos e engrenagem) agora ficam TODOS numa linha só; as abas vêm logo embaixo. Menu cerca de 50 px mais baixo.
 - O texto longo do status ("alterações aguardando confirmação…") é cortado com "…" e o texto completo aparece ao passar o mouse.
