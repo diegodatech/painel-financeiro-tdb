@@ -1,3 +1,7 @@
+V1.64 (app TDB v1.64 + servidor 1.64)
+- INICIAR FINANCEIRO.bat: o servidor agora liga escondido, sem a janela na barra de tarefas (antes ficava uma janela minimizada que, se fechada sem querer, derrubava o Financeiro). Para desligar, use o ENCERRAR FINANCEIRO.bat. Quem usa o LIGAR COM O WINDOWS já rodava escondido.
+- Inclui tudo da v1.63 (ícone do app ocupando o quadro inteiro) e da v1.62 (menu da engrenagem fecha ao abrir Atualizar, Tamanho da tela e Contorno).
+
 V1.63 (app TDB v1.63 + servidor 1.63)
 - Ícone do app (barra de tarefas, menu Iniciar e atalho): estava com uma margem transparente de cerca de 13% ao redor e por isso aparecia menor que os outros aplicativos. As imagens foram recortadas para ocupar o quadro inteiro. Só os arquivos de ícone mudaram; o desenho é o mesmo.
 - Se o Windows continuar mostrando o ícone antigo, desafixe o app da barra de tarefas e fixe de novo (ou reinstale o app pelo Edge/Chrome), porque o Windows guarda o ícone em cache.
