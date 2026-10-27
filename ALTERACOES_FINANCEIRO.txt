@@ -1,3 +1,7 @@
+V1.65 (app TDB v1.65 + servidor 1.65)
+- INICIAR FINANCEIRO.bat corrigido: o servidor agora liga sem criar nenhuma janela (no Windows 11 a janela do Node ainda aparecia na barra de tarefas mesmo escondida). Para desligar, use o ENCERRAR FINANCEIRO.bat.
+- Inclui tudo da v1.64, v1.63 e v1.62.
+
 V1.64 (app TDB v1.64 + servidor 1.64)
 - INICIAR FINANCEIRO.bat: o servidor agora liga escondido, sem a janela na barra de tarefas (antes ficava uma janela minimizada que, se fechada sem querer, derrubava o Financeiro). Para desligar, use o ENCERRAR FINANCEIRO.bat. Quem usa o LIGAR COM O WINDOWS já rodava escondido.
 - Inclui tudo da v1.63 (ícone do app ocupando o quadro inteiro) e da v1.62 (menu da engrenagem fecha ao abrir Atualizar, Tamanho da tela e Contorno).
