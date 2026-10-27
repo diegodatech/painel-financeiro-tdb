@@ -1,3 +1,8 @@
+V1.59 (app TDB v1.59 + servidor 1.59)
+- Menu do topo reorganizado (modelo 2C), com o mesmo design de cards e botões: a primeira linha continua com logo, título, status e busca; os botões (Exercício, Salvar, Atualizar, Dados, avisos e engrenagem) agora ficam TODOS numa linha só; as abas vêm logo embaixo. Menu cerca de 50 px mais baixo.
+- O texto longo do status ("alterações aguardando confirmação…") é cortado com "…" e o texto completo aparece ao passar o mouse.
+- Vale para telas a partir de 900 px; no celular nada muda.
+
 V1.58 (app TDB v1.58 + servidor 1.58)
 - Menu do topo alinhado com o conteúdo: em tela grande ele era 48 px mais estreito que o resto da página (e 4 px mais largo em tela menor). Agora as bordas esquerda e direita batem com os quadros abaixo em qualquer tamanho.
 - Os ícones das abas deixam de ficar fixos em 88 px e se esticam para ocupar toda a largura do menu (telas a partir de 1300 px), sem sobrar vão nas pontas.
