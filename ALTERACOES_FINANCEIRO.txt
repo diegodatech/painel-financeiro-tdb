@@ -1,3 +1,7 @@
+V1.63 (app TDB v1.63 + servidor 1.63)
+- Ícone do app (barra de tarefas, menu Iniciar e atalho): estava com uma margem transparente de cerca de 13% ao redor e por isso aparecia menor que os outros aplicativos. As imagens foram recortadas para ocupar o quadro inteiro. Só os arquivos de ícone mudaram; o desenho é o mesmo.
+- Se o Windows continuar mostrando o ícone antigo, desafixe o app da barra de tarefas e fixe de novo (ou reinstale o app pelo Edge/Chrome), porque o Windows guarda o ícone em cache.
+
 V1.62 (app TDB v1.62 + servidor 1.62)
 - Correção: ao clicar em "Atualizar o programa", "Tamanho da tela" ou "Contorno de vidro" no menu da engrenagem, o menu agora fecha sozinho. Antes ele ficava aberto por cima da janela e não saía.
 
