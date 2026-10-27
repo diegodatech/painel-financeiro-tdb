@@ -1,3 +1,11 @@
+V1.53 (app TDB v1.53 + servidor 1.53)
+- Linhas mais finas em tudo (contorno de 1 px em quadros, botões, abas, cabeçalho e campos).
+- Menu: os cards das abas agora são azuis; o cabeçalho continua violeta.
+- Lançamentos/Visão geral: os cards de cima (Entradas, Saídas, Resultado, Saldo) usam a cor contrária à da página (azuis em página violeta); o 3º card fica "solto", sem anel, só com sombra, para dar contraste.
+- Calendário: sem contorno em "Minhas agendas" e a busca sem moldura quadrada por dentro.
+- Contratos: sem contorno dentro dos PDFs (Ver/editar o PDF original, Editar cláusulas, linha do arquivo anexado).
+- Linhas de tabela e itens de cantos quadrados deixam de ter anel (ficam só com a linha fina).
+
 V1.52 (app TDB v1.52 + servidor 1.52)
 - Contorno agora em azul e VIOLETA (o violeta da logo); o verde saiu.
 - Cada página tem UMA cor só (sem alternar linha a linha): Visão geral, Mensalidades, Contratos, Recibos, Rematrícula, Arquivos, Calendário e Município CB em azul; Lançamentos, Notas Fiscais, Compras, Valores, Anotações, Festas TDB e Pessoais em violeta.
