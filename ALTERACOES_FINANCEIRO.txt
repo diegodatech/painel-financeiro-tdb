@@ -1,7 +1,12 @@
+V1.62 (app TDB v1.62 + servidor 1.62)
+- Correção: ao clicar em "Atualizar o programa", "Tamanho da tela" ou "Contorno de vidro" no menu da engrenagem, o menu agora fecha sozinho. Antes ele ficava aberto por cima da janela e não saía.
+
 V1.61 (app TDB v1.61 + servidor 1.61)
 - Correção de lógica, sem mudança de visual. Vale para computador e celular.
-- Lançamentos: o total no cabeçalho de cada mês agora soma só o que foi efetivado (Pago e Parcial), igual ao card "Resultado do mês". O que está pendente aparece ao lado, em letra pequena ("pendente R$ ..."), e não entra no total.
+- Lançamentos: o total no cabeçalho de cada mês agora soma só o que foi efetivado (Pago e Parcial), igual ao card "Resultado do mês". O que falta receber e o que falta pagar aparecem ao lado, em letra pequena ("a receber R$ ..." e "a pagar R$ ..."), separados e sem se compensarem; pagamentos parciais mostram só o valor restante. Nada disso entra no total.
 - Lixeira: Valores (avulsos, convênios multivaga, casos especiais, notas, convênios e linhas), Anotações, Contas Pessoais, Festas (registro e festa completa), Arquivos e Contratos só removem o item da lista depois que a lixeira confirma a gravação. Se a lixeira falhar, aparece o aviso "Não consegui mandar para a lixeira. Nada foi excluído." e o item permanece.
+- Mensalidades: aparece um aviso amarelo quando a mesma mensalidade (mesmo aluno, mesmo mês, mesmo valor) está paga mais de uma vez, para conferir se não é lançamento duplicado. Nada é alterado automaticamente; os valores continuam somando como antes.
+- Testes: o motor de cálculo foi conferido com dados simulados (mensalidades, desconto, parcial, pendente, irmãos, duplicidade, água e luz, alimentação, mês vazio, margem e saldo) contra o cálculo manual, sem diferenças.
 
 V1.60 (app TDB v1.60 + servidor 1.60)
 - Menu do TABLET (a partir de 761 px, retrato e deitado) com a mesma regra do computador, mantendo todos os botões, cards e ícones: logo, título, status e busca na 1ª linha; Exercício, Salvar, Atualizar, Dados, avisos e engrenagem numa linha só; abas embaixo.
