@@ -1,3 +1,9 @@
+V1.68 (app TDB v1.68 + servidor 1.68)
+- Instalação como app no celular/tablet: o manifesto do app agora é pedido com as credenciais do navegador (crossorigin=use-credentials), como já faz o painel do robô. Sem isso, por trás do login do Cloudflare Access o celular recebia a página de login no lugar do manifesto e o ícone não aparecia.
+- Android: o ícone recortado em círculo/quadrado arredondado agora usa uma versão com margem de segurança (icon-maskable-android-512.png), para não cortar o desenho. Computador, iPhone e iPad seguem com o ícone de antes.
+- IMPORTANTE para o ícone aparecer certo ao instalar: no Cloudflare (Zero Trust > Access) liberar sem login (Bypass) os caminhos /manifest.webmanifest, /icon-*, /favicon-64.png. Ver instruções enviadas junto.
+- Inclui tudo da v1.67 e anteriores.
+
 V1.67 (app TDB v1.67 + servidor 1.67)
 - Menu do topo acompanha o "Tamanho da tela": ao escolher largura "Larga" ou "Total" (tela estendida, monitor largo ou segundo monitor), o conteúdo esticava mas o menu ficava parado em 1560 px no centro. Agora o menu estica junto e fica alinhado com os blocos, também com zoom. Só computador; tablet e celular não mudam.
 - Inclui tudo da v1.66 e anteriores.
