@@ -1,3 +1,8 @@
+V1.54 (app TDB v1.54 + servidor 1.54)
+- Menu/cabeçalho todo azul (moldura, botões Exercício, Salvar, Atualizar, Dados, avisos, engrenagem e abas). Só o anel da logo e o campo de busca do topo ficam violeta.
+- Contratos: sem contorno nos botões "Ver / editar o PDF original" e "Editar cláusulas como texto" (e em qualquer botão largo de linha inteira).
+- Lançamentos: linhas dos meses e demais quadros com UMA linha fina só (antes a borda cinza somava com o contorno e parecia grossa).
+
 V1.53 (app TDB v1.53 + servidor 1.53)
 - Linhas mais finas em tudo (contorno de 1 px em quadros, botões, abas, cabeçalho e campos).
 - Menu: os cards das abas agora são azuis; o cabeçalho continua violeta.
