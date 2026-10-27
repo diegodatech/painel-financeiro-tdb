@@ -1,3 +1,6 @@
+V1.57 (app TDB v1.57 + servidor 1.57)
+- Valores: a bolha de cima (título, Todos/Particular/Tramontina..., botões) toda em azul, e os contornos dos valores (Com desconto / Sem desconto / Nota / Integral / Meio turno) também em azul. Os quadros e textos abaixo ficam como estavam.
+
 V1.56 (app TDB v1.56 + servidor 1.56)
 - Lançamentos: busca e botões do lado (Todos os meses, Todos/Pendente/Pago, Ocultar lista) em azul. Mês FECHADO fica roxo; ao ABRIR, texto preto e as linhas/botões de dentro em azul.
 - Compras e Festas TDB: textos de volta em PRETO; todas as linhas da página em azul (Festas não é mais rosa).
