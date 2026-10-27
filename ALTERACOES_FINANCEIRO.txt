@@ -1,3 +1,7 @@
+V1.69 (app TDB v1.69 + servidor 1.69)
+- Ícone no celular/tablet Android: o desenho ficava pequeno demais dentro da moldura (muita borda ao redor). Agora ocupa bem mais espaço (86%), com um fundo degradê nas mesmas cores do ícone. Para ver a mudança, desinstale o app do celular e instale de novo.
+- Inclui tudo da v1.68 e anteriores.
+
 V1.68 (app TDB v1.68 + servidor 1.68)
 - Instalação como app no celular/tablet: o manifesto do app agora é pedido com as credenciais do navegador (crossorigin=use-credentials), como já faz o painel do robô. Sem isso, por trás do login do Cloudflare Access o celular recebia a página de login no lugar do manifesto e o ícone não aparecia.
 - Android: o ícone recortado em círculo/quadrado arredondado agora usa uma versão com margem de segurança (icon-maskable-android-512.png), para não cortar o desenho. Computador, iPhone e iPad seguem com o ícone de antes.
