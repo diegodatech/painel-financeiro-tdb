@@ -1,3 +1,9 @@
+V1.55 (app TDB v1.55 + servidor 1.55)
+- Lançamentos: os 4 cards de cima agora todos com contorno (o "Resultado do mês" estava sem). O quadro "Novo lançamento" (card, campos e botões) ficou todo azul.
+- Notas Fiscais (aba dos e-mails): contorno ROSA, com o brilho/contraste do vidro em azulado.
+- Compras: parte de cima (listas, fornecedor, formulário do item e busca) em azul; a lista de itens abaixo continua como estava. Textos em azul para ler melhor.
+- Festas TDB: contorno rosa e textos em azul (invertido), melhor de ler.
+
 V1.54 (app TDB v1.54 + servidor 1.54)
 - Menu/cabeçalho todo azul (moldura, botões Exercício, Salvar, Atualizar, Dados, avisos, engrenagem e abas). Só o anel da logo e o campo de busca do topo ficam violeta.
 - Contratos: sem contorno nos botões "Ver / editar o PDF original" e "Editar cláusulas como texto" (e em qualquer botão largo de linha inteira).
