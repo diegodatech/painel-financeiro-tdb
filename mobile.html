@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261026-tdb-v1-69";
+    window.__TDB_BUILD = "tdb-20261029-tdb-v1-70";
   </script>
-  <script src="./config.js?build=tdb-20261026-tdb-v1-69"></script>
+  <script src="./config.js?build=tdb-20261029-tdb-v1-70"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1999,10 +1999,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261026-tdb-v1-69"></script>
+  <script src="./sync.js?build=tdb-20261029-tdb-v1-70"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261026-tdb-v1-69-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261029-tdb-v1-70-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -12943,7 +12943,12 @@ function salvarTudoAgora() {
     useEffect(function () { salvarPreferencia('modoPrivadoRematricula', modoPrivadoRematricula); }, [modoPrivadoRematricula]);
     var _3 = useState(null), pinConfigurado = _3[0], setPinConfigurado = _3[1];
     var _3b = useState(null), tamanhoPin = _3b[0], setTamanhoPin = _3b[1];
-    var _4 = useState(function () { return !!window.__painelDesbloqueadoNestaSessao; }), desbloqueado = _4[0], setDesbloqueadoEstado = _4[1];
+    function tdbFinAwayCfg() { var m = 'time', t = 5; try { m = localStorage.getItem('tdb_fin_mode') || 'time'; var x = Number(localStorage.getItem('tdb_fin_min')); if (x >= 1 && x <= 1440) t = Math.round(x); } catch (e) { } if (m !== 'ask' && m !== 'never') m = 'time'; return { mode: m, min: t }; }
+    function tdbFinAwayMs() { var c = tdbFinAwayCfg(); return c.mode === 'ask' ? 1500 : (c.mode === 'never' ? 1e12 : c.min * 60000); }
+    function tdbFinAwaySet(m, t) { try { localStorage.setItem('tdb_fin_mode', m); if (t) localStorage.setItem('tdb_fin_min', String(t)); } catch (e) { } }
+    function tdbFinFmt(m) { return (m >= 60 && m % 60 === 0) ? (m / 60) + ' h' : m + ' min'; }
+    function tdbFinRecente() { try { var l = Number(localStorage.getItem('tdb_fin_left') || 0); localStorage.removeItem('tdb_fin_left'); if (l > 0 && Date.now() - l < tdbFinAwayMs()) { window.__painelDesbloqueadoNestaSessao = true; return true; } } catch (e) { } return false; }
+    var _4 = useState(function () { return !!window.__painelDesbloqueadoNestaSessao || tdbFinRecente(); }), desbloqueado = _4[0], setDesbloqueadoEstado = _4[1];
     useEffect(function () {
         (async function () {
             try {
@@ -13033,6 +13038,22 @@ function salvarTudoAgora() {
         setDesbloqueado(true);
     }
     var _5 = useState(false), modalPinAberto = _5[0], setModalPinAberto = _5[1];
+    /* v1.70: "Pedir PIN ao voltar" (por aparelho): sempre / depois de um tempo / não pedir */
+    var _pw1 = useState(false), pawAberto = _pw1[0], setPawAberto = _pw1[1];
+    var _pw2 = useState(0), pawTick = _pw2[0], setPawTick = _pw2[1];
+    var tdbPawStep = function (d) { var c = tdbFinAwayCfg(), L = [1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 480, 720, 1440]; var i = -1; for (var k = 0; k < L.length; k++) { if (L[k] >= c.min) { i = k; break; } } if (i < 0) i = L.length - 1; i = Math.max(0, Math.min(L.length - 1, i + d)); tdbFinAwaySet('time', L[i]); setPawTick(function (v) { return v + 1; }); };
+    useEffect(function () {
+        var oculto = 0;
+        function marca() { try { if (window.__painelDesbloqueadoNestaSessao) { localStorage.setItem('tdb_fin_left', String(Date.now())); } } catch (e) { } }
+        function onVisPin() {
+            if (document.visibilityState === 'hidden') { oculto = Date.now(); marca(); return; }
+            try { localStorage.removeItem('tdb_fin_left'); } catch (e) { }
+            var fora = oculto ? Date.now() - oculto : 0; oculto = 0;
+            if (fora && fora >= tdbFinAwayMs() && window.__painelDesbloqueadoNestaSessao) { setDesbloqueado(false); }
+        }
+        document.addEventListener('visibilitychange', onVisPin); window.addEventListener('pagehide', marca);
+        return function () { document.removeEventListener('visibilitychange', onVisPin); window.removeEventListener('pagehide', marca); };
+    }, []);
     var _bioA = useState(function () { return !!(window.__tdbBio && window.__tdbBio.cadastrado()); }), bioCad = _bioA[0], setBioCad = _bioA[1];
     var _bioB = useState(false), bioSup = _bioB[0], setBioSup = _bioB[1];
     var _bioC = useState(false), bioOcupado = _bioC[0], setBioOcupado = _bioC[1];
@@ -14971,7 +14992,27 @@ function salvarTudoAgora() {
             display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
             background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
             cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: COLORS.ink,
-        } }, React.createElement(Lock, { size: 15, color: COLORS.ink }), " Alterar PIN"), (!!pinConfigurado && bioSup) && React.createElement("div", { 'data-tdb-bio-linha': '1', style: { display: 'grid', gap: 2 } },
+        } }, React.createElement(Lock, { size: 15, color: COLORS.ink }), " Alterar PIN"), (!!pinConfigurado) && React.createElement("div", { 'data-tdb-paw': '1', style: { display: 'grid', gap: 2 } },
+            React.createElement("button", { type: "button", onClick: function () { setPawAberto(function (v) { return !v; }); }, title: "Quando pedir o PIN ao voltar para o painel", style: {
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', width: '100%',
+                background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',
+                cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: COLORS.ink,
+            } }, React.createElement(Lock, { size: 15, color: COLORS.ink }), React.createElement("span", { style: { flex: 1 } }, " Pedir PIN ao voltar"), React.createElement("span", { style: { fontSize: 11.5, fontWeight: 600, color: COLORS.inkSoft } }, (tdbFinAwayCfg().mode === 'ask' ? 'Sempre' : (tdbFinAwayCfg().mode === 'never' ? 'Não pedir' : tdbFinFmt(tdbFinAwayCfg().min))), pawAberto ? ' ▴' : ' ▾')),
+            pawAberto && React.createElement("div", { style: { padding: '2px 8px 8px 33px', display: 'grid', gap: 8 } },
+                React.createElement("div", { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } }, [['ask', 'Sempre'], ['time', 'Depois de'], ['never', 'Não pedir']].map(function (o) {
+                    var on = tdbFinAwayCfg().mode === o[0];
+                    return React.createElement("button", { key: o[0], type: "button", onClick: function () { tdbFinAwaySet(o[0]); setPawTick(function (v) { return v + 1; }); }, style: {
+                        padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                        background: on ? COLORS.green : COLORS.paperCard, color: on ? '#fff' : COLORS.ink,
+                        border: '1px solid ' + (on ? 'transparent' : COLORS.line),
+                        backdropFilter: 'blur(14px) saturate(160%)', WebkitBackdropFilter: 'blur(14px) saturate(160%)',
+                    } }, o[1]);
+                })),
+                tdbFinAwayCfg().mode === 'time' && React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+                    React.createElement("button", { type: "button", "aria-label": "menos", onClick: function () { tdbPawStep(-1); }, style: { width: 30, height: 30, borderRadius: '50%', border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.green, fontSize: 18, fontWeight: 800, cursor: 'pointer', lineHeight: 1, backdropFilter: 'blur(14px) saturate(160%)', WebkitBackdropFilter: 'blur(14px) saturate(160%)' } }, "−"),
+                    React.createElement("b", { style: { minWidth: 56, textAlign: 'center', fontSize: 14, color: COLORS.ink } }, tdbFinFmt(tdbFinAwayCfg().min)),
+                    React.createElement("button", { type: "button", "aria-label": "mais", onClick: function () { tdbPawStep(1); }, style: { width: 30, height: 30, borderRadius: '50%', border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.green, fontSize: 18, fontWeight: 800, cursor: 'pointer', lineHeight: 1, backdropFilter: 'blur(14px) saturate(160%)', WebkitBackdropFilter: 'blur(14px) saturate(160%)' } }, "+")),
+                React.createElement("div", { style: { fontSize: 11.5, fontWeight: 600, color: COLORS.inkSoft, lineHeight: 1.3 } }, tdbFinAwayCfg().mode === 'ask' ? 'Sempre que sair do painel e voltar, pede o PIN.' : (tdbFinAwayCfg().mode === 'never' ? 'Não pede o PIN ao voltar.' : 'Se voltar antes de ' + tdbFinFmt(tdbFinAwayCfg().min) + ', continua logado.') + ' Vale só para este aparelho.'))), (!!pinConfigurado && bioSup) && React.createElement("div", { 'data-tdb-bio-linha': '1', style: { display: 'grid', gap: 2 } },
             React.createElement("button", { type: "button", role: "switch", "aria-checked": bioCad, onClick: alternarBio, disabled: bioOcupado, title: "Entrar com digital ou Face ID neste aparelho", style: {
                 display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', width: '100%',
                 background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 8px',

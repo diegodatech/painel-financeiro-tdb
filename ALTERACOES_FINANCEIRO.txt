@@ -1,3 +1,8 @@
+V1.70 (app TDB v1.70 + servidor 1.70)
+- Novo: "Pedir PIN ao voltar" (menu da engrenagem, abaixo de "Alterar PIN"). Por aparelho: Sempre / Depois de um tempo (voce escolhe os minutos, padrao 5) / Nao pedir. Vale no celular, tablet, Fold e computador.
+- Atualizacao (pagina /atualizar e painel dentro do app): ao escolher o pacote .zip agora mostra a porcentagem do envio e uma barra, como na Portaria.
+- Inclui tudo da v1.69 e anteriores.
+
 V1.69 (app TDB v1.69 + servidor 1.69)
 - Ícone no celular/tablet Android: o desenho ficava pequeno demais dentro da moldura (muita borda ao redor). Agora ocupa bem mais espaço (86%), com um fundo degradê nas mesmas cores do ícone. Para ver a mudança, desinstale o app do celular e instale de novo.
 - Inclui tudo da v1.68 e anteriores.
