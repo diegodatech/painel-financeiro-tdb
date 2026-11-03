@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261029-tdb-v1-70";
+    window.__TDB_BUILD = "tdb-20261029-tdb-v1-71";
   </script>
-  <script src="./config.js?build=tdb-20261029-tdb-v1-70"></script>
+  <script src="./config.js?build=tdb-20261029-tdb-v1-71"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1542,10 +1542,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261029-tdb-v1-70"></script>
+  <script src="./sync.js?build=tdb-20261029-tdb-v1-71"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261029-tdb-v1-70-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261029-tdb-v1-71-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2244,6 +2244,9 @@ function NotasFiscaisTDB(_a) {
     var _ea = useState(false), enviadasAbertas = _ea[0], setEnviadasAbertas = _ea[1];
     var _p = useState(false), modoPdf = _p[0], setModoPdf = _p[1];
     var _ed = useState(null), ed = _ed[0], setEd = _ed[1];
+    var _selN = useState(null), selN = _selN[0], setSelN = _selN[1];
+    var _selV = useState(null), selV = _selV[0], setSelV = _selV[1];
+    var _apN = useState(false), apagandoN = _apN[0], setApagandoN = _apN[1];
     var edRef = useRef(null);
     function setEdit(v) { edRef.current = v; setEd(v); }
     var _cf = useState(nfCfgLer), cfg = _cf[0], setCfg = _cf[1];
@@ -2420,6 +2423,26 @@ function NotasFiscaisTDB(_a) {
         paraLixeira(c.aluno || 'Convênio', 'Notas Fiscais', NF_KEY_CONV, convRef.current, c).then(function () {
             salvarConv(convRef.current.filter(function (x) { return x.id !== c.id; })); toast('Convênio movido para a lixeira.');
         }, function () { lixeiraFalhou('o convênio'); });
+    }
+    function removerLoteNF(ids, ehConv) {
+        var ref = ehConv ? convRef : cadRef, chave = ehConv ? NF_KEY_CONV : NF_KEY_CAD, salvar = ehConv ? salvarConv : salvarCad;
+        var alvos = ref.current.filter(function (x) { return ids.indexOf(x.id) >= 0; });
+        if (!alvos.length) return Promise.resolve(false);
+        var qtd = alvos.length, nome = ehConv ? (qtd === 1 ? 'convênio' : 'convênios') : (qtd === 1 ? 'aluno' : 'alunos');
+        if (!window.confirm('Apagar ' + qtd + ' ' + nome + '?\n\nEles vão para a lixeira e ficam lá até você restaurar ou excluir definitivamente.')) return Promise.resolve(false);
+        var feitos = [], falhou = false, cadeia = Promise.resolve();
+        alvos.forEach(function (c) {
+            cadeia = cadeia.then(function () {
+                if (falhou) return;
+                return paraLixeira(c.aluno || (ehConv ? 'Convênio' : 'Aluno'), 'Notas Fiscais', chave, ref.current, c).then(function () { feitos.push(c.id); }, function () { falhou = true; });
+            });
+        });
+        return cadeia.then(function () {
+            if (feitos.length) salvar(ref.current.filter(function (x) { return feitos.indexOf(x.id) < 0; }));
+            if (falhou) { toast(feitos.length ? 'Apaguei ' + feitos.length + ' e parei: não consegui guardar o próximo na lixeira.' : 'Não consegui guardar na lixeira agora, nada foi excluído. Tente de novo.'); return false; }
+            toast(feitos.length + (feitos.length === 1 ? ' item movido' : ' itens movidos') + ' para a lixeira.');
+            return true;
+        });
     }
     function abrirImportarConv() {
         var vistos = {}, jaTem = {};
@@ -2825,7 +2848,8 @@ function NotasFiscaisTDB(_a) {
                             h('input', { type: 'checkbox', checked: marc, 'aria-label': 'Enviar ' + k + ' junto', onChange: function (e) { var nova = e.target.checked ? lista.concat([k]) : lista.filter(function (x) { return x !== k; }); if (emEd) alterarDraft('anexos', nova); else { editarConv(c.id, 'anexos', nova); agendarSeguro(NF_KEY_CONV); } }, style: { width: 16, height: 16, accentColor: '#2878de' } }), NF_ROTULO_TIPO[k]);
                     }),
                     MOB && ativoEl);
-            return h('div', { key: c.id, 'data-nf-row': true, 'data-nf-alvo': c.aluno, onClick: function () { if (!emEd) setSel({ tipo: tipo, id: c.id }); }, onDoubleClick: function (e) { if (!emEd) desmarcar(e); }, style: Object.assign({}, estiloLinha(tipo, c.id), ehConv ? gradeConv : gradeCad, { opacity: c.ativo === false ? .55 : 1 }) },
+            return h('div', { key: c.id, 'data-nf-row': true, 'data-nf-alvo': c.aluno, onClick: function () { if (!emEd) setSel({ tipo: tipo, id: c.id }); }, onDoubleClick: function (e) { if (!emEd) desmarcar(e); }, style: Object.assign({}, estiloLinha(tipo, c.id), ehConv ? gradeConv : gradeCad, { opacity: c.ativo === false ? .55 : 1 }, (ehConv ? selV : selN) !== null ? { position: 'relative', paddingLeft: 46 } : {}) },
+                (ehConv ? selV : selN) !== null && h('span', { style: { position: 'absolute', left: 14, top: MOB ? 14 : '50%', transform: MOB ? 'none' : 'translateY(-50%)', display: 'flex' } }, h(TDBSelCaixa, { marcado: (ehConv ? selV : selN).indexOf(c.id) >= 0, onClick: function (e) { e.stopPropagation(); var setter = ehConv ? setSelV : setSelN; setter(function (a) { a = a || []; return a.indexOf(c.id) >= 0 ? a.filter(function (x) { return x !== c.id; }) : a.concat([c.id]); }); } })),
                 campoRot(ehConv ? 'Empresa (convênio)' : 'Aluno', modoPdf ? h('div', { style: { fontSize: 13, fontWeight: 700, color: COLORS.ink } }, c.aluno) : h(NFTexto, atrNome)),
                 campoRot('Nome na nota fiscal', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, c.nomeNota || '—') : h(NFTexto, { value: d.nomeNota, readOnly: lk, tabIndex: lk ? -1 : 0, placeholder: ehConv ? 'igual à empresa' : 'Nome do responsável na nota', 'aria-label': 'Nome na nota fiscal', onChange: function (e) { alterarDraft('nomeNota', e.target.value.replace(/\s*\n+\s*/g, ' ').toUpperCase()); }, style: Object.assign({}, inp, trava) })),
                 campoRot(ehConv ? 'CNPJ da empresa' : 'CPF do responsável', modoPdf ? h('div', { style: { fontSize: 13, color: COLORS.ink } }, doc || '—') : h('div', null,
@@ -2946,9 +2970,11 @@ function NotasFiscaisTDB(_a) {
                 h('div', { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
                     cad.length > 1 && h('button', { type: 'button', 'data-nf-ativar-todos': '1', title: q ? 'Marca como ativos os alunos que aparecem na busca' : 'Marca todos os alunos como ativos', onClick: function () { ativarTodos(true); }, style: btnS }, '☑ Marcar todos'),
                     cad.length > 1 && h('button', { type: 'button', 'data-nf-desativar-todos': '1', title: q ? 'Desmarca os alunos que aparecem na busca' : 'Desmarca todos os alunos (depois marque só os que quer enviar)', onClick: function () { ativarTodos(false); }, style: btnS }, '☐ Desmarcar todos'),
+                    h(TDBSelBtn, { ativo: selN !== null, onClick: function () { setSelN(function (a) { return a === null ? [] : null; }); } }),
                     h('button', { type: 'button', onClick: abrirImportar, style: btnS }, '⬇ Importar alunos da Mensalidade'),
                     h('button', { type: 'button', onClick: adicionarAluno, style: btnP }, h(Plus, { size: 14 }), ' Adicionar aluno'))),
             cad.length > 6 && h('div', { 'data-export-ignore': true, style: { padding: '0 16px 12px', position: 'relative' } }, h(Search, { size: 14, color: COLORS.inkSoft, style: { position: 'absolute', left: 28, top: 11 } }), h('input', { value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: 'Buscar aluno ou e-mail...', 'aria-label': 'Buscar no cadastro', style: Object.assign({}, inp, { paddingLeft: 34 }) })),
+            selN !== null && h(TDBSelBarra, { ids: selN, todos: cadVis.map(function (c) { return c.id; }), onTodos: setSelN, apagando: apagandoN, onCancelar: function () { setSelN(null); }, onApagar: function () { if (!selN.length) return; setApagandoN(true); removerLoteNF(selN.slice(), false).then(function (ok) { if (ok) setSelN(null); }).then(function () { setApagandoN(false); }, function () { setApagandoN(false); }); } }),
             cabecalho(['Aluno', 'Nome na nota fiscal', 'CPF do responsável', 'E-mail(s) para envio', 'Ativo', h('span', { 'data-export-ignore': true }, 'Ações')], gradeCad),
             linhasCad.length ? linhasCad : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, cad.length ? 'Nenhum aluno encontrado.' : 'Nenhum aluno cadastrado. Use “Importar alunos da Mensalidade” ou “Adicionar aluno”.')),
         // --- convênios (empresas) ---
@@ -2959,9 +2985,11 @@ function NotasFiscaisTDB(_a) {
                 h('div', { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
                     conv.length > 1 && h('button', { type: 'button', 'data-nf-ativar-todos-conv': '1', title: qc ? 'Marca como ativas as empresas que aparecem na busca' : 'Marca todas as empresas como ativas', onClick: function () { ativarTodosConv(true); }, style: btnS }, '☑ Marcar todos'),
                     conv.length > 1 && h('button', { type: 'button', 'data-nf-desativar-todos-conv': '1', title: qc ? 'Desmarca as empresas que aparecem na busca' : 'Desmarca todas as empresas (depois marque só as que quer enviar)', onClick: function () { ativarTodosConv(false); }, style: btnS }, '☐ Desmarcar todos'),
+                    h(TDBSelBtn, { ativo: selV !== null, onClick: function () { setSelV(function (a) { return a === null ? [] : null; }); } }),
                     h('button', { type: 'button', onClick: abrirImportarConv, style: btnS }, '⬇ Importar convênios da Mensalidade'),
                     h('button', { type: 'button', onClick: adicionarConvenio, style: btnP }, h(Plus, { size: 14 }), ' Adicionar convênio'))),
             conv.length > 6 && h('div', { 'data-export-ignore': true, style: { padding: '0 16px 12px', position: 'relative' } }, h(Search, { size: 14, color: COLORS.inkSoft, style: { position: 'absolute', left: 28, top: 11 } }), h('input', { value: buscaConv, onChange: function (e) { setBuscaConv(e.target.value); }, placeholder: 'Buscar empresa, CNPJ ou e-mail...', 'aria-label': 'Buscar nos convênios', style: Object.assign({}, inp, { paddingLeft: 34 }) })),
+            selV !== null && h(TDBSelBarra, { ids: selV, todos: convVis.map(function (c) { return c.id; }), onTodos: setSelV, apagando: apagandoN, onCancelar: function () { setSelV(null); }, onApagar: function () { if (!selV.length) return; setApagandoN(true); removerLoteNF(selV.slice(), true).then(function (ok) { if (ok) setSelV(null); }).then(function () { setApagandoN(false); }, function () { setApagandoN(false); }); } }),
             cabecalho(['Empresa (convênio)', 'Nome na nota fiscal', 'CNPJ da empresa', 'E-mail(s) para envio', 'Envia', 'Ativo', h('span', { 'data-export-ignore': true }, 'Ações')], gradeConv),
             linhasConv.length ? linhasConv : h('div', { style: { padding: '22px 16px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13.5, borderTop: '1px solid ' + COLORS.lineSoft } }, conv.length ? 'Nenhum convênio encontrado.' : 'Nenhum convênio cadastrado. Use “Importar convênios da Mensalidade” ou “Adicionar convênio”.')),
         importarConv && h(NFModalImportar, { nomes: importarConv, titulo: 'Importar convênios da Mensalidade', vazio: 'Todos os convênios da Mensalidade já estão no cadastro.', onFechar: function () { setImportarConv(null); }, onImportar: confirmarImportarConv }),
@@ -3339,6 +3367,30 @@ var COLORS = {
     lineSoft: 'var(--c-lineSoft)',
 };
 var PIE_COLORS = ['#2878de', '#d74349'];
+/* v1.71: selecionar vários itens para apagar (botão "Selecionar", caixinha por linha e barra) */
+function TDBSelBtn(p) {
+    return React.createElement("button", { type: "button", 'data-export-ignore': true, 'data-sel-btn': true, onClick: p.onClick, title: p.ativo ? 'Sair da seleção' : 'Escolher vários itens para apagar de uma vez', style: {
+            background: p.ativo ? COLORS.goldSoft : 'none', border: "1px solid ".concat(p.ativo ? COLORS.gold : COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
+            display: 'flex', alignItems: 'center', gap: 5, color: p.ativo ? COLORS.gold : COLORS.inkSoft, fontSize: 13, fontWeight: p.ativo ? 700 : 600, height: 39, boxSizing: 'border-box',
+        } }, React.createElement(Check, { size: 14 }), "Selecionar");
+}
+function TDBSelCaixa(p) {
+    return React.createElement("span", { role: "checkbox", 'aria-checked': !!p.marcado, 'data-sel-caixa': true, onClick: p.onClick, style: {
+            width: 20, height: 20, borderRadius: 6, flexShrink: 0, boxSizing: 'border-box', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            border: "2px solid ".concat(p.marcado ? COLORS.gold : COLORS.inkSoft), background: p.marcado ? COLORS.gold : COLORS.paperCard,
+        } }, p.marcado ? React.createElement(Check, { size: 13, color: "#FFFFFF", strokeWidth: 3 }) : null);
+}
+function TDBSelBarra(p) {
+    var n = p.ids.length, total = p.todos.length, tudo = total > 0 && n === total;
+    return React.createElement("div", { 'data-export-ignore': true, 'data-sel-barra': true, style: {
+            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: COLORS.goldSoft, border: "1px solid ".concat(COLORS.gold), borderRadius: 10, padding: '9px 14px',
+        } }, React.createElement("span", { onClick: function () { return p.onTodos(tudo ? [] : p.todos.slice()); }, style: { display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700, color: COLORS.gold } }, React.createElement(TDBSelCaixa, { marcado: tudo }), tudo ? 'Desmarcar todos' : 'Selecionar todos'),
+        React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: COLORS.gold, marginRight: 'auto' } }, n + (n === 1 ? ' selecionado' : ' selecionados')),
+        React.createElement("button", { type: "button", disabled: !n || p.apagando, onClick: p.onApagar, style: {
+            background: n ? COLORS.red : COLORS.lineSoft, color: n ? '#FFFFFF' : COLORS.inkSoft, border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 13, fontWeight: 800, cursor: n && !p.apagando ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 6,
+        } }, React.createElement(Trash2, { size: 14 }), p.apagando ? 'Apagando...' : 'Apagar selecionados'),
+        React.createElement("button", { type: "button", onClick: p.onCancelar, style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 700, color: COLORS.inkSoft, cursor: 'pointer' } }, "Cancelar"));
+}
 function Toast(_a) {
     var mensagem = _a.mensagem, tipo = _a.tipo;
     if (!mensagem) return null;
@@ -5374,6 +5426,8 @@ function Recibos(_a) {
         setToastMsg(msg);
         setTimeout(function () { return setToastMsg(null); }, 4000);
     }
+    var _selR = useState(null), selR = _selR[0], setSelR = _selR[1];
+    var _selRb = useState(false), apagandoR = _selRb[0], setApagandoR = _selRb[1];
     if (!dados) {
         return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Carregando recibos...");
     }
@@ -5443,6 +5497,7 @@ function Recibos(_a) {
     }
     var chavesAdicionadas = Object.keys(dados).filter(function (k) { return !SEED_RECIBOS[k] && dados[k] && Array.isArray(dados[k].rows); });
     var subTabAdicionado = chavesAdicionadas.indexOf(subTab) >= 0;
+    function toggleSelR(k) { setSelR(function (a) { a = a || []; return a.indexOf(k) >= 0 ? a.filter(function (x) { return x !== k; }) : a.concat([k]); }); }
     function excluirRecibosAdicionados(chaves) {
         if (!chaves || !chaves.length) return;
         var restore = chaves.map(function (k) { return { op: 'set', key: 'recibos_convenios', path: [k], value: dados[k] }; });
@@ -5885,12 +5940,12 @@ function Recibos(_a) {
             ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$'], ['valor2', 'Valor R$']]
             : [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Valor R$']];
     var colsPrev = (r.temSegundaColuna && !tdbUsaSegundaColuna(r)) ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Auxílio R$']] : (r.temSegundaColuna ? [['pai', 'Nome Mãe ou Pai'], ['crianca', 'Nome da Criança'], ['nascimento', 'Nascimento'], ['valor', 'Auxílio R$'], ['valor2', 'Compl. R$']] : cols);
-    return (React.createElement("div", { className: "recibos-view", style: { display: 'grid', gap: 20 } }, React.createElement(Toast, { mensagem: toastMsg }), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, categoriasRecibos.map(function (c) { if (renomeandoAba === c.key) return editorAbaRecibo(c); return (React.createElement("button", { key: c.key, "data-rec-aba": c.key, title: "Dois cliques para renomear a aba", className: "subtab-btn selection-card ".concat(subTab === c.key ? 'subtab-ativa selection-card-ativa' : ''), onClick: function () { return clicarAbaRecibo(c.key); }, style: {
+    return (React.createElement("div", { className: "recibos-view", style: { display: 'grid', gap: 20 } }, React.createElement(Toast, { mensagem: toastMsg }), selR !== null && React.createElement(TDBSelBarra, { ids: selR, todos: chavesAdicionadas, onTodos: setSelR, apagando: apagandoR, onCancelar: function () { setSelR(null); }, onApagar: function () { if (!selR.length) return; var qtd = selR.length; if (!window.confirm((qtd === 1 ? 'Apagar 1 recibo?' : 'Apagar ' + qtd + ' recibos?') + '\n\nEles v\u00E3o para a lixeira e ficam l\u00E1 at\u00E9 voc\u00EA restaurar ou excluir definitivamente. Os recibos originais n\u00E3o s\u00E3o afetados.')) return; excluirRecibosAdicionados(selR.slice()); setSelR(null); } }), React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, categoriasRecibos.map(function (c) { if (renomeandoAba === c.key) return editorAbaRecibo(c); return (React.createElement("button", { key: c.key, "data-rec-aba": c.key, title: "Dois cliques para renomear a aba", className: "subtab-btn selection-card ".concat(subTab === c.key ? 'subtab-ativa selection-card-ativa' : ''), onClick: function () { if (selR !== null) { if (chavesAdicionadas.indexOf(c.key) >= 0) toggleSelR(c.key); return; } return clicarAbaRecibo(c.key); }, style: {
             padding: '9px 16px', borderRadius: 8, border: "1px solid ".concat(COLORS.line), cursor: 'pointer',
             fontWeight: 700, fontSize: 13.5,
             background: subTab === c.key ? COLORS.inkButton : COLORS.paperCard,
             color: subTab === c.key ? '#FFFFFF' : COLORS.ink,
-        } }, c.label)); })), React.createElement("div", { style: { display: 'flex', gap: 8 } }, React.createElement("button", { type: 'button', onClick: adicionarRecibo, title: "Cria um recibo igual aos outros, com o nome da empresa e das crianças em branco", style: {
+        } }, selR !== null && chavesAdicionadas.indexOf(c.key) >= 0 && React.createElement("span", { style: { display: 'inline-flex', marginRight: 8, verticalAlign: 'middle' } }, React.createElement(TDBSelCaixa, { marcado: selR.indexOf(c.key) >= 0, onClick: function (e) { e.stopPropagation(); toggleSelR(c.key); } })), c.label)); })), React.createElement("div", { style: { display: 'flex', gap: 8 } }, React.createElement("button", { type: 'button', onClick: adicionarRecibo, title: "Cria um recibo igual aos outros, com o nome da empresa e das crianças em branco", style: {
             background: COLORS.gold, color: '#FFF', border: 'none', borderRadius: 8, padding: '10px 16px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
         } }, React.createElement(Plus, { size: 14 }), " Adicionar"), React.createElement("button", { type: 'button', onClick: criarReciboSemValores, "data-rec-sem-valores": "1", title: "Cria um recibo sem valores: só mãe/pai, criança e nascimento, com a linha do convênio sublinhada", style: {
@@ -5902,7 +5957,7 @@ function Recibos(_a) {
         } }, React.createElement(Trash2, { size: 14 }), " Excluir"), React.createElement("button", { type: 'button', onClick: excluirTodosRecibosAdicionados, title: "Move todos os recibos adicionados para a lixeira (pede confirmação). Os originais não são afetados.", style: {
             opacity: (chavesAdicionadas.length ? 1 : .45), background: 'transparent', color: COLORS.red, border: '1.5px solid ' + COLORS.red, borderRadius: 8, padding: '9px 14px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-        } }, React.createElement(Trash2, { size: 14 }), " Excluir todos"), React.createElement("button", { onClick: atualizarDataEmTodas, title: "Preenche a data de hoje nas 7 empresas de uma vez", style: {
+        } }, React.createElement(Trash2, { size: 14 }), " Excluir todos"), React.createElement(TDBSelBtn, { ativo: selR !== null, onClick: function () { setSelR(function (a) { return a === null ? [] : null; }); } }), React.createElement("button", { onClick: atualizarDataEmTodas, title: "Preenche a data de hoje nas 7 empresas de uma vez", style: {
             background: 'none', color: COLORS.gold, border: "1px solid ".concat(COLORS.gold), borderRadius: 8, padding: '10px 16px',
             fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
         } }, "\uD83D\uDCC5 Atualizar data (todas)"), React.createElement("button", { onClick: function () {
@@ -6220,6 +6275,9 @@ function Compras(_a) {
         var proximoIndice = Math.min(Math.max(indice, 0), nextCategorias.length - 1); setSubTab(nextCategorias[proximoIndice].key);
         setLinhaSelecionada(function (s) { var copia = __assign({}, s); delete copia[subTab]; return copia; }); setEditandoId(null); setBusca(''); cancelarNovaListaCompra(); cancelarRenomearListaCompra(); mostrarToast('Lista movida para a lixeira.');
     }
+    var _selCo = useState(null), selCo = _selCo[0], setSelCo = _selCo[1];
+    var _selCob = useState(false), apagandoCo = _selCob[0], setApagandoCo = _selCob[1];
+    useEffect(function () { setSelCo(null); }, [subTab]);
     if (!dados) {
         return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Carregando listas de compras...");
     }
@@ -6246,6 +6304,18 @@ function Compras(_a) {
     var CATEGORIA_DISPLAY = { 'VERDURAS': 'Verduras', 'FRUTAS': 'Frutas', 'Alimentos': 'Alimentos', 'Limpeza': 'Limpeza', 'Comidas': 'Comidas', 'Embalagens': 'Embalagens', 'Bebidas': 'Bebidas' };
     var categoriasDistintas = Array.from(new Set(itensFiltrados.map(function (it) { return it.categoria; }).filter(Boolean)));
     var categoriasConhecidas = ['VERDURAS', 'FRUTAS', 'Alimentos', 'Limpeza', 'Comidas', 'Embalagens', 'Bebidas'];
+    function toggleSelCo(id) { setSelCo(function (a) { a = a || []; return a.indexOf(id) >= 0 ? a.filter(function (x) { return x !== id; }) : a.concat([id]); }); }
+    function removerItensCompras(ids) {
+        var _a;
+        var mapa = new Set(Array.isArray(ids) ? ids : []);
+        var lista = listaAtual.itens.filter(function (i) { return mapa.has(i.id); });
+        if (!lista.length) return false;
+        if (!window.confirm('Apagar ' + lista.length + (lista.length === 1 ? ' item' : ' itens') + ' da lista?\n\nEles v\u00E3o para a lixeira e ficam l\u00E1 at\u00E9 voc\u00EA restaurar ou excluir definitivamente.')) return false;
+        var agora = Date.now();
+        persistLixeiraCompras(__spreadArray(__spreadArray([], lixeiraCompras, true), lista.map(function (item, i) { return { id: 'lixc' + agora + '_' + i + Math.random().toString(36).slice(2), subTab: subTab, item: item, apagadoEm: new Date().toISOString() }; }), true));
+        salvar(__assign(__assign({}, dados), (_a = {}, _a[subTab] = __assign(__assign({}, dados[subTab]), { itens: listaAtual.itens.filter(function (it) { return !mapa.has(it.id); }) }), _a)));
+        return true;
+    }
     var gruposParaExibir = subTab === 'arraiaTdb'
         ? ['Comidas', 'Embalagens', 'Bebidas'].map(function (c) { return ({ nome: CATEGORIA_DISPLAY[c] || c, itens: itensFiltrados.filter(function (it) { return it.categoria === c; }) }); })
         : (categoriasDistintas.length > 1
@@ -6801,10 +6871,10 @@ function Compras(_a) {
             color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px', height: 37,
             fontWeight: 700, fontSize: 13.5, cursor: interpretandoCompra ? 'default' : 'pointer',
             animation: gravandoCompra ? 'pulsarMic 1s ease-in-out infinite' : 'none',
-        } }, React.createElement(Mic, { size: 14, color: "#FFF" }), gravandoCompra ? 'Ouvindo...' : (interpretandoCompra ? 'Interpretando...' : 'Ditar alteração'))), React.createElement("div", { style: { position: 'relative' } }, React.createElement("button", { onClick: function () { return setLixeiraCompraAberta(function (v) { return !v; }); }, title: "Lixeira — restaure itens ou exclua definitivamente", style: {
+        } }, React.createElement(Mic, { size: 14, color: "#FFF" }), gravandoCompra ? 'Ouvindo...' : (interpretandoCompra ? 'Interpretando...' : 'Ditar alteração'))), React.createElement(TDBSelBtn, { ativo: selCo !== null, onClick: function () { setSelCo(function (a) { return a === null ? [] : null; }); } }), React.createElement("div", { style: { position: 'relative' } }, React.createElement("button", { onClick: function () { return setLixeiraCompraAberta(function (v) { return !v; }); }, title: "Lixeira — restaure itens ou exclua definitivamente", style: {
             background: COLORS.paperCard, border: "1.5px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 12px',
             fontWeight: 700, fontSize: 13, cursor: 'pointer', height: 37, color: COLORS.inkSoft, display: 'flex', alignItems: 'center', gap: 6,
-        } }, React.createElement(Trash2, { size: 13 }), " Lixeira", lixeiraCompras.length > 0 && (React.createElement("span", { style: { background: COLORS.red, color: '#FFF', borderRadius: 999, fontSize: 10.5, fontWeight: 700, padding: '1px 6px' } }, lixeiraCompras.length))), lixeiraCompraAberta && React.createElement(TDBTrashPanel, { aberto: lixeiraCompraAberta, titulo: 'Lixeira de Compras', subtitulo: 'Itens e listas removidos ficam aqui até você decidir.', itens: lixeiraCompras, onFechar: function () { return setLixeiraCompraAberta(false); }, onRestaurar: function (l) { return restaurarItemCompras(l.id); }, onExcluir: function (l) { return apagarDefinitivoCompras(l.id); }, onExcluirLote: function (ids) { return apagarDefinitivoComprasLote(ids); }, getTitulo: function (l) { return l.tipo === 'lista' ? 'Lista: ' + ((l.config && l.config.label) || l.subTab || 'Compras') : (l.item ? l.item.nome : 'Item'); }, getMeta: function (l) { var partes = []; if (l.subTab) partes.push('Lista: ' + l.subTab); if (l.apagadoEm) partes.push('Apagado em ' + new Date(l.apagadoEm).toLocaleDateString('pt-BR')); return partes.join(' · '); } }))), React.createElement("form", { onSubmit: adicionarItem, style: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end', background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, padding: 14 } }, React.createElement("div", { style: { display: 'grid', gap: 4, flex: '2 1 200px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "ITEM"), React.createElement("input", { value: novoItem.nome, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { nome: e.target.value })); }, placeholder: "Nome do item", spellCheck: "true", lang: "pt-BR", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } })), temColunaEstoque && (React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 85px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "ESTOQUE"), React.createElement("input", { value: novoItem.estoque, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { estoque: e.target.value })); }, placeholder: "\u2014", className: "mono", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 85px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "COMPRAR"), React.createElement("input", { value: novoItem.comprar, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { comprar: e.target.value })); }, placeholder: "0", className: "mono", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } })), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 75px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "UNIDADE"), React.createElement("select", { value: novoItem.unidade, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { unidade: e.target.value })); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', background: COLORS.paperCard, color: COLORS.ink } }, React.createElement("option", { value: "" }, "\u2014 nenhuma \u2014"), unidadesDisponiveis.map(function (u) { return React.createElement("option", { key: u, value: u }, rotuloUnidadeCompra(u)); }))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 140px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "OBSERVA\u00C7\u00C3O"), React.createElement("input", { value: novoItem.observacao, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { observacao: e.target.value })); }, placeholder: "Opcional", spellCheck: "true", lang: "pt-BR", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } })), opcoesCategoria.length > 0 && (React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 130px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 700 } }, subTab === 'arraiaTdb' ? "CATEGORIA DO ITEM" : "CATEGORIA"), React.createElement("select", { value: opcoesCategoria.includes(novoItem.categoria) ? novoItem.categoria : opcoesCategoria[0], onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { categoria: e.target.value })); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', background: COLORS.paperCard, color: COLORS.ink } }, opcoesCategoria.map(function (c) { return React.createElement("option", { key: c, value: c }, CATEGORIA_DISPLAY[c] || c); })))), React.createElement("button", { type: "submit", style: { background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px', fontWeight: 600, fontSize: 13.5, cursor: 'pointer', height: 37, display: 'flex', alignItems: 'center', gap: 6 } }, React.createElement(Plus, { size: 14 }), " Adicionar")), React.createElement("div", { style: { position: 'relative' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: busca, onChange: function (e) { return setBusca(e.target.value); }, placeholder: "Buscar item...", style: { width: '100%', boxSizing: 'border-box', border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '9px 10px 9px 34px', fontSize: 13.5 } })), gruposParaExibir.map(function (_a) {
+        } }, React.createElement(Trash2, { size: 13 }), " Lixeira", lixeiraCompras.length > 0 && (React.createElement("span", { style: { background: COLORS.red, color: '#FFF', borderRadius: 999, fontSize: 10.5, fontWeight: 700, padding: '1px 6px' } }, lixeiraCompras.length))), lixeiraCompraAberta && React.createElement(TDBTrashPanel, { aberto: lixeiraCompraAberta, titulo: 'Lixeira de Compras', subtitulo: 'Itens e listas removidos ficam aqui até você decidir.', itens: lixeiraCompras, onFechar: function () { return setLixeiraCompraAberta(false); }, onRestaurar: function (l) { return restaurarItemCompras(l.id); }, onExcluir: function (l) { return apagarDefinitivoCompras(l.id); }, onExcluirLote: function (ids) { return apagarDefinitivoComprasLote(ids); }, getTitulo: function (l) { return l.tipo === 'lista' ? 'Lista: ' + ((l.config && l.config.label) || l.subTab || 'Compras') : (l.item ? l.item.nome : 'Item'); }, getMeta: function (l) { var partes = []; if (l.subTab) partes.push('Lista: ' + l.subTab); if (l.apagadoEm) partes.push('Apagado em ' + new Date(l.apagadoEm).toLocaleDateString('pt-BR')); return partes.join(' · '); } }))), React.createElement("form", { onSubmit: adicionarItem, style: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end', background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, padding: 14 } }, React.createElement("div", { style: { display: 'grid', gap: 4, flex: '2 1 200px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "ITEM"), React.createElement("input", { value: novoItem.nome, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { nome: e.target.value })); }, placeholder: "Nome do item", spellCheck: "true", lang: "pt-BR", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } })), temColunaEstoque && (React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 85px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "ESTOQUE"), React.createElement("input", { value: novoItem.estoque, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { estoque: e.target.value })); }, placeholder: "\u2014", className: "mono", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } }))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 85px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "COMPRAR"), React.createElement("input", { value: novoItem.comprar, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { comprar: e.target.value })); }, placeholder: "0", className: "mono", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } })), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 75px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "UNIDADE"), React.createElement("select", { value: novoItem.unidade, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { unidade: e.target.value })); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', background: COLORS.paperCard, color: COLORS.ink } }, React.createElement("option", { value: "" }, "\u2014 nenhuma \u2014"), unidadesDisponiveis.map(function (u) { return React.createElement("option", { key: u, value: u }, rotuloUnidadeCompra(u)); }))), React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 140px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 600 } }, "OBSERVA\u00C7\u00C3O"), React.createElement("input", { value: novoItem.observacao, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { observacao: e.target.value })); }, placeholder: "Opcional", spellCheck: "true", lang: "pt-BR", style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box' } })), opcoesCategoria.length > 0 && (React.createElement("div", { style: { display: 'grid', gap: 4, flex: '1 1 130px' } }, React.createElement("label", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 700 } }, subTab === 'arraiaTdb' ? "CATEGORIA DO ITEM" : "CATEGORIA"), React.createElement("select", { value: opcoesCategoria.includes(novoItem.categoria) ? novoItem.categoria : opcoesCategoria[0], onChange: function (e) { return setNovoItem(__assign(__assign({}, novoItem), { categoria: e.target.value })); }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 10px', fontSize: 13.5, boxSizing: 'border-box', background: COLORS.paperCard, color: COLORS.ink } }, opcoesCategoria.map(function (c) { return React.createElement("option", { key: c, value: c }, CATEGORIA_DISPLAY[c] || c); })))), React.createElement("button", { type: "submit", style: { background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px', fontWeight: 600, fontSize: 13.5, cursor: 'pointer', height: 37, display: 'flex', alignItems: 'center', gap: 6 } }, React.createElement(Plus, { size: 14 }), " Adicionar")), React.createElement("div", { style: { position: 'relative' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: busca, onChange: function (e) { return setBusca(e.target.value); }, placeholder: "Buscar item...", style: { width: '100%', boxSizing: 'border-box', border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '9px 10px 9px 34px', fontSize: 13.5 } })), selCo !== null && React.createElement(TDBSelBarra, { ids: selCo, todos: gruposParaExibir.reduce(function (a, g) { return a.concat(g.itens.map(function (i) { return i.id; })); }, []), onTodos: setSelCo, apagando: apagandoCo, onCancelar: function () { setSelCo(null); }, onApagar: async function () { if (!selCo.length) return; setApagandoCo(true); try { var ok = removerItensCompras(selCo.slice()); if (ok) setSelCo(null); } finally { setApagandoCo(false); } } }), gruposParaExibir.map(function (_a) {
         var nomeGrupo = _a.nome, itensDoGrupo = _a.itens;
         var iconeGrupo = nomeGrupo === 'Alimentos' ? '🍽️' : nomeGrupo === 'Limpeza' ? '🧴' : nomeGrupo === 'Comidas' ? '🍽️' : (nomeGrupo === 'Embalagens' ? '📦' : (nomeGrupo === 'Bebidas' ? '🥤' : ''));
         return (React.createElement("div", { key: nomeGrupo, style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 12, overflow: 'hidden', boxShadow: subTab === 'arraiaTdb' ? '0 8px 24px rgba(17,19,24,0.05)' : 'none' } }, React.createElement("div", { style: { padding: '12px 18px', background: COLORS.goldSoft, fontSize: 13.5, fontWeight: 800, color: COLORS.ink, display: 'flex', alignItems: 'center', gap: 7 } }, iconeGrupo && React.createElement("span", { style: { fontSize: 16 } }, iconeGrupo), React.createElement("span", null, nomeGrupo), React.createElement("span", { style: { marginLeft: 'auto', fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 700 } }, itensDoGrupo.length, " item(ns)")), React.createElement("div", { className: "compras-linha", style: { display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '9px 18px', background: COLORS.lineSoft, fontSize: 11.5, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '0.02em' } }, React.createElement("span", null, "Item"), temColunaEstoque && React.createElement("span", null, "Estoque"), React.createElement("span", null, "Comprar"), React.createElement("span", null)), itensDoGrupo.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '30px 0', fontSize: 14 } }, "Nenhum item encontrado.")) : itensDoGrupo.map(function (item) { return (React.createElement("div", { key: item.id, className: "compras-linha", onClick: function () { return editandoId !== item.id && setLinhaSelecionada(function (s) {
@@ -6814,14 +6884,14 @@ function Compras(_a) {
                 var _a;
                 return (__assign(__assign({}, s), (_a = {}, _a[subTab] = null, _a)));
             }); }, style: {
-                display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: '10px 18px',
+                display: 'grid', gridTemplateColumns: gridColunas, gap: 10, alignItems: 'center', padding: selCo !== null ? '10px 18px 10px 46px' : '10px 18px', position: selCo !== null ? 'relative' : undefined,
                 borderTop: "1px solid ".concat(COLORS.lineSoft), cursor: editandoId === item.id ? 'default' : 'pointer',
                 borderLeft: linhaSelecionada[subTab] === item.id ? '3px solid #E0AE3C' : '3px solid transparent',
                 background: linhaSelecionada[subTab] === item.id ? 'rgba(224, 174, 60, 0.16)' : 'transparent',
                 backdropFilter: linhaSelecionada[subTab] === item.id ? 'blur(6px)' : 'none',
                 boxShadow: linhaSelecionada[subTab] === item.id ? 'inset 0 1px 0 rgba(255,255,255,0.5)' : 'none',
                 transition: 'background 0.15s ease',
-            } }, editandoId === item.id ? (React.createElement(React.Fragment, null, React.createElement("div", { style: { display: 'flex', gap: 6 } }, React.createElement("input", { value: editItem.nome, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setEditItem(__assign(__assign({}, editItem), { nome: e.target.value })); }, onKeyDown: function (e) {
+            } }, selCo !== null && React.createElement("span", { style: { position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', display: 'flex' } }, React.createElement(TDBSelCaixa, { marcado: selCo.indexOf(item.id) >= 0, onClick: function (e) { e.stopPropagation(); toggleSelCo(item.id); } })), editandoId === item.id ? (React.createElement(React.Fragment, null, React.createElement("div", { style: { display: 'flex', gap: 6 } }, React.createElement("input", { value: editItem.nome, onFocus: selecionarConteudoCampoCompra, onChange: function (e) { return setEditItem(__assign(__assign({}, editItem), { nome: e.target.value })); }, onKeyDown: function (e) {
                 if (e.key === 'Enter')
                     salvarEdicaoItem(item.id);
                 if (e.key === 'Escape')
@@ -10787,10 +10857,28 @@ function FestasTDB(_a) {
         setDados(next);
         try { window.storage.set('festas_tdb', JSON.stringify(next), false); } catch (e) {}
     }
+    var _selF = useState(null), selF = _selF[0], setSelF = _selF[1];
+    var _selFb = useState(false), apagandoF = _selFb[0], setApagandoF = _selFb[1];
+    useEffect(function () { setSelF(null); }, [subTab]);
     if (!dados) return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Carregando Festas TDB...");
     var abaAtual = abasFestas.find(function (a) { return a.key === subTab; }) || abasFestas[0] || FESTAS_TDB_ABAS[0];
     if (!abasFestas.some(function (a) { return a.key === subTab; }) && abasFestas.length) setTimeout(function () { setSubTab(abasFestas[0].key); }, 0);
     var rows = dados[subTab] || [];
+    function toggleSelF(id) { setSelF(function (a) { a = a || []; return a.indexOf(id) >= 0 ? a.filter(function (x) { return x !== id; }) : a.concat([id]); }); }
+    async function removerRows(ids) {
+        var mapa = new Set(Array.isArray(ids) ? ids : []);
+        var lista = rows.filter(function (r) { return mapa.has(r.id); });
+        if (!lista.length) return false;
+        if (!window.confirm('Apagar ' + lista.length + (lista.length === 1 ? ' registro' : ' registros') + '?\n\nEles v\u00E3o para a lixeira e ficam l\u00E1 at\u00E9 voc\u00EA restaurar ou excluir definitivamente.')) return false;
+        try {
+            for (var k = 0; k < lista.length; k++) {
+                var rr = lista[k], idx = rows.findIndex(function (r) { return r.id === rr.id; });
+                await window.__tdbLixeiraAdicionar({ rotulo: rr.nome || 'Registro de festa', origem: 'Festas TDB \u00B7 ' + (abaAtual ? abaAtual.label : subTab), restoreOps: [{ op:'insert', key:'festas_tdb', path:[subTab], index:idx, item:rr, uniqueField:'id' }] });
+            }
+        } catch (e) { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); return false; }
+        var next = __assign({}, dados); next[subTab] = rows.filter(function (r) { return !mapa.has(r.id); }); salvar(next);
+        return true;
+    }
     function normalizarBuscaFestas(v) {
         return String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
     }
@@ -11038,7 +11126,7 @@ function FestasTDB(_a) {
                     React.createElement("td", { style: tdPrimeiro }, emEdicao ? React.createElement("div", { style: { display: 'grid', gap: 5 } },
                         React.createElement("input", { value: editRow.nome || '', onChange: function (e) { return alterarEdit('nome', e.target.value); }, spellCheck: "true", lang: "pt-BR", style: inp }),
                         React.createElement("select", { value: editRow.tipo || 'PARTICULAR', onChange: function (e) { return alterarEdit('tipo', e.target.value); }, style: __assign(__assign({}, inp), { fontSize: 10.5, fontWeight: 700 }) }, React.createElement("option", { value: "PARTICULAR" }, "Particular"), React.createElement("option", { value: "PREFEITURA" }, "Prefeitura"))
-                    ) : React.createElement("span", null, r.nome || '—', tdbCfBadge(r, 'tdb-cf-st', marcarFestaConf), tdbCfBadge(r, 'tdb-cf-nm', marcarFestaConf))),
+                    ) : React.createElement("span", selF !== null ? { style: { display: 'inline-flex', alignItems: 'center', gap: 8 } } : null, selF !== null && React.createElement(TDBSelCaixa, { marcado: selF.indexOf(r.id) >= 0, onClick: function (e) { e.stopPropagation(); toggleSelF(r.id); } }), r.nome || '—', tdbCfBadge(r, 'tdb-cf-st', marcarFestaConf), tdbCfBadge(r, 'tdb-cf-nm', marcarFestaConf))),
                     isMobileView ? null : paiTd(r, emEdicao),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { type: "number", min: "0", step: "1", inputMode: "numeric", value: editRow.pessoas || '', onChange: function (e) { return alterarEdit('pessoas', e.target.value.replace(/[^0-9]/g, '')); }, style: __assign(__assign({}, inp), { textAlign: 'center' }) }) : React.createElement("span", { className: "mono", style: { display: 'block', textAlign: 'center', fontWeight: 700 } }, r.pessoas || '—')),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement(CampoDinheiroTDB, { value: editRow.valor || '', onChange: function (v) { return alterarEdit('valor', v); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", style: inp } }) : React.createElement("span", { className: "mono", style: { fontWeight: 700, color: _festasNumero(r.valor) > 0 ? COLORS.green : COLORS.inkSoft } }, _festasNumero(r.valor) > 0 ? formatBRL(_festasNumero(r.valor)) : '—')),
@@ -11133,7 +11221,7 @@ function FestasTDB(_a) {
             React.createElement("input", { type: "search", value: buscaFestas, onChange: function (e) { return setBuscaFestas(e.target.value); }, placeholder: "Pesquisar nome, valor, data, banco, pago ou não pago...", autoComplete: "off", spellCheck: "false", 'aria-label': "Pesquisar participantes da festa", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 14, fontFamily: 'Inter, sans-serif', padding: '7px 4px' } }),
             filtrosFestasAtivos ? React.createElement("button", { type: "button", onClick: limparFiltrosFestas, title: "Limpar pesquisa e filtros", 'aria-label': "Limpar pesquisa e filtros", style: { width: 36, height: 36, flex: '0 0 36px', border: '1px solid ' + COLORS.line, borderRadius: 12, background: COLORS.paperCard, color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 15 })) : null,
             filtrosFestasAtivos ? React.createElement("span", { className: "mono", style: { flex: '0 0 auto', fontSize: 11.5, fontWeight: 800, color: COLORS.inkButton, whiteSpace: 'nowrap' } }, rowsFiltradosFestas.length + " de " + rows.length) : null),
-        React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirFestasAberto(true); }, title: "Conferir o extrato do banco com os pagamentos desta festa", style: {
+        React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', gap: 8, flexWrap: 'wrap' } }, React.createElement(TDBSelBtn, { ativo: selF !== null, onClick: function () { setSelF(function (a) { return a === null ? [] : null; }); } }), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirFestasAberto(true); }, title: "Conferir o extrato do banco com os pagamentos desta festa", style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
         } }, React.createElement(Check, { size: 14 }), "Conferir extrato"), selosFesta > 0 && React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: limparCertinhosFesta, title: "Tirar todos os certinhos desta festa para conferir de novo com outro extrato", style: {
@@ -11143,6 +11231,7 @@ function FestasTDB(_a) {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
         } }, "Atualizar nomes (" + nomesDiferentes.length + ")")),
+        selF !== null && React.createElement(TDBSelBarra, { ids: selF, todos: rowsFiltradosFestas.map(function (r) { return r.id; }), onTodos: setSelF, apagando: apagandoF, onCancelar: function () { setSelF(null); }, onApagar: async function () { if (!selF.length) return; setApagandoF(true); try { var ok = await removerRows(selF.slice()); if (ok) setSelF(null); } finally { setApagandoF(false); } } }),
         conferirFestasAberto && React.createElement(ConferirExtratoTDB, { modo: 'festas', tituloFesta: (abaAtual && abaAtual.label) || 'Festa', linhasFesta: rows, transacoes: transacoes, onFechar: function () { setConferirFestasAberto(false); }, onSalvar: function (mapa) {
             var next = __assign({}, dados);
             next[subTab] = (dados[subTab] || []).map(function (r) { return Object.prototype.hasOwnProperty.call(mapa, r.id) ? __assign(__assign({}, r), { conferido: mapa[r.id] }) : r; });
@@ -11157,6 +11246,9 @@ function FestasTDB(_a) {
 function Arquivos() {
     var _this = this;
     var _a = useState(null), itens = _a[0], setItens = _a[1];
+    var _selA = useState(null), selA = _selA[0], setSelA = _selA[1];
+    var _selAb = useState(false), apagandoA = _selAb[0], setApagandoA = _selAb[1];
+    function toggleSelA(id) { setSelA(function (a) { a = a || []; return a.indexOf(id) >= 0 ? a.filter(function (x) { return x !== id; }) : a.concat([id]); }); }
     var itensRef = useRef(null);
     var _b = useState(null), toastMsg = _b[0], setToastMsg = _b[1];
     var _c = useState(null), enviandoAnexo = _c[0], setEnviandoAnexo = _c[1];
@@ -11252,6 +11344,22 @@ function Arquivos() {
         window.__tdbLixeiraAdicionar({ rotulo: item.titulo || 'Arquivo', origem: 'Arquivos', restoreOps: [{ op:'insert', key:'arquivos_galeria_lista', path:[], index:idx, item:item, uniqueField:'id' }], cleanupKeys: item.anexoNome ? ['galeria_item_anexo_' + id] : [] }).then(function () {
         salvar((itensRef.current || itens).filter(function (i) { return i.id !== id; })); mostrarToast('Arquivo movido para a lixeira.');
         }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
+    }
+    async function removerItens(ids) {
+        var mapa = new Set(Array.isArray(ids) ? ids : []);
+        var base = itensRef.current || itens;
+        var lista = base.filter(function (i) { return mapa.has(i.id); });
+        if (!lista.length) return false;
+        if (!window.confirm('Mover ' + lista.length + (lista.length === 1 ? ' arquivo' : ' arquivos') + ' para a lixeira?\n\nOs arquivos anexados ficam preservados at\u00E9 voc\u00EA excluir definitivamente.')) return false;
+        try {
+            for (var k = 0; k < lista.length; k++) {
+                var item = lista[k], idx = base.findIndex(function (i) { return i.id === item.id; });
+                await window.__tdbLixeiraAdicionar({ rotulo: item.titulo || 'Arquivo', origem: 'Arquivos', restoreOps: [{ op: 'insert', key: 'arquivos_galeria_lista', path: [], index: idx, item: item, uniqueField: 'id' }], cleanupKeys: item.anexoNome ? ['galeria_item_anexo_' + item.id] : [] });
+            }
+        } catch (e) { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); return false; }
+        salvar((itensRef.current || itens).filter(function (i) { return !mapa.has(i.id); }));
+        mostrarToast(lista.length + (lista.length === 1 ? ' arquivo movido' : ' arquivos movidos') + ' para a lixeira.');
+        return true;
     }
     var LIMITE_ANEXO = 25 * 1024 * 1024;
     var TIPOS_ACEITOS = ['application/pdf', 'image/'];
@@ -11399,13 +11507,13 @@ function Arquivos() {
         cursor: 'pointer', padding: '5px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
         flexShrink: 0, width: 56, height: 44, boxSizing: 'border-box',
     };
-    return (React.createElement("div", { style: { display: 'grid', gap: 16 } }, React.createElement(Toast, { mensagem: toastMsg }), React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 } }, React.createElement("div", null, React.createElement("div", { className: "serif", style: { fontSize: 18, fontWeight: 700, color: COLORS.ink } }, "\uD83D\uDDBC\uFE0F Arquivos"), React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft } }, "Guarde PDFs e fotos de documentos aqui \u2014 comprovantes soltos, pap\u00E9is escaneados, o que precisar. Separado das Anota\u00E7\u00F5es, s\u00F3 pra arquivo.")), React.createElement("button", { onClick: novoItem, style: {
+    return (React.createElement("div", { style: { display: 'grid', gap: 16 } }, React.createElement(Toast, { mensagem: toastMsg }), React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 } }, React.createElement("div", null, React.createElement("div", { className: "serif", style: { fontSize: 18, fontWeight: 700, color: COLORS.ink } }, "\uD83D\uDDBC\uFE0F Arquivos"), React.createElement("div", { style: { fontSize: 13, color: COLORS.inkSoft } }, "Guarde PDFs e fotos de documentos aqui \u2014 comprovantes soltos, pap\u00E9is escaneados, o que precisar. Separado das Anota\u00E7\u00F5es, s\u00F3 pra arquivo.")), React.createElement("div", { style: { display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 } }, React.createElement(TDBSelBtn, { ativo: selA !== null, onClick: function () { setSelA(function (a) { return a === null ? [] : null; }); } }), React.createElement("button", { onClick: novoItem, style: {
             background: COLORS.inkButton, color: '#FFF', border: 'none', borderRadius: 7, padding: '9px 16px',
             fontWeight: 600, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
-        } }, React.createElement(Plus, { size: 14 }), " Novo arquivo")), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14 } }, "Nenhum arquivo ainda. Clique em \"Novo arquivo\" pra come\u00E7ar.")) : (React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 } }, itens.map(function (item) { return (React.createElement("div", { key: item.id, style: {
+        } }, React.createElement(Plus, { size: 14 }), " Novo arquivo"))), selA !== null && itens.length > 0 && React.createElement(TDBSelBarra, { ids: selA, todos: itens.map(function (i) { return i.id; }), onTodos: setSelA, apagando: apagandoA, onCancelar: function () { setSelA(null); }, onApagar: async function () { if (!selA.length) return; setApagandoA(true); try { var ok = await removerItens(selA.slice()); if (ok) setSelA(null); } finally { setApagandoA(false); } } }), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14 } }, "Nenhum arquivo ainda. Clique em \"Novo arquivo\" pra come\u00E7ar.")) : (React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 } }, itens.map(function (item) { return (React.createElement("div", { key: item.id, style: {
             background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 12,
-            padding: 12, display: 'grid', gap: 10, alignContent: 'start',
-        } }, React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 } }, editandoTitulo === item.id ? (React.createElement("input", { autoFocus: true, value: tituloEdit, onChange: function (e) { return setTituloEdit(e.target.value); }, onBlur: function () { return salvarTitulo(item.id); }, onKeyDown: function (e) {
+            padding: selA !== null ? '12px 12px 12px 42px' : 12, display: 'grid', gap: 10, alignContent: 'start', position: 'relative',
+        } }, selA !== null && React.createElement("span", { style: { position: 'absolute', left: 12, top: 14, display: 'flex' } }, React.createElement(TDBSelCaixa, { marcado: selA.indexOf(item.id) >= 0, onClick: function () { toggleSelA(item.id); } })), React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 } }, editandoTitulo === item.id ? (React.createElement("input", { autoFocus: true, value: tituloEdit, onChange: function (e) { return setTituloEdit(e.target.value); }, onBlur: function () { return salvarTitulo(item.id); }, onKeyDown: function (e) {
             if (e.key === 'Enter')
                 salvarTitulo(item.id);
         }, style: { border: "1px solid ".concat(COLORS.line), borderRadius: 6, padding: '5px 8px', fontSize: 14, fontWeight: 700, flex: '1 1 auto', minWidth: 0 } })) : (React.createElement("div", { onClick: function () { return iniciarEdicaoTitulo(item); }, title: "Clique pra renomear", style: {
@@ -13883,6 +13991,25 @@ function salvarTudoAgora() {
         }
         persist(transacoes.filter(function (t) { return t.id !== id; }));
     }
+    async function removerLancamentos(ids) {
+        if (bloquearEdicaoSeEncerrado_())
+            return false;
+        var mapa = new Set(Array.isArray(ids) ? ids : []);
+        var itens = transacoes.filter(function (t) { return mapa.has(t.id); });
+        if (!itens.length)
+            return false;
+        if (!window.confirm('Apagar ' + itens.length + (itens.length === 1 ? ' item' : ' itens') + '?\n\nEles vão para a lixeira e ficam lá até você restaurar ou excluir definitivamente.'))
+            return false;
+        var agora = Date.now();
+        try {
+            await persistLixeira(lixeira.concat(itens.map(function (item, i) {
+                var nome = String(item.categoria || 'lançamento').replace('Mensalidade - ', '').replace('Convênio - ', '');
+                return { id: 'lix' + agora + '_' + i + Math.random().toString(36).slice(2), rotulo: nome, dados: item, origem: 'Lançamentos / Mensalidades', ano: exercicioAtual, apagadoEm: new Date().toISOString(), restoreOps: [{ op: 'insert', key: 'transacoes_financas2026', path: [], item: item, uniqueField: 'id' }] };
+            })));
+        } catch (e) { window.alert('Não consegui guardar os itens na lixeira. Eles foram mantidos na lista.'); return false; }
+        persist(transacoes.filter(function (t) { return !mapa.has(t.id); }));
+        return true;
+    }
     function copiarParaMesSeguinte(ids) {
         if (bloquearEdicaoSeEncerrado_()) return null;
         var resumo = { criadas: 0, preenchidas: 0, jaExistem: 0, semValor: 0, semMes: 0, destino: '' };
@@ -14317,7 +14444,7 @@ function salvarTudoAgora() {
             { label: 'Entradas (com dados)', valor: kpis.entradas, icon: TrendingUp, cor: COLORS.green, bg: COLORS.greenBg },
             { label: 'Saídas (com dados)', valor: kpis.saidas, icon: TrendingDown, cor: COLORS.red, bg: COLORS.redBg },
             { label: 'Resultado', valor: kpis.resultado, icon: kpis.resultado >= 0 ? TrendingUp : TrendingDown, cor: '#4A5A58', bg: COLORS.lineSoft, destaque: true },
-        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, mesesSel: mesesSel, setMesesSel: setMesesSel, copiarParaMesSeguinte: copiarParaMesSeguinte, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { copiarNomes: copiarNomesParaProximos, marcarConferidos: marcarConferidos, transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : tab === 'municipioCb' ? (React.createElement(MunicipioCbTDB, null)) : tab === 'notasFiscais' ? (React.createElement(NotasFiscaisTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual, marcarNotasEnviadas: marcarNotasEnviadas })) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
+        ] }))), tab === 'visao' ? (React.createElement(VisaoGeral, { resumoMensal: resumoMensal, top10: top10, fixasVsVariaveis: fixasVsVariaveis, saldoEvolucao: saldoEvolucao, transacoes: transacoes, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, modoPrivado: modoPrivado, setModoPrivado: setModoPrivado, exercicioAtual: exercicioAtual })) : tab === 'lancamentos' ? (React.createElement(Lancamentos, { transacoes: transacoes, agrupadoPorMes: agrupadoPorMes, filtroMes: filtroMes, setFiltroMes: setFiltroMes, filtroTexto: filtroTexto, setFiltroTexto: setFiltroTexto, filtroStatusLancamento: filtroStatusLancamento, setFiltroStatusLancamento: setFiltroStatusLancamento, mesesAbertos: mesesAbertos, setMesesAbertos: setMesesAbertos, toggleMes: toggleMes, removerLancamento: removerLancamento, removerLancamentos: removerLancamentos, editarLancamento: editarLancamento, novoMes: novoMes, setNovoMes: setNovoMes, novaCategoria: novaCategoria, setNovaCategoria: setNovaCategoria, novoTipo: novoTipo, setNovoTipo: setNovoTipo, novoValor: novoValor, setNovoValor: setNovoValor, novoStatus: novoStatus, setNovoStatus: setNovoStatus, novaData: novaData, setNovaData: setNovaData, adicionarLancamento: adicionarLancamento, mesesSel: mesesSel, setMesesSel: setMesesSel, copiarParaMesSeguinte: copiarParaMesSeguinte, formErro: formErro, formOk: formOk, saldosMensais: saldosMensais, salvarSaldoMensal: salvarSaldoMensal, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA })) : tab === 'mensalidades' ? (React.createElement(Mensalidades, { copiarNomes: copiarNomesParaProximos, marcarConferidos: marcarConferidos, transacoes: transacoes, darBaixa: darBaixa, darNota: darNota, definirFoto: definirFoto, editarLancamento: editarLancamento, removerLancamento: removerLancamento, removerLancamentos: removerLancamentos, adicionarEntrada: adicionarEntrada, privadoTotais: privadoTotais, setPrivadoTotais: setPrivadoTotais, privadoDetalhes: privadoDetalhes, setPrivadoDetalhes: setPrivadoDetalhes, chamarIA: chamarIA, exercicioAtual: exercicioAtual })) : tab === 'contratos' ? (React.createElement(Contratos, { chamarIA: chamarIA })) : tab === 'compras' ? (React.createElement(Compras, { chamarIA: chamarIA })) : tab === 'recibos' ? (React.createElement(Recibos, { chamarIA: chamarIA })) : tab === 'valores' ? (React.createElement(Valores, { modoPrivado: modoPrivadoValores, setModoPrivado: setModoPrivadoValores, exercicioAtual: exercicioAtual })) : tab === 'rematricula' ? (React.createElement(Rematricula, { transacoes: transacoes, resumoMensal: resumoMensal, exercicioAtual: exercicioAtual, modoPrivado: modoPrivadoRematricula, setModoPrivado: setModoPrivadoRematricula })) : tab === 'anotacoes' ? (React.createElement(Anotacoes, { chamarIA: chamarIA })) : tab === 'arquivos' ? (React.createElement(Arquivos, null)) : tab === 'festasTdb' ? (React.createElement(FestasTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual })) : tab === 'calendario' ? (React.createElement(CalendarioTDB, null)) : tab === 'municipioCb' ? (React.createElement(MunicipioCbTDB, null)) : tab === 'notasFiscais' ? (React.createElement(NotasFiscaisTDB, { transacoes: transacoes, exercicioAtual: exercicioAtual, marcarNotasEnviadas: marcarNotasEnviadas })) : (React.createElement(ContasPessoais, { chamarIA: chamarIA, onAbrirIA: function () { setPerguntaInicialIA(null); setIaAberta(true); } })))));
 }
 function ModalExercicioEncerrado(_a) {
     var ano = _a.ano, onFechar = _a.onFechar;
@@ -15380,7 +15507,10 @@ function FiltroMesesMulti(p) {
             atalhos, MESES.map(linhaMes))));
 }
 function Lancamentos(props) {
-    var transacoes = props.transacoes, agrupadoPorMes = props.agrupadoPorMes, filtroMes = props.filtroMes, setFiltroMes = props.setFiltroMes, filtroTexto = props.filtroTexto, setFiltroTexto = props.setFiltroTexto, filtroStatusLancamento = props.filtroStatusLancamento, setFiltroStatusLancamento = props.setFiltroStatusLancamento, mesesAbertos = props.mesesAbertos, setMesesAbertos = props.setMesesAbertos, toggleMes = props.toggleMes, removerLancamento = props.removerLancamento, editarLancamento = props.editarLancamento, novoMes = props.novoMes, setNovoMes = props.setNovoMes, novaCategoria = props.novaCategoria, setNovaCategoria = props.setNovaCategoria, novoTipo = props.novoTipo, setNovoTipo = props.setNovoTipo, novoValor = props.novoValor, setNovoValor = props.setNovoValor, novoStatus = props.novoStatus, setNovoStatus = props.setNovoStatus, adicionarLancamento = props.adicionarLancamento, formErro = props.formErro, formOk = props.formOk, saldosMensais = props.saldosMensais, salvarSaldoMensal = props.salvarSaldoMensal, privadoTotais = props.privadoTotais, setPrivadoTotais = props.setPrivadoTotais, privadoDetalhes = props.privadoDetalhes, setPrivadoDetalhes = props.setPrivadoDetalhes, chamarIA = props.chamarIA, novaData = props.novaData, setNovaData = props.setNovaData, mesesSel = props.mesesSel || [], setMesesSel = props.setMesesSel, copiarParaMesSeguinte = props.copiarParaMesSeguinte;
+    var transacoes = props.transacoes, agrupadoPorMes = props.agrupadoPorMes, filtroMes = props.filtroMes, setFiltroMes = props.setFiltroMes, filtroTexto = props.filtroTexto, setFiltroTexto = props.setFiltroTexto, filtroStatusLancamento = props.filtroStatusLancamento, setFiltroStatusLancamento = props.setFiltroStatusLancamento, mesesAbertos = props.mesesAbertos, setMesesAbertos = props.setMesesAbertos, toggleMes = props.toggleMes, removerLancamento = props.removerLancamento, removerLancamentos = props.removerLancamentos, editarLancamento = props.editarLancamento, novoMes = props.novoMes, setNovoMes = props.setNovoMes, novaCategoria = props.novaCategoria, setNovaCategoria = props.setNovaCategoria, novoTipo = props.novoTipo, setNovoTipo = props.setNovoTipo, novoValor = props.novoValor, setNovoValor = props.setNovoValor, novoStatus = props.novoStatus, setNovoStatus = props.setNovoStatus, adicionarLancamento = props.adicionarLancamento, formErro = props.formErro, formOk = props.formOk, saldosMensais = props.saldosMensais, salvarSaldoMensal = props.salvarSaldoMensal, privadoTotais = props.privadoTotais, setPrivadoTotais = props.setPrivadoTotais, privadoDetalhes = props.privadoDetalhes, setPrivadoDetalhes = props.setPrivadoDetalhes, chamarIA = props.chamarIA, novaData = props.novaData, setNovaData = props.setNovaData, mesesSel = props.mesesSel || [], setMesesSel = props.setMesesSel, copiarParaMesSeguinte = props.copiarParaMesSeguinte;
+    var _selL = useState(null), selL = _selL[0], setSelL = _selL[1];
+    var _selLb = useState(false), apagandoL = _selLb[0], setApagandoL = _selLb[1];
+    function toggleSelL(id) { setSelL(function (a) { a = a || []; return a.indexOf(id) >= 0 ? a.filter(function (x) { return x !== id; }) : a.concat([id]); }); }
     var _copiaMsg = useState(null), copiaMsg = _copiaMsg[0], setCopiaMsg = _copiaMsg[1];
     var _pdfMesState = useState(function () { return filtroMes !== 'TODOS' ? filtroMes : (MESES[new Date().getMonth()] || 'SETEMBRO'); }), mesExportarPdf = _pdfMesState[0], setMesExportarPdf = _pdfMesState[1];
     var _pdfBusyState = useState(false), exportandoMesPdf = _pdfBusyState[0], setExportandoMesPdf = _pdfBusyState[1];
@@ -15620,10 +15750,10 @@ function Lancamentos(props) {
                 color: ativo ? corAtivo : COLORS.inkSoft, background: ativo ? bgAtivo : 'transparent',
                 '--select-cor': corAtivo,
             } }, op.rotulo));
-    })), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
+    })), React.createElement(TDBSelBtn, { ativo: selL !== null, onClick: function () { setSelL(function (a) { return a === null ? [] : null; }); } }), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
-        } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), React.createElement("div", { style: { display: 'grid', gap: 14 } }, React.createElement(Toast, { mensagem: copiaMsg }), agrupadoPorMes.length === 0 && (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14.5 } }, "Nenhum lan\u00E7amento encontrado.")), agrupadoPorMes.map(function (_a) {
+        } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), React.createElement("div", { style: { display: 'grid', gap: 14 } }, React.createElement(Toast, { mensagem: copiaMsg }), selL !== null && React.createElement(TDBSelBarra, { ids: selL, todos: agrupadoPorMes.reduce(function (a, g) { return a.concat(g.itens.map(function (t) { return t.id; })); }, []), onTodos: setSelL, apagando: apagandoL, onCancelar: function () { setSelL(null); }, onApagar: async function () { if (!removerLancamentos || !selL.length) return; setApagandoL(true); try { var ok = await removerLancamentos(selL.slice()); if (ok) setSelL(null); } finally { setApagandoL(false); } } }), agrupadoPorMes.length === 0 && (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14.5 } }, "Nenhum lan\u00E7amento encontrado.")), agrupadoPorMes.map(function (_a) {
         var mes = _a.mes, itens = _a.itens;
         var aberto = mesesAbertos[mes] === true || (!!filtroTexto && itens.length > 0);
         var totalMes = itens.reduce(function (s, t) { var v = TDBFinance.received(t); return s + (t.tipo === 'Entrada' ? v : -v); }, 0);
@@ -15642,9 +15772,9 @@ function Lancamentos(props) {
         })(), itens.map(function (t) {
             var emEdicao = editandoId === t.id;
             var semValor = t.valor == null;
-            return (React.createElement("div", { key: t.id, onClick: function () { return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
-                    display: 'grid', gridTemplateColumns: '1fr auto auto auto auto auto', gap: 12, alignItems: 'center',
-                    padding: '9px 18px', borderTop: "1px solid ".concat(COLORS.lineSoft), fontSize: 13.5,
+            return (React.createElement("div", { key: t.id, onClick: function () { if (selL !== null) return toggleSelL(t.id); return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
+                    display: 'grid', gridTemplateColumns: '1fr auto auto auto auto auto', gap: 12, alignItems: 'center', position: 'relative',
+                    padding: selL !== null ? '9px 18px 9px 48px' : '9px 18px', borderTop: "1px solid ".concat(COLORS.lineSoft), fontSize: 13.5,
                     cursor: emEdicao ? 'default' : 'pointer',
                     borderLeft: linhaSelecionada === t.id ? '3px solid #E0AE3C' : '3px solid transparent',
                     background: linhaSelecionada === t.id
@@ -15654,7 +15784,7 @@ function Lancamentos(props) {
                             : 'transparent'),
                     boxShadow: linhaSelecionada === t.id ? 'inset 0 1px 0 rgba(255,255,255,0.5)' : 'none',
                     transition: 'background 0.15s ease',
-                } }, emEdicao&&controleRecorrencia, React.createElement("div", null, emEdicao ? (React.createElement("input", { value: categoriaEdit, onChange: function (e) { return setCategoriaEdit(e.target.value); }, onKeyDown: function (e) {
+                } }, selL !== null && React.createElement("span", { style: { position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', display: 'flex' } }, React.createElement(TDBSelCaixa, { marcado: selL.indexOf(t.id) >= 0, onClick: function (e) { e.stopPropagation(); toggleSelL(t.id); } })), emEdicao&&controleRecorrencia, React.createElement("div", null, emEdicao ? (React.createElement("input", { value: categoriaEdit, onChange: function (e) { return setCategoriaEdit(e.target.value); }, onKeyDown: function (e) {
                     if (e.key === 'Enter')
                         salvarEdicao(t.id);
                     if (e.key === 'Escape')
@@ -15714,9 +15844,10 @@ function formatarData(iso) {
     return "".concat(d, "/").concat(m, "/").concat(y);
 }
 function TabelaMensalidades(_a) {
-    var titulo = _a.titulo, itens = _a.itens, mostrarDetalhes = _a.mostrarDetalhes, editandoId = _a.editandoId, iniciarEdicao = _a.iniciarEdicao, cancelarEdicao = _a.cancelarEdicao, salvarEdicao = _a.salvarEdicao, darBaixa = _a.darBaixa, darNota = _a.darNota, definirFoto = _a.definirFoto, removerLancamento = _a.removerLancamento, valorEdit = _a.valorEdit, setValorEdit = _a.setValorEdit, valorCheioEdit = _a.valorCheioEdit, setValorCheioEdit = _a.setValorCheioEdit, statusEdit = _a.statusEdit, setStatusEdit = _a.setStatusEdit, bancoEdit = _a.bancoEdit, setBancoEdit = _a.setBancoEdit, paiEdit = _a.paiEdit, setPaiEdit = _a.setPaiEdit, tirarNotaEdit = _a.tirarNotaEdit, setTirarNotaEdit = _a.setTirarNotaEdit, convenioEdit = _a.convenioEdit, setConvenioEdit = _a.setConvenioEdit, dataEdit = _a.dataEdit, setDataEdit = _a.setDataEdit, okEdit = _a.okEdit, setOkEdit = _a.setOkEdit, inputStyle = _a.inputStyle, modoPrivado = _a.modoPrivado, nomeEdit = _a.nomeEdit, setNomeEdit = _a.setNomeEdit, avulsos = _a.avulsos, diasLetivos = _a.diasLetivos, tabelaValores = _a.tabelaValores, casosValores = _a.casosValores;
+    var titulo = _a.titulo, itens = _a.itens, mostrarDetalhes = _a.mostrarDetalhes, editandoId = _a.editandoId, iniciarEdicao = _a.iniciarEdicao, cancelarEdicao = _a.cancelarEdicao, salvarEdicao = _a.salvarEdicao, darBaixa = _a.darBaixa, darNota = _a.darNota, definirFoto = _a.definirFoto, removerLancamento = _a.removerLancamento, removerLancamentos = _a.removerLancamentos, valorEdit = _a.valorEdit, setValorEdit = _a.setValorEdit, valorCheioEdit = _a.valorCheioEdit, setValorCheioEdit = _a.setValorCheioEdit, statusEdit = _a.statusEdit, setStatusEdit = _a.setStatusEdit, bancoEdit = _a.bancoEdit, setBancoEdit = _a.setBancoEdit, paiEdit = _a.paiEdit, setPaiEdit = _a.setPaiEdit, tirarNotaEdit = _a.tirarNotaEdit, setTirarNotaEdit = _a.setTirarNotaEdit, convenioEdit = _a.convenioEdit, setConvenioEdit = _a.setConvenioEdit, dataEdit = _a.dataEdit, setDataEdit = _a.setDataEdit, okEdit = _a.okEdit, setOkEdit = _a.setOkEdit, inputStyle = _a.inputStyle, modoPrivado = _a.modoPrivado, nomeEdit = _a.nomeEdit, setNomeEdit = _a.setNomeEdit, avulsos = _a.avulsos, diasLetivos = _a.diasLetivos, tabelaValores = _a.tabelaValores, casosValores = _a.casosValores;
     var quantidadeEdit = _a.quantidadeEdit, setQuantidadeEdit = _a.setQuantidadeEdit, contagemAlunos = _a.contagemAlunos;
     var marcarConferidos = _a.marcarConferidos;
+    var sel = _a.sel, toggleSel = _a.toggleSel;
     var _b = useState(false), proporcionalAberto = _b[0], setProporcionalAberto = _b[1];
     var _c = useState(''), diasFrequentados = _c[0], setDiasFrequentados = _c[1];
     var _d = useState(false), aplicarDescontoAvista = _d[0], setAplicarDescontoAvista = _d[1];
@@ -15727,13 +15858,13 @@ function TabelaMensalidades(_a) {
     var _f = useState(null), linhaSelecionada = _f[0], setLinhaSelecionada = _f[1];
     return (React.createElement("div", { className: "mensalidades-tabela-card", style: { background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, overflow: 'hidden' } }, React.createElement("div", { className: "mensalidades-tabela-header", style: { padding: '13px 18px', background: COLORS.paperCard, borderBottom: "1px solid ".concat(COLORS.line), fontSize: 13.5, fontWeight: 700, color: COLORS.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }, React.createElement("span", null, titulo, " ", React.createElement("span", { style: { fontWeight: 500, color: COLORS.inkSoft } }, "(", modoPrivado ? '••' : (titulo === 'Alunos' ? (contagemAlunos != null ? contagemAlunos.alunos : TDBFinance.listed(itens).alunos) : itens.length), ")"), titulo === 'Alunos' && !modoPrivado && (function () { var c = contagemAlunos != null ? contagemAlunos : TDBFinance.listed(itens); return c.linhas !== c.alunos ? React.createElement("span", { className: "tdb-contagem-linhas", title: "Cada linha de irm\u00E3os conta 2 alunos", style: {whiteSpace:"nowrap", fontWeight: 500, color: COLORS.inkSoft, fontSize: 11.5, marginLeft: 8 } }, "\u00B7 ", c.linhas, " linhas") : null; })(), titulo === 'Alunos' && !modoPrivado && tdbCfResumo(itens)), React.createElement("span", { className: "mensalidades-table-tip", style: { fontSize: 11.5, color: COLORS.inkSoft, fontWeight: 500 } }, "Dica: Voc\u00EA pode digitar contas nos valores (ex: ", React.createElement("b", null, "900+150"), " ou ", React.createElement("b", null, "1483-200"), ") e salvar")), itens.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '28px 0', fontSize: 14 } }, "Nenhum registro encontrado.")) : (React.createElement("div", { className: "mensalidades-table-scroll", style: { overflowX: 'auto' } }, React.createElement("table", { className: mostrarDetalhes ? "tabela-mensalidades mensalidades-detalhes" : "tabela-mensalidades mensalidades-resumida", style: { width: '100%', minWidth: mostrarDetalhes ? 1180 : 760, borderCollapse: 'collapse', tableLayout: 'fixed' } }, React.createElement("colgroup", null, React.createElement("col", { style: { width: mostrarDetalhes ? '17%' : '30%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '6%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '9%' : '18%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '7%' : '12%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '7%' : '12%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '13%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '12%' } }), mostrarDetalhes && React.createElement("col", { style: { width: '10%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '9%' : '12%' } }), React.createElement("col", { style: { width: mostrarDetalhes ? '10%' : '16%' } })), React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Nome"), mostrarDetalhes && React.createElement("th", { style: th }, "Nota"), React.createElement("th", { style: th }, "Valor"), React.createElement("th", { style: th }, "Status"), React.createElement("th", { style: th }, "Banco"), mostrarDetalhes && React.createElement("th", { style: th }, "Pai / Respons\u00E1vel"), mostrarDetalhes && React.createElement("th", { style: th }, "Tirar nota"), mostrarDetalhes && React.createElement("th", { style: th }, "Conv\u00EAnio"), React.createElement("th", { style: th }, "Data"), React.createElement("th", { style: __assign(__assign({}, th), { textAlign: 'center' }) }, "A\u00E7\u00F5es"))), React.createElement("tbody", null, itens.map(function (t) {
         var emEdicao = editandoId === t.id;
-        return (React.createElement(React.Fragment, { key: t.id }, React.createElement("tr", { className: emEdicao ? "mensalidades-row-editando" : "mensalidades-row", "data-cf": t.conferido ? t.conferido.st : undefined, onClick: function () { return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
+        return (React.createElement(React.Fragment, { key: t.id }, React.createElement("tr", { className: emEdicao ? "mensalidades-row-editando" : "mensalidades-row", "data-cf": t.conferido ? t.conferido.st : undefined, onClick: function () { if (sel) return toggleSel(t.id); return !emEdicao && setLinhaSelecionada(function (id) { return id === t.id ? id : t.id; }); }, onDoubleClick: function () { return !emEdicao && setLinhaSelecionada(null); }, style: {
                 cursor: emEdicao ? 'default' : 'pointer',
                 background: linhaSelecionada === t.id
                     ? 'rgba(184, 92, 163, 0.12)'
                     : (emEdicao ? 'color-mix(in srgb, var(--c-goldSoft) 55%, var(--c-paperCard))' : (t.conferido && t.conferido.st === 'olhar' ? 'rgba(240, 180, 41, 0.16)' : (t.conferido && t.conferido.st === 'nao' ? 'rgba(217, 58, 74, 0.12)' : 'transparent'))),
                 transition: 'background 0.15s ease',
-            } }, React.createElement("td", { colSpan: emEdicao && mostrarDetalhes ? 2 : 1, style: __assign(__assign({}, td), { background: linhaSelecionada === t.id ? 'rgba(184, 92, 163, 0.08)' : 'transparent', fontWeight: 700, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.35, padding: '9px 10px', boxSizing: 'border-box', borderLeft: linhaSelecionada === t.id ? "3px solid ".concat(COLORS.gold) : '3px solid transparent' }) }, emEdicao ? (React.createElement("input", { value: nomeEdit, onChange: function (e) { return setNomeEdit(e.target.value); }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { padding: '5px 8px', fontSize: 13.5, width: '100%', minWidth: 140, boxSizing: 'border-box' }) })) : (React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } }, React.createElement("label", { title: "Clique para adicionar/trocar a foto", style: {
+            } }, React.createElement("td", { colSpan: emEdicao && mostrarDetalhes ? 2 : 1, style: __assign(__assign({}, td), { background: linhaSelecionada === t.id ? 'rgba(184, 92, 163, 0.08)' : 'transparent', fontWeight: 700, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.35, padding: '9px 10px', boxSizing: 'border-box', borderLeft: linhaSelecionada === t.id ? "3px solid ".concat(COLORS.gold) : '3px solid transparent' }) }, emEdicao ? (React.createElement("input", { value: nomeEdit, onChange: function (e) { return setNomeEdit(e.target.value); }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { padding: '5px 8px', fontSize: 13.5, width: '100%', minWidth: 140, boxSizing: 'border-box' }) })) : (React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } }, sel && React.createElement(TDBSelCaixa, { marcado: sel.indexOf(t.id) >= 0, onClick: function (e) { e.stopPropagation(); toggleSel(t.id); } }), React.createElement("label", { title: "Clique para adicionar/trocar a foto", style: {
                 width: 26, height: 26, borderRadius: '50%',
                 background: t.foto ? "url(".concat(t.foto, ") center/cover") : COLORS.goldSoft,
                 color: COLORS.gold, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -16642,7 +16773,7 @@ function Mensalidades(_a) {
     var _this = this;
     var marcarConferidos = _a.marcarConferidos;
     var copiarNomes = _a.copiarNomes;
-    var transacoes = _a.transacoes, darBaixa = _a.darBaixa, darNota = _a.darNota, definirFoto = _a.definirFoto, editarLancamento = _a.editarLancamento, removerLancamento = _a.removerLancamento, adicionarEntrada = _a.adicionarEntrada, privadoTotais = _a.privadoTotais, setPrivadoTotais = _a.setPrivadoTotais, privadoDetalhes = _a.privadoDetalhes, setPrivadoDetalhes = _a.setPrivadoDetalhes, chamarIA = _a.chamarIA, _b = _a.exercicioAtual, exercicioAtual = _b === void 0 ? 2026 : _b;
+    var transacoes = _a.transacoes, darBaixa = _a.darBaixa, darNota = _a.darNota, definirFoto = _a.definirFoto, editarLancamento = _a.editarLancamento, removerLancamento = _a.removerLancamento, removerLancamentos = _a.removerLancamentos, adicionarEntrada = _a.adicionarEntrada, privadoTotais = _a.privadoTotais, setPrivadoTotais = _a.setPrivadoTotais, privadoDetalhes = _a.privadoDetalhes, setPrivadoDetalhes = _a.setPrivadoDetalhes, chamarIA = _a.chamarIA, _b = _a.exercicioAtual, exercicioAtual = _b === void 0 ? 2026 : _b;
     var _c = useState(function () {
         try {
             return localStorage.getItem('painel_mensalidades_filtroMes') || (MESES[new Date().getMonth()] || 'SETEMBRO');
@@ -16834,6 +16965,9 @@ function Mensalidades(_a) {
     var _17 = useState(''), formErro = _17[0], setFormErro = _17[1];
     var _18 = useState(false), gravandoMens = _18[0], setGravandoMens = _18[1];
     var _19 = useState(false), interpretandoMens = _19[0], setInterpretandoMens = _19[1];
+    var _selM = useState(null), selM = _selM[0], setSelM = _selM[1];
+    var _selMb = useState(false), apagandoM = _selMb[0], setApagandoM = _selMb[1];
+    function toggleSelM(id) { setSelM(function (a) { a = a || []; return a.indexOf(id) >= 0 ? a.filter(function (x) { return x !== id; }) : a.concat([id]); }); }
     var _cfx = useState(false), conferirAberto = _cfx[0], setConferirAberto = _cfx[1];
     var _cpn = useState(false), copiarAberto = _cpn[0], setCopiarAberto = _cpn[1];
     var reconhecimentoMensRef = useRef(null);
@@ -17045,6 +17179,7 @@ function Mensalidades(_a) {
         setNovoTirarNota('');
     }
     var linhaHandlers = {
+        sel: selM, toggleSel: toggleSelM,
         marcarConferidos: marcarConferidos,
         editandoId: editandoId,
         iniciarEdicao: iniciarEdicao,
@@ -17053,7 +17188,7 @@ function Mensalidades(_a) {
         darBaixa: darBaixa,
         darNota: darNota,
         definirFoto: definirFoto,
-        removerLancamento: removerLancamento,
+        removerLancamento: removerLancamento, removerLancamentos: removerLancamentos,
         valorEdit: valorEdit,
         setValorEdit: setValorEdit,
         quantidadeEdit: quantidadeEdit, setQuantidadeEdit: setQuantidadeEdit,
@@ -17134,10 +17269,10 @@ function Mensalidades(_a) {
         } }, React.createElement(Check, { size: 14 }), "Conferir extrato"), cfSelos.length > 0 && React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: limparCertinhos, title: "Tirar todos os certinhos para conferir de novo com outro extrato", style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
-        } }, "Limpar certinhos (" + cfSelos.length + ")"), conferirAberto && React.createElement(ConferirExtratoTDB, { entradas: entradas, mesInicial: filtroMes !== 'TODOS' ? filtroMes : (MESES[new Date().getMonth()] || 'SETEMBRO'), onFechar: function () { setConferirAberto(false); }, onSalvar: function (mapa) { return marcarConferidos ? marcarConferidos(mapa) : false; } }), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
+        } }, "Limpar certinhos (" + cfSelos.length + ")"), conferirAberto && React.createElement(ConferirExtratoTDB, { entradas: entradas, mesInicial: filtroMes !== 'TODOS' ? filtroMes : (MESES[new Date().getMonth()] || 'SETEMBRO'), onFechar: function () { setConferirAberto(false); }, onSalvar: function (mapa) { return marcarConferidos ? marcarConferidos(mapa) : false; } }), React.createElement(TDBSelBtn, { ativo: selM !== null, onClick: function () { setSelM(function (a) { return a === null ? [] : null; }); } }), React.createElement("button", { onClick: function () { return setPrivadoDetalhes(function (v) { return !v; }); }, title: privadoDetalhes ? 'Mostrar valores da lista' : 'Esconder valores da lista', style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
-        } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), semFiltroNenhum && filtradasCompleto.length > 100 && (React.createElement("div", { style: { fontSize: 13, color: COLORS.gold, background: COLORS.goldSoft, borderRadius: 8, padding: '8px 12px' } }, "Mostrando s\u00F3 os 100 primeiros de ", filtradasCompleto.length, " registros \u2014 escolha um m\u00EAs ou busque um nome pra ver o resto (evita travar a tela).")), React.createElement("datalist", { id: "convenios-lista" }, CONVENIOS_CONHECIDOS.map(function (c) { return React.createElement("option", { key: c, value: c }); })), React.createElement("datalist", { id: "valores-fotos-lista" }, valoresConhecidos.map(function (v, i) { return (React.createElement("option", { key: i, value: formatBRLNumber(v) })); })), (function () { var m = {}; filtradasCompleto.forEach(function (t) { if (t.status === 'Pago' && TDBFinance.student(t)) { var k = t.mes + '|' + TDBFinance.norm(t.categoria) + '|' + TDBFinance.num(t.valor); (m[k] = m[k] || []).push(t); } }); var d = Object.keys(m).filter(function (k) { return m[k].length > 1; }).map(function (k) { return nomeExibicao(m[k][0].categoria) + " (" + String(m[k][0].mes).charAt(0) + String(m[k][0].mes).slice(1).toLowerCase() + ")"; }); return d.length ? React.createElement("div", { role: "note", style: { margin: "0 0 10px", padding: "8px 12px", border: "1px solid #E0AE3C", borderRadius: 8, background: "rgba(224, 174, 60, 0.12)", color: COLORS.ink, fontSize: 12.5, fontWeight: 600 } }, "\u26A0 Poss\u00EDvel lan\u00E7amento duplicado (mesma mensalidade paga mais de uma vez, com o mesmo valor): ", d.slice(0, 8).join(", "), d.length > 8 ? " e mais " + (d.length - 8) : "", ". Se for engano, exclua uma das linhas.") : null; })(), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Alunos", itens: alunosLista, contagemAlunos: contagemAlunosLista, mostrarDetalhes: true }, linhaHandlers), { modoPrivado: privadoDetalhes })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Empresas / Conv\u00EAnios", itens: empresasLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes })), outrosLista.length > 0 && React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Outros", itens: outrosLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes }))));
+        } }, privadoDetalhes ? React.createElement(EyeOff, { size: 14 }) : React.createElement(Eye, { size: 14 }), privadoDetalhes ? 'Lista oculta' : 'Ocultar lista')), semFiltroNenhum && filtradasCompleto.length > 100 && (React.createElement("div", { style: { fontSize: 13, color: COLORS.gold, background: COLORS.goldSoft, borderRadius: 8, padding: '8px 12px' } }, "Mostrando s\u00F3 os 100 primeiros de ", filtradasCompleto.length, " registros \u2014 escolha um m\u00EAs ou busque um nome pra ver o resto (evita travar a tela).")), selM !== null && React.createElement(TDBSelBarra, { ids: selM, todos: filtradas.map(function (t) { return t.id; }), onTodos: setSelM, apagando: apagandoM, onCancelar: function () { setSelM(null); }, onApagar: async function () { if (!removerLancamentos || !selM.length) return; setApagandoM(true); try { var ok = await removerLancamentos(selM.slice()); if (ok) setSelM(null); } finally { setApagandoM(false); } } }), React.createElement("datalist", { id: "convenios-lista" }, CONVENIOS_CONHECIDOS.map(function (c) { return React.createElement("option", { key: c, value: c }); })), React.createElement("datalist", { id: "valores-fotos-lista" }, valoresConhecidos.map(function (v, i) { return (React.createElement("option", { key: i, value: formatBRLNumber(v) })); })), (function () { var m = {}; filtradasCompleto.forEach(function (t) { if (t.status === 'Pago' && TDBFinance.student(t)) { var k = t.mes + '|' + TDBFinance.norm(t.categoria) + '|' + TDBFinance.num(t.valor); (m[k] = m[k] || []).push(t); } }); var d = Object.keys(m).filter(function (k) { return m[k].length > 1; }).map(function (k) { return nomeExibicao(m[k][0].categoria) + " (" + String(m[k][0].mes).charAt(0) + String(m[k][0].mes).slice(1).toLowerCase() + ")"; }); return d.length ? React.createElement("div", { role: "note", style: { margin: "0 0 10px", padding: "8px 12px", border: "1px solid #E0AE3C", borderRadius: 8, background: "rgba(224, 174, 60, 0.12)", color: COLORS.ink, fontSize: 12.5, fontWeight: 600 } }, "\u26A0 Poss\u00EDvel lan\u00E7amento duplicado (mesma mensalidade paga mais de uma vez, com o mesmo valor): ", d.slice(0, 8).join(", "), d.length > 8 ? " e mais " + (d.length - 8) : "", ". Se for engano, exclua uma das linhas.") : null; })(), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Alunos", itens: alunosLista, contagemAlunos: contagemAlunosLista, mostrarDetalhes: true }, linhaHandlers), { modoPrivado: privadoDetalhes })), React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Empresas / Conv\u00EAnios", itens: empresasLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes })), outrosLista.length > 0 && React.createElement(TabelaMensalidades, __assign(__assign({ titulo: "Outros", itens: outrosLista, mostrarDetalhes: false }, linhaHandlers), { modoPrivado: privadoDetalhes }))));
 }
 var SEED_CONTRATO_IMAGEM = {
     id: 'contrato_termo_imagem_lei_felca',
@@ -17523,6 +17658,9 @@ function Contratos(_a) {
     var _this = this;
     var chamarIA = _a.chamarIA;
     var _b = useState(null), contratos = _b[0], setContratos = _b[1];
+    var _selC = useState(null), selC = _selC[0], setSelC = _selC[1];
+    var _selCb = useState(false), apagandoC = _selCb[0], setApagandoC = _selCb[1];
+    function toggleSelC(id) { setSelC(function (a) { a = a || []; return a.indexOf(id) >= 0 ? a.filter(function (x) { return x !== id; }) : a.concat([id]); }); }
     var _c = useState(null), editandoTitulo = _c[0], setEditandoTitulo = _c[1];
     var _d = useState(''), tituloEdit = _d[0], setTituloEdit = _d[1];
     var _e = useState(null), toastMsg = _e[0], setToastMsg = _e[1];
@@ -17666,6 +17804,21 @@ function Contratos(_a) {
         window.__tdbLixeiraAdicionar({ rotulo: c.nome || 'Contrato', origem: 'Contratos', restoreOps: [{ op:'insert', key:'contratos_lista', path:[], index:idx, item:c, uniqueField:'id' }], cleanupKeys: c.anexoNome ? ['contrato_anexo_' + id] : [] }).then(function () {
         salvar(contratos.filter(function (x) { return x.id !== id; })); mostrarToast('Contrato movido para a lixeira.');
         }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
+    }
+    async function removerContratos(ids) {
+        var mapa = new Set(Array.isArray(ids) ? ids : []);
+        var lista = contratos.filter(function (x) { return mapa.has(x.id); });
+        if (!lista.length) return false;
+        if (!window.confirm('Mover ' + lista.length + (lista.length === 1 ? ' contrato' : ' contratos') + ' para a lixeira?\n\nOs anexos ficam preservados at\u00E9 voc\u00EA excluir definitivamente.')) return false;
+        try {
+            for (var i = 0; i < lista.length; i++) {
+                var c = lista[i], idx = contratos.findIndex(function (x) { return x.id === c.id; });
+                await window.__tdbLixeiraAdicionar({ rotulo: c.nome || 'Contrato', origem: 'Contratos', restoreOps: [{ op: 'insert', key: 'contratos_lista', path: [], index: idx, item: c, uniqueField: 'id' }], cleanupKeys: c.anexoNome ? ['contrato_anexo_' + c.id] : [] });
+            }
+        } catch (e) { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); return false; }
+        salvar(contratos.filter(function (x) { return !mapa.has(x.id); }));
+        mostrarToast(lista.length + (lista.length === 1 ? ' contrato movido' : ' contratos movidos') + ' para a lixeira.');
+        return true;
     }
     function analisarComIA(c) {
         return __awaiter(this, void 0, void 0, function () {
@@ -18010,10 +18163,10 @@ function Contratos(_a) {
             fontWeight: 600, fontSize: 13.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
         } }, React.createElement(Plus, { size: 14 }), " Novo contrato")), contratos.length > 0 && (React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' } }, React.createElement("input", { value: busca, onChange: function (e) { return setBusca(e.target.value); }, placeholder: "Buscar contrato ou fornecedor...", style: {
             border: "1px solid ".concat(COLORS.line), borderRadius: 7, padding: '8px 11px', fontSize: 13.5, width: 260, boxSizing: 'border-box',
-        } }))), contratos.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14 } }, "Nenhum contrato cadastrado ainda. Clique em \"Novo contrato\" pra come\u00E7ar \u2014 depois \u00E9 s\u00F3 colar o texto completo (ou anexar o PDF) em cada um.")) : (React.createElement("div", { style: { display: 'grid', gap: 14 } }, filtrados.map(function (c) { return (React.createElement("div", { key: c.id, style: {
-            background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, padding: 16,
+        } }), React.createElement(TDBSelBtn, { ativo: selC !== null, onClick: function () { setSelC(function (a) { return a === null ? [] : null; }); } }))), selC !== null && contratos.length > 0 && React.createElement(TDBSelBarra, { ids: selC, todos: filtrados.map(function (c) { return c.id; }), onTodos: setSelC, apagando: apagandoC, onCancelar: function () { setSelC(null); }, onApagar: async function () { if (!selC.length) return; setApagandoC(true); try { var ok = await removerContratos(selC.slice()); if (ok) setSelC(null); } finally { setApagandoC(false); } } }), contratos.length === 0 ? (React.createElement("div", { style: { textAlign: 'center', color: COLORS.inkSoft, padding: '40px 0', fontSize: 14 } }, "Nenhum contrato cadastrado ainda. Clique em \"Novo contrato\" pra come\u00E7ar \u2014 depois \u00E9 s\u00F3 colar o texto completo (ou anexar o PDF) em cada um.")) : (React.createElement("div", { style: { display: 'grid', gap: 14 } }, filtrados.map(function (c) { return (React.createElement("div", { key: c.id, style: {
+            background: COLORS.paperCard, border: "1px solid ".concat(COLORS.line), borderRadius: 10, padding: selC !== null ? '16px 16px 16px 46px' : 16, position: 'relative',
             display: 'flex', flexDirection: 'column', gap: 10,
-        } }, React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' } }, editandoTitulo === c.id ? (React.createElement("input", { autoFocus: true, value: tituloEdit, onChange: function (e) { return setTituloEdit(e.target.value); }, onBlur: function () { return salvarTitulo(c.id); }, onKeyDown: function (e) {
+        } }, selC !== null && React.createElement("span", { style: { position: 'absolute', left: 14, top: 18, display: 'flex' } }, React.createElement(TDBSelCaixa, { marcado: selC.indexOf(c.id) >= 0, onClick: function () { toggleSelC(c.id); } })), React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' } }, editandoTitulo === c.id ? (React.createElement("input", { autoFocus: true, value: tituloEdit, onChange: function (e) { return setTituloEdit(e.target.value); }, onBlur: function () { return salvarTitulo(c.id); }, onKeyDown: function (e) {
             if (e.key === 'Enter')
                 salvarTitulo(c.id);
         }, style: { flex: '1 1 auto', minWidth: 100, border: "1px solid ".concat(COLORS.gold), borderRadius: 6, padding: '7px 9px', fontSize: 15.5, fontWeight: 700, color: COLORS.ink, boxSizing: 'border-box' } })) : (React.createElement("div", { onClick: function () { return iniciarEdicaoTitulo(c); }, title: "Clique pra renomear", style: {

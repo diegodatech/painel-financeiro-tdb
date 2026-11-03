@@ -1,3 +1,8 @@
+V1.71 (app TDB v1.71 + servidor 1.71)
+- Novo: botao "Selecionar" em cada aba de lista (Lancamentos, Mensalidades, Contratos, Compras, Recibos, Arquivos, Festas TDB e Notas Fiscais - alunos e convenios). Toque nele, marque varios itens (ou "Selecionar todos") e clique em "Apagar selecionados": tudo vai para a lixeira de uma vez, com uma unica confirmacao. Da para restaurar depois pela lixeira.
+- O visual nao muda: as caixinhas de marcar so aparecem enquanto o modo Selecionar esta ligado.
+- Inclui tudo da v1.70 e anteriores.
+
 V1.70 (app TDB v1.70 + servidor 1.70)
 - Novo: "Pedir PIN ao voltar" (menu da engrenagem, abaixo de "Alterar PIN"). Por aparelho: Sempre / Depois de um tempo (voce escolhe os minutos, padrao 5) / Nao pedir. Vale no celular, tablet, Fold e computador.
 - Atualizacao (pagina /atualizar e painel dentro do app): ao escolher o pacote .zip agora mostra a porcentagem do envio e uma barra, como na Portaria.
