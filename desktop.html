@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261029-tdb-v1-71";
+    window.__TDB_BUILD = "tdb-20261029-tdb-v1-72";
   </script>
-  <script src="./config.js?build=tdb-20261029-tdb-v1-71"></script>
+  <script src="./config.js?build=tdb-20261029-tdb-v1-72"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1542,10 +1542,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261029-tdb-v1-71"></script>
+  <script src="./sync.js?build=tdb-20261029-tdb-v1-72"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261029-tdb-v1-71-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261029-tdb-v1-72-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -14818,7 +14818,7 @@ function VisaoGeral(_a) {
     };
     function iniciarEdicaoSaldo(mes) {
         setSaldoEditMes(mes);
-        setSaldoEditValor(formatBRLNumber((saldosMensais || {})[mes] || 0));
+        setSaldoEditValor(Number((saldosMensais || {})[mes] || 0) === 0 ? '' : formatBRLNumber((saldosMensais || {})[mes]));
     }
     function salvarEdicaoSaldo() {
         var num = parseBRLInput(saldoEditValor);
@@ -15307,7 +15307,7 @@ function VisaoGeral(_a) {
         return (React.createElement("div", { key: mes, style: {
                 background: temValor ? COLORS.greenBg : COLORS.lineSoft, border: "1px solid ".concat(temValor ? COLORS.green + '33' : COLORS.lineSoft),
                 borderRadius: 7, padding: '6px 7px', minWidth: 0,
-            } }, React.createElement("div", { style: { fontSize: 10, color: COLORS.inkSoft, fontWeight: 800, marginBottom: 2 } }, MESES_ABREV[mes]), emEdicao ? (React.createElement("div", { style: { display: 'flex', gap: 3, alignItems: 'center' } }, React.createElement("input", { autoFocus: true, value: saldoEditValor, onChange: function (e) { return setSaldoEditValor(e.target.value); }, onKeyDown: function (e) {
+            } }, React.createElement("div", { style: { fontSize: 10, color: COLORS.inkSoft, fontWeight: 800, marginBottom: 2 } }, MESES_ABREV[mes]), emEdicao ? (React.createElement("div", { style: { display: 'flex', gap: 3, alignItems: 'center' } }, React.createElement("input", { autoFocus: true, value: saldoEditValor, placeholder: "0,00", onFocus: function (e) { var t = e.target; setTimeout(function () { try { t.select(); } catch (_) { } }, 0); }, onChange: function (e) { return setSaldoEditValor(e.target.value); }, onKeyDown: function (e) {
                 if (e.key === 'Enter')
                     salvarEdicaoSaldo();
                 if (e.key === 'Escape')
