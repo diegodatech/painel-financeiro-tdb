@@ -1,3 +1,7 @@
+V1.73 (app TDB v1.73 + servidor 1.73)
+- Rolagem mais leve: a pagina engasgava ao rolar (ate no Modo trabalho) porque cada botao, cartao e linha aplicava um desfoque de vidro. Agora so as barras fixas e janelas flutuantes mantem o vidro; o visual das telas continua igual. Vale para computador e celular.
+- Inclui tudo da v1.72 e anteriores.
+
 V1.72 (app TDB v1.72 + servidor 1.72)
 - Saldo em conta (por mes): ao clicar no campo de um mes, o 0,00 some e o numero antigo fica selecionado - e so digitar, sem apagar antes.
 - Inclui tudo da v1.71 e anteriores.

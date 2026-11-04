@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261029-tdb-v1-72";
+    window.__TDB_BUILD = "tdb-20261029-tdb-v1-73";
   </script>
-  <script src="./config.js?build=tdb-20261029-tdb-v1-72"></script>
+  <script src="./config.js?build=tdb-20261029-tdb-v1-73"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1942,6 +1942,21 @@ html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela td input,html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x) table.festas-tdb-tabela td select{font-size:13px!important}
 }
 </style>
+<style id="tdb-perf-rolagem">
+/* v1.73 - rolagem mais leve: o desfoque de vidro (backdrop-filter) em cada botao/cartao/linha fazia a pagina engasgar ao rolar.
+   O visual continua igual (o fundo atras ja e quase opaco); o vidro so permanece em barras fixas e janelas flutuantes. */
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .painel-main *,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .painel-main *::before,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .painel-main *::after,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .busca-liquid-glass,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .kpi-card,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .aurora-card,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .tdb-cat-card,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .lancamentos-mes-card,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .aba-item,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .tdb-xbtn,
+html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .contas-pessoais-raiz *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+</style>
 </head>
 <body>
 
@@ -1999,10 +2014,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261029-tdb-v1-72"></script>
+  <script src="./sync.js?build=tdb-20261029-tdb-v1-73"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261029-tdb-v1-72-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261029-tdb-v1-73-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
