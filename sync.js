@@ -1399,7 +1399,8 @@
         'rematricula_status_alunos',
         'rematricula_reajuste_padrao',
         'festas_tdb',
-        'festas_tdb_abas'
+        'festas_tdb_abas',
+        'excursao_tdb'
       ]);
 
       function chaveAnualParaAno_(base, ano) {

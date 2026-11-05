@@ -1,3 +1,12 @@
+V1.74 (app TDB v1.74 + servidor 1.74)
+- Novo: aba "Excursão TDB" dentro de Festas TDB (ao lado das outras festas, antes do "+ Nova festa"). Lista os alunos com CPF, pai e mae (um embaixo do outro), CPF dos pais e dois campos prontos para outros responsaveis (tio, tia, avo, avo - com nome, parentesco e CPF).
+- Clique no lapis para editar a linha (nada muda sem clicar nele); a linha selecionada fica marcada. Lixeira envia para a lixeira do sistema.
+- Botao "+ Novo aluno completo" abaixo da lista: crianca, pai, mae e responsaveis 3 e 4 com CPF. Nomes sempre em MAIUSCULO; CPF com mascara e aviso se estiver incompleto ou invalido.
+- Primeira abertura ja traz os alunos das Mensalidades e os nomes dos pais cadastrados la (1o nome em Pai, 2o em Mae - conferir).
+- "Exportar pagina" gera o PDF "Excursão TDB.pdf" na horizontal, com logo da escola, no mesmo padrao dos outros PDFs.
+- Funciona no computador, celular (1 coluna) e Fold (2 colunas). As outras festas nao mudaram.
+- Inclui tudo da v1.73 e anteriores.
+
 V1.73 (app TDB v1.73 + servidor 1.73)
 - Rolagem mais leve: a pagina engasgava ao rolar (ate no Modo trabalho) porque cada botao, cartao e linha aplicava um desfoque de vidro. Agora so as barras fixas e janelas flutuantes mantem o vidro; o visual das telas continua igual. Vale para computador e celular.
 - Inclui tudo da v1.72 e anteriores.

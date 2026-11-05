@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261029-tdb-v1-73";
+    window.__TDB_BUILD = "tdb-20261105-tdb-v1-74";
   </script>
-  <script src="./config.js?build=tdb-20261029-tdb-v1-73"></script>
+  <script src="./config.js?build=tdb-20261105-tdb-v1-74"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -2014,10 +2014,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261029-tdb-v1-73"></script>
+  <script src="./sync.js?build=tdb-20261105-tdb-v1-74"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261029-tdb-v1-73-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261105-tdb-v1-74-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -11275,6 +11275,340 @@ async function _mensalidadesGerarPDF(meses, nomeArquivo) {
     doc.save(nomeArquivo + '.pdf');
     _mostrarToastExportPDF('PDF exportado com sucesso!');
 }
+// ===== TDB v1.74 — Excursão TDB: alunos com CPF, pai, mãe e outros responsáveis (tio, tia, avô, avó) =====
+// Fica dentro da aba Festas TDB. Dados próprios em 'excursao_tdb' (não mexe nas outras festas).
+var EXCURSAO_TDB_KEY = 'excursao-tdb';
+var EXCURSAO_TDB_ABA = { key: EXCURSAO_TDB_KEY, label: 'Excursão TDB', emoji: '🚌' };
+var EXCURSAO_TDB_PARENTESCOS = ['Tio', 'Tia', 'Avô', 'Avó', 'Outro'];
+function _excCpfMask(v) {
+    var d = String(v == null ? '' : v).replace(/\D/g, '').slice(0, 11), o = d.slice(0, 3);
+    if (d.length > 3) o += '.' + d.slice(3, 6);
+    if (d.length > 6) o += '.' + d.slice(6, 9);
+    if (d.length > 9) o += '-' + d.slice(9, 11);
+    return o;
+}
+function _excCpfValido(v) {
+    var d = String(v || '').replace(/\D/g, '');
+    if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+    for (var t = 9; t < 11; t++) {
+        var s = 0;
+        for (var i = 0; i < t; i++) s += Number(d.charAt(i)) * (t + 1 - i);
+        if (((s * 10) % 11) % 10 !== Number(d.charAt(t))) return false;
+    }
+    return true;
+}
+function _excNome(v) { return String(v == null ? '' : v).toUpperCase(); }
+function _excLimpaNome(v) { return String(v == null ? '' : v).trim().replace(/\s+/g, ' ').toUpperCase(); }
+function _excVazio() {
+    return { id: '', aluno: '', cpfAluno: '', pai: '', cpfPai: '', mae: '', cpfMae: '', r3: { par: 'Avó', nome: '', cpf: '' }, r4: { par: 'Avô', nome: '', cpf: '' } };
+}
+function _excNorm(r) {
+    var b = _excVazio(), o = {};
+    Object.keys(b).forEach(function (k) { o[k] = r && r[k] != null ? r[k] : b[k]; });
+    o.r3 = { par: (r && r.r3 && r.r3.par) || 'Avó', nome: (r && r.r3 && r.r3.nome) || '', cpf: (r && r.r3 && r.r3.cpf) || '' };
+    o.r4 = { par: (r && r.r4 && r.r4.par) || 'Avô', nome: (r && r.r4 && r.r4.nome) || '', cpf: (r && r.r4 && r.r4.cpf) || '' };
+    return o;
+}
+function _excLimpaRow(r) {
+    var o = _excNorm(r);
+    return {
+        id: o.id, aluno: _excLimpaNome(o.aluno), cpfAluno: _excCpfMask(o.cpfAluno),
+        pai: _excLimpaNome(o.pai), cpfPai: _excCpfMask(o.cpfPai), mae: _excLimpaNome(o.mae), cpfMae: _excCpfMask(o.cpfMae),
+        r3: { par: o.r3.par, nome: _excLimpaNome(o.r3.nome), cpf: _excCpfMask(o.r3.cpf) },
+        r4: { par: o.r4.par, nome: _excLimpaNome(o.r4.nome), cpf: _excCpfMask(o.r4.cpf) }
+    };
+}
+function _excBase(transacoes) {
+    return _festasAlunosMensalidades(transacoes).map(function (a, i) { var r = _excVazio(); r.id = 'exc-m-' + (i + 1); r.aluno = _excNome(a.nome); _excPreencherPais(r, transacoes); return r; });
+}
+function _excPreencherPais(r, transacoes) {
+    var p = [];
+    try { p = typeof tdbPaisDoAluno === 'function' ? tdbPaisDoAluno(transacoes, r.aluno) : []; } catch (e) { p = []; }
+    if (!r.pai && p[0]) r.pai = _excNome(p[0]);
+    if (!r.mae && p[1]) r.mae = _excNome(p[1]);
+    return r;
+}
+function _excOutros(r) {
+    var l = [];
+    if (r.r3 && (r.r3.nome || r.r3.cpf)) l.push(r.r3);
+    if (r.r4 && (r.r4.nome || r.r4.cpf)) l.push(r.r4);
+    return l;
+}
+function _excTexto(r) {
+    var p = [r.aluno, r.cpfAluno, r.pai, r.cpfPai, r.mae, r.cpfMae, r.r3.nome, r.r3.cpf, r.r3.par, r.r4.nome, r.r4.cpf, r.r4.par];
+    return p.join(' ').normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR');
+}
+function _excValidar(r) {
+    if (!r.aluno) { window.alert('Informe o nome do aluno. Nada foi salvo.'); return false; }
+    var cpfs = [['do aluno', r.cpfAluno], ['do pai', r.cpfPai], ['da mãe', r.cpfMae], ['do responsável 3', r.r3.cpf], ['do responsável 4', r.r4.cpf]];
+    for (var i = 0; i < cpfs.length; i++) {
+        var d = String(cpfs[i][1] || '').replace(/\D/g, '');
+        if (d && d.length !== 11) { window.alert('O CPF ' + cpfs[i][0] + ' está incompleto (precisa de 11 números). Nada foi salvo.'); return false; }
+    }
+    var ruins = cpfs.filter(function (c) { return c[1] && !_excCpfValido(c[1]); }).map(function (c) { return c[0]; });
+    if (ruins.length && !window.confirm('O CPF ' + ruins.join(' e ') + ' parece inválido (os dígitos não conferem). Salvar mesmo assim?')) return false;
+    return true;
+}
+
+// PDF A4 horizontal, mesmo cabeçalho/rodapé dos outros PDFs (logo da escola)
+async function _excursaoGerarPDF(rows) {
+    await window.__ensureJsPDF();
+    var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
+    var W = 842, H = 595, margem = 28, topo = 66, margemRodape = 24, larguraUtil = W - margem * 2;
+    var colW = [175, 84, 150, 84, 205, 88], colX = [margem];
+    for (var ci = 1; ci < colW.length; ci++) colX[ci] = colX[ci - 1] + colW[ci - 1];
+    var y = topo, primeira = true, total = rows.length;
+    function novaPagina() {
+        if (!primeira) doc.addPage('a4', 'landscape');
+        primeira = false;
+        _tdbPdfCabecalho(doc, W, margem, larguraUtil, 'Excursão TDB — alunos e responsáveis');
+        y = topo;
+        doc.setFillColor(239, 243, 248); doc.roundedRect(margem, y, larguraUtil, 14, 4, 4, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(30, 36, 48);
+        doc.text('Alunos (' + total + ')', margem + 5, y + 9.8);
+        y += 16;
+        doc.setFillColor(249, 250, 252); doc.rect(margem, y, larguraUtil, 14, 'F');
+        var hs = ['Aluno', 'CPF do aluno', 'Pai / Responsável', 'CPF dos pais', 'Outros responsáveis', 'CPF dos responsáveis'];
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(77, 84, 96);
+        hs.forEach(function (h, i) { doc.text(h, colX[i] + 4, y + 9.6); });
+        y += 14;
+    }
+    novaPagina();
+    if (!rows.length) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(95, 101, 112);
+        doc.text('Nenhum aluno cadastrado.', margem + 5, y + 16);
+    }
+    rows.forEach(function (r, idx) {
+        r = _excNorm(r);
+        var outros = _excOutros(r), rowH = _tdbPdfAlturaLinha(2);
+        if (y + rowH > H - margemRodape - 4) novaPagina();
+        if (idx % 2 === 1) { doc.setFillColor(251, 252, 253); doc.rect(margem, y, larguraUtil, rowH, 'F'); }
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.2); doc.setTextColor(28, 32, 40);
+        doc.text(_festasPdfCortarTexto(doc, r.aluno || '', colW[0] - 8), colX[0] + 4, y + rowH / 2 + 2.5);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(6.9);
+        doc.setTextColor(28, 32, 40);
+        doc.text(r.cpfAluno || '—', colX[1] + 4, y + rowH / 2 + 2.5);
+        _tdbPdfNomesCelula(doc, [r.pai || '—', r.mae || '—'], colX[2] + 4, y, rowH, colW[2] - 10);
+        _tdbPdfNomesCelula(doc, [r.cpfPai || '—', r.cpfMae || '—'], colX[3] + 4, y, rowH, colW[3] - 8);
+        _tdbPdfNomesCelula(doc, outros.map(function (o) { return (o.par ? o.par.toLowerCase() + ' · ' : '') + (o.nome || '—'); }), colX[4] + 4, y, rowH, colW[4] - 10);
+        _tdbPdfNomesCelula(doc, outros.map(function (o) { return o.cpf || '—'; }), colX[5] + 4, y, rowH, colW[5] - 8);
+        y += rowH;
+        doc.setDrawColor(224, 228, 235); doc.setLineWidth(.45); doc.line(margem, y, W - margem, y);
+    });
+    _tdbPdfRodape(doc, W, H, margem, 'Excursão TDB — cadastro de alunos e responsáveis. Controle interno.');
+    _festasBaixarPDF(doc, 'Excursão TDB.pdf');
+    _mostrarToastExportPDF('PDF exportado com sucesso!');
+}
+
+function ExcursaoTDBLista(props) {
+    var transacoes = props.transacoes;
+    var _r = useState(null), rows = _r[0], setRows = _r[1];
+    var _ei = useState(null), editId = _ei[0], setEditId = _ei[1];
+    var _er = useState(null), edit = _er[0], setEdit = _er[1];
+    var _si = useState(null), selId = _si[0], setSelId = _si[1];
+    var _b = useState(''), busca = _b[0], setBusca = _b[1];
+    var _nv = useState(null), novo = _nv[0], setNovo = _nv[1];
+    var _w = useState(function () { return typeof window !== 'undefined' ? window.innerWidth : 1280; }), larg = _w[0], setLarg = _w[1];
+    useEffect(function () {
+        function f() { setLarg(window.innerWidth); }
+        window.addEventListener('resize', f);
+        return function () { window.removeEventListener('resize', f); };
+    }, []);
+    useEffect(function () {
+        var vivo = true;
+        (async function () {
+            var lista = null;
+            try { var r = await window.storage.get('excursao_tdb', false); lista = r && r.value ? JSON.parse(r.value) : null; } catch (e) { lista = null; }
+            if (!Array.isArray(lista)) {
+                lista = _excBase(transacoes);
+                if (lista.length) { try { window.storage.set('excursao_tdb', JSON.stringify(lista), false); } catch (e) {} }
+            }
+            lista = lista.map(_excNorm).map(function (r) { return (!r.pai && !r.mae) ? _excPreencherPais(r, transacoes) : r; });
+            if (vivo) setRows(lista);
+        })();
+        return function () { vivo = false; };
+    }, [transacoes && transacoes.length]);
+    if (!rows) return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Carregando Excursão TDB...");
+
+    function salvar(prox) { setRows(prox); try { window.storage.set('excursao_tdb', JSON.stringify(prox), false); } catch (e) {} }
+    function iniciarEdicao(r) { setEditId(r.id); setSelId(r.id); setEdit(JSON.parse(JSON.stringify(r))); }
+    function cancelar() { setEditId(null); setEdit(null); }
+    function chg(c, v) { setEdit(function (a) { if (!a) return a; var n = __assign({}, a); n[c] = v; return n; }); }
+    function chgR(w, c, v) { setEdit(function (a) { if (!a) return a; var n = __assign({}, a); n[w] = __assign({}, n[w]); n[w][c] = v; return n; }); }
+    function salvarEdicao() {
+        if (!edit || !editId) return;
+        var l = _excLimpaRow(edit);
+        if (!_excValidar(l)) return;
+        salvar(rows.map(function (r) { return r.id === editId ? l : r; }));
+        cancelar();
+    }
+    function remover(id) {
+        var r = rows.find(function (x) { return x.id === id; }); if (!r) return;
+        if (!window.confirm('Mover "' + (r.aluno || 'este aluno') + '" para a lixeira?')) return;
+        var idx = rows.findIndex(function (x) { return x.id === id; });
+        window.__tdbLixeiraAdicionar({ rotulo: r.aluno || 'Aluno da Excursão TDB', origem: 'Festas TDB · Excursão TDB', restoreOps: [{ op: 'insert', key: 'excursao_tdb', path: [], index: idx, item: r, uniqueField: 'id' }] }).then(function () {
+            salvar(rows.filter(function (x) { return x.id !== id; }));
+            if (editId === id) cancelar();
+        }, function () { window.alert('Não consegui mandar para a lixeira. Nada foi excluído.'); });
+    }
+    function salvarNovo() {
+        if (!novo) return;
+        var l = _excLimpaRow(novo);
+        if (!_excValidar(l)) return;
+        l.id = 'exc-n-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+        salvar(rows.concat([l]));
+        setNovo(null);
+        setSelId(l.id);
+    }
+
+    var termo = _excTexto({ aluno: busca, cpfAluno: '', pai: '', cpfPai: '', mae: '', cpfMae: '', r3: { par: '', nome: '', cpf: '' }, r4: { par: '', nome: '', cpf: '' } }).trim();
+    var lista = termo ? rows.filter(function (r) { return _excTexto(r).indexOf(termo) !== -1; }) : rows;
+    var tabela = larg >= 1000;
+    var th = { padding: '9px 8px', fontSize: 10.8, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '.025em', textAlign: 'left', whiteSpace: 'normal', lineHeight: 1.15, background: COLORS.paper };
+    var td = { padding: '7px 8px', fontSize: 12.5, color: COLORS.ink, borderTop: '1px solid ' + COLORS.lineSoft, verticalAlign: 'middle' };
+    var inp = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 7, padding: '6px 7px', fontSize: 12.5, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
+    var inpModal = __assign(__assign({}, inp), { height: 38, borderRadius: 9, fontSize: 13, padding: '0 11px' });
+    var chip = { fontSize: 10.5, fontWeight: 800, color: COLORS.inkButton, background: 'rgba(59,111,224,.14)', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' };
+    var mono = { fontVariantNumeric: 'tabular-nums', color: COLORS.ink };
+    var linha = { display: 'flex', alignItems: 'center', gap: 6, minHeight: 22 };
+    function btnIcone(titulo, onClick, icone, cor) {
+        return React.createElement("button", { type: "button", title: titulo, 'aria-label': titulo, onClick: function (e) { e.stopPropagation(); onClick(); }, style: { border: 'none', background: 'none', color: cor, borderRadius: 7, width: 30, height: 30, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', opacity: .65 } }, icone);
+    }
+    function entrada(valor, onChange, aria, extra) {
+        return React.createElement("input", __assign({ value: valor || '', onChange: function (e) { onChange(e.target.value); }, 'aria-label': aria, autoComplete: "off", spellCheck: "false", style: inp, onKeyDown: function (e) { if (e.key === 'Enter') salvarEdicao(); if (e.key === 'Escape') cancelar(); } }, extra || {}));
+    }
+    function acoes(r, emEd) {
+        return emEd ? React.createElement("div", { style: { display: 'flex', justifyContent: 'center', gap: 4 } },
+            React.createElement("button", { type: "button", title: "Salvar alterações", onClick: function (e) { e.stopPropagation(); salvarEdicao(); }, style: { background: COLORS.green, color: '#fff', border: 'none', borderRadius: 7, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 800 } }, React.createElement(Check, { size: 12, color: "#FFFFFF" }), " Salvar"),
+            React.createElement("button", { type: "button", title: "Cancelar edição", onClick: function (e) { e.stopPropagation(); cancelar(); }, style: { background: COLORS.redBg, color: COLORS.red, border: '1px solid ' + COLORS.red + '44', borderRadius: 7, padding: '5px 7px', cursor: 'pointer', display: 'flex', alignItems: 'center' } }, React.createElement(X, { size: 12, color: COLORS.red }))
+        ) : React.createElement("div", { style: { display: 'flex', justifyContent: 'center', gap: 3 } },
+            btnIcone("Editar linha", function () { iniciarEdicao(r); }, React.createElement(Pencil, { size: 13, color: COLORS.ink }), COLORS.ink),
+            btnIcone("Excluir linha", function () { remover(r.id); }, React.createElement(Trash2, { size: 13, color: COLORS.red }), COLORS.red));
+    }
+    function selPar(valor, onChange) {
+        return React.createElement("select", { value: valor, onChange: function (e) { onChange(e.target.value); }, 'aria-label': "Parentesco", style: __assign(__assign({}, inp), { width: 74, flex: '0 0 74px', fontSize: 11, fontWeight: 700, padding: '6px 4px' }) }, EXCURSAO_TDB_PARENTESCOS.map(function (p) { return React.createElement("option", { key: p, value: p }, p); }));
+    }
+    function estiloSel(sel, emEd) {
+        return { cursor: emEd ? 'default' : 'pointer', background: sel ? 'rgba(224, 174, 60, 0.16)' : (emEd ? 'color-mix(in srgb, var(--c-goldSoft) 45%, var(--c-paperCard))' : 'transparent'), transition: 'background .15s ease' };
+    }
+
+    var conteudo;
+    if (!lista.length) {
+        conteudo = React.createElement("div", { style: { padding: 24, textAlign: 'center', color: COLORS.inkSoft, fontSize: 13 } }, termo ? "Nenhum aluno encontrado para ‘" + busca + "’." : "Nenhum aluno ainda. Use o botão abaixo para cadastrar.");
+    } else if (tabela) {
+        var linhas = lista.map(function (r) {
+            var emEd = editId === r.id && edit, sel = selId === r.id, o = _excOutros(r);
+            var tdPrimeiro = __assign(__assign({}, td), { fontWeight: 700, borderLeft: sel ? '3px solid #E0AE3C' : '3px solid transparent' });
+            if (emEd) {
+                return React.createElement("tr", { key: r.id, style: estiloSel(true, true) },
+                    React.createElement("td", { style: tdPrimeiro }, entrada(edit.aluno, function (v) { chg('aluno', _excNome(v)); }, "Nome do aluno")),
+                    React.createElement("td", { style: td }, entrada(edit.cpfAluno, function (v) { chg('cpfAluno', _excCpfMask(v)); }, "CPF do aluno", { inputMode: "numeric", placeholder: "000.000.000-00" })),
+                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.pai, function (v) { chg('pai', _excNome(v)); }, "Nome do pai", { placeholder: "PAI" }), entrada(edit.mae, function (v) { chg('mae', _excNome(v)); }, "Nome da mãe", { placeholder: "MÃE" }))),
+                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.cpfPai, function (v) { chg('cpfPai', _excCpfMask(v)); }, "CPF do pai", { inputMode: "numeric", placeholder: "000.000.000-00" }), entrada(edit.cpfMae, function (v) { chg('cpfMae', _excCpfMask(v)); }, "CPF da mãe", { inputMode: "numeric", placeholder: "000.000.000-00" }))),
+                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } },
+                        React.createElement("div", { style: { display: 'flex', gap: 5 } }, selPar(edit.r3.par, function (v) { chgR('r3', 'par', v); }), entrada(edit.r3.nome, function (v) { chgR('r3', 'nome', _excNome(v)); }, "Nome do responsável 3")),
+                        React.createElement("div", { style: { display: 'flex', gap: 5 } }, selPar(edit.r4.par, function (v) { chgR('r4', 'par', v); }), entrada(edit.r4.nome, function (v) { chgR('r4', 'nome', _excNome(v)); }, "Nome do responsável 4")))),
+                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.r3.cpf, function (v) { chgR('r3', 'cpf', _excCpfMask(v)); }, "CPF do responsável 3", { inputMode: "numeric", placeholder: "000.000.000-00" }), entrada(edit.r4.cpf, function (v) { chgR('r4', 'cpf', _excCpfMask(v)); }, "CPF do responsável 4", { inputMode: "numeric", placeholder: "000.000.000-00" }))),
+                    React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, acoes(r, true)));
+            }
+            return React.createElement("tr", { key: r.id, onClick: function () { setSelId(r.id); }, onDoubleClick: function () { setSelId(null); }, style: estiloSel(sel, false) },
+                React.createElement("td", { style: tdPrimeiro }, r.aluno || '—'),
+                React.createElement("td", { style: td }, React.createElement("span", { style: mono }, r.cpfAluno || '—')),
+                React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 3 } }, React.createElement("div", { style: linha }, r.pai || '—'), React.createElement("div", { style: linha }, r.mae || '—'))),
+                React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 3 } }, React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfPai || '—')), React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfMae || '—')))),
+                React.createElement("td", { style: td }, o.length ? React.createElement("div", { style: { display: 'grid', gap: 3 } }, o.map(function (x, i) { return React.createElement("div", { key: i, style: linha }, x.nome || '—', React.createElement("span", { style: chip }, String(x.par || '').toLowerCase())); })) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—')),
+                React.createElement("td", { style: td }, o.length ? React.createElement("div", { style: { display: 'grid', gap: 3 } }, o.map(function (x, i) { return React.createElement("div", { key: i, style: linha }, React.createElement("span", { style: mono }, x.cpf || '—')); })) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—')),
+                React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, acoes(r, false)));
+        });
+        conteudo = React.createElement("div", { className: "festas-tdb-scroll", style: { overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', width: '100%', maxWidth: '100%', paddingBottom: 8 } },
+            React.createElement("table", { className: "tabela-mensalidades festas-tdb-tabela", style: { width: '100%', minWidth: 1200, borderCollapse: 'collapse', tableLayout: 'fixed' } },
+                React.createElement("colgroup", null, ['17%', '10%', '18%', '10%', '20%', '10%', '9%'].map(function (w, i) { return React.createElement("col", { key: i, style: { width: w } }); })),
+                React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Aluno"), React.createElement("th", { style: th }, "CPF do aluno"), React.createElement("th", { style: th }, "Pai / Responsável"), React.createElement("th", { style: th }, "CPF dos pais"), React.createElement("th", { style: th }, "Outros responsáveis"), React.createElement("th", { style: th }, "CPF dos responsáveis"), React.createElement("th", { 'data-export-ignore': true, style: th }, "Ações"))),
+                React.createElement("tbody", null, linhas)));
+    } else {
+        var cartoes = lista.map(function (r) {
+            var emEd = editId === r.id && edit, sel = selId === r.id, o = _excOutros(r);
+            var cartao = { borderRadius: 16, padding: '12px 13px', display: 'grid', gap: 8, minWidth: 0, borderLeft: sel || emEd ? '3px solid #E0AE3C' : '3px solid transparent', background: sel || emEd ? 'rgba(224, 174, 60, 0.16)' : undefined };
+            var rot = { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft };
+            function campo(label, el) { return React.createElement("div", { style: { display: 'grid', gap: 3, minWidth: 0 } }, React.createElement("label", { style: rot }, label), el); }
+            if (emEd) {
+                return React.createElement("div", { key: r.id, className: "busca-liquid-glass", style: cartao },
+                    campo('ALUNO', entrada(edit.aluno, function (v) { chg('aluno', _excNome(v)); }, "Nome do aluno")),
+                    campo('CPF DO ALUNO', entrada(edit.cpfAluno, function (v) { chg('cpfAluno', _excCpfMask(v)); }, "CPF do aluno", { inputMode: "numeric", placeholder: "000.000.000-00" })),
+                    campo('NOME DO PAI', entrada(edit.pai, function (v) { chg('pai', _excNome(v)); }, "Nome do pai")),
+                    campo('CPF DO PAI', entrada(edit.cpfPai, function (v) { chg('cpfPai', _excCpfMask(v)); }, "CPF do pai", { inputMode: "numeric", placeholder: "000.000.000-00" })),
+                    campo('NOME DA MÃE', entrada(edit.mae, function (v) { chg('mae', _excNome(v)); }, "Nome da mãe")),
+                    campo('CPF DA MÃE', entrada(edit.cpfMae, function (v) { chg('cpfMae', _excCpfMask(v)); }, "CPF da mãe", { inputMode: "numeric", placeholder: "000.000.000-00" })),
+                    campo('RESPONSÁVEL 3', React.createElement("div", { style: { display: 'flex', gap: 5 } }, selPar(edit.r3.par, function (v) { chgR('r3', 'par', v); }), entrada(edit.r3.nome, function (v) { chgR('r3', 'nome', _excNome(v)); }, "Nome do responsável 3"))),
+                    campo('CPF DO RESPONSÁVEL 3', entrada(edit.r3.cpf, function (v) { chgR('r3', 'cpf', _excCpfMask(v)); }, "CPF do responsável 3", { inputMode: "numeric", placeholder: "000.000.000-00" })),
+                    campo('RESPONSÁVEL 4', React.createElement("div", { style: { display: 'flex', gap: 5 } }, selPar(edit.r4.par, function (v) { chgR('r4', 'par', v); }), entrada(edit.r4.nome, function (v) { chgR('r4', 'nome', _excNome(v)); }, "Nome do responsável 4"))),
+                    campo('CPF DO RESPONSÁVEL 4', entrada(edit.r4.cpf, function (v) { chgR('r4', 'cpf', _excCpfMask(v)); }, "CPF do responsável 4", { inputMode: "numeric", placeholder: "000.000.000-00" })),
+                    React.createElement("div", { style: { display: 'flex', gap: 8, justifyContent: 'flex-end' } },
+                        React.createElement("button", { type: "button", onClick: salvarEdicao, style: { background: COLORS.green, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 800 } }, "Salvar"),
+                        React.createElement("button", { type: "button", onClick: cancelar, style: { background: COLORS.redBg, color: COLORS.red, border: '1px solid ' + COLORS.red + '44', borderRadius: 9, padding: '9px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 800 } }, "Cancelar")));
+            }
+            function linhaResp(nome, cpf, par) { return React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12, alignItems: 'baseline' } }, React.createElement("span", { style: { minWidth: 0, overflowWrap: 'anywhere' } }, nome || '—', par ? React.createElement("span", { style: Object.assign({}, chip, { marginLeft: 6 }) }, par.toLowerCase()) : null), React.createElement("span", { style: Object.assign({}, mono, { color: COLORS.inkSoft, whiteSpace: 'nowrap' }) }, cpf || '—')); }
+            return React.createElement("div", { key: r.id, className: "busca-liquid-glass", onClick: function () { setSelId(r.id); }, onDoubleClick: function () { setSelId(null); }, style: cartao },
+                React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+                    React.createElement("div", { style: { flex: 1, minWidth: 0 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 13.5, overflowWrap: 'anywhere' } }, r.aluno || '—'), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontVariantNumeric: 'tabular-nums' } }, "CPF " + (r.cpfAluno || '—'))),
+                    btnIcone("Editar", function () { iniciarEdicao(r); }, React.createElement(Pencil, { size: 14, color: COLORS.ink }), COLORS.ink),
+                    btnIcone("Excluir", function () { remover(r.id); }, React.createElement(Trash2, { size: 14, color: COLORS.red }), COLORS.red)),
+                React.createElement("div", { style: { display: 'grid', gap: 5, borderTop: '1px solid ' + COLORS.lineSoft, paddingTop: 8 } },
+                    linhaResp(r.pai, r.cpfPai, ''), linhaResp(r.mae, r.cpfMae, ''),
+                    o.map(function (x, i) { return React.createElement(React.Fragment, { key: i }, linhaResp(x.nome, x.cpf, x.par)); })));
+        });
+        conteudo = React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10, padding: 10 } }, cartoes);
+    }
+
+    function campoModal(label, el) { return React.createElement("div", { style: { display: 'grid', gap: 4, minWidth: 0 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, label), el); }
+    function inM(chave, mascara, aria) {
+        return React.createElement("input", { value: novo[chave] || '', onChange: function (e) { var v = e.target.value; setNovo(function (a) { var n = __assign({}, a); n[chave] = mascara === 'cpf' ? _excCpfMask(v) : _excNome(v); return n; }); }, 'aria-label': aria, autoComplete: "off", spellCheck: "false", inputMode: mascara === 'cpf' ? "numeric" : undefined, placeholder: mascara === 'cpf' ? "000.000.000-00" : "NOME COMPLETO", style: inpModal });
+    }
+    function inMR(w, c, mascara, aria) {
+        return React.createElement("input", { value: novo[w][c] || '', onChange: function (e) { var v = e.target.value; setNovo(function (a) { var n = __assign({}, a); n[w] = __assign({}, n[w]); n[w][c] = mascara === 'cpf' ? _excCpfMask(v) : _excNome(v); return n; }); }, 'aria-label': aria, autoComplete: "off", spellCheck: "false", inputMode: mascara === 'cpf' ? "numeric" : undefined, placeholder: mascara === 'cpf' ? "000.000.000-00" : "NOME COMPLETO", style: inpModal });
+    }
+    function selM(w) { return React.createElement("select", { value: novo[w].par, onChange: function (e) { var v = e.target.value; setNovo(function (a) { var n = __assign({}, a); n[w] = __assign({}, n[w], { par: v }); return n; }); }, 'aria-label': "Parentesco", style: inpModal }, EXCURSAO_TDB_PARENTESCOS.map(function (p) { return React.createElement("option", { key: p, value: p }, p); })); }
+    var par2 = { display: 'grid', gridTemplateColumns: 'minmax(0,1.6fr) minmax(0,1fr)', gap: 10 };
+    var par3 = { display: 'grid', gridTemplateColumns: '110px minmax(0,1.5fr) minmax(0,1fr)', gap: 10 };
+    var secT = { fontSize: 12, fontWeight: 800, color: COLORS.inkButton, letterSpacing: '.04em' };
+    var modal = novo ? React.createElement("div", { role: "dialog", 'aria-modal': "true", 'aria-label': "Novo aluno completo", onClick: function (e) { if (e.target === e.currentTarget) setNovo(null); }, style: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(20,30,60,.38)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14, overflowY: 'auto' } },
+        React.createElement("form", { onSubmit: function (e) { e.preventDefault(); salvarNovo(); }, className: "busca-liquid-glass", style: { width: 'min(720px, 100%)', maxHeight: '94vh', overflowY: 'auto', borderRadius: 22, padding: 20, display: 'grid', gap: 14, background: COLORS.paperCard } },
+            React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, React.createElement("div", { className: "serif", style: { fontSize: 20, fontWeight: 800, color: COLORS.ink } }, "Novo aluno completo"), React.createElement("button", { type: "button", 'aria-label': "Fechar", onClick: function () { setNovo(null); }, style: { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink, borderRadius: 10, width: 34, height: 34, cursor: 'pointer' } }, React.createElement(X, { size: 15 }))),
+            React.createElement("div", { style: secT }, "ALUNO"),
+            React.createElement("div", { style: par2 }, campoModal("NOME DA CRIANÇA", inM('aluno', 'nome', "Nome da criança")), campoModal("CPF DA CRIANÇA", inM('cpfAluno', 'cpf', "CPF da criança"))),
+            React.createElement("div", { style: secT }, "PAI"),
+            React.createElement("div", { style: par2 }, campoModal("NOME DO PAI", inM('pai', 'nome', "Nome do pai")), campoModal("CPF DO PAI", inM('cpfPai', 'cpf', "CPF do pai"))),
+            React.createElement("div", { style: secT }, "MÃE"),
+            React.createElement("div", { style: par2 }, campoModal("NOME DA MÃE", inM('mae', 'nome', "Nome da mãe")), campoModal("CPF DA MÃE", inM('cpfMae', 'cpf', "CPF da mãe"))),
+            React.createElement("div", { style: secT }, "RESPONSÁVEL 3 · opcional"),
+            React.createElement("div", { style: par3 }, campoModal("PARENTESCO", selM('r3')), campoModal("NOME", inMR('r3', 'nome', 'nome', "Nome do responsável 3")), campoModal("CPF", inMR('r3', 'cpf', 'cpf', "CPF do responsável 3"))),
+            React.createElement("div", { style: secT }, "RESPONSÁVEL 4 · opcional"),
+            React.createElement("div", { style: par3 }, campoModal("PARENTESCO", selM('r4')), campoModal("NOME", inMR('r4', 'nome', 'nome', "Nome do responsável 4")), campoModal("CPF", inMR('r4', 'cpf', 'cpf', "CPF do responsável 4"))),
+            React.createElement("div", { style: { display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 } },
+                React.createElement("button", { type: "button", onClick: function () { setNovo(null); }, style: { height: 40, border: '1px solid ' + COLORS.line, borderRadius: 10, padding: '0 16px', background: COLORS.paperCard, color: COLORS.ink, fontWeight: 700, cursor: 'pointer' } }, "Cancelar"),
+                React.createElement("button", { type: "submit", style: { height: 40, border: 'none', borderRadius: 10, padding: '0 18px', background: COLORS.inkButton, color: '#fff', fontWeight: 800, cursor: 'pointer' } }, "Salvar aluno")))) : null;
+
+    return React.createElement("div", { className: "excursao-tdb-raiz", style: { display: 'grid', gap: 12, minWidth: 0 } },
+        React.createElement("div", { className: "busca-liquid-glass festas-tdb-busca", style: { position: 'relative', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 14, padding: '9px 11px', minWidth: 0 } },
+            React.createElement(Search, { size: 17, color: COLORS.inkSoft, style: { flex: '0 0 auto' } }),
+            React.createElement("input", { type: "search", value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: "Buscar por aluno, pai, mãe ou CPF...", autoComplete: "off", spellCheck: "false", 'aria-label': "Pesquisar alunos da Excursão TDB", style: { flex: '1 1 auto', minWidth: 0, width: '100%', border: 'none', outline: 'none', background: 'transparent', color: COLORS.ink, fontSize: 14, fontFamily: 'Inter, sans-serif', padding: '7px 4px' } }),
+            termo ? React.createElement("span", { className: "mono", style: { flex: '0 0 auto', fontSize: 11.5, fontWeight: 800, color: COLORS.inkButton, whiteSpace: 'nowrap' } }, lista.length + " de " + rows.length) : null),
+        React.createElement("div", { className: "busca-liquid-glass festas-grupo-card", style: { borderRadius: 18, overflow: 'hidden', minWidth: 0 } },
+            React.createElement("div", { style: { padding: '11px 13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, borderBottom: '1px solid ' + COLORS.line, flexWrap: 'wrap' } },
+                React.createElement("div", { className: "serif", style: { fontSize: 17, fontWeight: 800, color: COLORS.ink } }, "Alunos ", React.createElement("span", { style: { fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: 600, color: COLORS.inkSoft } }, "(", rows.length, ")")),
+                React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Toque no lápis para editar. Nada muda sem clicar nele.")),
+            conteudo,
+            React.createElement("div", { 'data-export-ignore': true, style: { padding: '10px 13px 13px' } },
+                React.createElement("button", { type: "button", onClick: function () { setNovo(_excVazio()); }, style: { width: '100%', minHeight: 46, borderRadius: 14, border: '1px dashed ' + COLORS.inkButton, background: 'rgba(59,111,224,.08)', color: COLORS.inkButton, fontWeight: 800, fontSize: 14, cursor: 'pointer' } }, "+ Novo aluno completo"))),
+        modal);
+}
+
+function _excWrap(ativo, tr, el, nTail) {
+    if (!ativo) return el;
+    var ch = el.props.children;
+    var cauda = nTail ? Array.prototype.slice.call(ch, ch.length - nTail) : [];
+    return React.cloneElement.apply(null, [el, null, ch[0], ch[1], React.createElement(ExcursaoTDBLista, { key: 'exc-lista', transacoes: tr })].concat(cauda));
+}
 function FestasTDB(_a) {
     var _this = this;
     var transacoes = _a.transacoes, _anoFestas = _a.exercicioAtual, exercicioAtual = _anoFestas === void 0 ? (window.__exercicioAtual || 2026) : _anoFestas;
@@ -11339,7 +11673,7 @@ function FestasTDB(_a) {
                     if (limpas.length) {
                         setAbasFestas(limpas);
                         var ultimaAba = _festasLerUltimaAba(exercicioAtual);
-                        if (limpas.some(function (a) { return a.key === ultimaAba; })) setSubTab(ultimaAba);
+                        if (ultimaAba === EXCURSAO_TDB_KEY || limpas.some(function (a) { return a.key === ultimaAba; })) setSubTab(ultimaAba);
                     }
                 }
             } catch (e) {}
@@ -11402,7 +11736,7 @@ function FestasTDB(_a) {
     }
     if (!dados) return React.createElement("div", { style: { padding: 40, textAlign: 'center', color: COLORS.inkSoft } }, "Carregando Festas TDB...");
     var abaAtual = abasFestas.find(function (a) { return a.key === subTab; }) || abasFestas[0] || FESTAS_TDB_ABAS[0];
-    if (!abasFestas.some(function (a) { return a.key === subTab; }) && abasFestas.length) setTimeout(function () { setSubTab(abasFestas[0].key); }, 0);
+    if (subTab !== EXCURSAO_TDB_KEY && !abasFestas.some(function (a) { return a.key === subTab; }) && abasFestas.length) setTimeout(function () { setSubTab(abasFestas[0].key); }, 0);
     var rows = dados[subTab] || [];
     function normalizarBuscaFestas(v) {
         return String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
@@ -11572,6 +11906,12 @@ function FestasTDB(_a) {
         cancelarEdicaoRow();
         setExportandoAba(true);
         try {
+            if (subTab === EXCURSAO_TDB_KEY) {
+                var _rx = null;
+                try { var _gx = await window.storage.get('excursao_tdb', false); _rx = _gx && _gx.value ? JSON.parse(_gx.value) : null; } catch (e0) { _rx = null; }
+                await _excursaoGerarPDF(Array.isArray(_rx) ? _rx : _excBase(transacoes));
+                return;
+            }
             await _festasGerarPDF(dadosParaPdf(), [subTab], 'Festas-TDB-' + abaAtual.label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/gi, '-') + '.pdf', abasFestas);
         } catch (err) { window.alert('Não foi possível exportar o PDF. Tente novamente. ' + (err.message || '')); }
         finally { setExportandoAba(false); }
@@ -11739,22 +12079,23 @@ function FestasTDB(_a) {
     var totalGeral = totais(rows);
     var inputTop = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 9, padding: '0 11px', height: 38, fontSize: 13, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
     var bancoTop = __assign(__assign({}, inputTop), { color: novo.banco ? corBanco(novo.banco) : COLORS.ink, fontWeight: novo.banco ? 800 : 500 });
-    return React.createElement("div", { className: "festas-tdb-export-raiz", 'data-festa-chave': subTab, style: { display: 'grid', gap: 14, minWidth: 0, paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' } },
+    return _excWrap(subTab === EXCURSAO_TDB_KEY, transacoes, React.createElement("div", { className: "festas-tdb-export-raiz", 'data-festa-chave': subTab, style: { display: 'grid', gap: 14, minWidth: 0, paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' } },
         React.createElement("style", null, "@media(max-width:760px){.festas-tdb-abas{display:flex!important;overflow-x:auto!important;flex-wrap:nowrap!important;gap:7px!important;padding-bottom:6px!important;scroll-snap-type:none!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-x!important}.festas-tdb-abas>button{flex:0 0 auto!important;min-width:112px!important;scroll-snap-align:start}.festas-tdb-menu-wrap form{grid-template-columns:1fr!important}.festas-tdb-menu-wrap form>*{min-width:0!important}.festas-tdb-menu-wrap input,.festas-tdb-menu-wrap select,.festas-tdb-menu-wrap textarea{font-size:16.5px!important;touch-action:manipulation!important}.festas-tdb-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.festas-tdb-form>*{min-width:0!important;width:100%!important;box-sizing:border-box!important}.festas-tdb-form input,.festas-tdb-form select{min-width:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}.festas-tdb-form input[type=date]{-webkit-appearance:none;appearance:none;display:block!important}.festas-tdb-form .festas-campo-nome{grid-column:1/-1}.festas-tdb-form .festas-add-btn{grid-column:1/-1;width:100%!important}.festas-tdb-resumo{grid-template-columns:1fr 1fr!important}.festas-tdb-exportes{width:100%!important;justify-content:stretch!important}.festas-tdb-exportes button{flex:1 1 0!important}.festas-tdb-scroll{display:block!important;width:100%!important;max-width:calc(100vw - 28px)!important;overflow-x:scroll!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;touch-action:pan-x pan-y!important;scrollbar-gutter:stable!important;padding-bottom:10px!important}.festas-tdb-tabela{width:1180px!important;min-width:1180px!important;table-layout:fixed!important}.festas-editor-grid-mobile>*{min-width:0!important}}@media(max-width:420px){.festas-tdb-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.festas-tdb-form>*{grid-column:auto!important}.festas-tdb-form .festas-campo-nome,.festas-tdb-form .festas-add-btn{grid-column:1/-1!important}.festas-tdb-resumo{grid-template-columns:1fr!important}.festas-editor-grid-mobile{grid-template-columns:1fr 1fr!important}}"),
         React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 18, padding: '16px 16px 14px', display: 'grid', gap: 13 } },
             React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' } },
                 React.createElement("div", null, React.createElement("div", { className: "serif", style: { fontSize: 22, fontWeight: 800, color: COLORS.ink, display: 'flex', gap: 8, alignItems: 'center' } }, React.createElement(FestasIcon, { size: 22, color: COLORS.gold }), "Festas TDB"), React.createElement("div", { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 2 } }, "Controle de participantes e pagamentos por evento · base de alunos: " + _festasMesReferenciaLabel(), qtdBaseMesAtual ? " (" + qtdBaseMesAtual + ")" : "")),
                 React.createElement("div", { className: "festas-tdb-exportes", style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' } },
-                    React.createElement("button", { type: "button", onClick: exportarAba, disabled: exportandoAba || exportandoTudo, className: "busca-liquid-glass", style: { borderRadius: 12, padding: '9px 12px', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', color: COLORS.inkButton } }, exportandoAba ? 'Gerando...' : 'Exportar esta festa em PDF'),
+                    React.createElement("button", { type: "button", onClick: exportarAba, disabled: exportandoAba || exportandoTudo, className: "busca-liquid-glass", style: { borderRadius: 12, padding: '9px 12px', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', color: COLORS.inkButton } }, exportandoAba ? 'Gerando...' : (subTab === EXCURSAO_TDB_KEY ? 'Exportar p\u00E1gina' : 'Exportar esta festa em PDF')),
                     React.createElement("button", { type: "button", onClick: exportarTodas, className: "tdb-remat-exportar-tudo", disabled: exportandoTudo || exportandoAba }, exportandoTudo ? 'Gerando PDFs...' : 'Exportar todas em PDF'))),
             React.createElement("div", { className: "festas-tdb-menu-wrap tdb-emoji-scope", style: { display: 'grid', gap: 8 } },
                 React.createElement("div", { className: "festas-tdb-abas", style: { display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'stretch' } },
                     abasFestas.map(function (a) { var ativo = a.key === subTab; return React.createElement("button", { key: a.key, type: "button", onClick: function () { cancelarEdicaoRow(); cancelarRenomearFesta(); setCriandoFesta(false); setLinhaSelecionada(null); return selecionarFesta(a.key); }, className: "selection-card " + (ativo ? 'selection-card-ativa' : ''), style: { minHeight: 40, minWidth: 108, flex: '1 1 108px', border: '1px solid ' + (ativo ? COLORS.gold : COLORS.line), borderRadius: 12, background: ativo ? COLORS.goldSoft : COLORS.paperCard, color: COLORS.ink, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', '--select-cor': COLORS.gold, padding: '7px 10px' } }, TDBRotuloAba(a, 18)); }),
+                    (function () { var ativoE = subTab === EXCURSAO_TDB_KEY; return React.createElement("button", { key: EXCURSAO_TDB_KEY, type: "button", onClick: function () { cancelarEdicaoRow(); cancelarRenomearFesta(); setCriandoFesta(false); setLinhaSelecionada(null); return selecionarFesta(EXCURSAO_TDB_KEY); }, className: "selection-card " + (ativoE ? 'selection-card-ativa' : ''), style: { minHeight: 40, minWidth: 108, flex: '1 1 108px', border: '1px solid ' + (ativoE ? COLORS.gold : COLORS.line), borderRadius: 12, background: ativoE ? COLORS.goldSoft : COLORS.paperCard, color: COLORS.ink, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', '--select-cor': COLORS.gold, padding: '7px 10px' } }, '\uD83D\uDE8C Excurs\u00E3o TDB'); })(),
                     React.createElement("button", { type: "button", onClick: abrirNovaFesta, className: "busca-liquid-glass festas-nova-aba-btn", style: { minHeight: 40, minWidth: 108, borderRadius: 12, padding: '7px 12px', border: '1px dashed ' + COLORS.gold, color: COLORS.gold, fontWeight: 900, fontSize: 12.5, cursor: 'pointer' } }, "+ Nova festa")
                 ),
                 React.createElement("div", { style: { display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' } },
-                    !renomeandoAba && !criandoFesta && React.createElement("button", { type: "button", onClick: iniciarRenomearFesta, className: "busca-liquid-glass", style: { borderRadius: 10, padding: '7px 10px', fontSize: 11.5, fontWeight: 800, color: COLORS.ink, cursor: 'pointer' } }, React.createElement(Pencil, { size: 12, color: COLORS.ink }), " Renomear / emoji"),
-                    !renomeandoAba && !criandoFesta && React.createElement("button", { type: "button", onClick: excluirFestaAtual, className: "busca-liquid-glass", title: "Excluir esta festa e todos os dados dela", style: { borderRadius: 10, padding: '7px 10px', fontSize: 11.5, fontWeight: 800, color: COLORS.red, border: '1px solid ' + COLORS.red + '55', cursor: 'pointer' } }, React.createElement(Trash2, { size: 12, color: COLORS.red }), " Excluir ", abaAtual ? abaAtual.label : "festa"),
+                    subTab !== EXCURSAO_TDB_KEY && !renomeandoAba && !criandoFesta && React.createElement("button", { type: "button", onClick: iniciarRenomearFesta, className: "busca-liquid-glass", style: { borderRadius: 10, padding: '7px 10px', fontSize: 11.5, fontWeight: 800, color: COLORS.ink, cursor: 'pointer' } }, React.createElement(Pencil, { size: 12, color: COLORS.ink }), " Renomear / emoji"),
+                    subTab !== EXCURSAO_TDB_KEY && !renomeandoAba && !criandoFesta && React.createElement("button", { type: "button", onClick: excluirFestaAtual, className: "busca-liquid-glass", title: "Excluir esta festa e todos os dados dela", style: { borderRadius: 10, padding: '7px 10px', fontSize: 11.5, fontWeight: 800, color: COLORS.red, border: '1px solid ' + COLORS.red + '55', cursor: 'pointer' } }, React.createElement(Trash2, { size: 12, color: COLORS.red }), " Excluir ", abaAtual ? abaAtual.label : "festa"),
                     renomeandoAba && !ehMobileFestas && React.createElement("form", { onSubmit: salvarNomeFesta, className: "busca-liquid-glass", style: { display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'end', padding: 8, borderRadius: 12, flex: '1 1 520px' } },
                         React.createElement(TDBEmojiPicker, { value: emojiAbaEdit, onChange: setEmojiAbaEdit }),
                         React.createElement("div", { style: { display: 'grid', gap: 3, flex: '1 1 220px', minWidth: 0 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "NOME DA FESTA"), React.createElement("input", { value: nomeAbaEdit, onChange: function (e) { return setNomeAbaEdit(e.target.value); }, placeholder: "Nome da festa", style: { width: '100%', boxSizing: 'border-box', minWidth: 0, border: '1px solid ' + COLORS.line, borderRadius: 8, padding: '8px 9px', background: COLORS.paperCard, color: COLORS.ink } })),
@@ -11811,7 +12152,7 @@ function FestasTDB(_a) {
         filtrosFestasAtivos && rowsFiltradosFestas.length === 0 ? React.createElement("div", { className: "busca-liquid-glass", style: { borderRadius: 14, padding: '16px 14px', textAlign: 'center', color: COLORS.inkSoft, fontSize: 13 } }, termoBuscaFestas ? "Nenhum participante encontrado para ‘" + buscaFestas + "’." : "Nenhum participante encontrado com esses filtros.") : null,
         blocoGrupo('PARTICULAR', 'Particulares'),
         blocoGrupo('PREFEITURA', 'Prefeitura'),
-        editorMobileFestas(), modalNovoParticipanteMobileFestas, modalRenomearFestaMobile, modalNovaFestaMobile);
+        editorMobileFestas(), modalNovoParticipanteMobileFestas, modalRenomearFestaMobile, modalNovaFestaMobile), 3);
 }
 
 function Arquivos() {
