@@ -3964,7 +3964,9 @@ function TelaBloqueio(_a) {
 }
 function IconeGemini(_a) {
     var _b = _a.size, size = _b === void 0 ? 26 : _b;
-    return (React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24" }, React.createElement("defs", null, React.createElement("linearGradient", { id: "gradGemini", x1: "0%", y1: "0%", x2: "100%", y2: "100%" }, React.createElement("stop", { offset: "0%", stopColor: "#E0342A" }), React.createElement("stop", { offset: "35%", stopColor: "#4285F4" }), React.createElement("stop", { offset: "70%", stopColor: "#34A853" }), React.createElement("stop", { offset: "100%", stopColor: "#FBBC05" }))), React.createElement("path", { d: "M12 0 C12 6.6 17.4 12 24 12 C17.4 12 12 17.4 12 24 C12 17.4 6.6 12 0 12 C6.6 12 12 6.6 12 0 Z", fill: "url(#gradGemini)" })));
+    var gid = useRef(null);
+    if (gid.current === null) { window.__tdbGemSeq = (window.__tdbGemSeq || 0) + 1; gid.current = "gradGemini" + window.__tdbGemSeq; }
+    return (React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24" }, React.createElement("defs", null, React.createElement("linearGradient", { id: gid.current, x1: "0%", y1: "0%", x2: "100%", y2: "100%" }, React.createElement("stop", { offset: "0%", stopColor: "#E0342A" }), React.createElement("stop", { offset: "35%", stopColor: "#4285F4" }), React.createElement("stop", { offset: "70%", stopColor: "#34A853" }), React.createElement("stop", { offset: "100%", stopColor: "#FBBC05" }))), React.createElement("path", { d: "M12 0 C12 6.6 17.4 12 24 12 C17.4 12 12 17.4 12 24 C12 17.4 6.6 12 0 12 C6.6 12 12 6.6 12 0 Z", fill: "url(#" + gid.current + ")" })));
 }
 function BolhaFlutuanteIA(_a) {
     var onAbrir = _a.onAbrir;

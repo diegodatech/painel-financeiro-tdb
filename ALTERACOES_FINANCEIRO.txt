@@ -7,6 +7,7 @@ V1.74 (app TDB v1.74 + servidor 1.74)
 - Funciona no computador, celular (1 coluna) e Fold (2 colunas). As outras festas nao mudaram.
 - Fichas dos alunos (arquivo excursao_fichas.json): na primeira abertura a aba cruza pelo nome, preenche CPF do aluno, pai, mae e CPFs, e cria os alunos que nao estavam na lista.
 - Botao "Selecionar" na aba: marque varios alunos e use "Apagar selecionados" (vao para a lixeira).
+- Corrigido: o icone redondo da Gemini (canto direito, perto da busca) sumia na aba Anotacoes. Agora aparece em todas as abas. Nenhum dado ou conta foi alterado.
 - Inclui tudo da v1.73 e anteriores.
 
 V1.73 (app TDB v1.73 + servidor 1.73)
