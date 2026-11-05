@@ -1400,7 +1400,8 @@
         'rematricula_reajuste_padrao',
         'festas_tdb',
         'festas_tdb_abas',
-        'excursao_tdb'
+        'excursao_tdb',
+        'excursao_tdb_fichas'
       ]);
 
       function chaveAnualParaAno_(base, ano) {

@@ -5,6 +5,8 @@ V1.74 (app TDB v1.74 + servidor 1.74)
 - Primeira abertura ja traz os alunos das Mensalidades e os nomes dos pais cadastrados la (1o nome em Pai, 2o em Mae - conferir).
 - "Exportar pagina" gera o PDF "Excursão TDB.pdf" na horizontal, com logo da escola, no mesmo padrao dos outros PDFs.
 - Funciona no computador, celular (1 coluna) e Fold (2 colunas). As outras festas nao mudaram.
+- Fichas dos alunos (arquivo excursao_fichas.json): na primeira abertura a aba cruza pelo nome, preenche CPF do aluno, pai, mae e CPFs, e cria os alunos que nao estavam na lista.
+- Botao "Selecionar" na aba: marque varios alunos e use "Apagar selecionados" (vao para a lixeira).
 - Inclui tudo da v1.73 e anteriores.
 
 V1.73 (app TDB v1.73 + servidor 1.73)

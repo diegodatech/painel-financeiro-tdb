@@ -10795,6 +10795,26 @@ function _excLimpaRow(r) {
 function _excBase(transacoes) {
     return _festasAlunosMensalidades(transacoes).map(function (a, i) { var r = _excVazio(); r.id = 'exc-m-' + (i + 1); r.aluno = _excNome(a.nome); _excPreencherPais(r, transacoes); return r; });
 }
+function _excChaveNome(n) { return String(n || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+function _excChaveSet(n) { return _excChaveNome(n).split(' ').sort().join(' '); }
+// Mescla as fichas dos alunos: acha pelo nome (igual ao das Mensalidades), preenche e cria quem nao esta na lista.
+function _excMesclarFichas(lista, fichas) {
+    var porNome = {}, porSet = {};
+    lista.forEach(function (r, i) { porNome[_excChaveNome(r.aluno)] = i; porSet[_excChaveSet(r.aluno)] = i; });
+    fichas.forEach(function (f, n) {
+        var i = porNome[_excChaveNome(f.aluno)];
+        if (i == null) i = porSet[_excChaveSet(f.aluno)];
+        var r;
+        if (i == null) { r = _excVazio(); r.id = 'exc-f-' + (n + 1); r.aluno = _excNome(f.aluno); lista.push(r); porNome[_excChaveNome(r.aluno)] = lista.length - 1; }
+        else r = lista[i];
+        if (f.cpfAluno) r.cpfAluno = _excCpfMask(f.cpfAluno);
+        if (f.pai) r.pai = _excNome(f.pai);
+        if (f.cpfPai) r.cpfPai = _excCpfMask(f.cpfPai);
+        if (f.mae) r.mae = _excNome(f.mae);
+        if (f.cpfMae) r.cpfMae = _excCpfMask(f.cpfMae);
+    });
+    return lista;
+}
 function _excPreencherPais(r, transacoes) {
     var p = [];
     try { p = typeof tdbPaisDoAluno === 'function' ? tdbPaisDoAluno(transacoes, r.aluno) : []; } catch (e) { p = []; }
@@ -10882,6 +10902,8 @@ function ExcursaoTDBLista(props) {
     var _si = useState(null), selId = _si[0], setSelId = _si[1];
     var _b = useState(''), busca = _b[0], setBusca = _b[1];
     var _nv = useState(null), novo = _nv[0], setNovo = _nv[1];
+    var _sx = useState(null), selX = _sx[0], setSelX = _sx[1];
+    var _ax = useState(false), apagandoX = _ax[0], setApagandoX = _ax[1];
     var _w = useState(function () { return typeof window !== 'undefined' ? window.innerWidth : 1280; }), larg = _w[0], setLarg = _w[1];
     useEffect(function () {
         function f() { setLarg(window.innerWidth); }
@@ -10898,6 +10920,17 @@ function ExcursaoTDBLista(props) {
                 if (lista.length) { try { window.storage.set('excursao_tdb', JSON.stringify(lista), false); } catch (e) {} }
             }
             lista = lista.map(_excNorm).map(function (r) { return (!r.pai && !r.mae) ? _excPreencherPais(r, transacoes) : r; });
+            try {
+                var fl = await window.storage.get('excursao_tdb_fichas', false);
+                if (!(fl && fl.value)) {
+                    var resp = await fetch('./excursao_fichas.json?v=' + Date.now(), { cache: 'no-store' });
+                    var fichas = resp.ok ? await resp.json() : null;
+                    if (Array.isArray(fichas) && fichas.length) {
+                        lista = _excMesclarFichas(lista, fichas);
+                        try { window.storage.set('excursao_tdb', JSON.stringify(lista), false); window.storage.set('excursao_tdb_fichas', '1', false); } catch (e2) {}
+                    }
+                }
+            } catch (e1) {}
             if (vivo) setRows(lista);
         })();
         return function () { vivo = false; };
@@ -10925,6 +10958,20 @@ function ExcursaoTDBLista(props) {
             if (editId === id) cancelar();
         }, function () { window.alert('Não consegui mandar para a lixeira. Nada foi excluído.'); });
     }
+    async function removerSel(ids) {
+        var mapa = new Set(ids), alvo = rows.filter(function (r) { return mapa.has(r.id); });
+        if (!alvo.length) return false;
+        if (!window.confirm('Apagar ' + alvo.length + (alvo.length === 1 ? ' registro' : ' registros') + '?\n\nEles vão para a lixeira e ficam lá até você restaurar ou excluir definitivamente.')) return false;
+        try {
+            for (var k = 0; k < alvo.length; k++) {
+                var rr = alvo[k], idx = rows.findIndex(function (r) { return r.id === rr.id; });
+                await window.__tdbLixeiraAdicionar({ rotulo: rr.aluno || 'Aluno da Excursão TDB', origem: 'Festas TDB · Excursão TDB', restoreOps: [{ op: 'insert', key: 'excursao_tdb', path: [], index: idx, item: rr, uniqueField: 'id' }] });
+            }
+        } catch (e) { window.alert('Não consegui mandar para a lixeira. Nada foi excluído.'); return false; }
+        salvar(rows.filter(function (r) { return !mapa.has(r.id); }));
+        return true;
+    }
+    function toggleSelX(id) { setSelX(function (a) { a = a || []; return a.indexOf(id) >= 0 ? a.filter(function (x) { return x !== id; }) : a.concat([id]); }); }
     function salvarNovo() {
         if (!novo) return;
         var l = _excLimpaRow(novo);
@@ -10985,8 +11032,8 @@ function ExcursaoTDBLista(props) {
                     React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.r3.cpf, function (v) { chgR('r3', 'cpf', _excCpfMask(v)); }, "CPF do responsável 3", { inputMode: "numeric", placeholder: "000.000.000-00" }), entrada(edit.r4.cpf, function (v) { chgR('r4', 'cpf', _excCpfMask(v)); }, "CPF do responsável 4", { inputMode: "numeric", placeholder: "000.000.000-00" }))),
                     React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, acoes(r, true)));
             }
-            return React.createElement("tr", { key: r.id, onClick: function () { setSelId(r.id); }, onDoubleClick: function () { setSelId(null); }, style: estiloSel(sel, false) },
-                React.createElement("td", { style: tdPrimeiro }, r.aluno || '—'),
+            return React.createElement("tr", { key: r.id, onClick: function () { if (selX !== null) toggleSelX(r.id); else setSelId(r.id); }, onDoubleClick: function () { setSelId(null); }, style: estiloSel(sel || (selX !== null && selX.indexOf(r.id) >= 0), false) },
+                React.createElement("td", { style: tdPrimeiro }, selX !== null ? React.createElement("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 8 } }, React.createElement(TDBSelCaixa, { marcado: selX.indexOf(r.id) >= 0, onClick: function () { toggleSelX(r.id); } }), r.aluno || '—') : (r.aluno || '—')),
                 React.createElement("td", { style: td }, React.createElement("span", { style: mono }, r.cpfAluno || '—')),
                 React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 3 } }, React.createElement("div", { style: linha }, r.pai || '—'), React.createElement("div", { style: linha }, r.mae || '—'))),
                 React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 3 } }, React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfPai || '—')), React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfMae || '—')))),
@@ -11022,9 +11069,9 @@ function ExcursaoTDBLista(props) {
                         React.createElement("button", { type: "button", onClick: cancelar, style: { background: COLORS.redBg, color: COLORS.red, border: '1px solid ' + COLORS.red + '44', borderRadius: 9, padding: '9px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 800 } }, "Cancelar")));
             }
             function linhaResp(nome, cpf, par) { return React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12, alignItems: 'baseline' } }, React.createElement("span", { style: { minWidth: 0, overflowWrap: 'anywhere' } }, nome || '—', par ? React.createElement("span", { style: Object.assign({}, chip, { marginLeft: 6 }) }, par.toLowerCase()) : null), React.createElement("span", { style: Object.assign({}, mono, { color: COLORS.inkSoft, whiteSpace: 'nowrap' }) }, cpf || '—')); }
-            return React.createElement("div", { key: r.id, className: "busca-liquid-glass", onClick: function () { setSelId(r.id); }, onDoubleClick: function () { setSelId(null); }, style: cartao },
+            return React.createElement("div", { key: r.id, className: "busca-liquid-glass", onClick: function () { if (selX !== null) toggleSelX(r.id); else setSelId(r.id); }, onDoubleClick: function () { setSelId(null); }, style: cartao },
                 React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-                    React.createElement("div", { style: { flex: 1, minWidth: 0 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 13.5, overflowWrap: 'anywhere' } }, r.aluno || '—'), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontVariantNumeric: 'tabular-nums' } }, "CPF " + (r.cpfAluno || '—'))),
+                    selX !== null && React.createElement(TDBSelCaixa, { marcado: selX.indexOf(r.id) >= 0, onClick: function () { toggleSelX(r.id); } }), React.createElement("div", { style: { flex: 1, minWidth: 0 } }, React.createElement("div", { style: { fontWeight: 800, fontSize: 13.5, overflowWrap: 'anywhere' } }, r.aluno || '—'), React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft, fontVariantNumeric: 'tabular-nums' } }, "CPF " + (r.cpfAluno || '—'))),
                     btnIcone("Editar", function () { iniciarEdicao(r); }, React.createElement(Pencil, { size: 14, color: COLORS.ink }), COLORS.ink),
                     btnIcone("Excluir", function () { remover(r.id); }, React.createElement(Trash2, { size: 14, color: COLORS.red }), COLORS.red)),
                 React.createElement("div", { style: { display: 'grid', gap: 5, borderTop: '1px solid ' + COLORS.lineSoft, paddingTop: 8 } },
@@ -11070,7 +11117,8 @@ function ExcursaoTDBLista(props) {
         React.createElement("div", { className: "busca-liquid-glass festas-grupo-card", style: { borderRadius: 18, overflow: 'hidden', minWidth: 0 } },
             React.createElement("div", { style: { padding: '11px 13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, borderBottom: '1px solid ' + COLORS.line, flexWrap: 'wrap' } },
                 React.createElement("div", { className: "serif", style: { fontSize: 17, fontWeight: 800, color: COLORS.ink } }, "Alunos ", React.createElement("span", { style: { fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: 600, color: COLORS.inkSoft } }, "(", rows.length, ")")),
-                React.createElement("div", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Toque no lápis para editar. Nada muda sem clicar nele.")),
+                React.createElement("div", { 'data-export-ignore': true, style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' } }, React.createElement("span", { style: { fontSize: 11.5, color: COLORS.inkSoft } }, "Toque no lápis para editar. Nada muda sem clicar nele."), React.createElement(TDBSelBtn, { ativo: selX !== null, onClick: function () { setSelX(function (a) { return a === null ? [] : null; }); } }))),
+            selX !== null && React.createElement("div", { style: { padding: '10px 13px 0' } }, React.createElement(TDBSelBarra, { ids: selX, todos: lista.map(function (r) { return r.id; }), onTodos: setSelX, apagando: apagandoX, onCancelar: function () { setSelX(null); }, onApagar: async function () { if (!selX.length) return; setApagandoX(true); try { var ok = await removerSel(selX.slice()); if (ok) setSelX(null); } finally { setApagandoX(false); } } })),
             conteudo,
             React.createElement("div", { 'data-export-ignore': true, style: { padding: '10px 13px 13px' } },
                 React.createElement("button", { type: "button", onClick: function () { setNovo(_excVazio()); }, style: { width: '100%', minHeight: 46, borderRadius: 14, border: '1px dashed ' + COLORS.inkButton, background: 'rgba(59,111,224,.08)', color: COLORS.inkButton, fontWeight: 800, fontSize: 14, cursor: 'pointer' } }, "+ Novo aluno completo"))),
