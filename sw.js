@@ -1,7 +1,7 @@
 // TDB 02n — Service Worker
 // Objetivos: abrir o painel na hora (mesmo com internet ruim), nunca falhar a instalação por causa de UM arquivo,
 // e nunca interceptar as chamadas ao Google (Apps Script) — elas vão direto do navegador ao servidor.
-const BUILD='tdb-20261106-tdb-v1-79';
+const BUILD='tdb-20261106-tdb-v1-80';
 const CACHE='tdb-financeiro-github-'+BUILD;
 const CRITICOS=[
   './','./index.html','./desktop.html','./mobile.html','./config.js','./sync.js','./atualizar.js','./version.json','./manifest.webmanifest',
@@ -58,7 +58,7 @@ self.addEventListener('fetch',event=>{
     const p=url.pathname;
     // só arquivos estáticos do painel (nunca chamadas de API): o resto passa direto
     if(!(p.endsWith('/')||/\.(html|js|json|png|jpg|jpeg|svg|ico|pdf|webmanifest|css|woff2?)$/i.test(p)))return;
-    if(p.endsWith('/version.json')){event.respondWith(redeComPrazo(req,2500));return;}
+    if(p.endsWith('/version.json')){if(url.searchParams.has('v'))return;event.respondWith(redeComPrazo(req,2500));return;}  // com ?v= (aviso de versão) vai direto à rede, sem cópia do cache
     if(/\/(mobile|desktop)\.html$/.test(p)){event.respondWith(cacheEDepoisRede(event,req,p.endsWith('mobile.html')?'./mobile.html':'./desktop.html'));return;}
     if(p.endsWith('/index.html')||p.endsWith('/')){event.respondWith(cacheEDepoisRede(event,req,'./index.html'));return;}
     event.respondWith(cacheEDepoisRede(event,req,null));return;

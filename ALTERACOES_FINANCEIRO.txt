@@ -1,3 +1,8 @@
+V1.80 (app TDB v1.80 + servidor 1.80)
+- Aviso "Nova versao disponivel": agora EMPURRA o programa para baixo enquanto esta na tela, em vez de ficar por cima do cabecalho (logo, Salvar, Atualizar, Dados). Quando some, o programa volta ao lugar.
+- Corrigido o aviso que sumia sozinho ao clicar fora: o programa podia receber uma copia velha do version.json (do cache) e achar que ja estava atualizado. Agora o aviso so sai quando voce toca em "Atualizar agora" ou no x, e a conferencia da versao vai direto a rede, sem usar copia do cache.
+- Nada mais mudou. Inclui tudo da v1.79 e anteriores.
+
 V1.79 (app TDB v1.79 + servidor 1.79)
 - Lista de Compras (Rancho e Frutas/Verduras): as bolhas de quantidade e unidade agora ficam alinhadas em coluna (todas as unidades com a mesma largura), em vez de mudarem de lugar conforme a unidade (PCT, L, UN...). A Limpeza ja era assim.
 - Nada mais mudou. Inclui tudo da v1.78 e anteriores.

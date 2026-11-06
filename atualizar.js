@@ -164,8 +164,17 @@
   }
   function sub(t) { var s = criar().querySelector('small'); if (s) s.textContent = t; }
   function titulo(t) { var b = criar().querySelector('b'); if (b) b.textContent = t; }
-  function exibir() { criar().className = (faixa.className || '').replace(/\bon\b/, '') + ' on'; }
-  function esconder() { if (faixa) faixa.className = (faixa.className || '').replace(/\bon\b/g, '').trim(); }
+  // Empurra o app para baixo enquanto a faixa está na tela, para ela não cobrir o cabeçalho (logo, Salvar, Atualizar...).
+  function reservar(ligado) {
+    try {
+      var h = ligado && faixa ? Math.ceil(faixa.getBoundingClientRect().height) + 18 : 0, ds = document.documentElement.style;
+      ds.transition = 'padding-top .25s ease';
+      ds.paddingTop = h ? h + 'px' : '';
+    } catch (e) {}
+  }
+  function exibir() { criar().className = (faixa.className || '').replace(/\bon\b/, '') + ' on'; reservar(true); setTimeout(function () { reservar(true); }, 60); }
+  function esconder() { if (faixa) faixa.className = (faixa.className || '').replace(/\bon\b/g, '').trim(); reservar(false); }
+  window.addEventListener('resize', function () { if (faixa && /\bon\b/.test(faixa.className)) reservar(true); });
   function mostrar() {
     var cfg = window.TDB_CONFIG || {};
     titulo('Nova versão disponível');
@@ -216,7 +225,8 @@
     }).then(function (j) {
       emVoo = false;
       if (!j || !j.build) return;
-      if (j.build === cfg.build) { novaBuild = ''; esconder(); return; }
+      // Resposta igual à versão em uso NÃO apaga o aviso já mostrado (pode ser uma cópia velha vinda do cache): ele só sai com o toque do usuário.
+      if (j.build === cfg.build) return;
       novaBuild = j.build; novaLabel = limpaLabel(j.label || j.build);
       if (!forcar && dispensada === j.build) return;
       mostrar();
