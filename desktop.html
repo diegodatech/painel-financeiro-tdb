@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261106-tdb-v1-75";
+    window.__TDB_BUILD = "tdb-20261106-tdb-v1-76";
   </script>
-  <script src="./config.js?build=tdb-20261106-tdb-v1-75"></script>
+  <script src="./config.js?build=tdb-20261106-tdb-v1-76"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1557,10 +1557,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261106-tdb-v1-75"></script>
+  <script src="./sync.js?build=tdb-20261106-tdb-v1-76"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-75-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-76-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10851,7 +10851,7 @@ async function _excursaoGerarPDF(rows) {
     await window.__ensureJsPDF();
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
     var W = 842, H = 595, margem = 28, topo = 66, margemRodape = 24, larguraUtil = W - margem * 2;
-    var colW = [212, 106, 326, 142], colX = [margem];   // v1.75: 4 colunas (tio/tia ficam abaixo dos pais) — letra maior
+    var colW = [250, 98, 328, 110], colX = [margem];   // v1.75: 4 colunas (tio/tia ficam abaixo dos pais) — letra maior
     for (var ci = 1; ci < colW.length; ci++) colX[ci] = colX[ci - 1] + colW[ci - 1];
     var y = topo, primeira = true, total = rows.length;
     function novaPagina() {
@@ -10874,20 +10874,32 @@ async function _excursaoGerarPDF(rows) {
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(95, 101, 112);
         doc.text('Nenhum aluno cadastrado.', margem + 5, y + 16);
     }
+    // v1.76: ajusta sozinho o espaço entre as linhas para a lista fechar em até 2 páginas (começa em 15 e desce até 12)
+    var passo = 15, pad = 8.25;
+    (function () {
+        var nl = rows.map(function (q) { return 2 + _excOutros(_excNorm(q)).length; });
+        var disp = H - margemRodape - 4 - (topo + 21 + 19);
+        for (var p = 15; p >= 12; p -= 0.5) {
+            var pd = Math.round(p * 0.55 * 10) / 10, yy = 0, pg = 1;
+            nl.forEach(function (n) { var h = n * p + pd; if (yy + h > disp) { pg++; yy = 0; } yy += h; });
+            passo = p; pad = pd;
+            if (pg <= 2) break;
+        }
+    })();
     rows.forEach(function (r, idx) {
         r = _excNorm(r);
         // v1.75: pai e mãe, e logo abaixo (só se preenchidos) os responsáveis 3 e 4 (tio, tia…); CPF na mesma altura
         var ls = [{ n: r.pai || '—', c: r.cpfPai || '—', t: '' }, { n: r.mae || '—', c: r.cpfMae || '—', t: '' }];
         _excOutros(r).forEach(function (o) { ls.push({ n: o.nome || '—', c: o.cpf || '—', t: o.par ? String(o.par).toLowerCase() : '' }); });
-        var passo = 15, rowH = ls.length * passo + 10;
+        var rowH = ls.length * passo + pad;
         if (y + rowH > H - margemRodape - 4) novaPagina();
         if (idx % 2 === 1) { doc.setFillColor(251, 252, 253); doc.rect(margem, y, larguraUtil, rowH, 'F'); }
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.4); doc.setTextColor(28, 32, 40);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9.8); doc.setTextColor(28, 32, 40);
         doc.text(_festasPdfCortarTexto(doc, r.aluno || '', colW[0] - 8), colX[0] + 4, y + rowH / 2 + 3.6);
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9.8); doc.setTextColor(28, 32, 40);
         doc.text(r.cpfAluno || '—', colX[1] + 4, y + rowH / 2 + 3.4);
         ls.forEach(function (l, i) {
-            var by = y + 5 + passo * i + 11;
+            var by = y + pad / 2 + passo * i + passo * 0.73;
             doc.setFont('helvetica', 'normal'); doc.setFontSize(9.8); doc.setTextColor(28, 32, 40);
             var tw = 0;
             if (l.t) { doc.setFontSize(8.6); tw = doc.getTextWidth('· ' + l.t) + 6; doc.setFontSize(9.8); }

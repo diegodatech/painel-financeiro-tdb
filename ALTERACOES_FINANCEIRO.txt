@@ -1,3 +1,8 @@
+V1.76 (app TDB v1.76 + servidor 1.76)
+- Excursao TDB, PDF: o espaco entre as linhas agora se ajusta sozinho (um pouco menor, de 15 ate 12 pt) para a lista fechar em ate 2 paginas. A coluna do aluno ficou mais larga (o nome nao corta mais) e a de CPF mais estreita.
+- Nada mais mudou: cadastro, lista do programa e dados continuam iguais a v1.75.
+- Inclui tudo da v1.75 e anteriores.
+
 V1.75 (app TDB v1.75 + servidor 1.75)
 - Excursao TDB, PDF e lista: os responsaveis 3 e 4 (tio, tia, avo...) agora ficam logo ABAIXO do pai e da mae, na mesma coluna, e o CPF de cada um na mesma altura na coluna de CPF. No PDF essas linhas so aparecem se estiverem preenchidas.
 - PDF: as colunas "Outros responsaveis" e "CPF dos responsaveis" sairam; o espaco foi aproveitado nas colunas dos pais. Letra maior (de 7 para 10 pt) e mais espaco entre as linhas (de 7 para 15 pt). Com a letra maior a lista passa de 1 para 2 paginas.
