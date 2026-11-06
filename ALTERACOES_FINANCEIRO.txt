@@ -1,3 +1,10 @@
+V1.75 (app TDB v1.75 + servidor 1.75)
+- Excursao TDB, PDF e lista: os responsaveis 3 e 4 (tio, tia, avo...) agora ficam logo ABAIXO do pai e da mae, na mesma coluna, e o CPF de cada um na mesma altura na coluna de CPF. No PDF essas linhas so aparecem se estiverem preenchidas.
+- PDF: as colunas "Outros responsaveis" e "CPF dos responsaveis" sairam; o espaco foi aproveitado nas colunas dos pais. Letra maior (de 7 para 10 pt) e mais espaco entre as linhas (de 7 para 15 pt). Com a letra maior a lista passa de 1 para 2 paginas.
+- Lista no programa (computador/tablet): mesmo arranjo, com o parentesco em etiqueta ao lado do nome. O editar linha mostra pai, mae e responsaveis 3 e 4 na mesma celula. Os cartoes do celular nao mudaram (ja mostravam os responsaveis abaixo dos pais).
+- Nenhum dado foi mexido: o cadastro (pai, mae, responsaveis 3 e 4) continua igual.
+- Inclui tudo da v1.74 e anteriores.
+
 V1.74 (app TDB v1.74 + servidor 1.74)
 - Novo: aba "Excursão TDB" dentro de Festas TDB (ao lado das outras festas, antes do "+ Nova festa"). Lista os alunos com CPF, pai e mae (um embaixo do outro), CPF dos pais e dois campos prontos para outros responsaveis (tio, tia, avo, avo - com nome, parentesco e CPF).
 - Clique no lapis para editar a linha (nada muda sem clicar nele); a linha selecionada fica marcada. Lixeira envia para a lixeira do sistema.

@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261105-tdb-v1-74";
+    window.__TDB_BUILD = "tdb-20261106-tdb-v1-75";
   </script>
-  <script src="./config.js?build=tdb-20261105-tdb-v1-74"></script>
+  <script src="./config.js?build=tdb-20261106-tdb-v1-75"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -2014,10 +2014,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261105-tdb-v1-74"></script>
+  <script src="./sync.js?build=tdb-20261106-tdb-v1-75"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261105-tdb-v1-74-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-75-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -11377,7 +11377,7 @@ async function _excursaoGerarPDF(rows) {
     await window.__ensureJsPDF();
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
     var W = 842, H = 595, margem = 28, topo = 66, margemRodape = 24, larguraUtil = W - margem * 2;
-    var colW = [175, 84, 150, 84, 205, 88], colX = [margem];
+    var colW = [212, 106, 326, 142], colX = [margem];   // v1.75: 4 colunas (tio/tia ficam abaixo dos pais) — letra maior
     for (var ci = 1; ci < colW.length; ci++) colX[ci] = colX[ci - 1] + colW[ci - 1];
     var y = topo, primeira = true, total = rows.length;
     function novaPagina() {
@@ -11385,15 +11385,15 @@ async function _excursaoGerarPDF(rows) {
         primeira = false;
         _tdbPdfCabecalho(doc, W, margem, larguraUtil, 'Excursão TDB — alunos e responsáveis');
         y = topo;
-        doc.setFillColor(239, 243, 248); doc.roundedRect(margem, y, larguraUtil, 14, 4, 4, 'F');
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(30, 36, 48);
-        doc.text('Alunos (' + total + ')', margem + 5, y + 9.8);
-        y += 16;
-        doc.setFillColor(249, 250, 252); doc.rect(margem, y, larguraUtil, 14, 'F');
-        var hs = ['Aluno', 'CPF do aluno', 'Pai / Responsável', 'CPF dos pais', 'Outros responsáveis', 'CPF dos responsáveis'];
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(77, 84, 96);
-        hs.forEach(function (h, i) { doc.text(h, colX[i] + 4, y + 9.6); });
-        y += 14;
+        doc.setFillColor(239, 243, 248); doc.roundedRect(margem, y, larguraUtil, 18, 4, 4, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(30, 36, 48);
+        doc.text('Alunos (' + total + ')', margem + 5, y + 12.6);
+        y += 21;
+        doc.setFillColor(249, 250, 252); doc.rect(margem, y, larguraUtil, 19, 'F');
+        var hs = ['Aluno', 'CPF do aluno', 'Pai / Mãe / Responsáveis', 'CPF'];
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.6); doc.setTextColor(77, 84, 96);
+        hs.forEach(function (h, i) { doc.text(h, colX[i] + 4, y + 12.8); });
+        y += 19;
     }
     novaPagina();
     if (!rows.length) {
@@ -11402,18 +11402,26 @@ async function _excursaoGerarPDF(rows) {
     }
     rows.forEach(function (r, idx) {
         r = _excNorm(r);
-        var outros = _excOutros(r), rowH = _tdbPdfAlturaLinha(2);
+        // v1.75: pai e mãe, e logo abaixo (só se preenchidos) os responsáveis 3 e 4 (tio, tia…); CPF na mesma altura
+        var ls = [{ n: r.pai || '—', c: r.cpfPai || '—', t: '' }, { n: r.mae || '—', c: r.cpfMae || '—', t: '' }];
+        _excOutros(r).forEach(function (o) { ls.push({ n: o.nome || '—', c: o.cpf || '—', t: o.par ? String(o.par).toLowerCase() : '' }); });
+        var passo = 15, rowH = ls.length * passo + 10;
         if (y + rowH > H - margemRodape - 4) novaPagina();
         if (idx % 2 === 1) { doc.setFillColor(251, 252, 253); doc.rect(margem, y, larguraUtil, rowH, 'F'); }
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.2); doc.setTextColor(28, 32, 40);
-        doc.text(_festasPdfCortarTexto(doc, r.aluno || '', colW[0] - 8), colX[0] + 4, y + rowH / 2 + 2.5);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(6.9);
-        doc.setTextColor(28, 32, 40);
-        doc.text(r.cpfAluno || '—', colX[1] + 4, y + rowH / 2 + 2.5);
-        _tdbPdfNomesCelula(doc, [r.pai || '—', r.mae || '—'], colX[2] + 4, y, rowH, colW[2] - 10);
-        _tdbPdfNomesCelula(doc, [r.cpfPai || '—', r.cpfMae || '—'], colX[3] + 4, y, rowH, colW[3] - 8);
-        _tdbPdfNomesCelula(doc, outros.map(function (o) { return (o.par ? o.par.toLowerCase() + ' · ' : '') + (o.nome || '—'); }), colX[4] + 4, y, rowH, colW[4] - 10);
-        _tdbPdfNomesCelula(doc, outros.map(function (o) { return o.cpf || '—'; }), colX[5] + 4, y, rowH, colW[5] - 8);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.4); doc.setTextColor(28, 32, 40);
+        doc.text(_festasPdfCortarTexto(doc, r.aluno || '', colW[0] - 8), colX[0] + 4, y + rowH / 2 + 3.6);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.8); doc.setTextColor(28, 32, 40);
+        doc.text(r.cpfAluno || '—', colX[1] + 4, y + rowH / 2 + 3.4);
+        ls.forEach(function (l, i) {
+            var by = y + 5 + passo * i + 11;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(9.8); doc.setTextColor(28, 32, 40);
+            var tw = 0;
+            if (l.t) { doc.setFontSize(8.6); tw = doc.getTextWidth('· ' + l.t) + 6; doc.setFontSize(9.8); }
+            var nome = _festasPdfCortarTexto(doc, l.n, colW[2] - 10 - tw);
+            doc.text(nome, colX[2] + 4, by);
+            if (l.t) { var nw = doc.getTextWidth(nome); doc.setFontSize(8.6); doc.setTextColor(110, 116, 126); doc.text('· ' + l.t, colX[2] + 4 + nw + 5, by); doc.setFontSize(9.8); doc.setTextColor(28, 32, 40); }
+            doc.text(_festasPdfCortarTexto(doc, l.c, colW[3] - 8), colX[3] + 4, by);
+        });
         y += rowH;
         doc.setDrawColor(224, 228, 235); doc.setLineWidth(.45); doc.line(margem, y, W - margem, y);
     });
@@ -11552,27 +11560,21 @@ function ExcursaoTDBLista(props) {
                 return React.createElement("tr", { key: r.id, style: estiloSel(true, true) },
                     React.createElement("td", { style: tdPrimeiro }, entrada(edit.aluno, function (v) { chg('aluno', _excNome(v)); }, "Nome do aluno")),
                     React.createElement("td", { style: td }, entrada(edit.cpfAluno, function (v) { chg('cpfAluno', _excCpfMask(v)); }, "CPF do aluno", { inputMode: "numeric", placeholder: "000.000.000-00" })),
-                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.pai, function (v) { chg('pai', _excNome(v)); }, "Nome do pai", { placeholder: "PAI" }), entrada(edit.mae, function (v) { chg('mae', _excNome(v)); }, "Nome da mãe", { placeholder: "MÃE" }))),
-                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.cpfPai, function (v) { chg('cpfPai', _excCpfMask(v)); }, "CPF do pai", { inputMode: "numeric", placeholder: "000.000.000-00" }), entrada(edit.cpfMae, function (v) { chg('cpfMae', _excCpfMask(v)); }, "CPF da mãe", { inputMode: "numeric", placeholder: "000.000.000-00" }))),
-                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } },
-                        React.createElement("div", { style: { display: 'flex', gap: 5 } }, selPar(edit.r3.par, function (v) { chgR('r3', 'par', v); }), entrada(edit.r3.nome, function (v) { chgR('r3', 'nome', _excNome(v)); }, "Nome do responsável 3")),
-                        React.createElement("div", { style: { display: 'flex', gap: 5 } }, selPar(edit.r4.par, function (v) { chgR('r4', 'par', v); }), entrada(edit.r4.nome, function (v) { chgR('r4', 'nome', _excNome(v)); }, "Nome do responsável 4")))),
-                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.r3.cpf, function (v) { chgR('r3', 'cpf', _excCpfMask(v)); }, "CPF do responsável 3", { inputMode: "numeric", placeholder: "000.000.000-00" }), entrada(edit.r4.cpf, function (v) { chgR('r4', 'cpf', _excCpfMask(v)); }, "CPF do responsável 4", { inputMode: "numeric", placeholder: "000.000.000-00" }))),
+                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.pai, function (v) { chg('pai', _excNome(v)); }, "Nome do pai", { placeholder: "PAI" }), entrada(edit.mae, function (v) { chg('mae', _excNome(v)); }, "Nome da mãe", { placeholder: "MÃE" }), React.createElement("div", { style: { display: 'flex', gap: 5 } }, selPar(edit.r3.par, function (v) { chgR('r3', 'par', v); }), entrada(edit.r3.nome, function (v) { chgR('r3', 'nome', _excNome(v)); }, "Nome do responsável 3")), React.createElement("div", { style: { display: 'flex', gap: 5 } }, selPar(edit.r4.par, function (v) { chgR('r4', 'par', v); }), entrada(edit.r4.nome, function (v) { chgR('r4', 'nome', _excNome(v)); }, "Nome do responsável 4")))),
+                    React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 5 } }, entrada(edit.cpfPai, function (v) { chg('cpfPai', _excCpfMask(v)); }, "CPF do pai", { inputMode: "numeric", placeholder: "000.000.000-00" }), entrada(edit.cpfMae, function (v) { chg('cpfMae', _excCpfMask(v)); }, "CPF da mãe", { inputMode: "numeric", placeholder: "000.000.000-00" }), entrada(edit.r3.cpf, function (v) { chgR('r3', 'cpf', _excCpfMask(v)); }, "CPF do responsável 3", { inputMode: "numeric", placeholder: "000.000.000-00" }), entrada(edit.r4.cpf, function (v) { chgR('r4', 'cpf', _excCpfMask(v)); }, "CPF do responsável 4", { inputMode: "numeric", placeholder: "000.000.000-00" }))),
                     React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, acoes(r, true)));
             }
             return React.createElement("tr", { key: r.id, onClick: function () { if (selX !== null) toggleSelX(r.id); else setSelId(r.id); }, onDoubleClick: function () { setSelId(null); }, style: estiloSel(sel || (selX !== null && selX.indexOf(r.id) >= 0), false) },
                 React.createElement("td", { style: tdPrimeiro }, selX !== null ? React.createElement("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 8 } }, React.createElement(TDBSelCaixa, { marcado: selX.indexOf(r.id) >= 0, onClick: function () { toggleSelX(r.id); } }), r.aluno || '—') : (r.aluno || '—')),
                 React.createElement("td", { style: td }, React.createElement("span", { style: mono }, r.cpfAluno || '—')),
-                React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 3 } }, React.createElement("div", { style: linha }, r.pai || '—'), React.createElement("div", { style: linha }, r.mae || '—'))),
-                React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 3 } }, React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfPai || '—')), React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfMae || '—')))),
-                React.createElement("td", { style: td }, o.length ? React.createElement("div", { style: { display: 'grid', gap: 3 } }, o.map(function (x, i) { return React.createElement("div", { key: i, style: linha }, x.nome || '—', React.createElement("span", { style: chip }, String(x.par || '').toLowerCase())); })) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—')),
-                React.createElement("td", { style: td }, o.length ? React.createElement("div", { style: { display: 'grid', gap: 3 } }, o.map(function (x, i) { return React.createElement("div", { key: i, style: linha }, React.createElement("span", { style: mono }, x.cpf || '—')); })) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—')),
+                React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 7 } }, React.createElement("div", { style: __assign(__assign({}, linha), { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }), title: r.pai || '' }, r.pai || '—'), React.createElement("div", { style: __assign(__assign({}, linha), { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }), title: r.mae || '' }, r.mae || '—'), o.map(function (x, i) { return React.createElement("div", { key: 'o' + i, style: __assign(__assign({}, linha), { display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }) }, React.createElement("span", { style: { minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, title: x.nome || '' }, x.nome || '—'), React.createElement("span", { style: __assign(__assign({}, chip), { flex: '0 0 auto' }) }, String(x.par || '').toLowerCase())); }))),
+                React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 7 } }, React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfPai || '—')), React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfMae || '—')), o.map(function (x, i) { return React.createElement("div", { key: 'o' + i, style: linha }, React.createElement("span", { style: mono }, x.cpf || '—')); }))),
                 React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, acoes(r, false)));
         });
         conteudo = React.createElement("div", { className: "festas-tdb-scroll", style: { overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', width: '100%', maxWidth: '100%', paddingBottom: 8 } },
-            React.createElement("table", { className: "tabela-mensalidades festas-tdb-tabela", style: { width: '100%', minWidth: 1200, borderCollapse: 'collapse', tableLayout: 'fixed' } },
-                React.createElement("colgroup", null, ['17%', '10%', '18%', '10%', '20%', '10%', '9%'].map(function (w, i) { return React.createElement("col", { key: i, style: { width: w } }); })),
-                React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Aluno"), React.createElement("th", { style: th }, "CPF do aluno"), React.createElement("th", { style: th }, "Pai / Responsável"), React.createElement("th", { style: th }, "CPF dos pais"), React.createElement("th", { style: th }, "Outros responsáveis"), React.createElement("th", { style: th }, "CPF dos responsáveis"), React.createElement("th", { 'data-export-ignore': true, style: th }, "Ações"))),
+            React.createElement("table", { className: "tabela-mensalidades festas-tdb-tabela", style: { width: '100%', minWidth: 1000, borderCollapse: 'collapse', tableLayout: 'fixed' } },
+                React.createElement("colgroup", null, ['21%', '12%', '35%', '21%', '11%'].map(function (w, i) { return React.createElement("col", { key: i, style: { width: w } }); })),
+                React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Aluno"), React.createElement("th", { style: th }, "CPF do aluno"), React.createElement("th", { style: th }, "Pai / Mãe / Responsáveis"), React.createElement("th", { style: th }, "CPF"), React.createElement("th", { 'data-export-ignore': true, style: th }, "Ações"))),
                 React.createElement("tbody", null, linhas)));
     } else {
         var cartoes = lista.map(function (r) {
