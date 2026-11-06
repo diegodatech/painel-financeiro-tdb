@@ -1,3 +1,14 @@
+V1.79 (app TDB v1.79 + servidor 1.79)
+- Lista de Compras (Rancho e Frutas/Verduras): as bolhas de quantidade e unidade agora ficam alinhadas em coluna (todas as unidades com a mesma largura), em vez de mudarem de lugar conforme a unidade (PCT, L, UN...). A Limpeza ja era assim.
+- Nada mais mudou. Inclui tudo da v1.78 e anteriores.
+
+V1.78 (app TDB v1.78 + servidor 1.78)
+- TODOS os PDFs do Financeiro agora seguem o padrao "com vida" do recibo (fundo com bolhas pastel, moldura dupla verde-agua e magenta, cartao de cabecalho com a logo, linhas em cartoes com faixa colorida, numero de pagina em etiqueta):
+  Lista de Compras (Frutas/Verduras, Rancho, Limpeza e as outras listas), Festas (todas as abas), Mensalidades (um mes ou os 12), Relatorio Financeiro, Contratos, Anotacoes, Rematricula e as telas exportadas em PDF (Lancamentos, Valores, Visao Geral, Calendario, Notas Fiscais, Contas Pessoais).
+- As telas exportadas continuam sendo a propria tela do programa; so o cabecalho, o fundo e o rodape mudaram. Como agora ha moldura, a tela fica um pouquinho menor na folha.
+- Nao mudaram: o Recibo (ja era esse modelo), os documentos do Municipio CB (modelo oficial) e os dados do programa.
+- Inclui tudo da v1.77 e anteriores.
+
 V1.77 (app TDB v1.77 + servidor 1.77)
 - Aviso "Nova versao disponivel" refeito (faixa grande de vidro no topo, com icone, "Atualizar agora" e x). Agora fica na tela ate voce tocar em atualizar (o x so dispensa ate reabrir o app). Confere 4 s depois de abrir, ao voltar para o app e a cada 2 minutos.
 - Servidor: sw.js, version.json, config.js, index.html e manifest agora vao com ordem para a Cloudflare NAO guardar copia (antes ela podia entregar o version.json velho para celular e outros PCs).

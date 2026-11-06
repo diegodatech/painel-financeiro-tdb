@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261106-tdb-v1-77";
+    window.__TDB_BUILD = "tdb-20261106-tdb-v1-79";
   </script>
-  <script src="./config.js?build=tdb-20261106-tdb-v1-77"></script>
+  <script src="./config.js?build=tdb-20261106-tdb-v1-79"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -2014,10 +2014,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261106-tdb-v1-77"></script>
+  <script src="./sync.js?build=tdb-20261106-tdb-v1-79"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-77-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-79-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -6980,12 +6980,12 @@ function Compras(_a) {
                     var linhasNome = doc.splitTextToSize(String(it.nome), larguraNomeReal);
                     var alturaBlocoNome = linhasNome.length * alturaLinha;
                     if (yy + alturaBlocoNome > 800) {
-                        doc.addPage();
+                        doc.addPage(); _tdbVFundo(doc, 595, 842);
                         yy = 50;
                     }
                     if (i % 2 === 1) {
-                        doc.setFillColor(248, 250, 252);
-                        doc.rect(x, yy - 10 * escala, largura, alturaBlocoNome, 'F');
+                        doc.setFillColor(243, 247, 252);
+                        doc.roundedRect(x, yy - 10 * escala, largura, alturaBlocoNome, 3, 3, 'F');
                     }
                     doc.setTextColor.apply(doc, roxo);
                     doc.text(linhasNome, x + 4, yy, { lineHeightFactor: 1.15 });
@@ -7088,51 +7088,34 @@ function Compras(_a) {
                         doc = new jsPDF({ unit: 'pt', format: 'a4' });
                         roxo = [17, 19, 24];
                         roxoClaro = [69, 76, 89];
-                        dourado = [23, 103, 207];
-                        goldSoft = [237, 244, 255];
-                        linhaCor = [215, 221, 230];
-                        fundoClaro = [241, 244, 248];
-                        y = 48;
-                        doc.setFillColor(245, 247, 250);
-                        doc.setDrawColor(222, 228, 236);
-                        doc.roundedRect(29, 24, 537, 64, 12, 12, 'FD');
-                        doc.setDrawColor(40, 120, 222);
-                        doc.line(155, 81, 185, 81);
-                        doc.setDrawColor(198, 45, 54);
-                        doc.line(190, 81, 200, 81);
-                        try {
-                            doc.addImage(LOGO_B64, 'PNG', 35, y - 16, 108, 53);
-                        }
-                        catch (e) { }
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(15);
-                        doc.setTextColor.apply(doc, roxo);
-                        doc.text('Escola Infantil Tempo de Brincar', 155, y + 6);
-                        doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(10.5);
-                        doc.setTextColor.apply(doc, roxoClaro);
+                        dourado = [20, 125, 118];
+                        goldSoft = [227, 246, 246];
+                        linhaCor = [217, 224, 232];
+                        fundoClaro = [235, 241, 248];
+                        // v1.78 — padrão "com vida": fundo com bolhas, moldura dupla, cartão de cabeçalho e etiquetas
                         catInfo = categoriaAtualCompra;
                         catLabel = catInfo.label.replace(/[^\w\sÀ-ú/]/g, '').trim();
-                        doc.text("Lista de Compras \u2014 ".concat(catLabel), 155, y + 22);
-                        y += 48;
-                        doc.setDrawColor.apply(doc, roxo);
-                        doc.setLineWidth(1.3);
-                        doc.line(35, y, 560, y);
-                        doc.setLineWidth(1);
-                        y += 20;
-                        doc.setFont('helvetica', 'normal');
+                        _tdbVFundo(doc, 595, 842);
+                        y = _tdbVCabecalho(doc, 595, 'Lista de Compras \u2014 ' + catLabel, true, new Date().toLocaleDateString('pt-BR'), 35) + 30;
                         doc.setFontSize(10);
-                        doc.setTextColor.apply(doc, roxoClaro);
                         if (listaAtual.fornecedor) {
-                            doc.text('Fornecedor:', 35, y);
                             doc.setFont('helvetica', 'bold');
-                            doc.setTextColor.apply(doc, roxo);
-                            doc.text(listaAtual.fornecedor, 95, y);
+                            var wForn = doc.getTextWidth(String(listaAtual.fornecedor));
                             doc.setFont('helvetica', 'normal');
+                            var wRot = doc.getTextWidth('Fornecedor: ');
+                            _tdbVRound(doc, 35, y - 13, wRot + wForn + 28, 21, 9, [248, 250, 253]);
+                            doc.setDrawColor(229, 235, 241); doc.setLineWidth(.8); doc.roundedRect(35, y - 13, wRot + wForn + 28, 21, 9, 9);
                             doc.setTextColor.apply(doc, roxoClaro);
+                            doc.text('Fornecedor:', 49, y + 1);
+                            doc.setFont('helvetica', 'bold'); doc.setTextColor.apply(doc, roxo);
+                            doc.text(String(listaAtual.fornecedor), 49 + wRot, y + 1);
+                            doc.setFont('helvetica', 'normal');
                         }
-                        doc.text("Data: ".concat(new Date().toLocaleDateString('pt-BR')), 460, y);
-                        y += 24;
+                        _tdbVRound(doc, 450, y - 13, 110, 21, 9, [227, 246, 246]);
+                        doc.setDrawColor(126, 210, 210); doc.setLineWidth(.8); doc.roundedRect(450, y - 13, 110, 21, 9, 9);
+                        doc.setFont('helvetica', 'normal'); doc.setTextColor.apply(doc, roxoClaro);
+                        doc.text('Data: ' + new Date().toLocaleDateString('pt-BR'), 505, y + 1, { align: 'center' });
+                        y += 30;
                         itensParaComprar = listaAtual.itens
                             .filter(function (it) { return categoriaAtualCompra && categoriaAtualCompra.modeloPdf === 'arraia' ? true : (it.comprar != null && it.comprar > 0); })
                             .sort(function (a, b) {
@@ -7156,7 +7139,7 @@ function Compras(_a) {
                             gruposArraia.forEach(function (categoriaNome) {
                                 var itensGrupo = itensParaComprar.filter(function (it) { return it.categoria === categoriaNome; });
                                 if (!itensGrupo.length) return;
-                                doc.setFillColor(237, 244, 255);
+                                doc.setFillColor(227, 246, 246);
                                 doc.setTextColor.apply(doc, dourado);
                                 doc.setFont('helvetica', 'bold');
                                 doc.roundedRect(35, yArraia - 9, larguraTabela, 16, 4, 4, 'F');
@@ -7167,8 +7150,8 @@ function Compras(_a) {
                                     var nomeLinhas = doc.splitTextToSize(String(it.nome), 400);
                                     var alturaItem = Math.max(15, nomeLinhas.length * 10.5);
                                     if (idx % 2 === 1) {
-                                        doc.setFillColor(248, 250, 252);
-                                        doc.rect(35, yArraia - 9, larguraTabela, alturaItem, 'F');
+                                        doc.setFillColor(243, 247, 252);
+                                        doc.roundedRect(35, yArraia - 9, larguraTabela, alturaItem, 3, 3, 'F');
                                     }
                                     doc.setTextColor.apply(doc, roxo);
                                     doc.setFontSize(8.2);
@@ -7206,9 +7189,10 @@ function Compras(_a) {
                             maiorLarguraNumero = Math.max.apply(Math, itensParaComprar.map(function (it) { return doc.getTextWidth(String(it.comprar)); }));
                             larguraNumeroFixaRancho = maiorLarguraNumero + 12;
                             paginaInicial = doc.internal.getCurrentPageInfo().pageNumber;
-                            desenharColuna(colEsq, 35, y, 258, escalaRancho, null, larguraNumeroFixaRancho, null, true);
+                            var _lu = (function () { doc.setFont('helvetica', 'bold'); doc.setFontSize(7); var m = Math.max.apply(Math, [0].concat(itensParaComprar.filter(function (it) { return it.unidade; }).map(function (it) { return Math.max(18, doc.getTextWidth(String(it.unidade)) + 6 * 1.6); }))); doc.setFontSize(8); return m || null; })();
+                            desenharColuna(colEsq, 35, y, 258, escalaRancho, null, larguraNumeroFixaRancho, _lu, true);
                             doc.setPage(paginaInicial);
-                            desenharColuna(colDir, 302, y, 258, escalaRancho, null, larguraNumeroFixaRancho, null, true);
+                            desenharColuna(colDir, 302, y, 258, escalaRancho, null, larguraNumeroFixaRancho, _lu, true);
                         }
                         else if (categoriaAtualCompra && categoriaAtualCompra.modeloPdf === 'limpeza') {
                             doc.setFont('helvetica', 'bold');
@@ -7233,16 +7217,10 @@ function Compras(_a) {
                             doc.setFontSize(8);
                             maiorLarguraNumeroFrutas = Math.max.apply(Math, itensParaComprar.map(function (it) { return doc.getTextWidth(String(it.comprar)); }));
                             var escalaFrutas = Math.min(1.28, Math.max(1.05, 22 / Math.max(18, itensParaComprar.length)));
-                            desenharColuna(itensParaComprar, 35, y, 525, escalaFrutas, null, maiorLarguraNumeroFrutas + 12, null, true);
+                            var _lu2 = (function () { doc.setFont('helvetica', 'bold'); doc.setFontSize(7); var m = Math.max.apply(Math, [0].concat(itensParaComprar.filter(function (it) { return it.unidade; }).map(function (it) { return Math.max(18, doc.getTextWidth(String(it.unidade)) + 6 * 1.6); }))); doc.setFontSize(8); return m || null; })();
+                            desenharColuna(itensParaComprar, 35, y, 525, escalaFrutas, null, maiorLarguraNumeroFrutas + 12, _lu2, true);
                         }
-                        totalPaginas = doc.internal.getNumberOfPages();
-                        for (p = 1; p <= totalPaginas; p++) {
-                            doc.setPage(p);
-                            doc.setFont('helvetica', 'normal');
-                            doc.setFontSize(8);
-                            doc.setTextColor.apply(doc, roxoClaro);
-                            doc.text("Gerado em ".concat(new Date().toLocaleDateString('pt-BR'), " pelo Painel Financeiro"), 40, 820);
-                        }
+                        _tdbPdfRodape(doc, 595, 842, 36, 'Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro');
                         blob = doc.output('blob');
                         url = URL.createObjectURL(blob);
                         a = document.createElement('a');
@@ -9005,16 +8983,11 @@ function _mostrarToastExportPDF(mensagem) {
 function _adicionarCanvasNoDocPDF(doc, canvas, tituloPagina, usarHorizontal, opts) {
     var larguraPagina = usarHorizontal ? 842 : 595, alturaPagina = usarHorizontal ? 595 : 842;
     var chave = opts && opts.chave ? opts.chave : 'generico';
-    var margem = (chave === 'contas' || chave === 'mensalidades' || chave === 'lancamentos') ? 24 : 32;
+    var margem = 36; // v1.78: dentro da moldura do padrão com vida
     var margemDireita = larguraPagina - margem, larguraUtil = margemDireita - margem;
-    var topoConteudo = usarHorizontal ? 76 : 80, rodapeConteudo = alturaPagina - 36;
-    if (chave === 'contas') { topoConteudo = 64; rodapeConteudo = alturaPagina - 31; }
+    var topoConteudo = 80, rodapeConteudo = alturaPagina - 40;
     function cabecalho() {
-        doc.setFillColor(245,247,250);doc.roundedRect(margem-5,9,larguraUtil+10,44,10,10,'F');
-        try { doc.addImage(LOGO_B64,'PNG',margem,14,70,34); } catch(e){}
-        doc.setFont('helvetica','bold');doc.setFontSize(usarHorizontal?12.5:13);doc.setTextColor(17,19,24);doc.text('Escola Infantil Tempo de Brincar',margem+78,30);
-        doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(69,76,89);doc.text(tituloPagina,margem+78,44);
-        doc.setDrawColor(215,221,230);doc.setLineWidth(1.2);doc.line(margem,58,margemDireita,58);doc.setLineWidth(1);
+        _tdbPdfCabecalho(doc, larguraPagina, margem, larguraUtil, tituloPagina);
     }
     if(opts&&opts.novaPaginaAntes)doc.addPage('a4',usarHorizontal?'landscape':'portrait');
     cabecalho();
@@ -9178,16 +9151,10 @@ async function exportarRematriculaPDF(alvo, botao) {
         var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
         var pagina = alvo.closest('[data-ano]');
         var ano = alvo.getAttribute('data-ano') || (pagina ? pagina.getAttribute('data-ano') : '');
-        var margem = 40, larguraUtil = 555 - margem, topoConteudo = 74, rodapeConteudo = 800;
+        var margem = 40, larguraUtil = 555 - margem, topoConteudo = 82, rodapeConteudo = 800;
         var y = topoConteudo;
         function cabecalho() {
-            doc.setFillColor(245,247,250);doc.roundedRect(35,12,525,46,10,10,'F');
-            try { doc.addImage(LOGO_B64, 'PNG', 40, 18, 74, 36); } catch (e) { }
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(17, 19, 24);
-            doc.text('Escola Infantil Tempo de Brincar', 122, 34);
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(69, 76, 89);
-            doc.text('Rematrícula ' + ano, 122, 49);
-            doc.setDrawColor(215, 221, 230); doc.setLineWidth(1.3); doc.line(40, 62, 555, 62); doc.setLineWidth(1);
+            _tdbPdfCabecalho(doc, 595, 36, 523, 'Rematrícula ' + ano);
             y = topoConteudo;
         }
         cabecalho();
@@ -9236,14 +9203,7 @@ async function exportarRematriculaPDF(alvo, botao) {
             }
             y += 8;
         }
-        var paginas = doc.getNumberOfPages();
-        for (var p = 1; p <= paginas; p++) {
-            doc.setPage(p);
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(69, 76, 89);
-            doc.text('Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro', 40, 817);
-            doc.setFontSize(9); doc.setTextColor(100);
-            doc.text(p + ' / ' + paginas, 555, 817, { align: 'right' });
-        }
+        _tdbPdfRodape(doc, 595, 842, 36, 'Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro');
         var nomeQuadro = ((cards[0].innerText || cards[0].textContent || '').trim().split('\n')[0] || 'quadro')
             .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 70) || 'quadro';
         var _pdfBlob = doc.output('blob');
@@ -9288,15 +9248,7 @@ async function exportarPaginaVisualPDF(elemento, tituloPagina, nomeArquivoBase, 
         });
         var larguraPagina = usarHorizontal ? 842 : 595;
         var alturaPagina = usarHorizontal ? 595 : 842;
-        var margem = 40, margemDireita = larguraPagina - margem, yRodape = alturaPagina - 25;
-        var paginas = doc.getNumberOfPages();
-        for (var p = 1; p <= paginas; p++) {
-            doc.setPage(p);
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(69, 76, 89);
-            doc.text('Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro', margem, yRodape);
-            doc.setFontSize(9); doc.setTextColor(100);
-            doc.text(p + ' / ' + paginas, margemDireita, yRodape, { align: 'right' });
-        }
+        _tdbPdfRodape(doc, larguraPagina, alturaPagina, 36, 'Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro');
         var _pdfBlob = doc.output('blob');
         var _pdfUrl = URL.createObjectURL(_pdfBlob);
         var _pdfAnchor = document.createElement('a');
@@ -9356,15 +9308,7 @@ async function exportarTodosMesesPDF(seletorElemento, montarTitulo, nomeArquivoB
         if (!doc) { window.alert('Não foi possível localizar os dados para exportar.'); return; }
         var larguraPagina = usarHorizontal ? 842 : 595;
         var alturaPagina = usarHorizontal ? 595 : 842;
-        var margem = 40, margemDireita = larguraPagina - margem, yRodape = alturaPagina - 25;
-        var paginas = doc.getNumberOfPages();
-        for (var p = 1; p <= paginas; p++) {
-            doc.setPage(p);
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(69, 76, 89);
-            doc.text('Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro', margem, yRodape);
-            doc.setFontSize(9); doc.setTextColor(100);
-            doc.text(p + ' / ' + paginas, margemDireita, yRodape, { align: 'right' });
-        }
+        _tdbPdfRodape(doc, larguraPagina, alturaPagina, 36, 'Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro');
         var _pdfBlob = doc.output('blob');
         var _pdfUrl = URL.createObjectURL(_pdfBlob);
         var _pdfAnchor = document.createElement('a');
@@ -10048,34 +9992,22 @@ function Anotacoes(_a) {
                         roxo = [17, 19, 24];
                         margemX = 56;
                         larguraUtil = 595 - margemX * 2;
-                        y = 70;
-                        doc.setFillColor(245, 247, 250);
-                        doc.roundedRect(margemX - 8, y - 23, larguraUtil + 16, 32, 9, 9, 'F');
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(18);
-                        doc.setTextColor.apply(doc, roxo);
-                        doc.text(b.titulo, margemX, y);
-                        y += 12;
-                        doc.setDrawColor.apply(doc, roxo);
-                        doc.setLineWidth(1.2);
-                        doc.line(margemX, y, 595 - margemX, y);
-                        y += 28;
+                        // v1.78 — padrão "com vida"
+                        _tdbVFundo(doc, 595, 842);
+                        y = _tdbVCabecalho(doc, 595, 'Anota\u00E7\u00E3o \u2014 ' + String(b.titulo || ''), true, new Date().toLocaleDateString('pt-BR'), 36) + 30;
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(11.5);
                         doc.setTextColor(40, 40, 40);
                         linhas = doc.splitTextToSize(b.texto || '(sem conteúdo)', larguraUtil);
                         linhas.forEach(function (linha) {
-                            if (y > 780) {
-                                doc.addPage();
+                            if (y > 772) {
+                                doc.addPage(); _tdbVFundo(doc, 595, 842);
                                 y = 60;
                             }
                             doc.text(linha, margemX, y);
                             y += 17;
                         });
-                        doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(8);
-                        doc.setTextColor(150, 150, 150);
-                        doc.text("Gerado em ".concat(new Date().toLocaleDateString('pt-BR'), " pelo Painel Financeiro"), margemX, 822);
+                        _tdbPdfRodape(doc, 595, 842, 36, 'Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro');
                         var _pdfBlob = doc.output('blob');
                         var _pdfUrl = URL.createObjectURL(_pdfBlob);
                         var _pdfAnchor = document.createElement('a');
@@ -11020,24 +10952,45 @@ function _tdbPdfCheck(doc, cx, cy, r) {
     doc.line(cx - r * 0.1, cy + r * 0.42, cx + r * 0.52, cy - r * 0.36);
 }
 function _tdbPdfPaiLinhas(pai) { return tdbPaiPartes(pai).slice(0, 3); }
-function _tdbPdfAlturaLinha(nLinhas) { return nLinhas >= 2 ? 4.6 + 7 * nLinhas : 13; }
+function _tdbPdfAlturaLinha(nLinhas) { return (nLinhas >= 2 ? 4.6 + 7 * nLinhas : 13) + 3; }
+// v1.78 — padrão "com vida": cartão de linha com faixa colorida, barra de grupo e cabeçalho de colunas arredondados
+function _tdbPdfLinhaCard(doc, x, y, w, h, idx) {
+    var yy = y + 0.6, hh = h - 3.2;
+    doc.setFillColor(idx % 2 === 0 ? 251 : 255, idx % 2 === 0 ? 252 : 255, idx % 2 === 0 ? 254 : 255); doc.roundedRect(x, yy, w, hh, 4, 4, 'F');
+    doc.setDrawColor.apply(doc, TDBV.linha); doc.setLineWidth(.5); doc.roundedRect(x, yy, w, hh, 4, 4);
+    doc.setFillColor.apply(doc, idx % 2 === 0 ? TDBV.teal : TDBV.mag); doc.roundedRect(x + 2.5, yy + 2.5, 1.8, hh - 5, .9, .9, 'F');
+}
+function _tdbPdfBarraGrupo(doc, x, y, w, h, cor, bordaCor) {
+    doc.setFillColor.apply(doc, cor); doc.roundedRect(x, y, w, h, 6, 6, 'F');
+    doc.setDrawColor.apply(doc, bordaCor); doc.setLineWidth(.6); doc.roundedRect(x, y, w, h, 6, 6);
+}
+function _tdbPdfCorGrupo(titulo) { var t = String(titulo || '').toLowerCase(); if (/prefeitura|empresa|conv/.test(t)) return [[248, 238, 210], [232, 212, 154]]; if (/outro/.test(t)) return [[250, 228, 242], [236, 190, 222]]; return [[227, 246, 246], [126, 210, 210]]; }
+function _tdbPdfCabCols(doc, x, y, w, h) {
+    doc.setFillColor.apply(doc, TDBV.head); doc.roundedRect(x, y, w, h, 5, 5, 'F');
+    doc.setDrawColor.apply(doc, TDBV.linha); doc.setLineWidth(.5); doc.roundedRect(x, y, w, h, 5, 5);
+}
 function _tdbPdfRodape(doc, W, H, margem, textoEsq) {
     var total = doc.getNumberOfPages();
     for (var p = 1; p <= total; p++) {
         doc.setPage(p);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(95, 101, 112);
-        doc.text(textoEsq, margem, H - 10);
-        doc.text(p + ' / ' + total, W - margem, H - 10, { align: 'right' });
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.4); doc.setTextColor.apply(doc, TDBV.suave);
+        doc.text(textoEsq, margem, H - 26);
+        _tdbVRound(doc, W - margem - 46, H - 35, 46, 14, 7, TDBV.pill);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.8); doc.setTextColor.apply(doc, TDBV.tinta);
+        doc.text(p + ' / ' + total, W - margem - 23, H - 25.2, { align: 'center' });
     }
 }
 function _tdbPdfCabecalho(doc, W, margem, larguraUtil, subtitulo) {
-    doc.setFillColor(245, 247, 250); doc.roundedRect(margem - 5, 9, larguraUtil + 10, 44, 10, 10, 'F');
-    try { doc.addImage(LOGO_B64, 'PNG', margem, 14, 70, 34); } catch (e) {}
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(17, 19, 24);
-    doc.text('Escola Infantil Tempo de Brincar', margem + 78, 30);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(69, 76, 89);
-    doc.text(subtitulo, margem + 78, 44);
-    doc.setDrawColor(215, 221, 230); doc.setLineWidth(.45); doc.line(margem, 58, W - margem, 58);
+    var H = doc.internal.pageSize.getHeight();
+    _tdbVFundo(doc, W, H);
+    var x = margem, w = W - margem * 2, y = 32, h = 36;
+    _tdbVRound(doc, x, y, w, h, 12, TDBV.glass);
+    doc.setDrawColor.apply(doc, TDBV.glassB); doc.setLineWidth(.8); doc.roundedRect(x, y, w, h, 12, 12);
+    try { doc.addImage(LOGO_B64, 'PNG', x + w - 70, y + 4.5, 56, 27); } catch (e) {}
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.setTextColor.apply(doc, TDBV.tinta);
+    doc.text('Escola Infantil Tempo de Brincar', x + 16, y + 16);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.8); doc.setTextColor.apply(doc, TDBV.suave);
+    doc.text(subtitulo, x + 16, y + 28);
 }
 // Escreve os nomes empilhados (até 3) dentro da célula da linha.
 function _tdbPdfNomesCelula(doc, nomes, x, y, h, largura) {
@@ -11051,8 +11004,8 @@ function _tdbPdfNomesCelula(doc, nomes, x, y, h, largura) {
 async function _festasGerarPDF_(dados, chaves, nomeArquivo, abasConfig) {
     await window.__ensureJsPDF();
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
-    var W = 842, H = 595, margem = 28, topo = 66, margemRodape = 22, larguraUtil = W - margem * 2;
-    var colW = [175, 235, 50, 80, 80, 80, 86];
+    var W = 842, H = 595, margem = 36, topo = 80, margemRodape = 38, larguraUtil = W - margem * 2;
+    var colW = [170, 228, 48, 78, 78, 78, 90];
     var colX = [margem];
     for (var ci = 1; ci < colW.length; ci++) colX[ci] = colX[ci - 1] + colW[ci - 1];
     function cabecalho(titulo) { _tdbPdfCabecalho(doc, W, margem, larguraUtil, 'Festas TDB — ' + titulo); }
@@ -11061,13 +11014,13 @@ async function _festasGerarPDF_(dados, chaves, nomeArquivo, abasConfig) {
     function alturaDe(r) { return _tdbPdfAlturaLinha(_tdbPdfPaiLinhas(paiDe(r)).length); }
     function blocoGrupo(lista, titulo, y) {
         var soma = _festasTotais(lista);
-        doc.setFillColor(239, 243, 248); doc.roundedRect(margem, y, larguraUtil, 14, 4, 4, 'F');
+        var cg = _tdbPdfCorGrupo(titulo); _tdbPdfBarraGrupo(doc, margem, y, larguraUtil, 14, cg[0], cg[1]);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(30, 36, 48);
-        doc.text(titulo + ' (' + lista.length + ')', margem + 5, y + 9.8);
+        doc.text(titulo + ' (' + lista.length + ')', margem + 9, y + 9.8);
         doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(82, 90, 104);
         doc.text('Pessoas: ' + soma.pessoas + '   •   Total: ' + formatBRL(soma.valor), W - margem - 5, y + 9.8, { align: 'right' });
         y += 16;
-        doc.setFillColor(249, 250, 252); doc.rect(margem, y, larguraUtil, 14, 'F');
+        _tdbPdfCabCols(doc, margem, y, larguraUtil, 14);
         var headers = ['Nome', 'Pai / Responsável', 'Pessoas', 'Valor', 'Banco', 'Data', 'Pago'];
         doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(77, 84, 96);
         headers.forEach(function (h, i) {
@@ -11078,12 +11031,12 @@ async function _festasGerarPDF_(dados, chaves, nomeArquivo, abasConfig) {
         y += 14;
         lista.forEach(function (r, idx) {
             var linhas = _tdbPdfPaiLinhas(paiDe(r)), rowH = _tdbPdfAlturaLinha(linhas.length), yb = y + rowH / 2 + 2.5;
-            if (idx % 2 === 1) { doc.setFillColor(251, 252, 253); doc.rect(margem, y, larguraUtil, rowH, 'F'); }
+            _tdbPdfLinhaCard(doc, margem, y, larguraUtil, rowH, idx);
             var ok = r.conferido && r.conferido.st === 'ok';
             doc.setFont('helvetica', 'bold'); doc.setFontSize(7.2); doc.setTextColor(28, 32, 40);
-            var nomeTxt = _festasPdfCortarTexto(doc, r.nome || '', colW[0] - (ok ? 20 : 8));
-            doc.text(nomeTxt, colX[0] + 4, yb);
-            if (ok) _tdbPdfCheck(doc, colX[0] + 4 + doc.getTextWidth(nomeTxt) + 6, yb - 2.3, 3.2);
+            var nomeTxt = _festasPdfCortarTexto(doc, r.nome || '', colW[0] - (ok ? 25 : 13));
+            doc.text(nomeTxt, colX[0] + 9, yb);
+            if (ok) _tdbPdfCheck(doc, colX[0] + 9 + doc.getTextWidth(nomeTxt) + 6, yb - 2.3, 3.2);
             doc.setFont('helvetica', 'normal'); doc.setFontSize(6.9);
             _tdbPdfNomesCelula(doc, _tdbPdfPaiLinhas(paiDe(r)), colX[1] + 4, y, rowH, colW[1] - 10);
             doc.setFontSize(7.2); doc.setTextColor(28, 32, 40);
@@ -11100,9 +11053,9 @@ async function _festasGerarPDF_(dados, chaves, nomeArquivo, abasConfig) {
             var stPdf = _festasStatus(r); doc.setFont('helvetica', 'bold');
             if (stPdf === 'Pago') doc.setTextColor(28, 140, 70); else if (stPdf === 'Parcial') doc.setTextColor(176, 124, 0); else doc.setTextColor(193, 39, 45);
             doc.text(stPdf.toUpperCase(), colX[6] + colW[6] / 2, yb, { align: 'center' });
-            y += rowH; linhaHorizontal(y);
+            y += rowH;
         });
-        doc.setFillColor(246, 248, 251); doc.rect(margem, y, larguraUtil, 13, 'F');
+        _tdbPdfBarraGrupo(doc, margem, y, larguraUtil, 13, TDBV.head, TDBV.linha);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(40, 46, 58);
         doc.text('TOTAL — ' + titulo.toUpperCase(), colX[0] + 4, y + 9);
         doc.text(String(soma.pessoas), colX[2] + colW[2] / 2, y + 9, { align: 'center' });
@@ -11155,16 +11108,16 @@ async function _festasGerarPDF_(dados, chaves, nomeArquivo, abasConfig) {
 async function _mensalidadesGerarPDF(meses, nomeArquivo) {
     await window.__ensureJsPDF();
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
-    var W = 842, H = 595, margem = 28, topo = 66, margemRodape = 24, larguraUtil = W - margem * 2;
+    var W = 842, H = 595, margem = 36, topo = 80, margemRodape = 38, larguraUtil = W - margem * 2;
     var VERDE = [28, 140, 70], OURO = [176, 124, 0], VERM = [193, 39, 45];
     var COLS_AL = [
-        { k: 'nome', t: 'Nome', w: 150 }, { k: 'pai', t: 'Pai / Responsável', w: 190 }, { k: 'valor', t: 'Valor', w: 86, a: 'r' },
-        { k: 'status', t: 'Status', w: 58, a: 'c' }, { k: 'banco', t: 'Banco', w: 50, a: 'c' }, { k: 'data', t: 'Data', w: 54, a: 'c' },
-        { k: 'conv', t: 'Convênio', w: 60, a: 'c' }, { k: 'nota', t: 'Nota', w: 50, a: 'c' }, { k: 'tirar', t: 'Tirar nota', w: 88 }
+        { k: 'nome', t: 'Nome', w: 146 }, { k: 'pai', t: 'Pai / Responsável', w: 182 }, { k: 'valor', t: 'Valor', w: 82, a: 'r' },
+        { k: 'status', t: 'Status', w: 56, a: 'c' }, { k: 'banco', t: 'Banco', w: 48, a: 'c' }, { k: 'data', t: 'Data', w: 52, a: 'c' },
+        { k: 'conv', t: 'Convênio', w: 58, a: 'c' }, { k: 'nota', t: 'Nota', w: 48, a: 'c' }, { k: 'tirar', t: 'Tirar nota', w: 98 }
     ];
     var COLS_EM = [
-        { k: 'nome', t: 'Nome', w: 300 }, { k: 'valor', t: 'Valor', w: 110, a: 'r' }, { k: 'status', t: 'Status', w: 100, a: 'c' },
-        { k: 'banco', t: 'Banco', w: 120, a: 'c' }, { k: 'data', t: 'Data', w: 156, a: 'c' }
+        { k: 'nome', t: 'Nome', w: 300 }, { k: 'valor', t: 'Valor', w: 106, a: 'r' }, { k: 'status', t: 'Status', w: 98, a: 'c' },
+        { k: 'banco', t: 'Banco', w: 118, a: 'c' }, { k: 'data', t: 'Data', w: 148, a: 'c' }
     ];
     function posicoes(cols) { var x = margem; return cols.map(function (c) { var p = x; x += c.w; return p; }); }
     function fmt(v) { return formatBRL(v); }
@@ -11178,8 +11131,8 @@ async function _mensalidadesGerarPDF(meses, nomeArquivo) {
     }
     function caixas(res) {
         var w = (larguraUtil - 10) / 2;
-        doc.setFillColor(253, 238, 238); doc.roundedRect(margem, y, w, 30, 8, 8, 'F');
-        doc.setFillColor(232, 241, 253); doc.roundedRect(margem + w + 10, y, w, 30, 8, 8, 'F');
+        doc.setFillColor(253, 238, 238); doc.roundedRect(margem, y, w, 30, 10, 10, 'F'); doc.setDrawColor(240, 185, 185); doc.setLineWidth(.7); doc.roundedRect(margem, y, w, 30, 10, 10);
+        doc.setFillColor(232, 241, 253); doc.roundedRect(margem + w + 10, y, w, 30, 10, 10, 'F'); doc.setDrawColor(180, 201, 236); doc.roundedRect(margem + w + 10, y, w, 30, 10, 10);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(193, 39, 45); doc.text('PENDENTES', margem + 10, y + 11);
         doc.setTextColor(31, 91, 168); doc.text('RECEBIDOS', margem + w + 20, y + 11);
         doc.setFontSize(11.5); doc.setTextColor(193, 39, 45); doc.text(res.qtdPendente + '  ·  ' + fmt(res.valorPendente), margem + 10, y + 24);
@@ -11191,33 +11144,33 @@ async function _mensalidadesGerarPDF(meses, nomeArquivo) {
         else if (c.a === 'r') doc.text(txt, x + c.w - 5, yb, { align: 'right' });
         else doc.text(txt, x + 4, yb);
     }
-    function alturaDe(t, det) { return det ? _tdbPdfAlturaLinha(_tdbPdfPaiLinhas(t.pai).length) : 13; }
+    function alturaDe(t, det) { return det ? _tdbPdfAlturaLinha(_tdbPdfPaiLinhas(t.pai).length) : 16; }
     function cabGrupo(titulo, rows, rec) {
-        doc.setFillColor(239, 243, 248); doc.roundedRect(margem, y, larguraUtil, 14, 4, 4, 'F');
+        var cg = _tdbPdfCorGrupo(titulo); _tdbPdfBarraGrupo(doc, margem, y, larguraUtil, 14, cg[0], cg[1]);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(30, 36, 48);
-        doc.text(titulo + ' (' + rows.length + ')', margem + 5, y + 9.8);
+        doc.text(titulo + ' (' + rows.length + ')', margem + 9, y + 9.8);
         doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(82, 90, 104);
         doc.text('Recebido: ' + fmt(rec), W - margem - 5, y + 9.8, { align: 'right' });
         y += 16;
     }
     function cabColunas(cols, xs) {
-        doc.setFillColor(249, 250, 252); doc.rect(margem, y, larguraUtil, 14, 'F');
+        _tdbPdfCabCols(doc, margem, y, larguraUtil, 14);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8); doc.setTextColor(77, 84, 96);
         cols.forEach(function (c, i) { celulaTexto(doc, c.t, xs[i], c, y + 9.6); });
         y += 14;
     }
     function linha(t, cols, xs, det, idx) {
         var linhas = det ? _tdbPdfPaiLinhas(t.pai) : [], h = alturaDe(t, det), yb = y + h / 2 + 2.5;
-        if (idx % 2 === 1) { doc.setFillColor(251, 252, 253); doc.rect(margem, y, larguraUtil, h, 'F'); }
+        _tdbPdfLinhaCard(doc, margem, y, larguraUtil, h, idx);
         cols.forEach(function (c, i) {
             var x = xs[i];
             doc.setFont('helvetica', 'normal'); doc.setFontSize(7.1); doc.setTextColor(28, 32, 40);
             if (c.k === 'nome') {
                 var ok = t.conferido && t.conferido.st === 'ok';
                 doc.setFont('helvetica', 'bold'); doc.setFontSize(7.2);
-                var nm = _festasPdfCortarTexto(doc, nomeExibicao(t.categoria), c.w - (ok ? 20 : 8));
-                doc.text(nm, x + 4, yb);
-                if (ok) _tdbPdfCheck(doc, x + 4 + doc.getTextWidth(nm) + 6, yb - 2.3, 3.2);
+                var nm = _festasPdfCortarTexto(doc, nomeExibicao(t.categoria), c.w - (ok ? 25 : 13));
+                doc.text(nm, x + 9, yb);
+                if (ok) _tdbPdfCheck(doc, x + 9 + doc.getTextWidth(nm) + 6, yb - 2.3, 3.2);
             } else if (c.k === 'pai') {
                 doc.setFontSize(6.9); _tdbPdfNomesCelula(doc, linhas, x + 4, y, h, c.w - 10);
             } else if (c.k === 'valor') {
@@ -11248,7 +11201,7 @@ async function _mensalidadesGerarPDF(meses, nomeArquivo) {
                 doc.setFontSize(6.9); doc.setTextColor(48, 54, 64); celulaTexto(doc, _festasPdfCortarTexto(doc, t.tirarNota || '—', c.w - 8), x, c, yb);
             }
         });
-        y += h; doc.setDrawColor(224, 228, 235); doc.setLineWidth(.45); doc.line(margem, y, W - margem, y);
+        y += h;
     }
     function grupo(titulo, rows, det, m) {
         if (!rows.length) return;
@@ -11386,8 +11339,8 @@ function _tdbVFundo(doc, W, H) {
     doc.setDrawColor.apply(doc, TDBV.mag); doc.setLineWidth(1.1); doc.roundedRect(19, 19, W - 38, H - 38, 10, 10);
 }
 // Cartão de cabeçalho (completo na 1ª página, enxuto nas outras). Devolve o y logo abaixo.
-function _tdbVCabecalho(doc, W, titulo, completo, quando) {
-    var x = 44, w = W - 88, y = 32, h = completo ? 62 : 36;
+function _tdbVCabecalho(doc, W, titulo, completo, quando, mx) {
+    var x = mx == null ? 44 : mx, w = W - 2 * x, y = 32, h = completo ? 62 : 36;
     _tdbVRound(doc, x, y, w, h, completo ? 16 : 12, TDBV.glass);
     doc.setDrawColor.apply(doc, TDBV.glassB); doc.setLineWidth(.8); doc.roundedRect(x, y, w, h, completo ? 16 : 12, completo ? 16 : 12);
     try { doc.addImage(LOGO_B64, 'PNG', x + w - (completo ? 118 : 70), y + (completo ? 7 : 5), completo ? 100 : 56, completo ? 48 : 27); } catch (e) {}
@@ -14954,34 +14907,16 @@ function salvarTudoAgora() {
                         vermelho = [198, 45, 54];
                         linhaCor = [215, 221, 230];
                         fundoClaro = [241, 244, 248];
-                        y = 48;
-                        doc.setFillColor(245, 247, 250);
-                        doc.setDrawColor(222, 228, 236);
-                        doc.roundedRect(29, 24, 537, 64, 12, 12, 'FD');
-                        doc.setDrawColor(40, 120, 222);
-                        doc.line(155, 81, 185, 81);
-                        doc.setDrawColor(198, 45, 54);
-                        doc.line(190, 81, 200, 81);
-                        try {
-                            doc.addImage(LOGO_B64, 'PNG', 35, y - 16, 108, 53);
-                        }
-                        catch (e) { }
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(15);
-                        doc.setTextColor.apply(doc, roxo);
-                        doc.text('Escola Infantil Tempo de Brincar', 155, y + 6);
-                        doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(10.5);
-                        doc.setTextColor.apply(doc, roxoClaro);
-                        doc.text("Relat\u00F3rio Financeiro \u2014 ".concat(nomeMes), 155, y + 22);
-                        y += 48;
-                        doc.setDrawColor.apply(doc, roxo);
-                        doc.setLineWidth(1.3);
-                        doc.line(35, y, 560, y);
-                        doc.setLineWidth(1);
-                        y += 26;
-                        doc.setFillColor.apply(doc, fundoClaro);
-                        doc.rect(35, y - 16, 525, 50, 'F');
+                        // v1.78 — padrão "com vida"
+                        _tdbVFundo(doc, 595, 842);
+                        y = _tdbVCabecalho(doc, 595, 'Relat\u00F3rio Financeiro \u2014 ' + nomeMes, true, new Date().toLocaleDateString('pt-BR'), 35) + 40;
+                        (function () {
+                            var lc = (560 - 35) / 4, fundos = [[233, 247, 238], [253, 236, 236], [233, 247, 238], [232, 240, 251]], bordas = [[168, 214, 184], [240, 185, 185], [168, 214, 184], [180, 201, 236]];
+                            for (var k = 0; k < 4; k++) {
+                                doc.setFillColor.apply(doc, fundos[k]); doc.roundedRect(35 + k * lc, y - 16, lc - 6, 50, 10, 10, 'F');
+                                doc.setDrawColor.apply(doc, bordas[k]); doc.setLineWidth(.7); doc.roundedRect(35 + k * lc, y - 16, lc - 6, 50, 10, 10);
+                            }
+                        })();
                         kpisPdf = [
                             ['ENTRADAS', formatBRL(entradas), verde],
                             ['SAÍDAS', formatBRL(saidas), vermelho],
@@ -15012,14 +14947,14 @@ function salvarTudoAgora() {
                         largEntrada = (entradas / maiorValor) * largMax;
                         largSaida = (saidas / maiorValor) * largMax;
                         doc.setFillColor.apply(doc, verde);
-                        doc.rect(35, y, largEntrada, 16, 'F');
+                        doc.roundedRect(35, y, Math.max(largEntrada, 2), 16, 5, 5, 'F');
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(9);
                         doc.setTextColor.apply(doc, roxo);
                         doc.text("Entradas \u2014 ".concat(formatBRL(entradas)), 35 + largMax + 10, y + 12);
                         y += 24;
                         doc.setFillColor.apply(doc, vermelho);
-                        doc.rect(35, y, largSaida, 16, 'F');
+                        doc.roundedRect(35, y, Math.max(largSaida, 2), 16, 5, 5, 'F');
                         doc.text("Sa\u00EDdas \u2014 ".concat(formatBRL(saidas)), 35 + largMax + 10, y + 12);
                         y += 36;
                         doc.setDrawColor.apply(doc, linhaCor);
@@ -15031,7 +14966,7 @@ function salvarTudoAgora() {
                         doc.text('Despesas por categoria', 35, y);
                         y += 16;
                         doc.setFillColor.apply(doc, fundoClaro);
-                        doc.rect(35, y - 11, 525, 16, 'F');
+                        doc.roundedRect(35, y - 11, 525, 16, 5, 5, 'F');
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(8.5);
                         doc.setTextColor.apply(doc, roxoClaro);
@@ -15043,12 +14978,12 @@ function salvarTudoAgora() {
                         categoriasOrdenadas.forEach(function (_a, i) {
                             var cat = _a[0], valor = _a[1];
                             if (y > 790) {
-                                doc.addPage();
+                                doc.addPage(); _tdbVFundo(doc, 595, 842);
                                 y = 50;
                             }
                             if (i % 2 === 1) {
-                                doc.setFillColor(248, 250, 252);
-                                doc.rect(35, y - 10, 525, 15, 'F');
+                                doc.setFillColor(243, 247, 252);
+                                doc.roundedRect(35, y - 10, 525, 15, 4, 4, 'F');
                             }
                             doc.setTextColor.apply(doc, roxo);
                             doc.text(cat, 40, y);
@@ -15058,14 +14993,7 @@ function salvarTudoAgora() {
                             doc.setFont('helvetica', 'normal');
                             y += 15;
                         });
-                        totalPaginas = doc.internal.getNumberOfPages();
-                        for (p = 1; p <= totalPaginas; p++) {
-                            doc.setPage(p);
-                            doc.setFont('helvetica', 'normal');
-                            doc.setFontSize(8);
-                            doc.setTextColor.apply(doc, roxoClaro);
-                            doc.text("Gerado em ".concat(new Date().toLocaleDateString('pt-BR'), " pelo Painel Financeiro"), 35, 820);
-                        }
+                        _tdbPdfRodape(doc, 595, 842, 36, 'Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro');
                         blobPdf = doc.output('blob');
                         urlPdf = URL.createObjectURL(blobPdf);
                         downloadAnchor = document.createElement('a');
@@ -19319,18 +19247,9 @@ function Contratos(_a) {
                         teal = [17, 19, 24];
                         margemX = 56;
                         larguraUtil = 595 - margemX * 2;
-                        y = 70;
-                        doc.setFillColor(245, 247, 250);
-                        doc.roundedRect(margemX - 8, y - 23, larguraUtil + 16, 32, 9, 9, 'F');
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(18);
-                        doc.setTextColor.apply(doc, teal);
-                        doc.text(c.nome, margemX, y);
-                        y += 12;
-                        doc.setDrawColor.apply(doc, teal);
-                        doc.setLineWidth(1.2);
-                        doc.line(margemX, y, 595 - margemX, y);
-                        y += 24;
+                        // v1.78 — padrão "com vida"
+                        _tdbVFundo(doc, 595, 842);
+                        y = _tdbVCabecalho(doc, 595, 'Contrato \u2014 ' + String(c.nome || ''), true, new Date().toLocaleDateString('pt-BR'), 36) + 28;
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(10.5);
                         doc.setTextColor(80, 80, 80);
@@ -19341,21 +19260,25 @@ function Contratos(_a) {
                             c.mesReajuste && "Reajuste: ".concat(c.mesReajuste),
                         ].filter(Boolean).join('   ·   ');
                         if (linhaResumo) {
-                            doc.text(doc.splitTextToSize(linhaResumo, larguraUtil), margemX, y);
-                            y += 24;
+                            var _lr = doc.splitTextToSize(linhaResumo, larguraUtil - 24), _hr = _lr.length * 13 + 12;
+                            _tdbVRound(doc, 36, y - 16, 523, _hr, 10, [227, 246, 246]);
+                            doc.setDrawColor(126, 210, 210); doc.setLineWidth(.8); doc.roundedRect(36, y - 16, 523, _hr, 10, 10);
+                            doc.text(_lr, margemX, y);
+                            y += _hr + 12;
                         }
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(11.5);
                         doc.setTextColor(40, 40, 40);
                         linhas = doc.splitTextToSize(c.texto || '(sem conteúdo do contrato ainda)', larguraUtil);
                         linhas.forEach(function (linha) {
-                            if (y > 780) {
-                                doc.addPage();
+                            if (y > 772) {
+                                doc.addPage(); _tdbVFundo(doc, 595, 842);
                                 y = 60;
                             }
                             doc.text(linha, margemX, y);
                             y += 15.5;
                         });
+                        _tdbPdfRodape(doc, 595, 842, 36, 'Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' pelo Painel Financeiro');
                         var _pdfBlob = doc.output('blob');
                         var _pdfUrl = URL.createObjectURL(_pdfBlob);
                         var _pdfAnchor = document.createElement('a');
