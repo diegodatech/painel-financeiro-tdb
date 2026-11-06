@@ -1,3 +1,10 @@
+V1.84 (app TDB v1.84 + servidor 1.84)
+- Fold / tablet (tela abaixo de 1000 px): os menus suspensos (Configuracoes, Dados) agora sao opacos; antes dava para ver os botoes de baixo atraves deles.
+- Fold / tablet: aba Festas > formulario de adicionar (Nome, Grupo, Pessoas, Valor, Banco, Data, Pago) com fundo solido e campos com borda e cor firmes, faceis de ver. Computador (1000 px ou mais) nao mudou.
+- Novo painel "Diagnostico de sincronizacao" (somente leitura, nao altera dados): toque na etiqueta de status ("Sincronizado (Google Drive)") para ver se o Drive responde, quanto demora e se ha alteracoes pendentes.
+- sync.js (salvamento) NAO foi alterado.
+- Inclui tudo da v1.83 e anteriores.
+
 V1.83 (app TDB v1.83 + servidor 1.83)
 - Excursao > Alunos: no celular e no Fold aberto a lista agora e uma tabela, como no computador (no computador nada mudou).
   Celular (tela estreita): tabela de 3 colunas (Aluno com CPF, Pai/Mae/Resp. com CPF, Acoes), sem rolar para o lado.

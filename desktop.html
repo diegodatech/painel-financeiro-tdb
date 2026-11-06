@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261106-tdb-v1-83";
+    window.__TDB_BUILD = "tdb-20261106-tdb-v1-84";
   </script>
-  <script src="./config.js?build=tdb-20261106-tdb-v1-83"></script>
+  <script src="./config.js?build=tdb-20261106-tdb-v1-84"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1504,6 +1504,22 @@ html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .aba-item,
 html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .tdb-xbtn,
 html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .contas-pessoais-raiz *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 </style>
+<style id="tdb-fold-nitidez">
+/* v1.84 — Fold/tablet (telas abaixo de 1000 px): menus suspensos e campos de "adicionar" das Festas mais nítidos. Computador (1000 px ou mais) não muda. */
+@media (max-width:999px){
+  html body .busca-liquid-glass.tdb-menu-flut:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:#ffffff!important;background-image:none!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1.5px solid rgba(110,120,150,.38)!important;box-shadow:0 14px 38px rgba(20,30,60,.32)!important}
+  html body.dark-mode .busca-liquid-glass.tdb-menu-flut:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:#182030!important;background-image:none!important;border-color:rgba(160,175,210,.35)!important}
+  html body .busca-liquid-glass.festas-balao:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:rgba(255,255,255,.94)!important;border:1.5px solid rgba(110,120,150,.45)!important}
+  html body.dark-mode .busca-liquid-glass.festas-balao:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:rgba(30,38,52,.94)!important;border-color:rgba(160,175,210,.4)!important}
+  html body .busca-liquid-glass.festas-tdb-form:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:#ffffff!important;background-image:none!important;border:1.5px solid rgba(110,120,150,.45)!important}
+  html body.dark-mode .busca-liquid-glass.festas-tdb-form:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:#182030!important;border-color:rgba(160,175,210,.4)!important}
+  html body .festas-tdb-form:not(#tdbn1):not(#tdbn2):not(#tdbn3):not(#tdbn4):not(#tdbn5):not(#tdbn6) input:not([type=checkbox]),html body .festas-tdb-form:not(#tdbn1):not(#tdbn2):not(#tdbn3):not(#tdbn4):not(#tdbn5):not(#tdbn6) select{background-color:#f3f6fb!important;border-radius:14px!important;border:1.5px solid rgba(90,105,140,.55)!important;color:var(--c-ink)!important;opacity:1!important}
+  html body.dark-mode .festas-tdb-form:not(#tdbn1):not(#tdbn2):not(#tdbn3):not(#tdbn4):not(#tdbn5):not(#tdbn6) input:not([type=checkbox]),html body.dark-mode .festas-tdb-form:not(#tdbn1):not(#tdbn2):not(#tdbn3):not(#tdbn4):not(#tdbn5):not(#tdbn6) select{background-color:#222c40!important;border-color:rgba(160,175,210,.5)!important}
+  html body .festas-balao input,html body .festas-balao select{color:var(--c-ink)!important;opacity:1!important}
+  html body .festas-balao input::placeholder{color:var(--c-inkSoft)!important;opacity:.85!important}
+  html body .festas-balao input[type=date]::-webkit-datetime-edit,html body .festas-balao input[type=date]::-webkit-datetime-edit-fields-wrapper{color:var(--c-ink)!important;opacity:1!important}
+}
+</style>
 </head>
 <body>
 
@@ -1557,10 +1573,11 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261106-tdb-v1-83"></script>
-  <script src="./atualizar.js?build=tdb-20261106-tdb-v1-83"></script>
+  <script src="./diagnostico.js?build=tdb-20261106-tdb-v1-84"></script>
+  <script src="./sync.js?build=tdb-20261106-tdb-v1-84"></script>
+  <script src="./atualizar.js?build=tdb-20261106-tdb-v1-84"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-83-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-84-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -4126,7 +4143,7 @@ function DropdownFlutuante(_a) {
     }, [aberto, onFechar, anchorRef]);
     if (!aberto || !pos)
         return null;
-    return ReactDOM.createPortal(React.createElement("div", { ref: menuRef, className: "busca-liquid-glass", style: {
+    return ReactDOM.createPortal(React.createElement("div", { ref: menuRef, className: "busca-liquid-glass tdb-menu-flut", style: {
             position: 'fixed', top: pos.top, left: pos.left, zIndex: 999999,
             borderRadius: 12, boxShadow: '0 12px 34px rgba(0,0,0,0.22)',
             width: width,
