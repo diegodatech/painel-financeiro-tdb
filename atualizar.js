@@ -194,8 +194,27 @@
     exibir();
   }
   function falha(msg) { aplicando = false; titulo('Não consegui atualizar agora'); sub(msg); var bt = criar().querySelector('.bt'); if (bt) bt.style.display = ''; exibir(); }
+  // Se a página voltou velha depois de um "Atualizar agora" (service worker que não trocou, cópia presa), a 2ª tentativa limpa tudo e baixa de novo.
+  function tentativaForte() {
+    try {
+      var o = JSON.parse(sessionStorage.getItem('tdbUpdTent') || '{}'), agora = Date.now();
+      if (o.build === novaBuild && agora - (o.em || 0) < 6 * 60 * 1000) o.n = (o.n || 0) + 1; else o = { build: novaBuild, em: agora, n: 1 };
+      sessionStorage.setItem('tdbUpdTent', JSON.stringify(o));
+      return o.n >= 2;
+    } catch (e) { return false; }
+  }
+  function limparTudoERecarregar() {
+    var url = location.pathname + '?_upd=' + Date.now() + (location.hash || '');
+    var ir = function () { try { location.replace(url); } catch (e) { location.reload(); } };
+    var tarefas = [];
+    try { if (window.caches) tarefas.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })); } catch (e) {}
+    try { if (navigator.serviceWorker) tarefas.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })); } catch (e) {}
+    Promise.all(tarefas).then(ir, ir);
+    setTimeout(ir, 6000);
+  }
   function seguir() {
     var feito = false;
+    if (tentativaForte()) { limparTudoERecarregar(); return; }
     function recarregar() { if (feito) return; feito = true; try { location.reload(); } catch (e) { location.href = location.href; } }
     if (!('serviceWorker' in navigator)) { recarregar(); return; }
     navigator.serviceWorker.getRegistration().then(function (reg) {

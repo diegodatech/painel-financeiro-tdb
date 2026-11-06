@@ -1,3 +1,16 @@
+V1.83 (app TDB v1.83 + servidor 1.83)
+- Excursao > Alunos: no celular e no Fold aberto a lista agora e uma tabela, como no computador (no computador nada mudou).
+  Celular (tela estreita): tabela de 3 colunas (Aluno com CPF, Pai/Mae/Resp. com CPF, Acoes), sem rolar para o lado.
+  Fold aberto / tablet: tabela de 5 colunas igual a do computador, ajustada para caber.
+- Corrigido: no celular (mobile.html) a aba Excursao dava erro "TDBSelBtn is not defined" por falta do botao Selecionar; ele foi incluido.
+- Inclui tudo da v1.82 e anteriores.
+
+V1.82 (app TDB v1.82 + servidor 1.82)
+- Aviso "Nova versao disponivel" que pedia para atualizar de novo mesmo depois de atualizar: agora, se a pagina volta velha depois do toque em "Atualizar agora" (cache preso, service worker que nao trocou), a segunda tentativa limpa o cache do programa, desliga o service worker velho e baixa tudo de novo. O programa nao apaga seus dados (eles ficam no Drive e no armazenamento do aparelho); so os arquivos do programa sao baixados de novo.
+- Barra de titulo do app instalado: a bolinha branca foi trocada pelo icone TDB.
+- sync.js (salvamento) NAO foi alterado: e identico ao da v1.75 ate a v1.81. A unica diferenca em relacao a antes da v1.74 e a inclusao de excursao_tdb e excursao_tdb_fichas na lista de dados por exercicio (ano).
+- Inclui tudo da v1.81 e anteriores.
+
 V1.81 (app TDB v1.81 + servidor 1.81)
 - CAUSA ACHADA do aviso "Nova versao" nao aparecer em alguns computadores: o aviso comparava a versao do servidor com o config.js, e o config.js podia vir NOVO do cache do programa mesmo com a pagina VELHA (o cache do navegador ignora o ?build= do endereco). Resultado: servidor 1.80, config.js 1.80, pagina 1.77 -> "igual" -> sem aviso. Agora o aviso usa a versao escrita na PROPRIA pagina (HTML) e por isso aparece sempre que a pagina estiver velha. (Mesmo principio ja usado na Portaria, que compara a versao da pagina com o versao.txt do servidor.)
 - O arquivo atualizar.js tinha endereco fixo (?build=tdb-02i-revisado-6) e nunca mudava; agora muda a cada versao, junto com os outros arquivos.

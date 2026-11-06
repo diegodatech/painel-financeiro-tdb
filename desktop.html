@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261106-tdb-v1-81";
+    window.__TDB_BUILD = "tdb-20261106-tdb-v1-83";
   </script>
-  <script src="./config.js?build=tdb-20261106-tdb-v1-81"></script>
+  <script src="./config.js?build=tdb-20261106-tdb-v1-83"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1557,10 +1557,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261106-tdb-v1-81"></script>
-  <script src="./atualizar.js?build=tdb-20261106-tdb-v1-81"></script>
+  <script src="./sync.js?build=tdb-20261106-tdb-v1-83"></script>
+  <script src="./atualizar.js?build=tdb-20261106-tdb-v1-83"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-81-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-83-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -11083,7 +11083,7 @@ function ExcursaoTDBLista(props) {
 
     var termo = _excTexto({ aluno: busca, cpfAluno: '', pai: '', cpfPai: '', mae: '', cpfMae: '', r3: { par: '', nome: '', cpf: '' }, r4: { par: '', nome: '', cpf: '' } }).trim();
     var lista = termo ? rows.filter(function (r) { return _excTexto(r).indexOf(termo) !== -1; }) : rows;
-    var tabela = larg >= 1000;
+    var tabela = larg >= 640;
     var th = { padding: '9px 8px', fontSize: 10.8, fontWeight: 700, color: COLORS.inkSoft, textTransform: 'uppercase', letterSpacing: '.025em', textAlign: 'left', whiteSpace: 'normal', lineHeight: 1.15, background: COLORS.paper };
     var td = { padding: '7px 8px', fontSize: 12.5, color: COLORS.ink, borderTop: '1px solid ' + COLORS.lineSoft, verticalAlign: 'middle' };
     var inp = { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 7, padding: '6px 7px', fontSize: 12.5, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 };
@@ -11134,9 +11134,9 @@ function ExcursaoTDBLista(props) {
                 React.createElement("td", { style: td }, React.createElement("div", { style: { display: 'grid', gap: 7 } }, React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfPai || '—')), React.createElement("div", { style: linha }, React.createElement("span", { style: mono }, r.cpfMae || '—')), o.map(function (x, i) { return React.createElement("div", { key: 'o' + i, style: linha }, React.createElement("span", { style: mono }, x.cpf || '—')); }))),
                 React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, acoes(r, false)));
         });
-        conteudo = React.createElement("div", { className: "festas-tdb-scroll", style: { overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', width: '100%', maxWidth: '100%', paddingBottom: 8 } },
-            React.createElement("table", { className: "tabela-mensalidades festas-tdb-tabela", style: { width: '100%', minWidth: 1000, borderCollapse: 'collapse', tableLayout: 'fixed' } },
-                React.createElement("colgroup", null, ['21%', '12%', '35%', '21%', '11%'].map(function (w, i) { return React.createElement("col", { key: i, style: { width: w } }); })),
+        conteudo = React.createElement("div", { className: larg >= 1000 ? "festas-tdb-scroll" : "excursao-tdb-scroll", style: { overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', width: '100%', maxWidth: '100%', paddingBottom: 8 } },
+            React.createElement("table", { className: larg >= 1000 ? "tabela-mensalidades festas-tdb-tabela" : "excursao-tdb-tabela", style: { width: '100%', minWidth: larg >= 1000 ? 1000 : 760, borderCollapse: 'collapse', tableLayout: 'fixed' } },
+                React.createElement("colgroup", null, (larg >= 1000 ? ['21%', '12%', '35%', '21%', '11%'] : ['21%', '16%', '33%', '18%', '12%']).map(function (w, i) { return React.createElement("col", { key: i, style: { width: w } }); })),
                 React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: th }, "Aluno"), React.createElement("th", { style: th }, "CPF do aluno"), React.createElement("th", { style: th }, "Pai / Mãe / Responsáveis"), React.createElement("th", { style: th }, "CPF"), React.createElement("th", { 'data-export-ignore': true, style: th }, "Ações"))),
                 React.createElement("tbody", null, linhas)));
     } else {
@@ -11171,7 +11171,23 @@ function ExcursaoTDBLista(props) {
                     linhaResp(r.pai, r.cpfPai, ''), linhaResp(r.mae, r.cpfMae, ''),
                     o.map(function (x, i) { return React.createElement(React.Fragment, { key: i }, linhaResp(x.nome, x.cpf, x.par)); })));
         });
-        conteudo = React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 10, padding: 10 } }, cartoes);
+        var thC = th;
+        var linhasC = lista.map(function (r, i) {
+            var emEd = editId === r.id && edit, sel = selId === r.id, o = _excOutros(r);
+            if (emEd) return React.createElement("tr", { key: r.id }, React.createElement("td", { colSpan: 3, style: { padding: 6, borderTop: '1px solid ' + COLORS.lineSoft } }, cartoes[i]));
+            var tdC = __assign(__assign({}, td), { padding: '8px 7px', fontSize: 12, verticalAlign: 'top' });
+            var cp = { fontSize: 11, color: COLORS.inkSoft, fontVariantNumeric: 'tabular-nums' };
+            function respC(nome, cpf, par) { return React.createElement("div", { style: { overflowWrap: 'anywhere', lineHeight: 1.25 } }, nome || '\u2014', par ? React.createElement("span", { style: Object.assign({}, chip, { marginLeft: 5 }) }, par.toLowerCase()) : null, React.createElement("div", { style: cp }, cpf || '\u2014')); }
+            return React.createElement("tr", { key: r.id, onClick: function () { if (selX !== null) toggleSelX(r.id); else setSelId(r.id); }, onDoubleClick: function () { setSelId(null); }, style: estiloSel(sel || (selX !== null && selX.indexOf(r.id) >= 0), false) },
+                React.createElement("td", { style: __assign(__assign({}, tdC), { borderLeft: sel ? '3px solid #E0AE3C' : '3px solid transparent' }) }, React.createElement("div", { style: { display: 'flex', gap: 7, alignItems: 'flex-start' } }, selX !== null && React.createElement(TDBSelCaixa, { marcado: selX.indexOf(r.id) >= 0, onClick: function () { toggleSelX(r.id); } }), React.createElement("div", { style: { minWidth: 0 } }, React.createElement("div", { style: { fontWeight: 800, overflowWrap: 'anywhere', lineHeight: 1.25 } }, r.aluno || '\u2014'), React.createElement("div", { style: cp }, r.cpfAluno || '\u2014')))),
+                React.createElement("td", { style: tdC }, React.createElement("div", { style: { display: 'grid', gap: 7 } }, respC(r.pai, r.cpfPai, ''), respC(r.mae, r.cpfMae, ''), o.map(function (x, k) { return React.createElement(React.Fragment, { key: k }, respC(x.nome, x.cpf, x.par)); }))),
+                React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, tdC), { textAlign: 'center', padding: '6px 2px' }) }, React.createElement("div", { style: { display: 'grid', justifyItems: 'center', gap: 2 } }, btnIcone("Editar", function () { iniciarEdicao(r); }, React.createElement(Pencil, { size: 14, color: COLORS.ink }), COLORS.ink), btnIcone("Excluir", function () { remover(r.id); }, React.createElement(Trash2, { size: 14, color: COLORS.red }), COLORS.red))));
+        });
+        conteudo = React.createElement("div", { style: { width: '100%', maxWidth: '100%' } },
+            React.createElement("table", { className: larg >= 1000 ? "tabela-mensalidades festas-tdb-tabela" : "excursao-tdb-tabela", style: { width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' } },
+                React.createElement("colgroup", null, ['40%', '', '60px'].map(function (w, i) { return React.createElement("col", { key: i, style: w ? { width: w } : {} }); })),
+                React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", { style: thC }, "Aluno"), React.createElement("th", { style: thC }, "Pai / M\u00e3e / Resp."), React.createElement("th", { 'data-export-ignore': true, style: __assign(__assign({}, thC), { padding: '9px 2px', textAlign: 'center', whiteSpace: 'nowrap' }) }, "A\u00e7\u00f5es"))),
+                React.createElement("tbody", null, linhasC)));
     }
 
     function campoModal(label, el) { return React.createElement("div", { style: { display: 'grid', gap: 4, minWidth: 0 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, label), el); }
@@ -19761,7 +19777,7 @@ html[data-tdb-aurora] body.dark-mode #tdb-aurora-dialog .aurora-nit button.auror
 /* ===== barra do topo (vidro orquídea) — só na janela instalada com barra personalizada ===== */
 #tdb-titlebar {display:none;}
 html[data-tdb-wco] #tdb-titlebar {display:flex;align-items:center;gap:9px;position:fixed;left:0;right:0;top:0;height:env(titlebar-area-height,40px);min-height:36px;z-index:2147483000;padding:0 12px 0 calc(env(titlebar-area-x,0px) + 12px);box-sizing:border-box;color:#2a1f2b;font:700 13.5px/1 -apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:linear-gradient(90deg,rgba(214,126,186,.80),rgba(250,226,243,.62) 45%,rgba(160,222,213,.72));backdrop-filter:blur(20px) saturate(1.7)!important;-webkit-backdrop-filter:blur(20px) saturate(1.7)!important;box-shadow:0 2px 0 rgba(193,92,160,.55),inset 0 1px 0 rgba(255,255,255,.95);-webkit-app-region:drag;app-region:drag;user-select:none;}
-html[data-tdb-wco] #tdb-titlebar i {width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #c15ca0;display:inline-block;flex:none;}
+html[data-tdb-wco] #tdb-titlebar i {width:20px;height:20px;border-radius:6px;background:url('./icon-192.png') center/cover no-repeat;display:inline-block;flex:none;}
 html[data-tdb-wco].dark-mode #tdb-titlebar,html[data-tdb-wco] body.dark-mode #tdb-titlebar {color:#fbeaf5;background:linear-gradient(90deg,rgba(120,50,100,.78),rgba(60,36,62,.66) 45%,rgba(30,90,86,.70));box-shadow:0 2px 0 rgba(193,92,160,.6),inset 0 1px 0 rgba(255,255,255,.18);}
 html[data-tdb-wco] body {padding-top:env(titlebar-area-height,40px);}
 
