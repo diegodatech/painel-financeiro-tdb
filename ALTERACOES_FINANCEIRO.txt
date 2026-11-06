@@ -1,3 +1,10 @@
+V1.77 (app TDB v1.77 + servidor 1.77)
+- Aviso "Nova versao disponivel" refeito (faixa grande de vidro no topo, com icone, "Atualizar agora" e x). Agora fica na tela ate voce tocar em atualizar (o x so dispensa ate reabrir o app). Confere 4 s depois de abrir, ao voltar para o app e a cada 2 minutos.
+- Servidor: sw.js, version.json, config.js, index.html e manifest agora vao com ordem para a Cloudflare NAO guardar copia (antes ela podia entregar o version.json velho para celular e outros PCs).
+- Excursao TDB, PDF: novo visual "com vida" igual ao recibo (fundo com bolhas pastel, moldura dupla, cartao com a logo, titulo em pilula, etiquetas pai/mae/avo/tio e total de alunos). Continua fechando em 2 paginas, com nomes completos. Os outros PDFs ainda nao mudaram.
+- Nada mudou nos dados, cadastro e lista do programa.
+- Inclui tudo da v1.76 e anteriores.
+
 V1.76 (app TDB v1.76 + servidor 1.76)
 - Excursao TDB, PDF: o espaco entre as linhas agora se ajusta sozinho (um pouco menor, de 15 ate 12 pt) para a lista fechar em ate 2 paginas. A coluna do aluno ficou mais larga (o nome nao corta mais) e a de CPF mais estreita.
 - Nada mais mudou: cadastro, lista do programa e dados continuam iguais a v1.75.

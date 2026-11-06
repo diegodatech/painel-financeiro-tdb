@@ -123,79 +123,57 @@
   setInterval(function () { if (Date.now() - atividade < ATIVIDADE_MS) verificar('tempo'); }, INTERVALO_MS);
 })();
 
-/* TDB v1.4 — aviso "Nova versão disponível".
+/* TDB v1.77 — aviso "Nova versão disponível" (faixa grande de vidro, Opção A).
    Só LÊ o version.json (rede, sem cache) e compara com a versão em uso (TDB_CONFIG.build). Não grava dados, não mexe na sincronização.
-   Aparece uma vez por abertura do app (por versão nova), na mesma caixa branca dos outros avisos do topo. Tocar = mesmo "Atualizar agora" do ⚙️. */
+   Fica na tela até tocar em "Atualizar agora" ou no ×. O × só dispensa até reabrir o app. Reconfere ao voltar para o app e a cada ~2 min. */
 (function () {
   'use strict';
-  var PRIMEIRA_MS = 9000, MIN_ENTRE_MS = 5 * 60 * 1000, MOSTRAR_MS = 12000;
-  var ultimo = 0, emVoo = false, pilula = null, timerEsc = null, aplicando = false, avisadas = {};
-  try { avisadas = JSON.parse(sessionStorage.getItem('tdb_ver_avisada') || '{}') || {}; } catch (e) { avisadas = {}; }
-  function marcar(b) { avisadas[b] = 1; try { sessionStorage.setItem('tdb_ver_avisada', JSON.stringify(avisadas)); } catch (e) {} }
-
-  function topo() {
-    var extra = 0, d = document.getElementById('tdb-aviso-novidades'), t = document.getElementById('tdb-startup-source-toast');
-    if ((d && d.style.opacity === '1') || (t && t.style.opacity === '1')) extra = 54;
-    return 'calc(env(safe-area-inset-top, 0px) + ' + (12 + extra) + 'px)';
+  var PRIMEIRA_MS = 4000, MIN_ENTRE_MS = 60 * 1000, RECHECA_MS = 2 * 60 * 1000;
+  var ultimo = 0, emVoo = false, faixa = null, aplicando = false, dispensada = '', novaBuild = '', novaLabel = '';
+  function limpaLabel(t) { return String(t || '').replace(/ /g, ' '); }
+  function el(tag, css, txt) { var e = document.createElement(tag); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; }
+  function css() {
+    if (document.getElementById('tdb-aviso-versao-css')) return;
+    var st = document.createElement('style');
+    st.id = 'tdb-aviso-versao-css';
+    st.textContent = '#tdb-aviso-versao{position:fixed;z-index:2147483500;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);width:min(760px,calc(100vw - 24px));box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:22px;background:rgba(255,255,255,.94);border:1.5px solid #cfd9ee;box-shadow:0 14px 36px rgba(40,60,110,.24);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;color:#1c2230;opacity:0;pointer-events:none;transform:translateX(-50%) translateY(-14px);transition:opacity .25s ease,transform .25s ease}' +
+      '#tdb-aviso-versao.on{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}' +
+      '#tdb-aviso-versao .ic{width:46px;height:46px;border-radius:15px;background:linear-gradient(135deg,#3b6fe0,#8f6bd8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:25px;font-weight:800;flex:none}' +
+      '#tdb-aviso-versao .tx{flex:1 1 auto;min-width:0}#tdb-aviso-versao .tx b{display:block;font-size:16px;line-height:1.2}#tdb-aviso-versao .tx small{display:block;font-size:12.5px;color:#5b6577;margin-top:2px;line-height:1.3}' +
+      '#tdb-aviso-versao .bt{border:0;cursor:pointer;background:#3b6fe0;color:#fff;border-radius:13px;padding:11px 18px;font-weight:800;font-size:14px;white-space:nowrap;font-family:inherit}' +
+      '#tdb-aviso-versao .x{border:0;cursor:pointer;width:30px;height:30px;border-radius:50%;background:#eef2f8;color:#5b6577;font-weight:800;font-size:16px;line-height:1;flex:none;font-family:inherit}' +
+      '@media (max-width:560px){#tdb-aviso-versao{flex-wrap:wrap;gap:10px;padding:12px 14px}#tdb-aviso-versao .tx{flex:1 1 150px}#tdb-aviso-versao .bt{flex:1 1 100%;order:5;text-align:center;padding:12px 18px}}';
+    document.head.appendChild(st);
   }
   function criar() {
-    if (pilula) return pilula;
-    var el = document.createElement('div');
-    el.id = 'tdb-aviso-versao';
-    el.setAttribute('role', 'button');
-    el.setAttribute('tabindex', '0');
-    el.setAttribute('aria-live', 'polite');
-    el.setAttribute('data-export-ignore', 'true');
-    el.style.cssText = [
-      'position:fixed', 'z-index:2147483500', 'top:calc(env(safe-area-inset-top, 0px) + 12px)', 'left:50%',
-      'transform:translateX(-50%) translateY(-10px)', 'max-width:calc(100vw - 28px)', 'box-sizing:border-box',
-      'padding:10px 16px', 'border-radius:18px', 'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif',
-      'font-size:13px', 'line-height:1.25', 'font-weight:700', 'text-align:center', 'color:#1f2937', 'cursor:pointer',
-      'background:rgba(255,255,255,.95)', 'border:1px solid rgba(100,100,120,.18)',
-      'box-shadow:0 10px 30px rgba(40,35,55,.18)', 'backdrop-filter:blur(20px) saturate(150%)',
-      '-webkit-backdrop-filter:blur(20px) saturate(150%)', 'opacity:0', 'pointer-events:none',
-      'transition:opacity .22s ease, transform .22s ease'
-    ].join(';');
-    el.addEventListener('click', aplicar);
-    el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); aplicar(); } });
-    document.body.appendChild(el);
-    pilula = el;
-    return el;
+    if (faixa) return faixa;
+    css();
+    var f = el('div'); f.id = 'tdb-aviso-versao';
+    f.setAttribute('role', 'alert'); f.setAttribute('aria-live', 'polite'); f.setAttribute('data-export-ignore', 'true');
+    f.appendChild(el('div', '', '⟳')).className = 'ic';
+    var tx = el('div'); tx.className = 'tx';
+    tx.appendChild(el('b', '', 'Nova versão disponível'));
+    tx.appendChild(el('small', '', ''));
+    f.appendChild(tx);
+    var bt = el('button', '', 'Atualizar agora'); bt.type = 'button'; bt.className = 'bt'; bt.addEventListener('click', aplicar);
+    var x = el('button', '', '×'); x.type = 'button'; x.className = 'x'; x.setAttribute('aria-label', 'Dispensar'); x.addEventListener('click', function () { dispensada = novaBuild; esconder(); });
+    f.appendChild(bt); f.appendChild(x);
+    document.body.appendChild(f);
+    faixa = f;
+    return f;
   }
-  function exibir() {
-    var el = criar();
-    el.style.top = topo();
-    el.style.pointerEvents = 'auto';
-    el.style.opacity = '1';
-    el.style.transform = 'translateX(-50%) translateY(0)';
-  }
-  function esconder() {
-    clearTimeout(timerEsc);
-    if (!pilula) return;
-    pilula.style.opacity = '0';
-    pilula.style.pointerEvents = 'none';
-    pilula.style.transform = 'translateX(-50%) translateY(-10px)';
-  }
-  function textoSimples(t) { criar().textContent = t; }
-  function mostrar(label) {
-    var el = criar();
-    el.textContent = '';
-    el.appendChild(document.createTextNode('🔄 Nova versão disponível: ' + label + ' — '));
-    var u = document.createElement('span');
-    u.style.textDecoration = 'underline';
-    u.textContent = 'toque para atualizar';
-    el.appendChild(u);
+  function sub(t) { var s = criar().querySelector('small'); if (s) s.textContent = t; }
+  function titulo(t) { var b = criar().querySelector('b'); if (b) b.textContent = t; }
+  function exibir() { criar().className = (faixa.className || '').replace(/\bon\b/, '') + ' on'; }
+  function esconder() { if (faixa) faixa.className = (faixa.className || '').replace(/\bon\b/g, '').trim(); }
+  function mostrar() {
+    var cfg = window.TDB_CONFIG || {};
+    titulo('Nova versão disponível');
+    sub(novaLabel + (cfg.buildLabel ? ' · você está na ' + limpaLabel(cfg.buildLabel).replace(/^TDB\s*/i, '') : '') + ' · leva uns segundos');
+    var bt = criar().querySelector('.bt'); if (bt) bt.style.display = '';
     exibir();
-    clearTimeout(timerEsc);
-    timerEsc = setTimeout(esconder, MOSTRAR_MS);
   }
-  function falha(msg) {
-    aplicando = false;
-    textoSimples(msg);
-    exibir();
-    clearTimeout(timerEsc);
-    timerEsc = setTimeout(esconder, 7000);
-  }
+  function falha(msg) { aplicando = false; titulo('Não consegui atualizar agora'); sub(msg); var bt = criar().querySelector('.bt'); if (bt) bt.style.display = ''; exibir(); }
   function seguir() {
     var feito = false;
     function recarregar() { if (feito) return; feito = true; try { location.reload(); } catch (e) { location.href = location.href; } }
@@ -203,16 +181,16 @@
     navigator.serviceWorker.getRegistration().then(function (reg) {
       if (!reg) { recarregar(); return; }
       navigator.serviceWorker.addEventListener('controllerchange', function () { setTimeout(recarregar, 300); });
-      setTimeout(function () { if (!feito) falha('Não consegui atualizar agora. Tente pelo ⚙️ › Versão do app.'); }, 25000);
+      setTimeout(function () { if (!feito) falha('Tente pelo ⚙️ › Versão do app.'); }, 25000);
       return reg.update().then(function () { if (!reg.installing && !reg.waiting) setTimeout(recarregar, 600); });
-    }).catch(function () { falha('Não consegui atualizar agora. Tente pelo ⚙️ › Versão do app.'); });
+    }).catch(function () { falha('Tente pelo ⚙️ › Versão do app.'); });
   }
   function aplicar() {
     if (aplicando) return;
     if (window.__salvandoAgoraFlag || window.__atualizandoAgoraFlag) { falha('Aguarde terminar de salvar e toque de novo.'); return; }
     aplicando = true;
-    clearTimeout(timerEsc);
-    textoSimples('Salvando e atualizando… o app vai reiniciar.');
+    titulo('Salvando e atualizando…'); sub('O app vai reiniciar sozinho.');
+    var bt = criar().querySelector('.bt'); if (bt) bt.style.display = 'none';
     exibir();
     var t0 = Date.now();
     (function esperar() {
@@ -232,19 +210,22 @@
     if (!forcar && agora - ultimo < MIN_ENTRE_MS) return;
     ultimo = agora;
     emVoo = true;
-    fetch('./version.json?v=' + agora, { cache: 'no-store' }).then(function (r) {
+    fetch('./version.json?v=' + agora + '_' + Math.random().toString(36).slice(2, 7), { cache: 'no-store' }).then(function (r) {
       if (!r.ok) throw new Error('http');
       return r.json();
     }).then(function (j) {
       emVoo = false;
-      if (!j || !j.build || j.build === cfg.build) return;
-      if (!forcar && avisadas[j.build]) return;
-      marcar(j.build);
-      mostrar(String(j.label || j.build).replace(/ /g, ' '));
+      if (!j || !j.build) return;
+      if (j.build === cfg.build) { novaBuild = ''; esconder(); return; }
+      novaBuild = j.build; novaLabel = limpaLabel(j.label || j.build);
+      if (!forcar && dispensada === j.build) return;
+      mostrar();
     }).catch(function () { emVoo = false; });
   }
   window.__tdbConferirVersao = conferir;
   setTimeout(function () { conferir(false); }, PRIMEIRA_MS);
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setTimeout(function () { conferir(false); }, 1500); });
+  setInterval(function () { conferir(false); }, RECHECA_MS);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setTimeout(function () { conferir(false); }, 1200); });
+  window.addEventListener('focus', function () { setTimeout(function () { conferir(false); }, 1200); });
   window.addEventListener('online', function () { setTimeout(function () { conferir(false); }, 1500); });
 })();

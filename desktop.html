@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261106-tdb-v1-76";
+    window.__TDB_BUILD = "tdb-20261106-tdb-v1-77";
   </script>
-  <script src="./config.js?build=tdb-20261106-tdb-v1-76"></script>
+  <script src="./config.js?build=tdb-20261106-tdb-v1-77"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1557,10 +1557,10 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./sync.js?build=tdb-20261106-tdb-v1-76"></script>
+  <script src="./sync.js?build=tdb-20261106-tdb-v1-77"></script>
   <script src="./atualizar.js?build=tdb-02i-revisado-6"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-76-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-77-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10847,7 +10847,131 @@ function _excValidar(r) {
 }
 
 // PDF A4 horizontal, mesmo cabeçalho/rodapé dos outros PDFs (logo da escola)
+// ===== Padrão "com vida" dos PDFs (mesmo visual do recibo): fundo com bolhas pastel + moldura dupla + cartão de cabeçalho com a logo + título em pílula =====
+var TDBV = { teal: [31, 166, 157], mag: [198, 93, 165], tinta: [24, 28, 38], suave: [89, 97, 112], linha: [217, 224, 232], glass: [248, 250, 253], glassB: [229, 235, 241], head: [235, 241, 248], pill: [231, 238, 248], p1: [250, 228, 242], p2: [222, 246, 246], p3: [248, 238, 210], p4: [240, 249, 242] };
+function _tdbVRound(doc, x, y, w, h, r, cor) { doc.setFillColor.apply(doc, cor); doc.roundedRect(x, y, w, h, r, r, 'F'); }
+function _tdbVFundo(doc, W, H) {
+    doc.setFillColor(255, 255, 255); doc.rect(0, 0, W, H, 'F');
+    _tdbVRound(doc, 23, 23, 104, 70, 24, TDBV.p1);
+    _tdbVRound(doc, W - 23 - 104, 23, 104, 66, 24, TDBV.p2);
+    _tdbVRound(doc, W - 23 - 132, H - 23 - 86, 132, 86, 28, TDBV.p3);
+    _tdbVRound(doc, 23, H - 23 - 74, 120, 74, 26, TDBV.p4);
+    doc.setDrawColor.apply(doc, TDBV.teal); doc.setLineWidth(1.4); doc.roundedRect(14, 14, W - 28, H - 28, 12, 12);
+    doc.setDrawColor.apply(doc, TDBV.mag); doc.setLineWidth(1.1); doc.roundedRect(19, 19, W - 38, H - 38, 10, 10);
+}
+// Cartão de cabeçalho (completo na 1ª página, enxuto nas outras). Devolve o y logo abaixo.
+function _tdbVCabecalho(doc, W, titulo, completo, quando) {
+    var x = 44, w = W - 88, y = 32, h = completo ? 62 : 36;
+    _tdbVRound(doc, x, y, w, h, completo ? 16 : 12, TDBV.glass);
+    doc.setDrawColor.apply(doc, TDBV.glassB); doc.setLineWidth(.8); doc.roundedRect(x, y, w, h, completo ? 16 : 12, completo ? 16 : 12);
+    try { doc.addImage(LOGO_B64, 'PNG', x + w - (completo ? 118 : 70), y + (completo ? 7 : 5), completo ? 100 : 56, completo ? 48 : 27); } catch (e) {}
+    doc.setFont('helvetica', 'bold'); doc.setTextColor.apply(doc, TDBV.tinta);
+    if (completo) {
+        doc.setFontSize(15.5); doc.text('Escola Infantil Tempo de Brincar', x + 18, y + 26);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10.2); doc.setTextColor.apply(doc, TDBV.suave);
+        doc.text(titulo + '  ·  emitido em ' + quando, x + 18, y + 43);
+    } else {
+        doc.setFontSize(11.5); doc.text('Escola Infantil Tempo de Brincar', x + 16, y + 16);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.6); doc.setTextColor.apply(doc, TDBV.suave);
+        doc.text(titulo + ' (continuação)', x + 16, y + 28);
+    }
+    return y + h;
+}
+// Etiqueta colorida (pai, mãe, avó, tio…): devolve a largura usada.
+function _tdbVEtiqueta(doc, txt, x, yBase, tipo) {
+    var cor = { pai: [[225, 236, 250], [47, 85, 181]], 'mãe': [TDBV.p1, [160, 60, 130]], avo: [TDBV.p3, [150, 105, 20]], tio: [TDBV.p2, [20, 125, 118]] }[tipo] || [TDBV.p2, [20, 125, 118]];
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.2);
+    var w = 30;
+    _tdbVRound(doc, x, yBase - 8.2, w, 11, 5.5, cor[0]);
+    doc.setTextColor.apply(doc, cor[1]); doc.text(txt, x + w / 2, yBase - 0.4, { align: 'center' });
+    return w;
+}
+function _tdbVTipoPar(par) { var p = String(par || '').toLowerCase(); if (/av[óo]/.test(p)) return 'avo'; if (/ti[oa]/.test(p)) return 'tio'; return 'tio'; }
+
 async function _excursaoGerarPDF(rows) {
+    await window.__ensureJsPDF();
+    var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
+    var W = 842, H = 595, X0 = 44, LU = W - 88, limite = H - 34;
+    var colW = [258, 98, 298, 100], colX = [X0];
+    for (var ci = 1; ci < colW.length; ci++) colX[ci] = colX[ci - 1] + colW[ci - 1];
+    var d = new Date(), p2 = function (n) { return String(n).padStart(2, '0'); }, quando = p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear();
+    var titulo = 'Excursão TDB — alunos e responsáveis';
+    var y = 0, pag = 0, total = rows.length;
+    function topoPagina() {
+        if (pag > 0) doc.addPage('a4', 'landscape');
+        pag++;
+        _tdbVFundo(doc, W, H);
+        y = _tdbVCabecalho(doc, W, titulo, pag === 1, quando);
+        if (pag === 1) {
+            y += 10;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+            var t = 'ALUNOS E RESPONSÁVEIS', tw = doc.getTextWidth(t) + 56;
+            _tdbVRound(doc, (W - tw) / 2, y, tw, 28, 14, TDBV.pill);
+            doc.setTextColor.apply(doc, TDBV.tinta); doc.text(t, W / 2, y + 18.6, { align: 'center' });
+            // balão com o total, igual ao "VALOR TOTAL" do recibo
+            var bw = 112;
+            _tdbVRound(doc, X0 + LU - bw, y + 1, bw, 26, 10, [227, 246, 246]);
+            doc.setDrawColor(126, 210, 210); doc.setLineWidth(.8); doc.roundedRect(X0 + LU - bw, y + 1, bw, 26, 10, 10);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(7.6); doc.setTextColor.apply(doc, TDBV.suave); doc.text('ALUNOS', X0 + LU - bw + 11, y + 17.5);
+            doc.setFontSize(12); doc.setTextColor.apply(doc, TDBV.tinta); doc.text(String(total), X0 + LU - 11, y + 18, { align: 'right' });
+            y += 28 + 10;
+        } else y += 8;
+        var hs = ['Aluno', 'CPF do aluno', 'Pai / Mãe / Responsáveis', 'CPF'];
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9.4);
+        hs.forEach(function (h, i) {
+            _tdbVRound(doc, colX[i], y, colW[i] - 3, 22, 6, TDBV.head);
+            doc.setDrawColor.apply(doc, TDBV.linha); doc.setLineWidth(.6); doc.roundedRect(colX[i], y, colW[i] - 3, 22, 6, 6);
+            doc.setTextColor.apply(doc, TDBV.tinta); doc.text(h, colX[i] + (colW[i] - 3) / 2, y + 14.4, { align: 'center' });
+        });
+        y += 22 + 4;
+    }
+    // espaço entre linhas ajustado para fechar em até 2 páginas
+    var passo = 14, pad = 8;
+    (function () {
+        var nl = rows.map(function (q) { return 2 + _excOutros(_excNorm(q)).length; });
+        var cab1 = 32 + 62 + 10 + 28 + 10 + 22 + 4, cabN = 32 + 36 + 8 + 22 + 4;
+        for (var p = 14; p >= 11.5; p -= 0.5) {
+            var pd = Math.round(p * 0.6 * 10) / 10, pg = 1, yy = cab1;
+            nl.forEach(function (n) { var h = n * p + pd + 3; if (yy + h > limite) { pg++; yy = cabN; } yy += h; });
+            passo = p; pad = pd; if (pg <= 2) break;
+        }
+    })();
+    topoPagina();
+    rows.forEach(function (r, idx) {
+        r = _excNorm(r);
+        var ls = [{ n: r.pai || '—', c: r.cpfPai || '—', e: 'pai', t: 'pai' }, { n: r.mae || '—', c: r.cpfMae || '—', e: 'mãe', t: 'mãe' }];
+        _excOutros(r).forEach(function (o) { var p = String(o.par || '').toLowerCase(); ls.push({ n: o.nome || '—', c: o.cpf || '—', e: p || 'resp.', t: _tdbVTipoPar(p) }); });
+        var rowH = ls.length * passo + pad;
+        if (y + rowH > limite) topoPagina();
+        _tdbVRound(doc, X0, y, LU - 3, rowH, 7, idx % 2 === 0 ? [251, 252, 254] : [255, 255, 255]);
+        doc.setDrawColor.apply(doc, TDBV.linha); doc.setLineWidth(.6); doc.roundedRect(X0, y, LU - 3, rowH, 7, 7);
+        // faixa colorida à esquerda (alterna verde-água / magenta)
+        doc.setFillColor.apply(doc, idx % 2 === 0 ? TDBV.teal : TDBV.mag); doc.roundedRect(X0 + 4, y + 5, 2.6, rowH - 10, 1.3, 1.3, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9.8); doc.setTextColor.apply(doc, TDBV.tinta);
+        doc.text(_festasPdfCortarTexto(doc, r.aluno || '', colW[0] - 22), colX[0] + 14, y + rowH / 2 + 3.4);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.4);
+        doc.text(r.cpfAluno || '—', colX[1] + 8, y + rowH / 2 + 3.3);
+        ls.forEach(function (l, i) {
+            var by = y + pad / 2 + passo * i + passo * 0.74;
+            var ew = _tdbVEtiqueta(doc, l.e.length > 5 ? l.e.slice(0, 5) : l.e, colX[2] + 6, by, l.t === 'pai' ? 'pai' : l.t === 'mãe' ? 'mãe' : l.t);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(9.4); doc.setTextColor.apply(doc, TDBV.tinta);
+            doc.text(_festasPdfCortarTexto(doc, l.n, colW[2] - 18 - ew), colX[2] + 12 + ew, by);
+            doc.text(_festasPdfCortarTexto(doc, l.c, colW[3] - 10), colX[3] + 8, by);
+        });
+        y += rowH + 3;
+    });
+    var tp = doc.getNumberOfPages();
+    for (var pg = 1; pg <= tp; pg++) {
+        doc.setPage(pg);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.4); doc.setTextColor.apply(doc, TDBV.suave);
+        doc.text('Excursão TDB — cadastro de alunos e responsáveis. Controle interno.', 44, H - 24);
+        _tdbVRound(doc, W - 44 - 46, H - 33, 46, 14, 7, TDBV.pill);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.8); doc.setTextColor.apply(doc, TDBV.tinta); doc.text(pg + ' / ' + tp, W - 44 - 23, H - 23.2, { align: 'center' });
+    }
+    _festasBaixarPDF(doc, 'Excursão TDB.pdf');
+}
+
+async function _excursaoGerarPDFClassico(rows) {
     await window.__ensureJsPDF();
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
     var W = 842, H = 595, margem = 28, topo = 66, margemRodape = 24, larguraUtil = W - margem * 2;
