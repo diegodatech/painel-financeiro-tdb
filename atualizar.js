@@ -130,6 +130,16 @@
   'use strict';
   var PRIMEIRA_MS = 4000, MIN_ENTRE_MS = 60 * 1000, RECHECA_MS = 2 * 60 * 1000;
   var ultimo = 0, emVoo = false, faixa = null, aplicando = false, dispensada = '', novaBuild = '', novaLabel = '';
+  // Versão em que ESTA PÁGINA está: vem do próprio HTML (o ?build= do sync.js/config.js escritos nele). O config.js em si pode vir NOVO do cache do
+  // service worker (ignoreSearch) mesmo com a página velha — foi isso que escondia o aviso quando a página abria de cópia antiga.
+  function meuBuild() {
+    try {
+      var ss = document.querySelectorAll('script[src*="sync.js"],script[src*="config.js"]');
+      for (var i = 0; i < ss.length; i++) { var m = /[?&]build=([^&#]+)/.exec(ss[i].getAttribute('src') || ''); if (m) return decodeURIComponent(m[1]); }
+    } catch (e) {}
+    return (window.TDB_CONFIG || {}).build || '';
+  }
+  function rotuloDe(b) { var m = /v(\d+)-(\d+)$/.exec(String(b || '')); return m ? 'v' + m[1] + '.' + m[2] : ''; }
   function limpaLabel(t) { return String(t || '').replace(/ /g, ' '); }
   function el(tag, css, txt) { var e = document.createElement(tag); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; }
   function css() {
@@ -178,7 +188,8 @@
   function mostrar() {
     var cfg = window.TDB_CONFIG || {};
     titulo('Nova versão disponível');
-    sub(novaLabel + (cfg.buildLabel ? ' · você está na ' + limpaLabel(cfg.buildLabel).replace(/^TDB\s*/i, '') : '') + ' · leva uns segundos');
+    var meu = rotuloDe(meuBuild());
+    sub(novaLabel + (meu ? ' · você está na ' + meu : '') + ' · leva uns segundos');
     var bt = criar().querySelector('.bt'); if (bt) bt.style.display = '';
     exibir();
   }
@@ -213,7 +224,7 @@
   function conferir(forcar) {
     if (emVoo || aplicando) return;
     if (document.visibilityState !== 'visible' || navigator.onLine === false) return;
-    var cfg = window.TDB_CONFIG || {};
+    var cfg = { build: meuBuild() };
     if (!cfg.build) return;
     var agora = Date.now();
     if (!forcar && agora - ultimo < MIN_ENTRE_MS) return;

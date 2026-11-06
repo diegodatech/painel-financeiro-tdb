@@ -1,3 +1,9 @@
+V1.81 (app TDB v1.81 + servidor 1.81)
+- CAUSA ACHADA do aviso "Nova versao" nao aparecer em alguns computadores: o aviso comparava a versao do servidor com o config.js, e o config.js podia vir NOVO do cache do programa mesmo com a pagina VELHA (o cache do navegador ignora o ?build= do endereco). Resultado: servidor 1.80, config.js 1.80, pagina 1.77 -> "igual" -> sem aviso. Agora o aviso usa a versao escrita na PROPRIA pagina (HTML) e por isso aparece sempre que a pagina estiver velha. (Mesmo principio ja usado na Portaria, que compara a versao da pagina com o versao.txt do servidor.)
+- O arquivo atualizar.js tinha endereco fixo (?build=tdb-02i-revisado-6) e nunca mudava; agora muda a cada versao, junto com os outros arquivos.
+- Servidor: todos os .js, .html, .json e .webmanifest saem com ordem para a Cloudflare nao guardar copia (antes so sw.js, version.json, config.js, index.html e manifest).
+- Nada mais mudou. Inclui tudo da v1.80 e anteriores.
+
 V1.80 (app TDB v1.80 + servidor 1.80)
 - Aviso "Nova versao disponivel": agora EMPURRA o programa para baixo enquanto esta na tela, em vez de ficar por cima do cabecalho (logo, Salvar, Atualizar, Dados). Quando some, o programa volta ao lugar.
 - Corrigido o aviso que sumia sozinho ao clicar fora: o programa podia receber uma copia velha do version.json (do cache) e achar que ja estava atualizado. Agora o aviso so sai quando voce toca em "Atualizar agora" ou no x, e a conferencia da versao vai direto a rede, sem usar copia do cache.
