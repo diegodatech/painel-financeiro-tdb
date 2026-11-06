@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261106-tdb-v1-84";
+    window.__TDB_BUILD = "tdb-20261106-tdb-v1-85";
   </script>
-  <script src="./config.js?build=tdb-20261106-tdb-v1-84"></script>
+  <script src="./config.js?build=tdb-20261106-tdb-v1-85"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1505,8 +1505,8 @@ html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .tdb-xbtn,
 html:not(.tdb-aurora-pdf):not(#tdbp):not(#tdbq) body .contas-pessoais-raiz *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 </style>
 <style id="tdb-fold-nitidez">
-/* v1.84 — Fold/tablet (telas abaixo de 1000 px): menus suspensos e campos de "adicionar" das Festas mais nítidos. Computador (1000 px ou mais) não muda. */
-@media (max-width:999px){
+/* v1.85 — menus suspensos e campos de "adicionar" das Festas nítidos em qualquer tela (Fold, tablet e computador). */
+@media all{
   html body .busca-liquid-glass.tdb-menu-flut:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:#ffffff!important;background-image:none!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1.5px solid rgba(110,120,150,.38)!important;box-shadow:0 14px 38px rgba(20,30,60,.32)!important}
   html body.dark-mode .busca-liquid-glass.tdb-menu-flut:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:#182030!important;background-image:none!important;border-color:rgba(160,175,210,.35)!important}
   html body .busca-liquid-glass.festas-balao:not(#tdbn1):not(#tdbn2):not(#tdbn3){background:rgba(255,255,255,.94)!important;border:1.5px solid rgba(110,120,150,.45)!important}
@@ -1573,11 +1573,11 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261106-tdb-v1-84"></script>
-  <script src="./sync.js?build=tdb-20261106-tdb-v1-84"></script>
-  <script src="./atualizar.js?build=tdb-20261106-tdb-v1-84"></script>
+  <script src="./diagnostico.js?build=tdb-20261106-tdb-v1-85"></script>
+  <script src="./sync.js?build=tdb-20261106-tdb-v1-85"></script>
+  <script src="./atualizar.js?build=tdb-20261106-tdb-v1-85"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-84-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-85-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {

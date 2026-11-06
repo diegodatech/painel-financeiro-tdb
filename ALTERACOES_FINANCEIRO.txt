@@ -1,3 +1,9 @@
+V1.85 (app TDB v1.85 + servidor 1.85)
+- Menus suspensos (Configuracoes, Dados) agora opacos tambem no computador: antes, em tela larga, dava para ver os botoes e textos de baixo atraves deles (ex.: "Pedir PIN ao voltar" misturado com as abas das Festas).
+- Festas: formulario de adicionar com fundo solido e campos com borda firme tambem no computador (antes so no Fold/tablet).
+- sync.js (salvamento) NAO foi alterado.
+- Inclui tudo da v1.84 e anteriores.
+
 V1.84 (app TDB v1.84 + servidor 1.84)
 - Fold / tablet (tela abaixo de 1000 px): os menus suspensos (Configuracoes, Dados) agora sao opacos; antes dava para ver os botoes de baixo atraves deles.
 - Fold / tablet: aba Festas > formulario de adicionar (Nome, Grupo, Pessoas, Valor, Banco, Data, Pago) com fundo solido e campos com borda e cor firmes, faceis de ver. Computador (1000 px ou mais) nao mudou.
