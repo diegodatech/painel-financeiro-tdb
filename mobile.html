@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261106-tdb-v1-85";
+    window.__TDB_BUILD = "tdb-20261109-tdb-v1-86";
   </script>
-  <script src="./config.js?build=tdb-20261106-tdb-v1-85"></script>
+  <script src="./config.js?build=tdb-20261109-tdb-v1-86"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -2014,11 +2014,11 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261106-tdb-v1-85"></script>
-  <script src="./sync.js?build=tdb-20261106-tdb-v1-85"></script>
-  <script src="./atualizar.js?build=tdb-20261106-tdb-v1-85"></script>
+  <script src="./diagnostico.js?build=tdb-20261109-tdb-v1-86"></script>
+  <script src="./sync.js?build=tdb-20261109-tdb-v1-86"></script>
+  <script src="./atualizar.js?build=tdb-20261109-tdb-v1-86"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261106-tdb-v1-85-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261109-tdb-v1-86-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -3162,6 +3162,8 @@ function NotasFiscaisTDB(_a) {
         var r = montarItens(lista);
         setEnvio({ fase: 'confirmar', itens: r.itens, pulados: r.pulados, status: {}, teste: modoTeste, mi: mi, mesKey: mesKey });
     }
+    // V1.86: empresa com texto próprio usa ele; as demais (e os alunos) continuam com o texto padrão
+    function corpoDe(it, mod) { var ce = convRef.current.filter(function (x) { return x.id === it.cadId; })[0]; var t = ce && ce.convenio ? String(ce.textoEmail || '').trim() : ''; return t || mod.corpo; }
     function executarEnvio() {
         if (enviandoRef.current || !envio || envio.fase !== 'confirmar') return;
         enviandoRef.current = true;
@@ -3195,7 +3197,7 @@ function NotasFiscaisTDB(_a) {
                 return Promise.all([nfBase64(arq)].concat(arqsAn.map(nfBase64))).then(function (b64s) {
                     var nota = { id: it.id, aluno: it.aluno, nomeNota: it.nomeNota, mes: e0.mesKey, mesNome: mesNomeEnv, emails: it.emails, pdfBase64: b64s[0] };
                     if (temAnexos) nota.anexos = it.anexos.map(function (a, k) { return { tipo: a.tipo, nome: a.arquivo, pdfBase64: b64s[k + 1] }; });
-                    return nfPost(cfgUso, { acao: 'enviar', modoTeste: teste, forcar: !!it.reenvio, assunto: nfSub(it.princ && it.princ !== 'nota' ? String(mod.assunto).replace(/nota fiscal/i, NF_ROTULO_TIPO[it.princ]) : mod.assunto, { documentos: docTxt }), corpo: nfSub(mod.corpo, { documentos: docTxt }), imagem: imgEnv ? { mime: imgEnv.slice(5, imgEnv.indexOf(';')), base64: imgEnv.slice(imgEnv.indexOf(',') + 1) } : undefined, notas: [nota] }, 120000);
+                    return nfPost(cfgUso, { acao: 'enviar', modoTeste: teste, forcar: !!it.reenvio, assunto: nfSub(it.princ && it.princ !== 'nota' ? String(mod.assunto).replace(/nota fiscal/i, NF_ROTULO_TIPO[it.princ]) : mod.assunto, { documentos: docTxt }), corpo: nfSub(corpoDe(it, mod), { documentos: docTxt }), imagem: imgEnv ? { mime: imgEnv.slice(5, imgEnv.indexOf(';')), base64: imgEnv.slice(imgEnv.indexOf(',') + 1) } : undefined, notas: [nota] }, 120000);
                 }).then(function (j) {
                     var r = j && j.resultados && j.resultados[0];
                     if (!r) { falha(it.id, (j && j.erro) || 'O serviço não devolveu resultado.'); return; }
@@ -3367,6 +3369,14 @@ function NotasFiscaisTDB(_a) {
         var lista = gruposConv[c.id].slice().sort(function (a, b) { return (ORD_TIPO[tipoDe(a)] - ORD_TIPO[tipoDe(b)]) || String(a.arquivo).localeCompare(String(b.arquivo)); });
         linhasPend.push(cabGrupo(c, lista));
         linhasPend.push(h('div', { key: 'gl-' + c.id, style: { marginLeft: MOB ? 8 : 14, borderLeft: '3px solid rgba(23,103,207,.35)' } }, lista.map(function (n) { return elDe[n.id]; })));
+        // V1.86: texto do e-mail próprio desta empresa (vazio = usa o texto padrão da “Prévia do e-mail”)
+        linhasPend.push(h('div', { key: 'gt-' + c.id, 'data-export-ignore': true, 'data-nf-texto-empresa': c.id, style: { margin: MOB ? '6px 8px 10px 8px' : '6px 16px 12px 14px', padding: '8px 12px 10px', borderLeft: '3px solid rgba(23,103,207,.35)', background: 'rgba(23,103,207,.04)', borderRadius: '0 10px 10px 0' } },
+            h('label', { style: { display: 'block', fontSize: 12, fontWeight: 800, color: COLORS.ink, marginBottom: 4 } }, '✉ Texto do e-mail para ' + c.aluno + (String(c.textoEmail || '').trim() ? ' (texto próprio)' : ' (opcional)')),
+            h('textarea', { defaultValue: c.textoEmail || '', rows: 3, 'aria-label': 'Texto do e-mail para ' + c.aluno, placeholder: 'Deixe vazio para usar o texto padrão. Pode usar {aluno}, {mes}, {escola} e {documentos}.',
+                onChange: function (e) { var v = e.target.value, id = c.id; convRef.current = convRef.current.map(function (x) { return x.id === id ? Object.assign({}, x, { textoEmail: v }) : x; }); agendar(NF_KEY_CONV); },
+                onBlur: function () { setConv(convRef.current); },
+                style: Object.assign({}, inp, { width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 64, fontFamily: 'inherit', lineHeight: 1.4 }) }),
+            h('div', { style: { fontSize: 11.5, color: COLORS.inkSoft, marginTop: 3 } }, 'Vale só para esta empresa. Vazio = usa o texto padrão (botão “Prévia do e-mail”). O assunto continua o padrão.')));
     });
     if (outrosPend.length) { if (ordemConv.length) linhasPend.push(cabSecao('Alunos e notas sem vínculo', outrosPend.length)); outrosPend.forEach(function (n) { linhasPend.push(elDe[n.id]); }); }
     var mesesOpc = MESES.map(function (m, i) { return h('option', { key: m, value: i }, MESES_ABREV[m] || m); });

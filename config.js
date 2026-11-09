@@ -1,5 +1,5 @@
 window.TDB_CONFIG={
-  build: "tdb-20261106-tdb-v1-85",
-  buildLabel: "TDB\u00a0v1.85",
+  build: "tdb-20261109-tdb-v1-86",
+  buildLabel: "TDB\u00a0v1.86",
   appsScriptUrl: "https://script.google.com/macros/s/AKfycbw0CRh3ZyFfQkjRz4vRhymlBd489xDWvswt4NlZt4nc_Lf6ZoDlTQh11OfTctiJaxnnTA/exec"
 };
