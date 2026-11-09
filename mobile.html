@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261109-tdb-v1-86";
+    window.__TDB_BUILD = "tdb-20261109-tdb-v1-87";
   </script>
-  <script src="./config.js?build=tdb-20261109-tdb-v1-86"></script>
+  <script src="./config.js?build=tdb-20261109-tdb-v1-87"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -2014,11 +2014,11 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261109-tdb-v1-86"></script>
-  <script src="./sync.js?build=tdb-20261109-tdb-v1-86"></script>
-  <script src="./atualizar.js?build=tdb-20261109-tdb-v1-86"></script>
+  <script src="./diagnostico.js?build=tdb-20261109-tdb-v1-87"></script>
+  <script src="./sync.js?build=tdb-20261109-tdb-v1-87"></script>
+  <script src="./atualizar.js?build=tdb-20261109-tdb-v1-87"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261109-tdb-v1-86-mobile';
+window.__TDB_BUILD_EXATO = 'tdb-20261109-tdb-v1-87-mobile';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -3177,16 +3177,16 @@ function NotasFiscaisTDB(_a) {
         mostrar('enviando');
         var seq = Promise.resolve(), scriptOk = true;
         // pacote com recibo/boleto só sai se o script de envio já foi atualizado (senão iria só a nota, sem avisar)
-        var imgEnv = nfImagemOk(mod.imagem) ? mod.imagem : '', versaoScript = 0;
+        var imgEnv = nfImagemOk(mod.imagem) ? mod.imagem : '', versaoScript = 0; var pingErro = '';
         if (imgEnv || itens.some(function (i) { return i.anexos && i.anexos.length; })) {
-            seq = seq.then(function () { return nfPost(cfgUso, { acao: 'ping' }, 40000).then(function (j) { versaoScript = (j && j.ok) ? (parseFloat(j.versao) || 0) : 0; scriptOk = versaoScript >= 1.1; }).catch(function () { scriptOk = false; versaoScript = 0; }); });
+            seq = seq.then(function () { return nfPost(cfgUso, { acao: 'ping' }, 40000).then(function (j) { versaoScript = (j && j.ok) ? (parseFloat(j.versao) || 0) : 0; scriptOk = versaoScript >= 1.1; if (!(j && j.ok)) pingErro = (j && j.erro) || 'resposta inesperada do script'; }).catch(function (e) { scriptOk = false; versaoScript = 0; pingErro = nfErroMsg(e); }); });
         }
         itens.forEach(function (it) {
             seq = seq.then(function () {
                 st[it.id] = { s: 'enviando' }; mostrar();
                 var temAnexos = it.anexos && it.anexos.length > 0;
-                if (imgEnv && versaoScript < 1.2) { falha(it.id, 'O script de envio precisa ser atualizado (versão 1.2) para mandar a imagem do e-mail. Nada foi enviado. (Ou tire a imagem em “Prévia do e-mail”.)'); mostrar(); return; }
-                if (temAnexos && !scriptOk) { falha(it.id, 'O script de envio precisa ser atualizado (versão 1.1) para mandar recibo/boleto junto. Nada foi enviado.'); mostrar(); return; }
+                if (imgEnv && versaoScript < 1.2) { falha(it.id, pingErro ? 'Não consegui conferir o script de envio: ' + pingErro + ' Nada foi enviado. (Veja “Configurar envio” > “Testar conexão”: URL e senha.)' : 'O script de envio precisa ser atualizado (versão 1.2) para mandar a imagem do e-mail. Nada foi enviado. (Ou tire a imagem em “Prévia do e-mail”.)'); mostrar(); return; }
+                if (temAnexos && !scriptOk) { falha(it.id, pingErro ? 'Não consegui conferir o script de envio: ' + pingErro + ' Nada foi enviado. (Veja “Configurar envio” > “Testar conexão”: URL e senha.)' : 'O script de envio precisa ser atualizado (versão 1.1) para mandar recibo/boleto junto. Nada foi enviado.'); mostrar(); return; }
                 var arq = arquivosRef.current[it.id];
                 if (!arq) { falha(it.id, 'O PDF não está mais na memória. Escolha o arquivo de novo.'); mostrar(); return; }
                 var arqsAn = (it.anexos || []).map(function (a) { return arquivosRef.current[a.id]; });
