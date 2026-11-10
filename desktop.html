@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261110-tdb-v1-91";
+    window.__TDB_BUILD = "tdb-20261110-tdb-v1-92";
   </script>
-  <script src="./config.js?build=tdb-20261110-tdb-v1-91"></script>
+  <script src="./config.js?build=tdb-20261110-tdb-v1-92"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1573,9 +1573,9 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261110-tdb-v1-91"></script>
-  <script src="./sync.js?build=tdb-20261110-tdb-v1-91"></script>
-  <script src="./atualizar.js?build=tdb-20261110-tdb-v1-91"></script>
+  <script src="./diagnostico.js?build=tdb-20261110-tdb-v1-92"></script>
+  <script src="./sync.js?build=tdb-20261110-tdb-v1-92"></script>
+  <script src="./atualizar.js?build=tdb-20261110-tdb-v1-92"></script>
   <script>
   /* v1.91 — Atualização automática dos dados: antes o app só conferia o Drive ao abrir a página do zero. Agora confere
      também ao voltar para a janela/aba, ao reconectar e a cada 90 s com a tela visível. Usa só peças que já existem
@@ -1605,7 +1605,7 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
   })();
   </script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261110-tdb-v1-91-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261110-tdb-v1-92-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10065,6 +10065,7 @@ function ContasPessoais(_a) {
     }
     window.__tdbCPContas = contas;
     window.__tdbCPRenomear = renomearConta;
+    window.__tdbCPSalvar = salvar; // v1.92: usado pelo botão 'Levar contas para o próximo mês'
     function remover(id) {
         var atual = contas.find(function (c) { return c.id === id; }); if (!atual) return;
         if (!window.confirm('Mover a conta "' + atual.nome + '" para a lixeira?')) return;
@@ -24443,7 +24444,7 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
           if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')) return;
           var cs=realCells(row); var vc=cs[idx+1]; if(!vc) return;
           var nome=(cs[0]&&cs[0].textContent||'').trim(); var inp=vc.querySelector('input');
-          var k=ekey(nome,idx); parts.push(k+'='+(inp?(inp.value||inp.defaultValue):vc.textContent)+(editing[k]?'*':''));
+          var k=ekey(nome,idx); var pm0=peekM(nome,idx); parts.push(k+'='+(inp?(inp.value||inp.defaultValue):vc.textContent)+(editing[k]?'*':'')+'#'+(pm0.copiadaDe==null?'':pm0.copiadaDe)+(pm0.pago||''));
         });
         var sig=parts.join('|'); var n=table.querySelectorAll('.tdbm-cp-extra').length;
         if(table.getAttribute('data-tdb2sig')===sig && String(n)===table.getAttribute('data-tdb2n')) return;
@@ -24463,6 +24464,11 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
           var m=peekM(nome,idx); var st=m.pago || (valor>0?'PAGO':'PENDENTE'); var data=m.data || '';
           var ed=!!editing[ekey(nome,idx)];
           row.classList.toggle('tdb2-editing',ed);
+          try{
+            var veio=(m.copiadaDe!=null && st!=='PAGO');
+            row.classList.toggle('tdb2-veio',!!veio);
+            if(cs[0]){ if(veio){ cs[0].setAttribute('data-veio','\u21AA veio de '+String(meses[m.copiadaDe]||'').toUpperCase()); cs[0].title='Conta levada de '+(nomes[m.copiadaDe]||'')+'. O selo some quando voc\u00EA marcar como Pago.'; } else if(cs[0].hasAttribute('data-veio')){ cs[0].removeAttribute('data-veio'); cs[0].removeAttribute('title'); } }
+          }catch(e){}
           try{
             var tdn=cs[0], kk=ekey(nome,idx), oldI=tdn.querySelector('input.tdbm-cp-nome');
             if(ed){
@@ -24526,6 +24532,96 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
       }catch(e){}
     });
   }
+  // ===== v1.92 — Levar contas fixas para o próximo mês (com selo "veio de MÊS" até pagar) =====
+  var MES_CP=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  (function(){ try{ var st=document.createElement('style'); st.id='tdb-cp-levar-css'; st.textContent=
+    '.contas-pessoais-raiz .tdb1-cp-levar{display:flex;justify-content:flex-end;margin:0 0 10px}'
+   +'.contas-pessoais-raiz[data-tdbl-cp-view="annual"] .tdb1-cp-levar{display:none}'
+   +'.tdb1-cp-levar-btn{border:1px solid rgba(40,120,222,.45);background:rgba(40,120,222,.10);color:#2878de;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}'
+   +'.tdb1-cp-levar-btn:hover{background:rgba(40,120,222,.18)}'
+   +'.contas-pessoais-scroll td[data-veio]::after{content:attr(data-veio);display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(40,120,222,.14);color:#2878de;font-size:10.5px;font-weight:800;letter-spacing:.02em;white-space:nowrap;vertical-align:middle}'
+   +'.contas-pessoais-scroll tr.tdb2-veio td:first-child{box-shadow:inset 3px 0 0 #2878de}'
+   +'.tdb-cp-levar-ov{position:fixed;inset:0;z-index:100000;background:rgba(15,20,30,.45);display:flex;align-items:center;justify-content:center;padding:16px}'
+   +'.tdb-cp-levar-card{background:var(--c-paperCard,#fff);color:var(--c-ink,#18202c);border:1px solid var(--c-line,#d8dee8);border-radius:16px;max-width:460px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.28)}'
+   +'.tdb-cp-levar-card h3{margin:0;padding:16px 18px 4px;font-size:16px}'
+   +'.tdb-cp-levar-card p{margin:0;padding:0 18px 10px;font-size:12.5px;color:var(--c-inkSoft,#6b7a90)}'
+   +'.tdb-cp-levar-lista{overflow:auto;padding:4px 18px;flex:1}'
+   +'.tdb-cp-levar-lista label{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--c-line,#e6eaf0);font-size:13.5px;cursor:pointer}'
+   +'.tdb-cp-levar-lista label span.v{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700}'
+   +'.tdb-cp-levar-lista label.off{opacity:.5;cursor:default}'
+   +'.tdb-cp-levar-lista label small{color:var(--c-inkSoft,#6b7a90);font-size:11px}'
+   +'.tdb-cp-levar-rod{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px 16px}'
+   +'.tdb-cp-levar-rod button{border-radius:10px;padding:9px 16px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid var(--c-line,#cfd6e0);background:transparent;color:inherit}'
+   +'.tdb-cp-levar-rod button.ok{background:#1767cf;border-color:#1767cf;color:#fff}';
+   (document.head||document.documentElement).appendChild(st); }catch(e){} })();
+  function idxAtivo(){ var a=sessionStorage.getItem(storageKey); return Math.max(0,Math.min(11,parseInt(a,10)||0)); }
+  function renderLevar(root,table,idx,annual){
+    var box=root.querySelector('.tdb1-cp-levar');
+    if(annual||idx>=11){ if(box) box.style.display='none'; return; }
+    if(!box){
+      box=document.createElement('div'); box.className='tdb1-cp-levar';
+      var ref=root.querySelector('.tdb1-cp-balloons')||table.parentNode.firstChild;
+      if(ref&&ref.parentNode) ref.parentNode.insertBefore(box,ref.nextSibling); else return;
+      var b=document.createElement('button'); b.type='button'; b.className='tdb1-cp-levar-btn'; box.appendChild(b);
+      b.addEventListener('click',function(){ abrirLevar(root); });
+    }
+    box.style.display='';
+    var bt=box.querySelector('button'); var tx='\u21AA Levar contas fixas de '+nomes[idx]+' para '+nomes[idx+1];
+    if(bt&&bt.textContent!==tx) bt.textContent=tx;
+  }
+  function abrirLevar(root){
+    var idx=idxAtivo(); if(idx>=11) return;
+    var lista=window.__tdbCPContas, salvar=window.__tdbCPSalvar;
+    if(!Array.isArray(lista)||typeof salvar!=='function'){ window.alert('As contas ainda n\u00E3o carregaram. Aguarde um instante e tente de novo.'); return; }
+    var de=MES_CP[idx], para=MES_CP[idx+1];
+    var cand=lista.filter(function(c){ return c&&c.valores&&(Number(c.valores[de])||0)>0; });
+    if(!cand.length){ window.alert('N\u00E3o h\u00E1 contas com valor em '+nomes[idx]+' para levar.'); return; }
+    var ov=document.createElement('div'); ov.className='tdb-cp-levar-ov';
+    var card=document.createElement('div'); card.className='tdb-cp-levar-card'; ov.appendChild(card);
+    card.innerHTML='<h3>Levar para '+esc(nomes[idx+1])+'</h3><p>Marque as contas que se repetem. Elas entram em '+esc(nomes[idx+1])+' como <b>Pendente</b>, com o selo \u201Cveio de '+esc(meses[idx].toUpperCase())+'\u201D, e o selo some quando voc\u00EA marcar como Pago. Contas que j\u00E1 t\u00EAm valor em '+esc(nomes[idx+1])+' n\u00E3o s\u00E3o alteradas.</p>';
+    var box=document.createElement('div'); box.className='tdb-cp-levar-lista'; card.appendChild(box);
+    var checks=[];
+    cand.forEach(function(c){
+      var jaTem=(Number(c.valores[para])||0)>0;
+      var lb=document.createElement('label'); if(jaTem) lb.className='off';
+      var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!jaTem; cb.disabled=jaTem; cb.value=String(c.id);
+      var nm=document.createElement('span'); nm.textContent=c.nome; if(jaTem){ var sm=document.createElement('small'); sm.textContent=' (j\u00E1 tem valor)'; nm.appendChild(sm); }
+      var vv=document.createElement('span'); vv.className='v'; vv.textContent=brl(c.valores[de]);
+      lb.appendChild(cb); lb.appendChild(nm); lb.appendChild(vv); box.appendChild(lb); if(!jaTem) checks.push(cb);
+    });
+    var rod=document.createElement('div'); rod.className='tdb-cp-levar-rod'; card.appendChild(rod);
+    var bTodas=document.createElement('button'); bTodas.type='button'; bTodas.textContent='Marcar/desmarcar todas'; bTodas.style.marginRight='auto';
+    bTodas.addEventListener('click',function(){ var todas=checks.every(function(x){return x.checked;}); checks.forEach(function(x){x.checked=!todas;}); });
+    var bCan=document.createElement('button'); bCan.type='button'; bCan.textContent='Cancelar';
+    var bOk=document.createElement('button'); bOk.type='button'; bOk.className='ok'; bOk.textContent='Levar para '+nomes[idx+1];
+    rod.appendChild(bTodas); rod.appendChild(bCan); rod.appendChild(bOk);
+    function fechar(){ try{ ov.remove(); }catch(e){} }
+    bCan.addEventListener('click',fechar); ov.addEventListener('click',function(ev){ if(ev.target===ov) fechar(); });
+    bOk.addEventListener('click',function(){
+      var ids=checks.filter(function(x){return x.checked;}).map(function(x){return x.value;});
+      if(!ids.length){ window.alert('Marque pelo menos uma conta.'); return; }
+      var atual=window.__tdbCPContas||lista;
+      var prox=atual.map(function(c){
+        if(ids.indexOf(String(c.id))<0) return c;
+        if((Number(c.valores&&c.valores[para])||0)>0) return c;
+        var vals={}; for(var k in c.valores) vals[k]=c.valores[k]; vals[para]=Number(c.valores[de])||0;
+        var o={}; for(var kk in c) o[kk]=c[kk]; o.valores=vals; return o;
+      });
+      fechar();
+      try{ salvar(prox); }catch(e){ window.alert('N\u00E3o consegui salvar as contas. Nada foi levado.'); return; }
+      loadMeta(function(){
+        try{
+          prox.forEach(function(c){ if(ids.indexOf(String(c.id))<0) return; var mm=getM(c.nome,idx+1); mm.pago='PENDENTE'; mm.data=''; mm.copiadaDe=idx; });
+          saveMeta();
+        }catch(e){}
+        sessionStorage.setItem(storageKey,String(idx+1));
+        var t=root.querySelector('.contas-pessoais-scroll table'); if(t){ t.removeAttribute('data-tdb2sig'); }
+        apply(root);
+        setTimeout(function(){ var t2=root.querySelector('.contas-pessoais-scroll table'); if(t2) t2.removeAttribute('data-tdb2sig'); scan(); },700);
+      });
+    });
+    document.body.appendChild(ov);
+  }
   function apply(root){
     var scroll=root.querySelector('.contas-pessoais-scroll'); var table=scroll&&scroll.querySelector('table'); if(!table) return; removeDica(root);
     var active=sessionStorage.getItem(storageKey); if(active==null){active=String(new Date().getMonth()); sessionStorage.setItem(storageKey,active);} var annual=active==='annual';
@@ -24539,6 +24635,7 @@ html body .tcal .tcal-side-summary .tcal-summary-grid:not(#tdb3x):not(#tdbxx){gr
     if(table.tFoot){Array.prototype.forEach.call(table.tFoot.rows,function(row){ if(row.cells.length===1 && row.cells[0].hasAttribute('colspan')){var w=annual?15:5; if(row.cells[0].colSpan!==w) row.cells[0].colSpan=w; return;} var cs=realCells(row); if(cs[0]){var lb=annual?'📊 Total por mês':'📅 Total do mês ('+nomes[idx]+')'; if(cs[0].textContent!==lb) cs[0].textContent=lb;} for(var i=1;i<=12;i++) setCell(cs[i],annual?false:i!==idx+1); setCell(cs[13],!annual); });}
     if(!annual) inserirExtras(root,table,idx);
     renderBalloons(root,table,idx,annual);
+    try{ renderLevar(root,table,idx,annual); }catch(e){}
   }
   function ensure(root){
     if(!root.__tdb2Lapis){root.__tdb2Lapis=1;
