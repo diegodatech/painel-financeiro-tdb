@@ -1,3 +1,8 @@
+V1.90 (app TDB v1.90 + servidor 1.90)
+- Mensalidades no Fold/tablet estreito (menos de 1100 px): as colunas Nota e Valor ficavam uma em cima da outra (o selo PENDENTE cobria o valor R$). Agora a tabela mantem largura minima, as colunas ficaram mais largas e voce rola de lado se precisar. Tela larga (PC) nao mudou.
+- Inclui a v1.89 (correcao da perda de dados em Festas TDB) e a v1.88.
+- sync.js (salvamento) NAO foi alterado.
+
 V1.85 (app TDB v1.85 + servidor 1.85)
 - Menus suspensos (Configuracoes, Dados) agora opacos tambem no computador: antes, em tela larga, dava para ver os botoes e textos de baixo atraves deles (ex.: "Pedir PIN ao voltar" misturado com as abas das Festas).
 - Festas: formulario de adicionar com fundo solido e campos com borda firme tambem no computador (antes so no Fold/tablet).
