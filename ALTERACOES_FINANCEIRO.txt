@@ -1,3 +1,9 @@
+V1.93 (app TDB v1.93 + servidor 1.93)
+- Contas Pessoais: corrigida a sobreposicao ao clicar em Editar numa conta levada para o proximo mes (o selo "veio de OUT" aparecia por cima do valor). Agora o selo some enquanto a linha esta em edicao e volta ao salvar. Conferido tambem Lancamentos (o selo so aparece fora da edicao) e Festas TDB (sem sobreposicao).
+- Corrigido o numero de versao no config.js (ficava preso em v1.89 nas entregas 1.90 a 1.92, o que podia fazer o aviso de nova versao aparecer sempre).
+- Inclui v1.92 (levar contas pessoais), v1.91 (atualizacao automatica) e v1.90 (tabela de Mensalidades no Fold).
+- sync.js (salvamento) NAO foi alterado.
+
 V1.92 (app TDB v1.92 + servidor 1.92)
 - Contas Pessoais: novo botao "Levar contas fixas de <mes> para <proximo mes>" (aparece nas abas dos meses, nao no Resumo anual). Abre uma lista com as contas que tem valor no mes, voce marca as que se repetem e elas entram no proximo mes com o mesmo valor, como Pendente e com o selo azul "veio de NOV" no nome. Quando voce marca como Pago, o selo some. Contas que ja tem valor no proximo mes nao sao alteradas. Dezembro nao tem botao (nao ha mes seguinte no exercicio).
 - Inclui a v1.91 (atualizacao automatica entre aparelhos) e a v1.90 (tabela de Mensalidades no Fold).
