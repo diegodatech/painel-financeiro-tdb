@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261109-tdb-v1-87";
+    window.__TDB_BUILD = "tdb-20261110-tdb-v1-88";
   </script>
-  <script src="./config.js?build=tdb-20261109-tdb-v1-87"></script>
+  <script src="./config.js?build=tdb-20261110-tdb-v1-88"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1573,11 +1573,11 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261109-tdb-v1-87"></script>
-  <script src="./sync.js?build=tdb-20261109-tdb-v1-87"></script>
-  <script src="./atualizar.js?build=tdb-20261109-tdb-v1-87"></script>
+  <script src="./diagnostico.js?build=tdb-20261110-tdb-v1-88"></script>
+  <script src="./sync.js?build=tdb-20261110-tdb-v1-88"></script>
+  <script src="./atualizar.js?build=tdb-20261110-tdb-v1-88"></script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261109-tdb-v1-87-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261110-tdb-v1-88-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -2745,7 +2745,7 @@ function NotasFiscaisTDB(_a) {
         var r = montarItens(lista);
         setEnvio({ fase: 'confirmar', itens: r.itens, pulados: r.pulados, status: {}, teste: modoTeste, mi: mi, mesKey: mesKey });
     }
-    // V1.86: empresa com texto próprio usa ele; as demais (e os alunos) continuam com o texto padrão
+    // V1.88: empresa com texto próprio usa ele; as demais (e os alunos) continuam com o texto padrão
     function corpoDe(it, mod) { var ce = convRef.current.filter(function (x) { return x.id === it.cadId; })[0]; var t = ce && ce.convenio ? String(ce.textoEmail || '').trim() : ''; return t || mod.corpo; }
     function executarEnvio() {
         if (enviandoRef.current || !envio || envio.fase !== 'confirmar') return;
@@ -2953,7 +2953,7 @@ function NotasFiscaisTDB(_a) {
         var lista = gruposConv[c.id].slice().sort(function (a, b) { return (ORD_TIPO[tipoDe(a)] - ORD_TIPO[tipoDe(b)]) || String(a.arquivo).localeCompare(String(b.arquivo)); });
         linhasPend.push(cabGrupo(c, lista));
         linhasPend.push(h('div', { key: 'gl-' + c.id, style: { marginLeft: MOB ? 8 : 14, borderLeft: '3px solid rgba(23,103,207,.35)' } }, lista.map(function (n) { return elDe[n.id]; })));
-        // V1.86: texto do e-mail próprio desta empresa (vazio = usa o texto padrão da “Prévia do e-mail”)
+        // V1.88: texto do e-mail próprio desta empresa (vazio = usa o texto padrão da “Prévia do e-mail”)
         linhasPend.push(h('div', { key: 'gt-' + c.id, 'data-export-ignore': true, 'data-nf-texto-empresa': c.id, style: { margin: MOB ? '6px 8px 10px 8px' : '6px 16px 12px 14px', padding: '8px 12px 10px', borderLeft: '3px solid rgba(23,103,207,.35)', background: 'rgba(23,103,207,.04)', borderRadius: '0 10px 10px 0' } },
             h('label', { style: { display: 'block', fontSize: 12, fontWeight: 800, color: COLORS.ink, marginBottom: 4 } }, '✉ Texto do e-mail para ' + c.aluno + (String(c.textoEmail || '').trim() ? ' (texto próprio)' : ' (opcional)')),
             h('textarea', { defaultValue: c.textoEmail || '', rows: 3, 'aria-label': 'Texto do e-mail para ' + c.aluno, placeholder: 'Deixe vazio para usar o texto padrão. Pode usar {aluno}, {mes}, {escola} e {documentos}.',
@@ -14538,12 +14538,12 @@ function salvarTudoAgora() {
             var jaPos = -1;
             base.forEach(function (x, i) { if (jaPos < 0 && x.mes === prox && x.tipo === 'Fixa' && String(x.categoria).trim().toUpperCase() === String(t.categoria).trim().toUpperCase()) jaPos = i; });
             if (jaPos >= 0) {
-                if (base[jaPos].valor == null) { base[jaPos] = __assign(__assign({}, base[jaPos]), { valor: t.valor }); resumo.preenchidas++; mudou = true; }
+                if (base[jaPos].valor == null) { base[jaPos] = __assign(__assign({}, base[jaPos]), { valor: t.valor, copiadaDe: t.mes }); resumo.preenchidas++; mudou = true; }
                 else resumo.jaExistem++;
                 return;
             }
             maxId += 1;
-            base.push({ id: maxId, mes: prox, categoria: t.categoria, tipo: 'Fixa', valor: t.valor, status: 'Pendente', data: null });
+            base.push({ id: maxId, mes: prox, categoria: t.categoria, tipo: 'Fixa', valor: t.valor, status: 'Pendente', data: null, copiadaDe: t.mes });
             resumo.criadas++; mudou = true;
         });
         if (mudou) persist(base);
@@ -16290,7 +16290,7 @@ function Lancamentos(props) {
                     display: 'grid', gridTemplateColumns: '1fr auto auto auto auto auto', gap: 12, alignItems: 'center', position: 'relative',
                     padding: selL !== null ? '9px 18px 9px 48px' : '9px 18px', borderTop: "1px solid ".concat(COLORS.lineSoft), fontSize: 13.5,
                     cursor: emEdicao ? 'default' : 'pointer',
-                    borderLeft: linhaSelecionada === t.id ? '3px solid #E0AE3C' : '3px solid transparent',
+                    borderLeft: linhaSelecionada === t.id ? '3px solid #E0AE3C' : ((t.copiadaDe && t.status !== 'Pago' && !emEdicao) ? '3px solid #2878de' : '3px solid transparent'),
                     background: linhaSelecionada === t.id
                         ? 'rgba(224, 174, 60, 0.16)'
                         : (semValor && !emEdicao
@@ -16303,7 +16303,7 @@ function Lancamentos(props) {
                         salvarEdicao(t.id);
                     if (e.key === 'Escape')
                         cancelarEdicao();
-                }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { padding: '5px 8px', fontSize: 13.5, width: '100%', maxWidth: 280, boxSizing: 'border-box', marginBottom: 4 }) })) : (React.createElement("span", { style: { color: COLORS.ink } }, t.categoria)), emEdicao ? ((historicoEdit || t.historico) && (React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 } }, React.createElement("input", { value: historicoEdit, onChange: function (e) { return setHistoricoEdit(e.target.value); }, onKeyDown: function (e) {
+                }, spellCheck: "true", lang: "pt-BR", style: __assign(__assign({}, inputStyle), { padding: '5px 8px', fontSize: 13.5, width: '100%', maxWidth: 280, boxSizing: 'border-box', marginBottom: 4 }) })) : (React.createElement(React.Fragment, null, React.createElement("span", { style: { color: COLORS.ink } }, t.categoria), (t.copiadaDe && t.status !== 'Pago') ? React.createElement("span", { 'data-copiada-de': t.copiadaDe, 'data-export-ignore': true, title: "Conta copiada de " + String(t.copiadaDe).toLowerCase() + ". A marca some quando for paga.", style: { marginLeft: 8, fontSize: 11, fontWeight: 800, letterSpacing: '0.02em', padding: '2px 8px', borderRadius: 99, whiteSpace: 'nowrap', color: 'color-mix(in srgb, #2878de 72%, var(--c-ink))', background: 'color-mix(in srgb, #2878de 14%, var(--c-paperCard))' } }, "\u21AA veio de " + String(MESES_ABREV[t.copiadaDe] || t.copiadaDe).toUpperCase()) : null)), emEdicao ? ((historicoEdit || t.historico) && (React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 } }, React.createElement("input", { value: historicoEdit, onChange: function (e) { return setHistoricoEdit(e.target.value); }, onKeyDown: function (e) {
                     if (e.key === 'Enter')
                         salvarEdicao(t.id);
                     if (e.key === 'Escape')
