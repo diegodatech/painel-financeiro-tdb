@@ -1,3 +1,7 @@
+V1.91 (app TDB v1.91 + servidor 1.91)
+- ATUALIZACAO AUTOMATICA DOS DADOS entre aparelhos: antes o app so conferia o Google Drive quando a pagina era aberta do zero (e, se voce so voltava para a janela ou o app ficava em segundo plano, nunca conferia). Agora tambem confere ao voltar para a janela, ao reconectar a internet e a cada 90 segundos com a tela visivel. Se outro aparelho gravou algo, os dados chegam sozinhos; a tela so se refaz quando voce nao esta digitando nem com janela aberta. Nao grava nada e o sync.js (salvamento) NAO foi alterado.
+- Inclui a v1.90 (tabela de Mensalidades no Fold) e anteriores.
+
 V1.90 (app TDB v1.90 + servidor 1.90)
 - Mensalidades no Fold/tablet estreito (menos de 1100 px): as colunas Nota e Valor ficavam uma em cima da outra (o selo PENDENTE cobria o valor R$). Agora a tabela mantem largura minima, as colunas ficaram mais largas e voce rola de lado se precisar. Tela larga (PC) nao mudou.
 - Inclui a v1.89 (correcao da perda de dados em Festas TDB) e a v1.88.
