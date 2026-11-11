@@ -1,3 +1,9 @@
+V1.94 (app TDB v1.94 + servidor 1.94)
+- Janela "Enviando... nao feche esta janela" (envio de notas por e-mail) redesenhada: fundo solido, barra de progresso, cada aluno com status (Enviada / Falhou / aguardando) e resumo no fim. No computador a janela ficou maior; no tablet e no celular o tamanho continua o mesmo.
+- Novo: botao "Tentar de novo" (por nota) e "Tentar as que falharam". Reabre a tela de confirmacao so com as notas que falharam; as que deram certo nao sao reenviadas.
+- Inclui v1.93 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V1.93 (app TDB v1.93 + servidor 1.93)
 - Contas Pessoais: corrigida a sobreposicao ao clicar em Editar numa conta levada para o proximo mes (o selo "veio de OUT" aparecia por cima do valor). Agora o selo some enquanto a linha esta em edicao e volta ao salvar. Conferido tambem Lancamentos (o selo so aparece fora da edicao) e Festas TDB (sem sobreposicao).
 - Corrigido o numero de versao no config.js (ficava preso em v1.89 nas entregas 1.90 a 1.92, o que podia fazer o aviso de nova versao aparecer sempre).

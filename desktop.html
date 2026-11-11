@@ -2132,6 +2132,12 @@ function nfErroMsg(e) {
 function nfBtnP() { return { border: 'none', background: COLORS.inkButton, color: '#fff', borderRadius: 10, padding: '10px 18px', fontWeight: 800, fontSize: 13.5, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }; }
 function nfBtnS() { return { border: '1px solid ' + COLORS.line, background: COLORS.paperCard, color: COLORS.ink, borderRadius: 10, padding: '10px 16px', fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }; }
 function nfInp() { return { width: '100%', boxSizing: 'border-box', border: '1px solid ' + COLORS.line, borderRadius: 8, padding: NF_MOB ? '10px 11px' : '8px 10px', fontSize: NF_MOB ? 16 : 13.5, fontFamily: 'Inter, sans-serif', background: COLORS.paperCard, color: COLORS.ink, minWidth: 0 }; }
+// V1.94: o tema “vidro” deixa o fundo dos cartões translúcido; a janela de envio precisa de fundo sólido para o texto não se misturar com a tela de trás
+function nfFundoSolido() {
+    var escuro = false;
+    try { escuro = document.documentElement.classList.contains('dark-mode') || document.body.classList.contains('dark-mode') || !!document.querySelector('.dark-mode'); } catch (e) { }
+    return escuro ? { '--c-paperCard': '#22252b', '--c-lineSoft': '#2d3038', '--aurora-layers': 'none', background: '#22252b' } : { '--c-paperCard': '#ffffff', '--c-lineSoft': '#eef0f4', '--aurora-layers': 'none', background: '#ffffff' };
+}
 function NFModal(p) {
     var h = React.createElement;
     var ref = useRef(p); ref.current = p;
@@ -2142,7 +2148,7 @@ function NFModal(p) {
         return function () { document.body.style.overflow = ant; document.removeEventListener('keydown', tecla); };
     }, []);
     return ReactDOM.createPortal(h('div', { style: { position: 'fixed', inset: 0, zIndex: 2147483600, background: 'rgba(10,22,20,.68)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }, onMouseDown: function (e) { if (e.target === e.currentTarget && !ref.current.travado) ref.current.onFechar(); } },
-        h('div', { className: 'busca-liquid-glass', onMouseDown: function (e) { e.stopPropagation(); }, style: { width: 'min(' + (p.largura || 520) + 'px,94vw)', maxHeight: '88vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRadius: 20, background: COLORS.paperCard, padding: 20, boxShadow: '0 24px 80px rgba(0,0,0,.38)', border: '1px solid ' + COLORS.line } }, p.children)), document.body);
+        h('div', { className: p.opaco ? 'nf-modal-opaco' : 'busca-liquid-glass', role: 'dialog', 'aria-modal': 'true', onMouseDown: function (e) { e.stopPropagation(); }, style: Object.assign(p.opaco ? nfFundoSolido() : {}, { width: 'min(' + (p.largura || 520) + 'px,94vw)', maxHeight: '88vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', borderRadius: 20, background: COLORS.paperCard, padding: 20, boxShadow: '0 24px 80px rgba(0,0,0,.38)', border: '1px solid ' + COLORS.line }) }, p.children)), document.body);
 }
 function nfTitulo(t, sub) {
     var h = React.createElement;
@@ -2249,25 +2255,53 @@ function NFModalEnvio(p) {
         var s = e.status[it.id];
         if (s && (s.s === 'ok' || s.s === 'teste' || s.s === 'ja')) okN++; else if (s && s.s === 'erro') erroN++;
     });
-    var n = e.itens.length;
-    var titulo = fase === 'confirmar' ? (e.teste ? 'Enviar TESTE de ' : 'Enviar ') + n + (n === 1 ? ' nota' : ' notas') : fase === 'enviando' ? 'Enviando… não feche esta janela' : 'Envio concluído';
-    var sub = fase === 'confirmar' ? totalEm + (totalEm === 1 ? ' e-mail' : ' e-mails') + (e.teste ? ' — no teste tudo chega só no e-mail de teste.' : ' ao todo. A Mensalidade de cada aluno será marcada como “Enviada”.') : fase === 'fim' ? (okN + ' de ' + n + (e.teste ? ' testes enviados' : ' enviadas') + (erroN ? ' · ' + erroN + ' com problema' : '')) : '';
-    function glifo(s) { return !s ? '·' : s.s === 'enviando' ? '⏳' : s.s === 'ok' ? '✅' : s.s === 'ja' ? '✅' : s.s === 'teste' ? '🧪' : s.s === 'erro' ? '❌' : '·'; }
-    return h(NFModal, { onFechar: p.onFechar, travado: fase === 'enviando', largura: 560 },
-        nfTitulo(titulo, sub),
+    var n = e.itens.length, feitas = okN + erroN;
+    // V1.94: no computador a janela é maior; celular e tablet continuam do mesmo tamanho de antes
+    var grande = !NF_MOB && window.innerWidth >= 1040;
+    var titulo = fase === 'confirmar' ? (e.teste ? 'Enviar TESTE de ' : 'Enviar ') + n + (n === 1 ? ' nota' : ' notas') : fase === 'enviando' ? 'Enviando notas por e-mail' : (erroN ? 'Envio terminou com ' + erroN + (erroN === 1 ? ' falha' : ' falhas') : (e.teste ? 'Teste concluído' : 'Envio concluído'));
+    var sub = fase === 'confirmar' ? totalEm + (totalEm === 1 ? ' e-mail' : ' e-mails') + (e.teste ? ' — no teste tudo chega só no e-mail de teste.' : ' ao todo. A Mensalidade de cada aluno será marcada como “Enviada”.') : fase === 'enviando' ? 'Não feche esta janela até terminar.' : (okN + ' de ' + n + (e.teste ? ' testes enviados' : ' enviadas') + (erroN ? ' · ' + erroN + ' com problema. As que deram certo não serão repetidas.' : ''));
+    var pct = n ? Math.round(feitas / n * 100) : 0;
+    var corBarra = fase === 'fim' ? (erroN ? COLORS.red : COLORS.green) : '#2878de';
+    var mono = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+    function marcador(kind) {
+        var base = { flex: 'none', width: 26, height: 26, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, gridRow: '1 / span 3', marginTop: 1 };
+        if (kind === 'ok') return h('span', { style: Object.assign(base, { background: COLORS.greenBg, color: COLORS.green }) }, '✓');
+        if (kind === 'err') return h('span', { style: Object.assign(base, { background: COLORS.redBg, color: COLORS.red }) }, '!');
+        if (kind === 'go') return h('span', { style: Object.assign(base, { background: 'color-mix(in srgb, #2878de 14%, var(--c-paperCard))' }) }, h('span', { style: { width: 13, height: 13, borderRadius: '50%', border: '2px solid color-mix(in srgb, #2878de 25%, transparent)', borderTopColor: '#2878de', animation: 'nfspin .8s linear infinite', display: 'block' } }));
+        return h('span', { style: Object.assign(base, { background: COLORS.lineSoft, color: COLORS.inkSoft, border: '1px solid ' + COLORS.line }) }, '·');
+    }
+    function pilula(txt, kind) {
+        var cor = kind === 'ok' ? [COLORS.greenBg, COLORS.green] : kind === 'err' ? [COLORS.redBg, COLORS.red] : kind === 'go' ? ['color-mix(in srgb, #2878de 14%, var(--c-paperCard))', '#2878de'] : [COLORS.lineSoft, COLORS.inkSoft];
+        return h('span', { style: { alignSelf: 'start', fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: cor[0], color: cor[1] } }, txt);
+    }
+    return h(NFModal, { onFechar: p.onFechar, travado: fase === 'enviando', largura: grande ? 780 : 560, opaco: true },
+        h('style', null, '@keyframes nfspin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){[style*="nfspin"]{animation:none!important}}'),
+        h('div', { style: { display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 } },
+            h('div', { style: { flex: 'none', width: 42, height: 42, borderRadius: 13, background: 'color-mix(in srgb, #2878de 14%, var(--c-paperCard))', color: fase === 'fim' && erroN ? COLORS.red : '#2878de', display: 'grid', placeItems: 'center', fontSize: 20, fontWeight: 800 } }, fase === 'fim' ? (erroN ? '!' : '✓') : '✉'),
+            h('div', { style: { minWidth: 0, flex: 1 } },
+                h('div', { style: { fontSize: 19, fontWeight: 800, color: COLORS.ink, lineHeight: 1.25 } }, titulo),
+                h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft, marginTop: 3 } }, sub)),
+            fase !== 'confirmar' && h('div', { style: { flex: 'none', fontFamily: mono, fontWeight: 800, fontSize: 13, padding: '5px 11px', borderRadius: 999, border: '1px solid ' + COLORS.line, background: COLORS.lineSoft, color: COLORS.ink, whiteSpace: 'nowrap' } }, feitas + ' de ' + n)),
+        fase !== 'confirmar' && h('div', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': pct, style: { height: 6, borderRadius: 99, background: COLORS.lineSoft, overflow: 'hidden', marginBottom: 12 } },
+            h('div', { style: { height: '100%', width: pct + '%', background: corBarra, borderRadius: 99, transition: 'width .4s ease, background .3s' } })),
         e.teste && h('div', { style: { padding: '9px 12px', borderRadius: 12, background: '#FFF4D6', color: '#8a5a00', fontSize: 12.5, fontWeight: 700, marginBottom: 10 } }, '🧪 MODO TESTE — nenhum responsável vai receber e nada será marcado como enviado.'),
-        h('div', { style: { overflowY: 'auto', border: '1px solid ' + COLORS.line, borderRadius: 12, maxHeight: '42vh' } },
-            e.itens.map(function (it) {
-                var s = e.status[it.id];
-                return h('div', { key: it.id, style: { padding: '9px 12px', borderBottom: '1px solid ' + COLORS.lineSoft, fontSize: 13.5, color: COLORS.ink } },
-                    h('div', { style: { display: 'flex', gap: 8, alignItems: 'baseline' } },
-                        fase !== 'confirmar' && h('span', { style: { flex: 'none' } }, glifo(s)),
+        h('div', { style: { overflowY: 'auto', border: '1px solid ' + COLORS.line, borderRadius: 14, maxHeight: grande ? '52vh' : '42vh', background: COLORS.paperCard } },
+            e.itens.map(function (it, idx) {
+                var s = e.status[it.id], st = s ? s.s : '';
+                var kind = fase === 'confirmar' ? '' : (st === 'ok' || st === 'ja' || st === 'teste') ? 'ok' : st === 'erro' ? 'err' : st === 'enviando' ? 'go' : 'wait';
+                var rotulo = st === 'teste' ? 'Teste enviado' : st === 'ja' ? 'Já enviada' : kind === 'ok' ? 'Enviada' : kind === 'err' ? 'Falhou' : kind === 'go' ? 'Enviando…' : 'Na fila';
+                return h('div', { key: it.id, style: { display: 'grid', gridTemplateColumns: fase === 'confirmar' ? 'minmax(0,1fr)' : '26px minmax(0,1fr) auto', columnGap: 12, rowGap: 2, padding: '12px 14px', borderTop: idx ? '1px solid ' + COLORS.lineSoft : 'none', fontSize: 13.5, color: kind === 'wait' ? COLORS.inkSoft : COLORS.ink } },
+                    fase !== 'confirmar' && marcador(kind),
+                    h('div', { style: { display: 'flex', gap: 8, alignItems: 'baseline', minWidth: 0, flexWrap: 'wrap' } },
                         h('span', { style: { fontWeight: 800, minWidth: 0, overflowWrap: 'anywhere' } }, it.aluno),
                         it.reenvio && !e.teste && h('span', { style: { fontSize: 11, fontWeight: 800, padding: '1px 8px', borderRadius: 999, background: '#FFF4D6', color: '#8a5a00', flex: 'none' } }, 'REENVIO')),
-                    h('div', { style: { fontSize: 12, color: COLORS.inkSoft, overflowWrap: 'anywhere', marginTop: 2 } }, 'Para: ' + it.emails.join(', ')),
-                    it.anexos && it.anexos.length > 0 && h('div', { style: { fontSize: 12, color: COLORS.inkSoft, marginTop: 2 } }, 'Anexos: nota fiscal + ' + it.anexos.map(function (a) { return NF_ROTULO_TIPO[a.tipo].toLowerCase(); }).join(' + ')),
-                    s && s.msg && h('div', { style: { fontSize: 12, marginTop: 3, color: s.s === 'erro' ? COLORS.red : COLORS.green, overflowWrap: 'anywhere' } }, s.msg),
-                    s && s.msg2 && h('div', { style: { fontSize: 12, marginTop: 2, color: s.ok2 === false ? '#8a5a00' : COLORS.inkSoft, overflowWrap: 'anywhere' } }, s.msg2));
+                    fase !== 'confirmar' && pilula(rotulo, kind),
+                    h('div', { style: { gridColumn: fase === 'confirmar' ? 1 : 2, fontSize: 12.5, color: COLORS.inkSoft, overflowWrap: 'anywhere', fontFamily: mono } }, it.emails.join(', ')),
+                    it.anexos && it.anexos.length > 0 && h('div', { style: { gridColumn: fase === 'confirmar' ? 1 : 2, fontSize: 12, color: COLORS.inkSoft } }, 'Anexos: nota fiscal + ' + it.anexos.map(function (a) { return NF_ROTULO_TIPO[a.tipo].toLowerCase(); }).join(' + ')),
+                    s && s.msg && h('div', { style: { gridColumn: fase === 'confirmar' ? 1 : '2 / span 2', fontSize: 12.5, marginTop: 4, color: s.s === 'erro' ? COLORS.red : COLORS.inkSoft, overflowWrap: 'anywhere' } }, s.msg),
+                    s && s.msg2 && h('div', { style: { gridColumn: fase === 'confirmar' ? 1 : '2 / span 2', fontSize: 12.5, marginTop: 2, color: s.ok2 === false ? '#8a5a00' : COLORS.inkSoft, overflowWrap: 'anywhere' } }, s.msg2),
+                    kind === 'err' && fase === 'fim' && p.onTentar && h('div', { style: { gridColumn: '2 / span 2', marginTop: 6 } },
+                        h('button', { type: 'button', onClick: function () { p.onTentar([it.id]); }, style: Object.assign({}, nfBtnS(), { padding: '5px 12px', fontSize: 12 }) }, 'Tentar de novo')));
             })),
         fase === 'confirmar' && e.pulados.length > 0 && h('div', { style: { marginTop: 10, padding: '9px 12px', borderRadius: 12, background: COLORS.redBg, color: COLORS.ink, fontSize: 12.5 } },
             h('b', null, 'Não serão enviadas (' + e.pulados.length + '):'),
@@ -2275,11 +2309,14 @@ function NFModalEnvio(p) {
             p.onEscolherPdfs && e.pulados.some(function (x) { return x.motivo.indexOf('Escolher PDFs') >= 0; }) && h('div', { style: { marginTop: 8 } },
                 h('div', { style: { color: COLORS.inkSoft, marginBottom: 6 } }, 'Os PDFs não ficam guardados no TDB (só os dados). Depois de abrir a página de novo, escolha outra vez os mesmos arquivos — eles se reconectam às notas já cadastradas, sem duplicar.'),
                 h('button', { type: 'button', 'data-nf-escolher-pdfs': '1', onClick: p.onEscolherPdfs, style: nfBtnP() }, 'Escolher os PDFs agora'))),
-        h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16, flexWrap: 'wrap' } },
+        h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 16, flexWrap: 'wrap' } },
+            fase === 'fim' && h('div', { style: { flex: '1 1 160px', minWidth: 0, fontSize: 12.5, color: COLORS.inkSoft } }, h('b', { style: { color: COLORS.ink } }, okN + (okN === 1 ? (e.teste ? ' teste enviado' : ' enviada') : (e.teste ? ' testes enviados' : ' enviadas'))), erroN ? ' · ' + erroN + ' com falha' : ''),
             fase === 'confirmar' && h('button', { type: 'button', onClick: p.onFechar, style: nfBtnS() }, 'Cancelar'),
             fase === 'confirmar' && h('button', { type: 'button', disabled: !n, onClick: p.onConfirmar, style: Object.assign({}, nfBtnP(), { opacity: n ? 1 : .5, cursor: n ? 'pointer' : 'not-allowed' }) }, e.teste ? 'Enviar teste' : 'Enviar agora'),
-            fase === 'enviando' && h('div', { style: { fontSize: 13, color: COLORS.inkSoft } }, (okN + erroN) + ' de ' + n + ' processadas…'),
-            fase === 'fim' && h('button', { type: 'button', onClick: p.onFechar, style: nfBtnP() }, 'Fechar')));
+            fase === 'enviando' && h('button', { type: 'button', disabled: true, style: Object.assign({}, nfBtnS(), { opacity: .55, cursor: 'default' }) }, 'Aguarde…'),
+            fase === 'fim' && erroN > 0 && p.onTentar && h('button', { type: 'button', onClick: p.onFechar, style: nfBtnS() }, 'Fechar'),
+            fase === 'fim' && erroN > 0 && p.onTentar && h('button', { type: 'button', onClick: function () { p.onTentar(e.itens.filter(function (it) { var s = e.status[it.id]; return s && s.s === 'erro'; }).map(function (it) { return it.id; })); }, style: nfBtnP() }, 'Tentar as que falharam'),
+            fase === 'fim' && !(erroN > 0 && p.onTentar) && h('button', { type: 'button', onClick: p.onFechar, style: nfBtnP() }, 'Fechar')));
 }
 function NotasFiscaisTDB(_a) {
     var h = React.createElement;
@@ -2775,6 +2812,13 @@ function NotasFiscaisTDB(_a) {
     }
     // V1.88: empresa com texto próprio usa ele; as demais (e os alunos) continuam com o texto padrão
     function corpoDe(it, mod) { var ce = convRef.current.filter(function (x) { return x.id === it.cadId; })[0]; var t = ce && ce.convenio ? String(ce.textoEmail || '').trim() : ''; return t || mod.corpo; }
+    // V1.94: refaz só as notas que falharam (volta para a tela de confirmação com elas; as que já foram não se repetem)
+    function tentarDeNovo(ids) {
+        if (enviandoRef.current || !envio) return;
+        var its = envio.itens.filter(function (x) { return (ids || []).indexOf(x.id) >= 0; });
+        if (!its.length) return;
+        setEnvio({ fase: 'confirmar', itens: its, pulados: [], status: {}, teste: envio.teste, mi: envio.mi, mesKey: envio.mesKey });
+    }
     function executarEnvio() {
         if (enviandoRef.current || !envio || envio.fase !== 'confirmar') return;
         enviandoRef.current = true;
@@ -3066,7 +3110,7 @@ function NotasFiscaisTDB(_a) {
         importar && h(NFModalImportar, { nomes: importar, onFechar: function () { setImportar(null); }, onImportar: confirmarImportar }),
         dlg === 'config' && h(NFModalConfig, { cfg: cfg, onFechar: function () { setDlg(null); }, onSalvar: salvarCfg }),
         dlg === 'previa' && h(NFModalPrevia, { modelo: modelo, ex: exemploPrevia(), onFechar: function () { setDlg(null); }, onSalvar: salvarModelo }),
-        envio && h(NFModalEnvio, { envio: envio, onFechar: function () { setEnvio(null); }, onConfirmar: executarEnvio, onEscolherPdfs: function () { setEnvio(null); inputRef.current && inputRef.current.click(); } }));
+        envio && h(NFModalEnvio, { envio: envio, onFechar: function () { setEnvio(null); }, onConfirmar: executarEnvio, onTentar: tentarDeNovo, onEscolherPdfs: function () { setEnvio(null); inputRef.current && inputRef.current.click(); } }));
 }
 var NotasFiscaisIcon = function (_a) {
     var _b = _a.size, size = _b === void 0 ? 16 : _b, style = _a.style;
