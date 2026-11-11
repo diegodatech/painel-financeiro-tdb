@@ -1,3 +1,9 @@
+V1.95 (app TDB v1.95 + servidor 1.95)
+- Atualizar o programa (zip): ao clicar em Instalar, o app agora reinicia sozinho em ~1,5 s, sem precisar clicar fora da janela.
+- Corrigido o aviso "Nova versao disponivel" que voltava sempre (o numero da versao dentro de desktop.html/mobile.html ficou atrasado na 1.93).
+- Inclui v1.94 (janela de envio de notas redesenhada) e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V1.94 (app TDB v1.94 + servidor 1.94)
 - Janela "Enviando... nao feche esta janela" (envio de notas por e-mail) redesenhada: fundo solido, barra de progresso, cada aluno com status (Enviada / Falhou / aguardando) e resumo no fim. No computador a janela ficou maior; no tablet e no celular o tamanho continua o mesmo.
 - Novo: botao "Tentar de novo" (por nota) e "Tentar as que falharam". Reabre a tela de confirmacao so com as notas que falharam; as que deram certo nao sao reenviadas.
