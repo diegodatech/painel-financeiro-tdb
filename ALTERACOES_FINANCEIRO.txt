@@ -1,3 +1,9 @@
+V1.99 (app TDB v1.99 + servidor 1.99)
+- Conferir extrato: nova coluna "Ainda nao pagaram" ao lado (3 colunas no computador). Lista, direto da lista de mensalidades do mes, quem ainda esta em aberto (inclui quem pagou so parte), com o valor que falta e o total no topo. Na aba Festas lista quem ainda nao pagou a festa.
+- Em telas menores a coluna desce para baixo das outras.
+- Inclui v1.98 (conferencia em duas colunas), v1.97, v1.96, v1.95 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V1.98 (app TDB v1.98 + servidor 1.98)
 - Conferir extrato: nova tela em duas colunas. A esquerda ficam so os que precisam de atencao (nao achei, valor diferente, nome parecido). A direita ficam todos os que ele achou, ja com o check marcado, mostrando a entrada do extrato que casou (banco, data, nome) e o motivo. Tem busca por aluno e botao Marcar/Desmarcar todos.
 - Desmarcar um da direita tira o check dele ao salvar. Os botoes de salvar ficam sempre visiveis no rodape. No celular as colunas ficam uma embaixo da outra.
