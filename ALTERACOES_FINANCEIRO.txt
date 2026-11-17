@@ -1,3 +1,24 @@
+V1.98 (app TDB v1.98 + servidor 1.98)
+- Conferir extrato: nova tela em duas colunas. A esquerda ficam so os que precisam de atencao (nao achei, valor diferente, nome parecido). A direita ficam todos os que ele achou, ja com o check marcado, mostrando a entrada do extrato que casou (banco, data, nome) e o motivo. Tem busca por aluno e botao Marcar/Desmarcar todos.
+- Desmarcar um da direita tira o check dele ao salvar. Os botoes de salvar ficam sempre visiveis no rodape. No celular as colunas ficam uma embaixo da outra.
+- Vale tambem para a conferencia da aba Festas.
+- Inclui v1.97 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
+V1.97 (app TDB v1.97 + servidor 1.97)
+- Conferir extrato: a entrada "CRED.LIQ.COBRANCA" do Sicoob (boleto pago) agora vale sempre como Cooperativa Santa Clara. Se o valor bater, da o check sozinho; se o valor mudar, aparece como "Valor diferente" para voce olhar.
+- Inclui v1.96 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
+V1.96 (app TDB v1.96 + servidor 1.96)
+- Conferir extrato: agora acha nomes que o banco escreve de outro jeito.
+  * Nome colado: "TRAMONTINAPREV" no extrato bate com "TRAMONTINA PREV" do cadastro.
+  * Empresa de uma palavra so (ex.: IRWIN): se o extrato traz o nome da empresa e o valor bate, conta como conferido.
+  * Sigla: "PMCB" no extrato vale como Municipio de Carlos Barbosa.
+  * Valor identico e unico, mas sem o nome no extrato (ex.: Santa Clara, "CRED.LIQ.COBRANCA" de R$ 260,00, que o banco nao mostra o nome): aparece como "Valor igual, nome diferente" para voce olhar e marcar. Nao da o check sozinho.
+- Inclui v1.95 (instalar atualizacao reinicia sozinho; aviso de nova versao corrigido) e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V1.95 (app TDB v1.95 + servidor 1.95)
 - Atualizar o programa (zip): ao clicar em Instalar, o app agora reinicia sozinho em ~1,5 s, sem precisar clicar fora da janela.
 - Corrigido o aviso "Nova versao disponivel" que voltava sempre (o numero da versao dentro de desktop.html/mobile.html ficou atrasado na 1.93).
