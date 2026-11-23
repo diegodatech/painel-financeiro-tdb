@@ -1,3 +1,8 @@
+V2.01 (app TDB v2.01 + servidor 2.01)
+- Janela "escolher nomes" da Nova festa: agora o fundo e totalmente opaco (nada de transparencia) e o titulo/explicacao do topo foram retirados. Fica so a busca, os botoes Marcar/Desmarcar todos e a lista dos nomes.
+- Inclui v2.00 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V2.00 (app TDB v2.00 + servidor 2.00)
 - Escolher quais nomes levar (em vez de levar todos de uma vez, o que enchia a lixeira):
   * Festas > Nova festa: ao clicar em "Criar festa", abre uma lista com caixinhas dos alunos da festa de origem. Voce marca so quem quer levar (tem busca, "Marcar todos" e "Desmarcar todos"). Quem fica desmarcado nao entra na festa.
