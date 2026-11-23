@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261110-tdb-v1-99";
+    window.__TDB_BUILD = "tdb-20261123-tdb-v2-00";
   </script>
-  <script src="./config.js?build=tdb-20261110-tdb-v1-99"></script>
+  <script src="./config.js?build=tdb-20261123-tdb-v2-00"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1573,9 +1573,9 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261110-tdb-v1-99"></script>
-  <script src="./sync.js?build=tdb-20261110-tdb-v1-99"></script>
-  <script src="./atualizar.js?build=tdb-20261110-tdb-v1-99"></script>
+  <script src="./diagnostico.js?build=tdb-20261123-tdb-v2-00"></script>
+  <script src="./sync.js?build=tdb-20261123-tdb-v2-00"></script>
+  <script src="./atualizar.js?build=tdb-20261123-tdb-v2-00"></script>
   <script>
   /* v1.91 — Atualização automática dos dados: antes o app só conferia o Drive ao abrir a página do zero. Agora confere
      também ao voltar para a janela/aba, ao reconectar e a cada 90 s com a tela visível. Usa só peças que já existem
@@ -1605,7 +1605,7 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
   })();
   </script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261110-tdb-v1-99-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261123-tdb-v2-00-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -11354,6 +11354,7 @@ function FestasTDB(_a) {
     var _abP = useState(false), abasProntas = _abP[0], setAbasProntas = _abP[1]; // V1.89: só conferir os dados depois de ler a lista de abas (a lista padrão apagava abas criadas por você)
     var _m = useState(false), criandoFesta = _m[0], setCriandoFesta = _m[1];
     var _n = useState({ nome: '', emoji: '🎉', copiarDe: 'familia' }), novaFesta = _n[0], setNovaFesta = _n[1];
+    var _ef = useState(null), escolhaFesta = _ef[0], setEscolhaFesta = _ef[1];
     var _o = useState(null), renomeandoAba = _o[0], setRenomeandoAba = _o[1];
     var _p = useState(''), nomeAbaEdit = _p[0], setNomeAbaEdit = _p[1];
     var _q = useState('🎉'), emojiAbaEdit = _q[0], setEmojiAbaEdit = _q[1];
@@ -11630,14 +11631,20 @@ function FestasTDB(_a) {
         setNovaFesta({ nome: '', emoji: '🎉', copiarDe: subTab || (abasFestas[0] ? abasFestas[0].key : 'familia') });
         setCriandoFesta(true);
     }
-    function cancelarNovaFesta() { setCriandoFesta(false); setNovaFesta({ nome: '', emoji: '🎉', copiarDe: subTab || 'familia' }); }
+    function cancelarNovaFesta() { setEscolhaFesta(null); setCriandoFesta(false); setNovaFesta({ nome: '', emoji: '🎉', copiarDe: subTab || 'familia' }); }
     function criarNovaFesta(e) {
         if (e) e.preventDefault();
         var nome = _festasNormalizarNome(novaFesta.nome);
         if (!nome) return;
-        var chave = 'festa-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
         var origemKey = novaFesta.copiarDe || subTab;
         var origem = dados[origemKey] || [];
+        if (origem.some(function (r) { return !!_festasNormalizarNome(r.nome); })) { setEscolhaFesta({ linhas: origem.filter(function (r) { return !!_festasNormalizarNome(r.nome); }).map(function (r) { return { id: r.id, nome: _festasNormalizarNome(r.nome), tipo: r.tipo }; }) }); return; }
+        concluirNovaFesta(nome, origem, null);
+    }
+    function concluirNovaFesta(nome, origemTodos, ids) {
+        var chave = 'festa-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+        var idSet = ids ? new Set(ids) : null;
+        var origem = idSet ? origemTodos.filter(function (r) { return idSet.has(r.id); }) : origemTodos;
         var novasLinhas = origem.map(function (r, i) { return {
             id: chave + '-c-' + (i + 1) + '-' + Math.random().toString(36).slice(2, 6),
             nome: _festasNormalizarNome(r.nome), tipo: r.tipo === 'PREFEITURA' ? 'PREFEITURA' : 'PARTICULAR',
@@ -11646,7 +11653,7 @@ function FestasTDB(_a) {
         var nextDados = __assign({}, dados); nextDados[chave] = novasLinhas; salvar(nextDados);
         var nextAbas = __spreadArray(__spreadArray([], abasFestas, true), [{ key: chave, label: nome, emoji: novaFesta.emoji || '🎉' }], false);
         salvarAbasFestas(nextAbas);
-        selecionarFesta(chave); setLinhaSelecionada(null); cancelarEdicaoRow(); cancelarNovaFesta();
+        selecionarFesta(chave); setLinhaSelecionada(null); cancelarEdicaoRow(); setEscolhaFesta(null); cancelarNovaFesta();
     }
     function totais(lista) { return _festasTotais(lista); }
     async function exportarAba() {
@@ -11810,7 +11817,8 @@ function FestasTDB(_a) {
                         React.createElement("div", { style: { display: 'grid', gap: 3 } }, React.createElement("label", { style: { fontSize: 10.5, fontWeight: 800, color: COLORS.inkSoft } }, "COPIAR LISTA DE ALUNOS DE"), React.createElement("select", { value: novaFesta.copiarDe, onChange: function (e) { return setNovaFesta(__assign(__assign({}, novaFesta), { copiarDe: e.target.value })); }, style: { border: '1px solid ' + COLORS.line, borderRadius: 8, padding: '8px 9px', background: COLORS.paperCard, color: COLORS.ink } }, abasFestas.map(function (a) { return React.createElement("option", { key: a.key, value: a.key }, (a.emoji || _festasEmojiPadrao(a.key)) + ' ' + a.label); }))),
                         React.createElement("button", { type: "submit", style: { height: 37, border: 'none', borderRadius: 8, padding: '0 12px', background: COLORS.inkButton, color: '#fff', fontWeight: 800, cursor: 'pointer' } }, "Criar festa"),
                         React.createElement("button", { type: "button", onClick: cancelarNovaFesta, style: { height: 37, border: '1px solid ' + COLORS.line, borderRadius: 8, padding: '0 11px', background: COLORS.paperCard, color: COLORS.ink, fontWeight: 700, cursor: 'pointer' } }, "Cancelar")
-                    )
+                    ),
+                    criandoFesta && escolhaFesta && React.createElement(FestaEscolherNomesTDB, { linhas: escolhaFesta.linhas, nomeFesta: _festasNormalizarNome(novaFesta.nome), onFechar: function () { setEscolhaFesta(null); }, onOk: function (ids) { concluirNovaFesta(_festasNormalizarNome(novaFesta.nome), dados[novaFesta.copiarDe || subTab] || [], ids); } })
                 )
             ),
             React.createElement("form", { onSubmit: adicionarRow, className: "festas-tdb-form busca-liquid-glass", style: { display: 'grid', gridTemplateColumns: 'minmax(180px,2fr) 140px 105px 120px 135px 140px 110px auto', gap: 8, alignItems: 'end', padding: 12, borderRadius: 14 } },
@@ -14681,15 +14689,18 @@ function salvarTudoAgora() {
         persist(prox);
         return true;
     }
-    function copiarNomesParaProximos(aplicar) {
+    function copiarNomesParaProximos(aplicar, sel) {
         var atual = __transLatestRef.current;
         if (!Array.isArray(atual))
             return null;
         var norm = TDBFinance.norm, destinos = ['NOVEMBRO', 'DEZEMBRO'];
         var vazio = function (v) { return v == null || String(v).trim() === ''; };
-        var origem = atual.filter(function (t) { return t && t.mes === 'OUTUBRO' && /^(Mensalidade|Convênio) - /.test(String(t.categoria || '')) && !vazio(t.pai); });
+        var origemTodos = atual.filter(function (t) { return t && t.mes === 'OUTUBRO' && /^(Mensalidade|Convênio) - /.test(String(t.categoria || '')) && !vazio(t.pai); });
+        var selSet = Array.isArray(sel) ? new Set(sel.map(String)) : null;
+        var origem = selSet ? origemTodos.filter(function (t) { return selSet.has(String(t.id)); }) : origemTodos;
         var idx = new Map();
         atual.forEach(function (t) { if (t && destinos.indexOf(t.mes) >= 0) idx.set(norm(t.categoria) + '|' + t.mes, t); });
+        function acaoRef(ref) { var k = norm(ref.categoria), n = 0; destinos.forEach(function (mes) { var ex = idx.get(k + '|' + mes); if (ex) { if (vazio(ex.pai) || tdbPaiNorm(ex.pai) !== tdbPaiNorm(ref.pai)) n++; } else if (String(ref.categoria).indexOf('Mensalidade - ') === 0) n++; }); return n; }
         var maxId = atual.reduce(function (m, t) { return Math.max(m, Number(t && t.id) || 0); }, 0);
         var patchPorId = {}, novos = [], preenchidos = 0, jaTinham = 0, corrigidos = 0;
         origem.forEach(function (ref) {
@@ -14711,6 +14722,7 @@ function salvarTudoAgora() {
             });
         });
         var previa = { preenchidos: preenchidos, corrigidos: corrigidos, criados: novos.length, jaTinham: jaTinham, alunos: origem.length };
+        if (!aplicar) previa.lista = origemTodos.map(function (r) { var conv = /^Conv/.test(String(r.categoria)); return { id: String(r.id), nome: String(r.categoria).replace(/^(Mensalidade|Convênio) - /, ''), sub: (conv ? 'Convênio · ' : '') + String(r.pai || ''), muda: acaoRef(r) }; }).sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); });
         if (!aplicar)
             return previa;
         if (bloquearEdicaoSeEncerrado_())
@@ -17407,9 +17419,49 @@ function ConferirExtratoTDB(p) {
             h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { style: { fontSize: 17, fontWeight: 800, color: COLORS.ink } }, festas ? 'Festas TDB' : 'Mensalidades'), h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Conferir extrato')),
             h('button', { type: 'button', onClick: p.onFechar, className: 'tdb-cfp-btn', style: btn }, '✕  Fechar')), corpo)), document.body);
 }
+function TDBListaEscolher(p) {
+    var _b = useState(''), busca = _b[0], setBusca = _b[1];
+    var sel = p.sel, itens = p.itens || [];
+    var nz = function (s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); };
+    var q = nz(busca).trim();
+    var vis = q ? itens.filter(function (i) { return nz(i.nome + ' ' + (i.sub || '')).indexOf(q) >= 0; }) : itens;
+    function mudar(ids, marcar) { var n = new Set(sel); ids.forEach(function (id) { if (marcar) n.add(id); else n.delete(id); }); p.onChange(n); }
+    var bt = { background: 'none', border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 9, cursor: 'pointer', padding: '6px 11px', fontSize: 12.5, fontWeight: 700, color: 'inherit', fontFamily: 'inherit' };
+    return React.createElement("div", { style: { display: 'grid', gap: 8, margin: '4px 0 6px' } },
+        React.createElement("div", { style: { display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' } },
+            React.createElement("input", { value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: "Buscar nome...", "aria-label": "Buscar nome", style: { flex: '1 1 140px', minWidth: 0, border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 9, padding: '7px 10px', background: 'transparent', color: 'inherit', fontSize: 13, fontFamily: 'inherit' } }),
+            React.createElement("button", { type: "button", style: bt, onClick: function () { mudar(vis.map(function (i) { return i.id; }), true); } }, q ? "Marcar os da busca" : "Marcar todos"),
+            React.createElement("button", { type: "button", style: bt, onClick: function () { mudar(vis.map(function (i) { return i.id; }), false); } }, q ? "Desmarcar os da busca" : "Desmarcar todos")),
+        React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, opacity: .8 } }, sel.size, " de ", itens.length, (itens.length === 1 ? " marcado" : " marcados")),
+        React.createElement("div", { style: { maxHeight: 280, overflow: 'auto', border: '1px solid var(--aurora-edge, rgba(120,140,170,.3))', borderRadius: 12, padding: 4 } },
+            vis.length ? vis.map(function (i) {
+                var on = sel.has(i.id);
+                return React.createElement("label", { key: i.id, style: { display: 'flex', alignItems: 'center', gap: 10, padding: '7px 9px', borderRadius: 8, cursor: 'pointer', background: on ? 'rgba(43,183,164,.14)' : 'transparent', opacity: i.neutro && !on ? .55 : 1 } },
+                    React.createElement("input", { type: "checkbox", checked: on, onChange: function () { mudar([i.id], !on); }, style: { width: 17, height: 17, accentColor: '#1d9a8a', flex: 'none' } }),
+                    React.createElement("span", { style: { minWidth: 0, flex: 1, overflowWrap: 'anywhere' } }, React.createElement("span", { style: { fontSize: 13.5, fontWeight: 700 } }, i.nome), i.sub ? React.createElement("span", { style: { display: 'block', fontSize: 11.5, opacity: .7 } }, i.sub) : null),
+                    i.badge ? React.createElement("span", { style: { fontSize: 11, fontWeight: 700, opacity: .75, whiteSpace: 'nowrap' } }, i.badge) : null);
+            }) : React.createElement("div", { style: { padding: 12, fontSize: 13, opacity: .7 } }, "Nenhum nome encontrado.")));
+}
+function FestaEscolherNomesTDB(p) {
+    var itens = p.linhas.map(function (r) { return { id: r.id, nome: r.nome, sub: r.tipo === 'PREFEITURA' ? 'Prefeitura' : 'Particular' }; });
+    var _s = useState(function () { return new Set(itens.map(function (i) { return i.id; })); }), sel = _s[0], setSel = _s[1];
+    useEffect(function () { var f = function (e) { if (e.key === 'Escape') p.onFechar(); }; document.addEventListener('keydown', f); return function () { document.removeEventListener('keydown', f); }; }, []);
+    var base = { background: 'none', border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 12, cursor: 'pointer', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'inherit', fontFamily: 'inherit' };
+    return ReactDOM.createPortal(React.createElement("div", { role: "dialog", "aria-label": "Escolher nomes da nova festa", style: { position: 'fixed', inset: 0, zIndex: 2147483100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(15,20,30,.5)', fontFamily: 'Inter, -apple-system, sans-serif' }, onClick: function (e) { if (e.target === e.currentTarget) p.onFechar(); } },
+        React.createElement("div", { style: { boxSizing: 'border-box', width: '100%', maxWidth: 560, maxHeight: '92vh', overflow: 'auto', padding: '22px 22px 18px', borderRadius: 22, background: COLORS.paperCard, color: COLORS.ink, border: '1px solid ' + COLORS.line, boxShadow: '0 24px 60px rgba(0,0,0,.32)' }, onClick: function (e) { e.stopPropagation(); } },
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, marginBottom: 4 } }, "Quem vai para “" + p.nomeFesta + "”?"),
+            React.createElement("div", { style: { fontSize: 13, opacity: .8, marginBottom: 8, lineHeight: 1.45 } }, "Marque só os nomes que você quer levar da lista de origem. Os desmarcados não entram na festa, então não precisa apagar depois."),
+            React.createElement(TDBListaEscolher, { itens: itens, sel: sel, onChange: setSel }),
+            React.createElement("div", { style: { display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 14, flexWrap: 'wrap' } },
+                React.createElement("button", { type: "button", style: base, onClick: p.onFechar }, "Cancelar"),
+                React.createElement("button", { type: "button", style: Object.assign({}, base, { background: 'linear-gradient(135deg,#2bb7a4,#1d9a8a)', color: '#fff', border: 'none' }), onClick: function () { p.onOk(Array.from(sel)); } }, sel.size ? "Criar festa com " + sel.size + (sel.size === 1 ? " nome" : " nomes") : "Criar festa sem nomes")))), document.body);
+}
 function CopiarNomesTDB(p) {
     var _s = useState(null), feito = _s[0], setFeito = _s[1];
-    var previa = React.useMemo(function () { return p.copiar(false); }, []);
+    var base0 = React.useMemo(function () { return p.copiar(false); }, []);
+    var _sl = useState(function () { return new Set(((base0 && base0.lista) || []).filter(function (i) { return i.muda > 0; }).map(function (i) { return i.id; })); }), selNomes = _sl[0], setSelNomes = _sl[1];
+    var previa = React.useMemo(function () { return base0 ? p.copiar(false, Array.from(selNomes)) : null; }, [selNomes]);
+    var itensNomes = ((base0 && base0.lista) || []).map(function (i) { return { id: i.id, nome: i.nome, sub: i.sub, neutro: i.muda === 0, badge: i.muda === 0 ? 'já igual' : '' }; });
     useEffect(function () { var f = function (e) { if (e.key === 'Escape') p.onFechar(); }; document.addEventListener('keydown', f); return function () { document.removeEventListener('keydown', f); }; }, []);
     var n = previa ? previa.preenchidos + previa.criados + previa.corrigidos : 0;
     var base = { background: 'none', border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 12, cursor: 'pointer', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'inherit' };
@@ -17417,7 +17469,8 @@ function CopiarNomesTDB(p) {
         React.createElement("style", null, '.tdb-cfp-grid{display:grid;grid-template-columns:1fr 1.6fr;gap:24px}.tdb-cfp-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.tdb-cfp-dois{display:grid;grid-template-columns:1.9fr 1fr;gap:20px}.tdb-cfp-lista{display:none}.tdb-cfp-duas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}@media (max-width:1180px){.tdb-cfp-duas{grid-template-columns:repeat(2,minmax(0,1fr))}.tdb-cfp-duas>:nth-child(3){grid-column:1/-1}}@media (max-width:860px){.tdb-cfp-duas{grid-template-columns:1fr}}.tdb-cfp-bar{display:flex;align-items:center;gap:14px;box-sizing:border-box}html:not(.tdb-aurora-pdf) .tdb-cfp{padding:28px}.tdb-cfp .tdb-cfp-corpo{position:relative;width:100%;max-width:1400px;max-height:100%;overflow:auto;margin:0;padding:18px 22px 22px;border-radius:32px;background:radial-gradient(520px 160px at 8% -4%,rgba(255,255,255,.7),rgba(255,255,255,0) 62%),radial-gradient(420px 200px at 100% 100%,rgba(128,214,211,.34),rgba(128,214,211,0) 70%),linear-gradient(160deg,color-mix(in srgb,var(--c-paperCard,#fff) 95%,transparent),color-mix(in srgb,var(--c-paperCard,#fff) 91%,transparent) 50%,color-mix(in srgb,var(--c-paperCard,#fff) 94%,transparent));border:1px solid var(--aurora-edge,rgba(255,255,255,.95));box-shadow:0 36px 90px rgba(20,40,80,.38),0 10px 26px rgba(20,40,80,.18),inset 0 1px 0 rgba(255,255,255,.9);backdrop-filter:blur(40px) saturate(1.3);-webkit-backdrop-filter:blur(40px) saturate(1.3)}.tdb-cfp .tdb-cfp-bar{margin:0 0 12px;padding:6px 4px;background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important}.tdb-cfp .tdb-cfp-corpo>.tdb-cfp-g{background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:4px 4px 0!important}.tdb-cfp .tdb-cfp-sum{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 22px rgba(30,40,60,.07);border-radius:22px}.tdb-cfp .tdb-cfp-pill,.tdb-cfp .tdb-cfp-btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 6px 16px rgba(30,40,60,.09)}@media (max-width:760px){.tdb-cfp-grid,.tdb-cfp-dois{grid-template-columns:1fr}.tdb-cfp-cards{grid-template-columns:1fr 1fr}.tdb-cfp-tabela{display:none}.tdb-cfp-lista{display:block}.tdb-cfp{padding:10px!important}.tdb-cfp .tdb-cfp-corpo{padding:12px 12px 16px!important;border-radius:28px!important}}html:not(.tdb-aurora-pdf) .tdb-cfp .tdb-cfp-g{background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:24px;box-shadow:var(--aurora-shadow,0 8px 28px rgba(30,40,60,.075));backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08));-webkit-backdrop-filter:blur(var(--aurora-blur,18px)) saturate(var(--aurora-sat,1.08))}.tdb-cfp .tdb-cfp-btn,.tdb-cfp .tdb-cfp-pill{font-family:inherit;color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:999px;background:var(--aurora-layers,linear-gradient(transparent,transparent)),var(--c-paperCard,#fff);box-shadow:var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07));backdrop-filter:blur(var(--aurora-blur,12px));-webkit-backdrop-filter:blur(var(--aurora-blur,12px));transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}.tdb-cfp .tdb-cfp-btn:hover,.tdb-cfp .tdb-cfp-pill:hover{transform:translateY(-1px)}.tdb-cfp .tdb-cfp-pill.on{border-color:#18B9AD;color:#106E6B;box-shadow:0 0 0 3px rgba(24,185,173,.18),var(--aurora-shadow,0 4px 14px rgba(30,40,60,.07))}.tdb-cfp .tdb-cfp-main{border:1px solid rgba(255,255,255,.5);color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 55%),#18B9AD;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 6px 16px rgba(24,185,173,.32)}.tdb-cfp .tdb-cfp-main:disabled{box-shadow:none}.tdb-cfp .tdb-cfp-inp{color:var(--c-ink,#111);border:1px solid var(--aurora-edge,var(--c-line,#e3e8ee));border-radius:16px;background:var(--c-paperCard,#fff);box-shadow:inset 0 1px 2px rgba(30,40,60,.05)}.tdb-cfp .tdb-cfp-sum{border-radius:20px;border:1px solid color-mix(in srgb,var(--c) 38%,transparent);background:var(--aurora-layers,linear-gradient(transparent,transparent)),color-mix(in srgb,var(--c) 11%,var(--c-paperCard,#fff));box-shadow:var(--aurora-shadow,0 6px 20px rgba(30,40,60,.06));backdrop-filter:blur(var(--aurora-blur,14px));-webkit-backdrop-filter:blur(var(--aurora-blur,14px))}'),
         React.createElement("div", { className: "tdb-cfp-corpo", style: { maxWidth: 520, height: 'auto', padding: '26px 26px 22px' }, onClick: function (e) { e.stopPropagation(); } }, React.createElement("div", { style: { padding: '4px 10px 2px' } },
             React.createElement("div", { style: { fontSize: 19, fontWeight: 800, marginBottom: 6 } }, "Copiar nomes para Novembro e Dezembro"),
-            React.createElement("div", { style: { fontSize: 13.5, opacity: .8, marginBottom: 16, lineHeight: 1.45 } }, "Leva o que você cadastrou em Outubro (Pai/Responsável, Tirar nota e Convênio) para Novembro e Dezembro. Preenche o que estiver vazio e corrige nomes de Pai/Responsável diferentes dos de Outubro. Valores, status e datas não mudam."),
+            React.createElement("div", { style: { fontSize: 13.5, opacity: .8, marginBottom: 16, lineHeight: 1.45 } }, "Leva o que você cadastrou em Outubro (Pai/Responsável, Tirar nota e Convênio) para Novembro e Dezembro. Escolha abaixo quais nomes levar. Preenche o que estiver vazio e corrige nomes de Pai/Responsável diferentes dos de Outubro. Valores, status e datas não mudam."),
+            !feito && base0 && itensNomes.length > 0 && React.createElement(TDBListaEscolher, { itens: itensNomes, sel: selNomes, onChange: setSelNomes }),
             !previa ? React.createElement("div", null, "Os dados ainda estão carregando.") :
             feito ? React.createElement("div", { style: { fontWeight: 700, fontSize: 15, margin: '6px 0 4px' } }, "Pronto: ", feito.preenchidos, (feito.preenchidos === 1 ? " cadastro preenchido" : " cadastros preenchidos"), feito.corrigidos ? ", " + feito.corrigidos + (feito.corrigidos === 1 ? " nome corrigido" : " nomes corrigidos") : "", feito.criados ? " e " + feito.criados + " mensalidades criadas (pendentes)" : "", ".") :
             React.createElement("div", { style: { fontSize: 14.5, lineHeight: 1.6 } },
@@ -17427,7 +17480,7 @@ function CopiarNomesTDB(p) {
                 React.createElement("div", null, "\u2022 ", previa.corrigidos, (previa.corrigidos === 1 ? " nome diferente de Outubro será corrigido" : " nomes diferentes de Outubro serão corrigidos"), " em Nov/Dez"),
                 React.createElement("div", { style: { opacity: .7 } }, "\u2022 ", previa.jaTinham, " já iguais ficam como estão")),
             React.createElement("div", { style: { display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20, flexWrap: 'wrap' } },
-                !feito && previa && n > 0 && React.createElement("button", { type: "button", className: "tdb-cfp-btn tdb-cfp-main", style: Object.assign({}, base, { background: 'linear-gradient(135deg,#2bb7a4,#1d9a8a)', color: '#fff', border: 'none' }), onClick: function () { var r = p.copiar(true); if (r) setFeito(r); } }, "Copiar agora"),
+                !feito && previa && n > 0 && React.createElement("button", { type: "button", className: "tdb-cfp-btn tdb-cfp-main", style: Object.assign({}, base, { background: 'linear-gradient(135deg,#2bb7a4,#1d9a8a)', color: '#fff', border: 'none' }), onClick: function () { var r = p.copiar(true, Array.from(selNomes)); if (r) setFeito(r); } }, "Copiar " + selNomes.size + (selNomes.size === 1 ? " nome" : " nomes")),
                 React.createElement("button", { type: "button", className: "tdb-cfp-btn", style: base, onClick: p.onFechar }, feito ? "Fechar" : "Cancelar"))))), document.body);
 }
 function Mensalidades(_a) {
@@ -17924,7 +17977,7 @@ function Mensalidades(_a) {
         } }, React.createElement(Plus, { size: 15 }), " Adicionar"))), formErro && React.createElement("div", { style: { color: COLORS.red, fontSize: 13, marginTop: 10 } }, formErro)), React.createElement(ContaProporcionalBolhaTDB, { transacoes: transacoes, tabelaValores: tabelaValores, diasLetivos: diasLetivos, mes: novoMes, onUsar: function (valor, base) { if (novoStatus === 'Parcial' && !novoValorCheio) setNovoValorCheio(formatBRLNumber(base)); setNovoValor(formatBRLNumber(valor)); } }), React.createElement("div", { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' } }, React.createElement("div", { style: { position: 'relative', flex: '1 1 220px' } }, React.createElement(Search, { size: 15, color: COLORS.inkSoft, style: { position: 'absolute', left: 12, top: 11 } }), React.createElement("input", { value: filtroTexto, onChange: function (e) { return setFiltroTexto(e.target.value); }, placeholder: "Buscar por aluno ou pai...", style: __assign(__assign({}, inputStyle), { width: '100%', paddingLeft: 34, boxSizing: 'border-box' }) })), React.createElement("div", { className: "tdb-mens-data-filtro", style: { position: 'relative', flex: '0 1 190px' } }, React.createElement("input", { type: "date", value: filtroData, onChange: function (e) { return setFiltroData(e.target.value); }, onClick: function (e) { try { e.target.showPicker(); } catch (err) { } }, "aria-label": "Filtrar por data do pagamento", title: "Mostra só quem pagou na data escolhida", style: __assign(__assign({}, inputStyle), { width: '100%', boxSizing: 'border-box', cursor: 'pointer', paddingRight: filtroData ? 62 : undefined, boxShadow: filtroData ? 'inset 0 0 0 2px ' + COLORS.inkButton : undefined }) }), filtroData ? React.createElement("button", { type: "button", onClick: function () { return setFiltroData(''); }, "aria-label": "Limpar data", title: "Limpar data", style: { position: 'absolute', right: 34, top: '50%', transform: 'translateY(-50%)', width: 26, height: 26, border: 'none', borderRadius: 9, background: 'transparent', color: COLORS.inkSoft, cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0 } }, React.createElement(X, { size: 13 })) : null), React.createElement("select", { value: filtroMes, onChange: function (e) { return setFiltroMes(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os meses"), MESES.map(function (m) { return React.createElement("option", { key: m, value: m }, MESES_ABREV[m]); })), React.createElement("select", { value: filtroStatus, onChange: function (e) { return setFiltroStatus(e.target.value); }, style: inputStyle }, React.createElement("option", { value: "TODOS" }, "Todos os status"), React.createElement("option", { value: "Pago" }, "S\u00F3 pagos"), React.createElement("option", { value: "Pendente" }, "Só pendentes"), React.createElement("option", { value: "Parcial" }, "Só parciais")), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por banco", valor: filtroBanco, onChange: setFiltroBanco, opcoes: bancosDisponiveis, rotuloTodos: "Todos os bancos", rotuloSem: "Sem banco", valSem: "SEM_BANCO", estilo: inputStyle, colunaCheia: true }), React.createElement(FiltroMultiTDB, { ariaLabel: "Filtrar por conv\u00EAnio", valor: filtroConvenio, onChange: setFiltroConvenio, opcoes: conveniosDisponiveis, rotuloTodos: "Todos os conv\u00EAnios", rotuloSem: "Sem conv\u00EAnio", valSem: "SEM_CONVENIO", estilo: inputStyle, colunaCheia: true }), React.createElement("select", { value: filtroNota, onChange: function (e) { return setFiltroNota(e.target.value); }, style: inputStyle, title: "Dica: 'Pagou e falta nota' \u00E9 \u00F3timo pra ir emitindo as notas de quem j\u00E1 pagou, uma de cada vez" }, React.createElement("option", { value: "TODOS" }, "Todas as notas"), React.createElement("option", { value: "PAGO_NOTA_PENDENTE" }, "\u2B50 Pagou e falta nota"), React.createElement("option", { value: "Enviada" }, "Nota enviada"), React.createElement("option", { value: "Pendente" }, "Nota pendente"), React.createElement("option", { value: "SEM_NOTA" }, "Sem nota (empresas)")), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setCopiarAberto(true); }, title: "Levar o cadastro de Pai/Responsável de Outubro para Novembro e Dezembro", style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
-        } }, "Copiar nomes p/ Nov e Dez"), copiarAberto && React.createElement(CopiarNomesTDB, { copiar: function (a) { return copiarNomes ? copiarNomes(a) : null; }, onFechar: function () { setCopiarAberto(false); } }), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirAberto(true); }, title: "Conferir o extrato do banco com as mensalidades pagas", style: {
+        } }, "Copiar nomes p/ Nov e Dez"), copiarAberto && React.createElement(CopiarNomesTDB, { copiar: function (a, ids) { return copiarNomes ? copiarNomes(a, ids) : null; }, onFechar: function () { setCopiarAberto(false); } }), React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: function () { setConferirAberto(true); }, title: "Conferir o extrato do banco com as mensalidades pagas", style: {
             background: 'none', border: "1px solid ".concat(COLORS.line), borderRadius: 7, cursor: 'pointer', padding: '9px 12px',
             display: 'flex', alignItems: 'center', gap: 5, color: COLORS.inkSoft, fontSize: 13, fontWeight: 600, height: 39, boxSizing: 'border-box',
         } }, React.createElement(Check, { size: 14 }), "Conferir extrato"), cfSelos.length > 0 && React.createElement("button", { type: "button", className: "tdb-cf-btn", onClick: limparCertinhos, title: "Tirar todos os certinhos para conferir de novo com outro extrato", style: {

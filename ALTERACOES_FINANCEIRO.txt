@@ -1,3 +1,10 @@
+V2.00 (app TDB v2.00 + servidor 2.00)
+- Escolher quais nomes levar (em vez de levar todos de uma vez, o que enchia a lixeira):
+  * Festas > Nova festa: ao clicar em "Criar festa", abre uma lista com caixinhas dos alunos da festa de origem. Voce marca so quem quer levar (tem busca, "Marcar todos" e "Desmarcar todos"). Quem fica desmarcado nao entra na festa.
+  * Mensalidades e Lancamentos > "Copiar nomes p/ Nov e Dez": agora mostra a lista de cadastros de Outubro com caixinhas. Ja vem marcado so o que realmente muda; quem ja esta igual aparece apagado e desmarcado. Os numeros do resumo acompanham o que voce marca.
+- Inclui v1.99 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V1.99 (app TDB v1.99 + servidor 1.99)
 - Conferir extrato: nova coluna "Ainda nao pagaram" ao lado (3 colunas no computador). Lista, direto da lista de mensalidades do mes, quem ainda esta em aberto (inclui quem pagou so parte), com o valor que falta e o total no topo. Na aba Festas lista quem ainda nao pagou a festa.
 - Em telas menores a coluna desce para baixo das outras.
