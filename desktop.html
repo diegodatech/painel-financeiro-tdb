@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261123-tdb-v2-01";
+    window.__TDB_BUILD = "tdb-20261123-tdb-v2-02";
   </script>
-  <script src="./config.js?build=tdb-20261123-tdb-v2-01"></script>
+  <script src="./config.js?build=tdb-20261123-tdb-v2-02"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1573,9 +1573,9 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261123-tdb-v2-01"></script>
-  <script src="./sync.js?build=tdb-20261123-tdb-v2-01"></script>
-  <script src="./atualizar.js?build=tdb-20261123-tdb-v2-01"></script>
+  <script src="./diagnostico.js?build=tdb-20261123-tdb-v2-02"></script>
+  <script src="./sync.js?build=tdb-20261123-tdb-v2-02"></script>
+  <script src="./atualizar.js?build=tdb-20261123-tdb-v2-02"></script>
   <script>
   /* v1.91 — Atualização automática dos dados: antes o app só conferia o Drive ao abrir a página do zero. Agora confere
      também ao voltar para a janela/aba, ao reconectar e a cada 90 s com a tela visível. Usa só peças que já existem
@@ -1605,7 +1605,7 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
   })();
   </script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261123-tdb-v2-01-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261123-tdb-v2-02-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -13815,7 +13815,8 @@ function salvarTudoAgora() {
     var _22 = useState(''), filtroTexto = _22[0], setFiltroTexto = _22[1];
     var _23 = useState('TODOS'), filtroStatusLancamento = _23[0], setFiltroStatusLancamento = _23[1];
     var _24 = useState({}), mesesAbertos = _24[0], setMesesAbertos = _24[1];
-    var _25 = useState('SETEMBRO'), novoMes = _25[0], setNovoMes = _25[1];
+    var _25 = useState(function () { try { var m = localStorage.getItem('painel_lancamentos_novoMes'); if (m && MESES.indexOf(m) >= 0) return m; } catch (e) { } return 'SETEMBRO'; }), novoMes = _25[0], setNovoMesRaw_ = _25[1];
+    var setNovoMes = function (m) { setNovoMesRaw_(m); try { localStorage.setItem('painel_lancamentos_novoMes', m); } catch (e) { } };
     var _26 = useState(''), novaCategoria = _26[0], setNovaCategoria = _26[1];
     var _27 = useState('Variável'), novoTipo = _27[0], setNovoTipo = _27[1];
     var _28 = useState(''), novoValor = _28[0], setNovoValor = _28[1];
@@ -17419,6 +17420,25 @@ function ConferirExtratoTDB(p) {
             h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { style: { fontSize: 17, fontWeight: 800, color: COLORS.ink } }, festas ? 'Festas TDB' : 'Mensalidades'), h('div', { style: { fontSize: 12.5, color: COLORS.inkSoft } }, 'Conferir extrato')),
             h('button', { type: 'button', onClick: p.onFechar, className: 'tdb-cfp-btn', style: btn }, '✕  Fechar')), corpo)), document.body);
 }
+var TDB_ESC_CSS = '.tdb-esc-ov{background:rgba(12,22,45,.70)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}'
+ + '.tdb-esc-card{background:radial-gradient(440px 150px at 8% -6%,rgba(255,255,255,.95),rgba(255,255,255,0) 62%),radial-gradient(380px 220px at 100% 100%,rgba(110,165,255,.34),rgba(110,165,255,0) 70%),linear-gradient(160deg,#fbfdff,#edf3ff 55%,#f6f9ff)!important;color:#0f1b33!important;border:2px solid rgba(23,103,207,.60)!important;border-radius:28px!important;opacity:1!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 34px 90px rgba(15,35,90,.55),0 8px 24px rgba(15,35,90,.25),inset 0 2px 2px #fff,inset 0 -4px 12px rgba(110,165,255,.30)!important}'
+ + '.tdb-esc-card *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}'
+ + '.tdb-esc-in{border:1.5px solid rgba(23,103,207,.45)!important;background:#fff!important;color:#0f1b33!important;border-radius:14px!important;box-shadow:inset 0 1px 3px rgba(23,103,207,.12)}'
+ + '.tdb-esc-in:focus{outline:none;border-color:#1767cf!important;box-shadow:0 0 0 3px rgba(23,103,207,.22)}'
+ + '.tdb-esc-btn{border:1.5px solid rgba(23,103,207,.58)!important;background:linear-gradient(180deg,#fff,#e8f0fd)!important;color:#124a99!important;border-radius:14px!important;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:inset 0 1px 0 #fff,0 4px 10px rgba(23,103,207,.16)}'
+ + '.tdb-esc-btn:hover{background:linear-gradient(180deg,#fff,#dbe8fc)!important}'
+ + '.tdb-esc-ok{border:1px solid rgba(255,255,255,.55)!important;background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,0) 55%),var(--c-inkButton,#1767cf)!important;color:#fff!important;border-radius:14px!important;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 20px rgba(23,103,207,.40)}'
+ + '.tdb-esc-box{border:1.5px solid rgba(23,103,207,.50);background:#fff;border-radius:18px;padding:4px;box-shadow:inset 0 2px 6px rgba(23,103,207,.10)}'
+ + '.tdb-esc-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:11px;cursor:pointer;border-bottom:1px solid rgba(23,103,207,.13)}'
+ + '.tdb-esc-row.on{background:rgba(23,103,207,.11);box-shadow:inset 4px 0 0 #1767cf}'
+ + '.tdb-esc-row input{width:18px;height:18px;accent-color:#1767cf;flex:none}'
+ + '.tdb-esc-cnt{font-size:12.5px;font-weight:800;color:#1767cf}'
+ + '.dark-mode .tdb-esc-card{background:radial-gradient(440px 150px at 8% -6%,rgba(110,165,255,.20),rgba(110,165,255,0) 62%),linear-gradient(160deg,#272d3a,#1b202b)!important;color:#f5f5f7!important;border-color:rgba(10,132,255,.75)!important;box-shadow:0 34px 90px rgba(0,0,0,.7),inset 0 1px 1px rgba(255,255,255,.14)!important}'
+ + '.dark-mode .tdb-esc-in{background:#141923!important;color:#f5f5f7!important;border-color:rgba(10,132,255,.6)!important}'
+ + '.dark-mode .tdb-esc-btn{background:linear-gradient(180deg,#323b4e,#262d3d)!important;color:#cfe3ff!important;border-color:rgba(10,132,255,.7)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}'
+ + '.dark-mode .tdb-esc-box{background:#141923;border-color:rgba(10,132,255,.6)}'
+ + '.dark-mode .tdb-esc-row{border-bottom-color:rgba(255,255,255,.08)}.dark-mode .tdb-esc-row.on{background:rgba(10,132,255,.22);box-shadow:inset 4px 0 0 #0A84FF}.dark-mode .tdb-esc-row input{accent-color:#0A84FF}'
+ + '.dark-mode .tdb-esc-cnt{color:#7db8ff}';
 function TDBListaEscolher(p) {
     var _b = useState(''), busca = _b[0], setBusca = _b[1];
     var sel = p.sel, itens = p.itens || [];
@@ -17426,19 +17446,20 @@ function TDBListaEscolher(p) {
     var q = nz(busca).trim();
     var vis = q ? itens.filter(function (i) { return nz(i.nome + ' ' + (i.sub || '')).indexOf(q) >= 0; }) : itens;
     function mudar(ids, marcar) { var n = new Set(sel); ids.forEach(function (id) { if (marcar) n.add(id); else n.delete(id); }); p.onChange(n); }
-    var bt = { background: 'none', border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 9, cursor: 'pointer', padding: '6px 11px', fontSize: 12.5, fontWeight: 700, color: 'inherit', fontFamily: 'inherit' };
-    return React.createElement("div", { style: { display: 'grid', gap: 8, margin: '4px 0 6px' } },
-        React.createElement("div", { style: { display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' } },
-            React.createElement("input", { value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: "Buscar nome...", "aria-label": "Buscar nome", style: { flex: '1 1 140px', minWidth: 0, border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 9, padding: '7px 10px', background: 'transparent', color: 'inherit', fontSize: 13, fontFamily: 'inherit' } }),
-            React.createElement("button", { type: "button", style: bt, onClick: function () { mudar(vis.map(function (i) { return i.id; }), true); } }, q ? "Marcar os da busca" : "Marcar todos"),
-            React.createElement("button", { type: "button", style: bt, onClick: function () { mudar(vis.map(function (i) { return i.id; }), false); } }, q ? "Desmarcar os da busca" : "Desmarcar todos")),
-        React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, opacity: .8 } }, sel.size, " de ", itens.length, (itens.length === 1 ? " marcado" : " marcados")),
-        React.createElement("div", { style: { maxHeight: 280, overflow: 'auto', border: '1px solid var(--aurora-edge, rgba(120,140,170,.3))', borderRadius: 12, padding: 4 } },
+    var bt = { padding: '8px 13px', fontSize: 12.5 };
+    return React.createElement("div", { style: { display: 'grid', gap: 10, margin: '2px 0 6px', color: 'inherit' } },
+        React.createElement("style", null, TDB_ESC_CSS),
+        React.createElement("div", { style: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' } },
+            React.createElement("input", { className: "tdb-esc-in", value: busca, onChange: function (e) { setBusca(e.target.value); }, placeholder: "Buscar nome...", "aria-label": "Buscar nome", style: { flex: '1 1 150px', minWidth: 0, padding: '9px 12px', fontSize: 13.5, fontFamily: 'inherit' } }),
+            React.createElement("button", { type: "button", className: "tdb-esc-btn", style: bt, onClick: function () { mudar(vis.map(function (i) { return i.id; }), true); } }, q ? "Marcar os da busca" : "Marcar todos"),
+            React.createElement("button", { type: "button", className: "tdb-esc-btn", style: bt, onClick: function () { mudar(vis.map(function (i) { return i.id; }), false); } }, q ? "Desmarcar os da busca" : "Desmarcar todos")),
+        React.createElement("div", { className: "tdb-esc-cnt" }, sel.size, " de ", itens.length, (itens.length === 1 ? " marcado" : " marcados")),
+        React.createElement("div", { className: "tdb-esc-box", style: { maxHeight: 300, overflow: 'auto' } },
             vis.length ? vis.map(function (i) {
                 var on = sel.has(i.id);
-                return React.createElement("label", { key: i.id, style: { display: 'flex', alignItems: 'center', gap: 10, padding: '7px 9px', borderRadius: 8, cursor: 'pointer', background: on ? 'rgba(29,154,138,.16)' : 'transparent', opacity: i.neutro && !on ? .55 : 1 } },
-                    React.createElement("input", { type: "checkbox", checked: on, onChange: function () { mudar([i.id], !on); }, style: { width: 17, height: 17, accentColor: '#1d9a8a', flex: 'none' } }),
-                    React.createElement("span", { style: { minWidth: 0, flex: 1, overflowWrap: 'anywhere' } }, React.createElement("span", { style: { fontSize: 13.5, fontWeight: 700 } }, i.nome), i.sub ? React.createElement("span", { style: { display: 'block', fontSize: 11.5, opacity: .7 } }, i.sub) : null),
+                return React.createElement("label", { key: i.id, className: "tdb-esc-row" + (on ? " on" : ""), style: { opacity: i.neutro && !on ? .6 : 1 } },
+                    React.createElement("input", { type: "checkbox", checked: on, onChange: function () { mudar([i.id], !on); } }),
+                    React.createElement("span", { style: { minWidth: 0, flex: 1, overflowWrap: 'anywhere' } }, React.createElement("span", { style: { fontSize: 14, fontWeight: 800 } }, i.nome), i.sub ? React.createElement("span", { style: { display: 'block', fontSize: 11.5, opacity: .72 } }, i.sub) : null),
                     i.badge ? React.createElement("span", { style: { fontSize: 11, fontWeight: 700, opacity: .75, whiteSpace: 'nowrap' } }, i.badge) : null);
             }) : React.createElement("div", { style: { padding: 12, fontSize: 13, opacity: .7 } }, "Nenhum nome encontrado.")));
 }
@@ -17446,14 +17467,13 @@ function FestaEscolherNomesTDB(p) {
     var itens = p.linhas.map(function (r) { return { id: r.id, nome: r.nome, sub: r.tipo === 'PREFEITURA' ? 'Prefeitura' : 'Particular' }; });
     var _s = useState(function () { return new Set(itens.map(function (i) { return i.id; })); }), sel = _s[0], setSel = _s[1];
     useEffect(function () { var f = function (e) { if (e.key === 'Escape') p.onFechar(); }; document.addEventListener('keydown', f); return function () { document.removeEventListener('keydown', f); }; }, []);
-    var base = { background: 'none', border: '1px solid var(--aurora-edge, rgba(120,140,170,.35))', borderRadius: 12, cursor: 'pointer', padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'inherit', fontFamily: 'inherit' };
-    return ReactDOM.createPortal(React.createElement("div", { role: "dialog", className: "tdb-esc-ov", "aria-label": "Escolher nomes da nova festa", style: { position: 'fixed', inset: 0, zIndex: 2147483100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(15,20,30,.5)', fontFamily: 'Inter, -apple-system, sans-serif' }, onClick: function (e) { if (e.target === e.currentTarget) p.onFechar(); } },
-        React.createElement("div", { className: "tdb-esc-card", style: { boxSizing: 'border-box', width: '100%', maxWidth: 560, maxHeight: '92vh', overflow: 'auto', padding: '20px 20px 18px', borderRadius: 22, boxShadow: '0 24px 60px rgba(0,0,0,.45)' }, onClick: function (e) { e.stopPropagation(); } },
-            React.createElement("style", null, '.tdb-esc-card{background:#fff!important;color:#18202c!important;border:1px solid #cfd6e0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;opacity:1!important}.tdb-esc-card *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}.tdb-esc-card input[type=text],.tdb-esc-card input:not([type]){background:#f3f6fa!important;color:#18202c!important;border:1px solid #b9c3d1!important}.tdb-esc-card button{background:#eef2f7;color:#18202c;border:1px solid #b9c3d1}.tdb-esc-card button.tdb-esc-ok{background:#1d9a8a!important;color:#fff!important;border:none!important}.tdb-esc-ov{background:rgba(10,15,25,.72)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}.dark-mode .tdb-esc-card,html[data-theme=dark] .tdb-esc-card{background:#1b2330!important;color:#eef2f7!important;border-color:#3a4658!important}.dark-mode .tdb-esc-card input,html[data-theme=dark] .tdb-esc-card input[type=text]{background:#111823!important;color:#eef2f7!important;border-color:#47546a!important}.dark-mode .tdb-esc-card button,html[data-theme=dark] .tdb-esc-card button{background:#273246;color:#eef2f7;border-color:#47546a}'),
+    var bt = { padding: '11px 18px', fontSize: 14 };
+    return ReactDOM.createPortal(React.createElement("div", { role: "dialog", className: "tdb-esc-ov", "aria-label": "Escolher nomes da nova festa", style: { position: 'fixed', inset: 0, zIndex: 2147483100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: 'Inter, -apple-system, sans-serif' }, onClick: function (e) { if (e.target === e.currentTarget) p.onFechar(); } },
+        React.createElement("div", { className: "tdb-esc-card", style: { boxSizing: 'border-box', width: '100%', maxWidth: 560, maxHeight: '92vh', overflow: 'auto', padding: '20px 20px 18px' }, onClick: function (e) { e.stopPropagation(); } },
             React.createElement(TDBListaEscolher, { itens: itens, sel: sel, onChange: setSel }),
             React.createElement("div", { style: { display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 14, flexWrap: 'wrap' } },
-                React.createElement("button", { type: "button", style: base, onClick: p.onFechar }, "Cancelar"),
-                React.createElement("button", { type: "button", className: "tdb-esc-ok", style: Object.assign({}, base, { background: 'linear-gradient(135deg,#2bb7a4,#1d9a8a)', color: '#fff', border: 'none' }), onClick: function () { p.onOk(Array.from(sel)); } }, sel.size ? "Criar festa com " + sel.size + (sel.size === 1 ? " nome" : " nomes") : "Criar festa sem nomes")))), document.body);
+                React.createElement("button", { type: "button", className: "tdb-esc-btn", style: bt, onClick: p.onFechar }, "Cancelar"),
+                React.createElement("button", { type: "button", className: "tdb-esc-ok", style: bt, onClick: function () { p.onOk(Array.from(sel)); } }, sel.size ? "Criar festa com " + sel.size + (sel.size === 1 ? " nome" : " nomes") : "Criar festa sem nomes")))), document.body);
 }
 function CopiarNomesTDB(p) {
     var _s = useState(null), feito = _s[0], setFeito = _s[1];
@@ -17479,7 +17499,7 @@ function CopiarNomesTDB(p) {
                 React.createElement("div", null, "\u2022 ", previa.corrigidos, (previa.corrigidos === 1 ? " nome diferente de Outubro será corrigido" : " nomes diferentes de Outubro serão corrigidos"), " em Nov/Dez"),
                 React.createElement("div", { style: { opacity: .7 } }, "\u2022 ", previa.jaTinham, " já iguais ficam como estão")),
             React.createElement("div", { style: { display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20, flexWrap: 'wrap' } },
-                !feito && previa && n > 0 && React.createElement("button", { type: "button", className: "tdb-cfp-btn tdb-cfp-main", style: Object.assign({}, base, { background: 'linear-gradient(135deg,#2bb7a4,#1d9a8a)', color: '#fff', border: 'none' }), onClick: function () { var r = p.copiar(true, Array.from(selNomes)); if (r) setFeito(r); } }, "Copiar " + selNomes.size + (selNomes.size === 1 ? " nome" : " nomes")),
+                !feito && previa && n > 0 && React.createElement("button", { type: "button", className: "tdb-cfp-btn tdb-cfp-main", style: Object.assign({}, base, { background: 'linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,0) 55%),var(--c-inkButton,#1767cf)', color: '#fff', border: '1px solid rgba(255,255,255,.55)', boxShadow: '0 8px 20px rgba(23,103,207,.4)' }), onClick: function () { var r = p.copiar(true, Array.from(selNomes)); if (r) setFeito(r); } }, "Copiar " + selNomes.size + (selNomes.size === 1 ? " nome" : " nomes")),
                 React.createElement("button", { type: "button", className: "tdb-cfp-btn", style: base, onClick: p.onFechar }, feito ? "Fechar" : "Cancelar"))))), document.body);
 }
 function Mensalidades(_a) {
@@ -17669,7 +17689,8 @@ function Mensalidades(_a) {
     var _8 = useState(''), novoPai = _8[0], setNovoPai = _8[1];
     var _9 = useState('PARTICULAR'), novoConvenio = _9[0], setNovoConvenio = _9[1];
     var _10 = useState(''), novoTirarNota = _10[0], setNovoTirarNota = _10[1];
-    var _11 = useState(function () { return MESES[new Date().getMonth()] || 'SETEMBRO'; }), novoMes = _11[0], setNovoMes = _11[1];
+    var _11 = useState(function () { try { var m = localStorage.getItem('painel_mensalidades_novoMes'); if (m && MESES.indexOf(m) >= 0) return m; } catch (e) { } return MESES[new Date().getMonth()] || 'SETEMBRO'; }), novoMes = _11[0], setNovoMesRaw_ = _11[1];
+    var setNovoMes = function (m) { setNovoMesRaw_(m); try { localStorage.setItem('painel_mensalidades_novoMes', m); } catch (e) { } };
     var _12 = useState(''), novoValor = _12[0], setNovoValor = _12[1];
     var _13 = useState(''), novoValorCheio = _13[0], setNovoValorCheio = _13[1];
     var _14 = useState('SICOOB'), novoBanco = _14[0], setNovoBanco = _14[1];

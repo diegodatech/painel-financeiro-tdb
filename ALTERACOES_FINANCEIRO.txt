@@ -1,3 +1,9 @@
+V2.02 (app TDB v2.02 + servidor 2.02)
+- Janela "escolher nomes" (Nova festa e Copiar nomes p/ Nov e Dez) refeita no padrao do projeto: vidro liquido com contorno azul marcante, fundo bem legivel (sem transparencia que atrapalhe), caixinhas e botoes no azul do programa (nada de verde). Tem versao para o modo escuro.
+- Lancamentos > Novo lancamento: o MES escolhido (janeiro a dezembro) agora fica salvo. Ao voltar ou abrir de novo, ele continua no ultimo mes que voce usou, em vez de voltar para setembro. O mesmo vale para o mes do novo lancamento em Mensalidades.
+- Inclui v2.01, v2.00 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V2.01 (app TDB v2.01 + servidor 2.01)
 - Janela "escolher nomes" da Nova festa: agora o fundo e totalmente opaco (nada de transparencia) e o titulo/explicacao do topo foram retirados. Fica so a busca, os botoes Marcar/Desmarcar todos e a lista dos nomes.
 - Inclui v2.00 e anteriores.
