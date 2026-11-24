@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261123-tdb-v2-02";
+    window.__TDB_BUILD = "tdb-20261124-tdb-v2-03";
   </script>
-  <script src="./config.js?build=tdb-20261123-tdb-v2-02"></script>
+  <script src="./config.js?build=tdb-20261124-tdb-v2-03"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1573,9 +1573,9 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261123-tdb-v2-02"></script>
-  <script src="./sync.js?build=tdb-20261123-tdb-v2-02"></script>
-  <script src="./atualizar.js?build=tdb-20261123-tdb-v2-02"></script>
+  <script src="./diagnostico.js?build=tdb-20261124-tdb-v2-03"></script>
+  <script src="./sync.js?build=tdb-20261124-tdb-v2-03"></script>
+  <script src="./atualizar.js?build=tdb-20261124-tdb-v2-03"></script>
   <script>
   /* v1.91 — Atualização automática dos dados: antes o app só conferia o Drive ao abrir a página do zero. Agora confere
      também ao voltar para a janela/aba, ao reconectar e a cada 90 s com a tela visível. Usa só peças que já existem
@@ -1605,7 +1605,7 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
   })();
   </script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261123-tdb-v2-02-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261124-tdb-v2-03-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10414,6 +10414,7 @@ function _festasMesclarAlunos(dados, transacoes, abasConfig) {
         });
         alunos.forEach(function(a,i){
             var k=a.nome.toLocaleLowerCase('pt-BR');if(conhecidos.has(k))return;
+            if(Array.isArray(aba.excluidos)&&aba.excluidos.indexOf(k)>=0)return; // v2.03: quem voce tirou desta festa nao volta sozinho
             var nova=_festasLinhaVazia(aba.key,a,i),baseId=nova.id,sufixo=1;
             while(ids.has(nova.id))nova.id=baseId+'-novo-'+sufixo++;
             ids.add(nova.id);conhecidos.add(k);rows.push(nova);
@@ -11379,6 +11380,22 @@ function FestasTDB(_a) {
         var next = {}; Object.keys(dados).forEach(function (k) { next[k] = (dados[k] || []).map(function (r) { if (!set[k + '|' + r.id]) return r; var c = __assign({}, r); delete c.pai; return c; }); });
         salvar(next);
     }
+    function _chaveNomeFesta(n) { return _festasNormalizarNome(n).toLocaleLowerCase('pt-BR'); }
+    function marcarExcluidosFesta(abaKey, nomes) {
+        var ks = (nomes || []).map(_chaveNomeFesta).filter(Boolean);
+        if (!ks.length) return;
+        salvarAbasFestas(abasFestas.map(function (a) {
+            if (a.key !== abaKey) return a;
+            var set = {}; (a.excluidos || []).concat(ks).forEach(function (k) { set[k] = 1; });
+            return __assign(__assign({}, a), { excluidos: Object.keys(set) });
+        }));
+    }
+    function liberarExcluidoFesta(abaKey, nome) {
+        var k = _chaveNomeFesta(nome);
+        var aba = abasFestas.find(function (a) { return a.key === abaKey; });
+        if (!k || !aba || !Array.isArray(aba.excluidos) || aba.excluidos.indexOf(k) < 0) return;
+        salvarAbasFestas(abasFestas.map(function (a) { return a.key !== abaKey ? a : __assign(__assign({}, a), { excluidos: a.excluidos.filter(function (x) { return x !== k; }) }); }));
+    }
     function limparCertinhosFesta() {
         if (!selosFesta) return;
         if (!window.confirm('Remover os ' + selosFesta + ' certinhos desta festa? Depois você pode conferir de novo com outro extrato.')) return;
@@ -11398,7 +11415,7 @@ function FestasTDB(_a) {
                 var rAbas = await window.storage.get('festas_tdb_abas', false);
                 var lista = rAbas && rAbas.value ? JSON.parse(rAbas.value) : null;
                 if (Array.isArray(lista) && lista.length) {
-                    var limpas = lista.filter(function (a) { return a && a.key && a.label; }).map(function (a) { return { key: String(a.key), label: String(a.label), emoji: String(a.emoji || _festasEmojiPadrao(String(a.key))) }; });
+                    var limpas = lista.filter(function (a) { return a && a.key && a.label; }).map(function (a) { return { key: String(a.key), label: String(a.label), emoji: String(a.emoji || _festasEmojiPadrao(String(a.key))), excluidos: Array.isArray(a.excluidos) ? a.excluidos.map(String) : [] }; });
                     if (limpas.length) {
                         setAbasFestas(limpas);
                         var ultimaAba = _festasLerUltimaAba(exercicioAtual);
@@ -11484,6 +11501,7 @@ function FestasTDB(_a) {
                 await window.__tdbLixeiraAdicionar({ rotulo: rr.nome || 'Registro de festa', origem: 'Festas TDB \u00B7 ' + (abaAtual ? abaAtual.label : subTab), restoreOps: [{ op:'insert', key:'festas_tdb', path:[subTab], index:idx, item:rr, uniqueField:'id' }] });
             }
         } catch (e) { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); return false; }
+        marcarExcluidosFesta(subTab, lista.map(function (r) { return r.nome; }));
         var next = __assign({}, dados); next[subTab] = rows.filter(function (r) { return !mapa.has(r.id); }); salvar(next);
         return true;
     }
@@ -11579,6 +11597,7 @@ function FestasTDB(_a) {
         if (!window.confirm('Mover "' + (removida.nome || 'este registro') + '" para a lixeira?')) return;
         var idx = rows.findIndex(function(r){ return r.id === id; });
         window.__tdbLixeiraAdicionar({ rotulo: removida.nome || 'Registro de festa', origem: 'Festas TDB · ' + (abaAtual ? abaAtual.label : subTab), restoreOps: [{ op:'insert', key:'festas_tdb', path:[subTab], index:idx, item:removida, uniqueField:'id' }] }).then(function () {
+        marcarExcluidosFesta(subTab, [removida.nome]);
         var next = __assign({}, dados); next[subTab] = rows.filter(function (r) { return r.id !== id; }); salvar(next);
         }, function () { window.alert('N\u00E3o consegui mandar para a lixeira. Nada foi exclu\u00EDdo.'); });
     }
@@ -11593,6 +11612,7 @@ function FestasTDB(_a) {
             id: subTab + '-n-' + Date.now() + '-' + Math.random().toString(36).slice(2), nome: nome,
             tipo: novo.tipo || 'PARTICULAR', pessoas: novo.pessoas || '', valor: vcNovo.texto, banco: novo.banco || '', data: novo.data || '', pago: _festasPagoValor(novo.pago), origemMensalidade: false
         }], false);
+        liberarExcluidoFesta(subTab, nome);
         salvar(next);
         setNovo({ nome: '', tipo: novo.tipo || 'PARTICULAR', pessoas: '', valor: '', banco: '', data: '', pago: 'Pendente' });
     }
@@ -11651,7 +11671,9 @@ function FestasTDB(_a) {
             pessoas: '', valor: '', banco: '', data: '', pago: false, origemMensalidade: !!r.origemMensalidade
         }; }).filter(function (r) { return !!r.nome; });
         var nextDados = __assign({}, dados); nextDados[chave] = novasLinhas; salvar(nextDados);
-        var nextAbas = __spreadArray(__spreadArray([], abasFestas, true), [{ key: chave, label: nome, emoji: novaFesta.emoji || '🎉' }], false);
+        var excl = [];
+        if (idSet) { var mantidos = {}; origem.forEach(function (r) { mantidos[_chaveNomeFesta(r.nome)] = 1; }); var todos = {}; origemTodos.forEach(function (r) { todos[_chaveNomeFesta(r.nome)] = 1; }); _festasAlunosMensalidades(transacoes).forEach(function (a) { todos[_chaveNomeFesta(a.nome)] = 1; }); excl = Object.keys(todos).filter(function (k) { return k && !mantidos[k]; }); }
+        var nextAbas = __spreadArray(__spreadArray([], abasFestas, true), [{ key: chave, label: nome, emoji: novaFesta.emoji || '🎉', excluidos: excl }], false);
         salvarAbasFestas(nextAbas);
         selecionarFesta(chave); setLinhaSelecionada(null); cancelarEdicaoRow(); setEscolhaFesta(null); cancelarNovaFesta();
     }

@@ -1,3 +1,11 @@
+V2.03 (app TDB v2.03 + servidor 2.03)
+- CORRECAO na aba Festas: alunos que voce apagava de uma festa voltavam sozinhos ao reabrir o programa (mesmo depois de sincronizar no Drive). Causa: ao abrir a aba, o programa recolocava em toda festa qualquer aluno das Mensalidades que nao estivesse na lista.
+- Agora cada festa guarda quem voce tirou dela (junto com a configuracao da aba, que ja sincroniza). Apagar um aluno (um ou varios) marca como "tirado" e ele nao volta. Se voce adicionar o mesmo nome de novo a mao, ele sai da lista de tirados. Alunos novos das Mensalidades continuam entrando normalmente.
+- Nova festa criada escolhendo nomes: quem ficou desmarcado tambem nao volta depois.
+- Importante: alunos que voce ja tinha apagado antes desta versao e que voltaram precisam ser apagados mais uma vez (so uma vez).
+- Inclui v2.02 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V2.02 (app TDB v2.02 + servidor 2.02)
 - Janela "escolher nomes" (Nova festa e Copiar nomes p/ Nov e Dez) refeita no padrao do projeto: vidro liquido com contorno azul marcante, fundo bem legivel (sem transparencia que atrapalhe), caixinhas e botoes no azul do programa (nada de verde). Tem versao para o modo escuro.
 - Lancamentos > Novo lancamento: o MES escolhido (janeiro a dezembro) agora fica salvo. Ao voltar ou abrir de novo, ele continua no ultimo mes que voce usou, em vez de voltar para setembro. O mesmo vale para o mes do novo lancamento em Mensalidades.
