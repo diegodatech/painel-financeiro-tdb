@@ -1,3 +1,9 @@
+V2.04 (app TDB v2.04 + servidor 2.04)
+- Festas: a bolinha de conferencia (cinza) agora aparece em TODAS as linhas, inclusive as Pendentes e as importadas das Mensalidades. Clicar na bolinha de uma linha Pendente marca como Pago e da o verde manual (aro duplo) num clique so. Clicar de novo desfaz e a linha volta a Pendente. Linhas que ja eram Pago continuam como antes (verde liso = conferido no extrato; verde com aro duplo = baixa manual).
+- Festas > aba cujo nome tem "Janta" (ex.: Janta Formatura): nova coluna "Pagam meia" (so numero de pessoas, nao mexe em valores). Campo na linha, no formulario de nova linha e na edicao (computador e celular). Soma no rodape de cada grupo, no topo do grupo, no quadro "Pagam meia" do resumo e no PDF da festa. Nas outras festas a coluna nao aparece. Os valores continuam sendo digitados cheios, como antes.
+- Inclui v2.03 e anteriores.
+- sync.js (salvamento) NAO foi alterado.
+
 V2.03 (app TDB v2.03 + servidor 2.03)
 - CORRECAO na aba Festas: alunos que voce apagava de uma festa voltavam sozinhos ao reabrir o programa (mesmo depois de sincronizar no Drive). Causa: ao abrir a aba, o programa recolocava em toda festa qualquer aluno das Mensalidades que nao estivesse na lista.
 - Agora cada festa guarda quem voce tirou dela (junto com a configuracao da aba, que ja sincroniza). Apagar um aluno (um ou varios) marca como "tirado" e ele nao volta. Se voce adicionar o mesmo nome de novo a mao, ele sai da lista de tirados. Alunos novos das Mensalidades continuam entrando normalmente.
