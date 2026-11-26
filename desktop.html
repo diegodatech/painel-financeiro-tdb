@@ -24,9 +24,9 @@
   <script>
     window.__TDB_HTML_BOOT = null;
     window.__TDB_GIT_FRONTEND = true;
-    window.__TDB_BUILD = "tdb-20261125-tdb-v2-04";
+    window.__TDB_BUILD = "tdb-20261126-tdb-v2-05";
   </script>
-  <script src="./config.js?build=tdb-20261125-tdb-v2-04"></script>
+  <script src="./config.js?build=tdb-20261126-tdb-v2-05"></script>
   <!-- TDB 02n: o navegador avalia a instalacao NA PAGINA FINAL (esta). Antes o manifest so existia no index.html,
        que redireciona na hora para c; por isso o botao "Instalar app" deixou de aparecer. -->
   <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials">
@@ -1573,9 +1573,9 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
 @keyframes tdbPulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.tdb-girando,html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{animation:none}}
 </style>
-  <script src="./diagnostico.js?build=tdb-20261125-tdb-v2-04"></script>
-  <script src="./sync.js?build=tdb-20261125-tdb-v2-04"></script>
-  <script src="./atualizar.js?build=tdb-20261125-tdb-v2-04"></script>
+  <script src="./diagnostico.js?build=tdb-20261126-tdb-v2-05"></script>
+  <script src="./sync.js?build=tdb-20261126-tdb-v2-05"></script>
+  <script src="./atualizar.js?build=tdb-20261126-tdb-v2-05"></script>
   <script>
   /* v1.91 — Atualização automática dos dados: antes o app só conferia o Drive ao abrir a página do zero. Agora confere
      também ao voltar para a janela/aba, ao reconectar e a cada 90 s com a tela visível. Usa só peças que já existem
@@ -1605,7 +1605,7 @@ html[data-tdb-novidades="1"] .tdb-btn-atualizar::after{content:"";position:absol
   })();
   </script>
 <script>
-window.__TDB_BUILD_EXATO = 'tdb-20261125-tdb-v2-04-desktop';
+window.__TDB_BUILD_EXATO = 'tdb-20261126-tdb-v2-05-desktop';
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -11763,7 +11763,7 @@ function FestasTDB(_a) {
                             React.createElement("td", { style: tdPrimeiro }, React.createElement("span", null, r.nome || '—')),
                             React.createElement("td", { style: td }, React.createElement("span", { className: "mono", style: { display: 'block', textAlign: 'center', fontWeight: 700 } }, r.pessoas || '—')),
                             React.createElement("td", { style: td }, React.createElement("span", { className: "mono", style: { fontWeight: 700, color: _festasNumero(r.valor) > 0 ? COLORS.green : COLORS.inkSoft } }, _festasNumero(r.valor) > 0 ? formatBRL(_festasNumero(r.valor)) : '—')),
-                            React.createElement("td", { style: td }, (r.banco ? React.createElement("span", { className: "busca-liquid-glass", style: { display: 'inline-flex', minWidth: 74, justifyContent: 'center', borderRadius: 20, padding: '5px 8px', fontSize: 10.5, fontWeight: 800, color: corBanco(r.banco), border: '1px solid ' + corBanco(r.banco) + '55' } }, r.banco) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—'))),
+                            React.createElement("td", { style: td }, (r.banco ? React.createElement("span", { className: "busca-liquid-glass tdb-banco-pill", style: { '--bk': corBanco(r.banco), display: 'inline-flex', minWidth: 74, justifyContent: 'center', borderRadius: 20, padding: '5px 8px', fontSize: 10.5, fontWeight: 800, color: corBanco(r.banco), border: '1px solid ' + corBanco(r.banco) + '55' } }, r.banco) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—'))),
                             React.createElement("td", { style: td }, React.createElement("span", { className: "mono", style: { whiteSpace: 'nowrap', color: r.data ? COLORS.ink : COLORS.inkSoft } }, r.data ? formatarData(r.data) : '—')),
                             React.createElement("td", { style: td }, React.createElement("span", { className: "selection-chip", style: { display: 'inline-flex', width: '100%', boxSizing: 'border-box', justifyContent: 'center', border: '1px solid ' + (_festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red)), borderRadius: 7, padding: '6px 5px', fontWeight: 800, fontSize: 11.5, color: _festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red), background: _festasCorStatus(r, COLORS.greenBg, COLORS.goldSoft, COLORS.redBg) } }, _festasStatus(r))),
                             React.createElement("td", { style: __assign(__assign({}, td), { textAlign: 'center' }) }, React.createElement("span", { style: { fontWeight: 800, color: COLORS.inkButton, fontSize: 11 } }, 'Editando'))
@@ -11801,7 +11801,7 @@ function FestasTDB(_a) {
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { type: "number", min: "0", step: "1", inputMode: "numeric", value: editRow.pessoas || '', onChange: function (e) { return alterarEdit('pessoas', e.target.value.replace(/[^0-9]/g, '')); }, style: __assign(__assign({}, inp), { textAlign: 'center' }) }) : React.createElement("span", { className: "mono", style: { display: 'block', textAlign: 'center', fontWeight: 700 } }, r.pessoas || '—')),
                     (temMeia && !isMobileView) ? tdMeia(r, emEdicao) : null,
                     React.createElement("td", { style: td }, emEdicao ? React.createElement(CampoDinheiroTDB, { value: editRow.valor || '', onChange: function (v) { return alterarEdit('valor', v); }, extra: { inputMode: "decimal", placeholder: "R$ 0,00", className: "mono", style: inp } }) : React.createElement("span", { className: "mono", style: { fontWeight: 700, color: _festasNumero(r.valor) > 0 ? COLORS.green : COLORS.inkSoft } }, _festasNumero(r.valor) > 0 ? formatBRL(_festasNumero(r.valor)) : '—')),
-                    React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.banco || '', onChange: function (e) { return alterarEdit('banco', e.target.value); }, className: "busca-liquid-glass", style: bancoStyle }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })) : (r.banco ? React.createElement("span", { className: "busca-liquid-glass", style: { display: 'inline-flex', minWidth: 74, justifyContent: 'center', borderRadius: 20, padding: '5px 8px', fontSize: 10.5, fontWeight: 800, color: corBanco(r.banco), border: '1px solid ' + corBanco(r.banco) + '55' } }, r.banco) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—'))),
+                    React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.banco || '', onChange: function (e) { return alterarEdit('banco', e.target.value); }, className: "busca-liquid-glass", style: bancoStyle }, React.createElement("option", { value: "" }, "— nenhum —"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); })) : (r.banco ? React.createElement("span", { className: "busca-liquid-glass tdb-banco-pill", style: { '--bk': corBanco(r.banco), display: 'inline-flex', minWidth: 74, justifyContent: 'center', borderRadius: 20, padding: '5px 8px', fontSize: 10.5, fontWeight: 800, color: corBanco(r.banco), border: '1px solid ' + corBanco(r.banco) + '55' } }, r.banco) : React.createElement("span", { style: { color: COLORS.inkSoft } }, '—'))),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("input", { type: "date", value: editRow.data || '', onChange: function (e) { return alterarEdit('data', e.target.value); }, onClick: function (e) { e.stopPropagation(); try { e.target.showPicker(); } catch (err) { } }, style: __assign(__assign({}, inp), { cursor: 'pointer' }) }) : React.createElement("span", { className: "mono", style: { whiteSpace: 'nowrap', color: r.data ? COLORS.ink : COLORS.inkSoft } }, r.data ? formatarData(r.data) : '—')),
                     React.createElement("td", { style: td }, emEdicao ? React.createElement("select", { value: editRow.pago || 'Pendente', onChange: function (e) { return alterarEdit('pago', e.target.value); }, style: inp }, React.createElement("option", { value: "Pendente" }, "Pendente"), React.createElement("option", { value: "Parcial" }, "Parcial"), React.createElement("option", { value: "Pago" }, "Pago")) : React.createElement("span", { className: "selection-chip", style: { display: 'inline-flex', width: '100%', boxSizing: 'border-box', justifyContent: 'center', border: '1px solid ' + (_festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red)), borderRadius: 7, padding: '6px 5px', fontWeight: 800, fontSize: 11.5, color: _festasCorStatus(r, COLORS.green, COLORS.gold, COLORS.red), background: _festasCorStatus(r, COLORS.greenBg, COLORS.goldSoft, COLORS.redBg) } }, _festasStatus(r))),
                     React.createElement("td", { 'data-export-ignore': true, style: __assign(__assign({}, td), { textAlign: 'center' }) }, emEdicao ? React.createElement("div", { style: { display: 'flex', justifyContent: 'center', gap: 4 } },
@@ -16580,8 +16580,8 @@ function TabelaMensalidades(_a) {
                     salvarEdicao(t.id);
                 if (e.key === 'Escape')
                     cancelarEdicao();
-            }, style: inputCell }, React.createElement("option", { value: "" }, "\u2014 nenhum \u2014"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))) : t.banco ? (React.createElement("span", { className: "busca-liquid-glass", style: {
-                fontSize: 11, fontWeight: 700, color: corBanco(t.banco),
+            }, style: inputCell }, React.createElement("option", { value: "" }, "\u2014 nenhum \u2014"), BANCOS.map(function (b) { return React.createElement("option", { key: b, value: b }, b); }))) : t.banco ? (React.createElement("span", { className: "busca-liquid-glass tdb-banco-pill", style: {
+                '--bk': corBanco(t.banco), fontSize: 11, fontWeight: 700, color: corBanco(t.banco),
                 padding: '4px 6px', borderRadius: 20, whiteSpace: 'nowrap', display: 'inline-block',
                 width: 66, textAlign: 'center', boxSizing: 'border-box',
             } }, abrevBanco(t.banco))) : '—'), mostrarDetalhes && (React.createElement("td", { style: __assign(__assign({}, td), { whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.3 }) }, emEdicao ? tdbPaiCampos(paiEdit, setPaiEdit, function (e) {
@@ -19993,6 +19993,10 @@ html:not(.tdb-aurora-pdf) body .festas-tdb-scroll table.festas-tdb-tabela tbody 
 @media (max-width:760px){.tdb-cf-b[data-click="1"]::after{inset:-11px}}
 .tdb-cf-b[data-st="vazio"]{box-sizing:border-box;background:transparent;box-shadow:none;border:1.5px solid rgba(110,124,140,.55);color:transparent;opacity:.8}
 .tdb-cf-b[data-st="vazio"]:hover{border-color:#1fa86b;opacity:1}
+/* v2.05 — etiqueta do banco: vidro nitido e igual em todas as linhas */
+html body span.busca-liquid-glass.tdb-banco-pill:not(#tdbk1):not(#tdbk2):not(#tdbk3):not(#tdbk4):not(#tdbk5){background:linear-gradient(180deg,#ffffff 0%,#f1f5fb 100%)!important;background-color:#fff!important;border:1.5px solid color-mix(in srgb,var(--bk,#6b6b6b) 38%,#c3cde0)!important;box-shadow:0 2px 5px rgba(25,45,85,.20),0 0 0 1px rgba(255,255,255,.9) inset,0 1px 0 #fff inset!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:20px!important}
+html body.dark-mode span.busca-liquid-glass.tdb-banco-pill:not(#tdbk1):not(#tdbk2):not(#tdbk3):not(#tdbk4):not(#tdbk5){background:linear-gradient(180deg,#27324a 0%,#1b2438 100%)!important;background-color:#1b2438!important;border:1.5px solid color-mix(in srgb,var(--bk,#9aa7c4) 50%,#5d6c8f)!important;box-shadow:0 2px 5px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.10) inset!important}
+html.tdb-aurora-pdf body span.busca-liquid-glass.tdb-banco-pill:not(#tdbk1):not(#tdbk2):not(#tdbk3):not(#tdbk4):not(#tdbk5){box-shadow:none!important;background:#fff!important}
 /* v2.04 — Janta Formatura: coluna "Pagam meia" (9 colunas) */
 @media(min-width:761px){
 html body .festas-tdb-export-raiz:not(#tdb3x):not(#tdb4x):not(#tdb5x):not(#tdb6x):not(#tdb75x):not(#tdbz1):not(#tdbz2):not(#tdbm1):not(#tdbm2) table.festas-tdb-tabela.festas-meia col:nth-child(1){width:17%!important}
